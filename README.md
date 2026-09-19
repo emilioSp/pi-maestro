@@ -1,3 +1,3 @@
-# Maestro
+# pi-maestro
 
-Package documentation will be defined here.
+Pi extension to manage a spec driven multiagent development workflow.
