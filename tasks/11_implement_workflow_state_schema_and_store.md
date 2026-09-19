@@ -13,7 +13,7 @@ Validate and persist the minimal `workflow.json` document.
 ## Plan references
 
 - Section [2.11](../plan.md#plan-section-2-11), persistent state
-- Section [5](../plan.md#plan-section-5), `src/state/schema.ts` and `src/state/store.ts`
+- Section [5](../plan.md#plan-section-5), `src/workflow/state/schema.ts` and `src/workflow/state/store.ts`
 - Section [6.14](../plan.md#plan-section-6-14), state, phases, and revisions
 
 ## Work
@@ -24,7 +24,7 @@ Validate and persist the minimal `workflow.json` document.
 4. Implement validated reads and atomic writes.
 5. Require compare-and-set writes with `expectedRevision`.
 6. Reject unknown fields and malformed JSON.
-7. Export the state API from `src/state/index.ts`.
+7. Export the state API from `src/workflow/state/index.ts`.
 
 ## Implementation
 

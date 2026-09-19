@@ -8,50 +8,160 @@ Pi extension that implements a multiagent spec driven development workflow.
 
 The MVP package structure is frozen. Add a new structural file or directory only after an explicit design decision.
 
-### Package entry points and assets
+### Root
 
-| Path | Scope                                                                                                                                                        |
-|---|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `extensions/maestro.ts` | Main-session composition root. Registers `/maestro`, session events, status, instructions, and main tools. Contains Pi wiring only, not workflow logic.      |
-| `extensions/maestro-child.ts` | Child-session composition root. Registers child-only tools. It does not register orchestration commands, events, or status.                                  |
-| `agents/builder.md` | Builder role and operating contract distributed with the package.                                                                                            |
-| `agents/verifier.md` | Verifier role and operating contract distributed with the package.                                                                                           |
-| `templates/spec.md` | The spec template.                                                                                                                                           |
-| `docs/` | Stable user and operator documentation. `workflow.md` explains the workflow, `configuration.md` explains configuration, and `recovery.md` explains recovery. |
-| `.github/workflows/ci.yml` | macOS and Node.js 26 CI for install, typecheck, tests, and package dry run. It does not publish.                                                             |
-
-### Source components
-
-| Path | Scope |
+| File | Responsibility |
 |---|---|
-| `src/config/` | Defaults, TypeBox schema, and loading for `.pi/maestro.json`. It does not handle path security, model availability, or Pi UI concerns. |
-| `src/paths.ts` | Maestro path construction and path-safety validation. |
-| `src/ids.ts` | UTC timestamps, slug normalization, spec ID composition, and ID format validation. |
-| `src/git/` | Pi-independent Git operations. `command.ts` runs Git with argv, cwd, and timeout without a shell. The other modules own repository discovery, branches, worktrees, commits, ancestry, and final-review Git operations. |
-| `src/atomic-write.ts` | Shared atomic file writing for state and artifacts. |
-| `src/state/` | Schema, persistence, discovery, and reconciliation for `workflow.json`. It selects the highest revision, detects conflicts, and compares declared state with Git, worktrees, and handoffs. |
-| `src/specs/` | Spec template loading, creation, parsing, and deterministic validation. IDs, paths, and workflow state remain in their own modules. |
-| `src/artifacts/` | Pi-independent schemas, reading, validation, and writing for builder handoffs, verifier handoffs, escalations, and observations. |
-| `src/workflow/` | Pi-independent domain coordination. Separate modules own transitions, spec flow, builder flow, verifier flow, escalations, findings, final review, and recovery. |
-| `src/subagents/` | Integration with the public `pi-subagents/delegation` and `pi-subagents/preflight` APIs. Owns foreground launch contracts, request correlation, cancellation, and listener cleanup. It must not import internal `pi-subagents` modules. |
-| `src/maestro/` | Main mode behavior: activation, environment checks, Pi session persistence, instructions, and status. Its `index.ts` is only an export barrel. Pi registration stays in `extensions/maestro.ts`. |
-| `src/tools/main/` | One Pi adapter per owner-facing tool: create and ready a spec, inspect state, launch builder or verifier, resolve escalations or findings, and prepare final review. |
-| `src/tools/child/` | One Pi adapter per child-only tool: record builder observations or handoff, open an escalation, and record a verifier handoff. |
+| `.github/workflows/ci.yml` | Run CI checks on macOS. |
+| `.gitignore` | Exclude local and generated files from Git. |
+| `LICENSE` | Contain the MIT license. |
+| `README.md` | Explain Maestro and how to use it. |
+| `package.json` | Define package metadata, dependencies, scripts, and Pi integration. |
+| `package-lock.json` | Lock dependency versions. |
+| `tsconfig.json` | Configure TypeScript type checking. |
+
+### Pi extensions
+
+| File | Responsibility |
+|---|---|
+| `extensions/maestro.ts` | Connect Maestro to the main Pi session. |
+| `extensions/maestro-child.ts` | Connect child-only tools for builders and verifiers. |
+
+### Agents and template
+
+| File | Responsibility |
+|---|---|
+| `agents/builder.md` | Define builder instructions. |
+| `agents/verifier.md` | Define verifier instructions. |
+| `templates/spec.md` | Provide the spec template. |
+
+### Configuration, paths, and IDs
+
+| File | Responsibility |
+|---|---|
+| `src/config/defaults.ts` | Define default configuration values. |
+| `src/config/schema.ts` | Validate `.pi/maestro.json`. |
+| `src/config/load.ts` | Load and validate configuration. |
+| `src/config/index.ts` | Export configuration modules. |
+| `src/paths.ts` | Build and validate Maestro paths. |
+| `src/ids.ts` | Generate and validate spec IDs. |
+| `src/atomic-write.ts` | Write files atomically and safely. |
+
+### Git
+
+| File | Responsibility |
+|---|---|
+| `src/git/command.ts` | Run Git commands without a shell. |
+| `src/git/repository.ts` | Find and validate the Git repository. |
+| `src/git/branches.ts` | Create and inspect workflow branches. |
+| `src/git/worktrees.ts` | Create and remove worktrees. |
+| `src/git/commits.ts` | Create and find checkpoint commits. |
+| `src/git/verify-commit-history.ts` | Verify that commit history is valid. |
+| `src/git/final-review.ts` | Prepare the squash merge for final review. |
+| `src/git/index.ts` | Export Git modules. |
+
+### Specs
+
+| File | Responsibility |
+|---|---|
+| `src/specs/template.ts` | Load the spec template. |
+| `src/specs/create.ts` | Create specs and initial artifacts. |
+| `src/specs/parse.ts` | Parse spec sections. |
+| `src/specs/validate.ts` | Validate the spec structure. |
+| `src/specs/index.ts` | Export spec modules. |
+
+### Artifacts
+
+| File | Responsibility |
+|---|---|
+| `src/artifacts/builder-handoff.ts` | Handle builder handoff artifacts. |
+| `src/artifacts/verifier-handoff.ts` | Handle verifier handoff artifacts. |
+| `src/artifacts/escalation.ts` | Handle builder escalation artifacts. |
+| `src/artifacts/observations.ts` | Handle the builder evidence history. |
+| `src/artifacts/index.ts` | Export artifact modules. |
+
+### Workflow state
+
+| File | Responsibility |
+|---|---|
+| `src/workflow/state/schema.ts` | Define the `workflow.json` structure. |
+| `src/workflow/state/store.ts` | Read and write `workflow.json`. |
+| `src/workflow/state/discover.ts` | Find existing workflows in the repository. |
+| `src/workflow/state/reconcile.ts` | Compare state with Git, worktrees, and handoffs. |
+| `src/workflow/state/index.ts` | Export workflow-state modules. |
+
+
+### Workflow coordination
+
+| File | Responsibility |
+|---|---|
+| `src/workflow/transitions.ts` | Define valid workflow phase transitions. |
+| `src/workflow/spec.ts` | Coordinate spec creation and approval. |
+| `src/workflow/builder.ts` | Coordinate the builder cycle. |
+| `src/workflow/verifier.ts` | Coordinate the verifier cycle. |
+| `src/workflow/escalation.ts` | Coordinate escalation resolution. |
+| `src/workflow/findings.ts` | Coordinate finding resolution. |
+| `src/workflow/final-review.ts` | Coordinate final-review preparation. |
+| `src/workflow/recovery.ts` | Coordinate recovery after interruptions. |
+| `src/workflow/index.ts` | Export workflow modules. |
+
+### Subagent integration
+
+| File | Responsibility |
+|---|---|
+| `src/subagents/delegation.ts` | Start, monitor, and stop builders and verifiers. |
+| `src/subagents/preflight.ts` | Check that required subagents are available. |
+| `src/subagents/index.ts` | Export subagent modules. |
+
+### Maestro mode
+
+| File | Responsibility |
+|---|---|
+| `src/maestro/activation.ts` | Enable and disable Maestro mode. |
+| `src/maestro/checks.ts` | Check the environment and repository. |
+| `src/maestro/session.ts` | Persist Maestro state in the Pi session. |
+| `src/maestro/instructions.ts` | Provide instructions to Maestro in the session. |
+| `src/maestro/status.ts` | Show current status in the Pi UI. |
+| `src/maestro/index.ts` | Export Maestro modules. |
+
+### Owner tools
+
+| File | Responsibility |
+|---|---|
+| `src/tools/main/create-spec.ts` | Create a spec. |
+| `src/tools/main/mark-spec-ready.ts` | Validate and approve a ready spec. |
+| `src/tools/main/inspect-workflow.ts` | Show workflow status. |
+| `src/tools/main/launch-builder.ts` | Start a builder. |
+| `src/tools/main/resolve-escalation.ts` | Record the owner decision for an escalation. |
+| `src/tools/main/launch-verifier.ts` | Start a verifier. |
+| `src/tools/main/resolve-findings.ts` | Record owner decisions for findings. |
+| `src/tools/main/prepare-final-review.ts` | Prepare the candidate for final review. |
+| `src/tools/main/index.ts` | Export owner-facing tools. |
+
+### Builder and verifier tools
+
+| File | Responsibility |
+|---|---|
+| `src/tools/child/record-builder-observation.ts` | Record builder evidence. |
+| `src/tools/child/record-builder-handoff.ts` | Record a builder handoff. |
+| `src/tools/child/open-escalation.ts` | Open a builder escalation. |
+| `src/tools/child/record-verifier-handoff.ts` | Record a verifier handoff. |
+| `src/tools/child/index.ts` | Export child-only tools. |
+
+### Documentation and tests
+
+| File | Responsibility |
+|---|---|
+| `docs/workflow.md` | Explain the owner, Maestro, builder, and verifier flow. |
+| `docs/configuration.md` | Explain `.pi/maestro.json`. |
+| `docs/recovery.md` | Explain recovery of interrupted workflows. |
+| `test/support/temp-repository.ts` | Create temporary Git repositories for tests. |
+| `test/support/fake-subagents.ts` | Simulate builders and verifiers in tests. |
+| `test/support/test-files.ts` | Provide test file helpers. |
 
 Every `src/**/index.ts` is an export barrel. Keep schemas next to their domain. Do not add a global `src/schemas/` directory. Tool files define the input schema, register the Pi tool, call domain code, and convert the result to Pi format. They do not duplicate Git, state, artifact, or workflow logic.
 
-### Tests
-
-| Path | Scope |
-|---|---|
-| `test/unit/` | Unit tests for complex pure logic, arranged to mirror `src/`. |
-| `test/integration/` | Feature and boundary tests, arranged to mirror `src/`. |
-| `test/support/` | Explicit test infrastructure: temporary repositories, fake subagents, and test file helpers. |
-| `test/fixtures/config/` | Configuration scenarios. |
-| `test/fixtures/specs/` | Spec scenarios. |
-| `test/fixtures/artifacts/` | Artifact scenarios. |
-
-A test file identifies its main source file, for example `src/state/store.ts` maps to `test/integration/state/store.test.ts`. A module does not need both unit and integration coverage when one meaningful test level is sufficient. Do not create generic aggregate tests such as `state.test.ts`.
+`test/unit/` and `test/integration/` mirror `src/`. `test/fixtures/config/`, `test/fixtures/specs/`, and `test/fixtures/artifacts/` contain their matching scenarios. A test file identifies its main source file, for example `src/workflow/state/store.ts` maps to `test/integration/workflow/state/store.test.ts`. A module does not need both unit and integration coverage when one meaningful test level is sufficient. Do not create generic aggregate tests such as `state.test.ts`.
 
 The package is source-only. Pi loads TypeScript directly, `src/` is published, and no `dist/` directory exists.
 

@@ -1,0 +1,1 @@
+// Maestro configuration schema definitions.

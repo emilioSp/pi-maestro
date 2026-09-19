@@ -1,0 +1,1 @@
+// Verifier handoff artifact handling.

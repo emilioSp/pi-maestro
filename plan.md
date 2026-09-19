@@ -942,16 +942,10 @@ pi-maestro/
 │   │   ├── branches.ts
 │   │   ├── worktrees.ts
 │   │   ├── commits.ts
-│   │   ├── ancestry.ts
+│   │   ├── verify-commit-history.ts
 │   │   ├── final-review.ts
 │   │   └── index.ts
 │   ├── atomic-write.ts
-│   ├── state/
-│   │   ├── schema.ts
-│   │   ├── store.ts
-│   │   ├── discover.ts
-│   │   ├── reconcile.ts
-│   │   └── index.ts
 │   ├── specs/
 │   │   ├── template.ts
 │   │   ├── create.ts
@@ -965,6 +959,12 @@ pi-maestro/
 │   │   ├── observations.ts
 │   │   └── index.ts
 │   ├── workflow/
+│   │   ├── state/
+│   │   │   ├── schema.ts
+│   │   │   ├── store.ts
+│   │   │   ├── discover.ts
+│   │   │   ├── reconcile.ts
+│   │   │   └── index.ts
 │   │   ├── transitions.ts
 │   │   ├── spec.ts
 │   │   ├── builder.ts
@@ -1039,11 +1039,11 @@ Ogni tool vive in un file dedicato. Il file contiene schema degli input, registr
 
 `src/artifacts/` implementa lettura, validazione e scrittura degli handoff, delle escalation e di `observations.json` senza dipendere da Pi. I file sotto `src/tools/` sono solo adapter tra le chiamate Pi e questa logica.
 
-`src/state/` contiene schema, persistenza, discovery e riconciliazione di `workflow.json`. Seleziona la revisione più alta, rileva conflitti e confronta lo stato dichiarato con Git, worktree e handoff.
+`src/workflow/state/` contiene schema, persistenza, discovery e riconciliazione di `workflow.json`. Seleziona la revisione più alta, rileva conflitti e confronta lo stato dichiarato con Git, worktree e handoff.
 
 `src/specs/` separa caricamento del template, creazione, parsing e validazione della spec. ID, percorsi e stato restano responsabilità dei rispettivi moduli.
 
-`src/workflow/` coordina i domini senza dipendere dai tool Pi. Separa transizioni, ciclo spec, builder, verifier, escalation, finding, final review e recovery.
+`src/workflow/` coordina i domini senza dipendere dai tool Pi. La sua directory `state/` gestisce lo stato persistente del workflow. Gli altri moduli separano transizioni, ciclo spec, builder, verifier, escalation, finding, final review e recovery.
 
 Non esiste una directory globale `src/schemas/`. Ogni schema resta vicino al dominio che lo usa e viene esportato dal relativo `index.ts`.
 
@@ -1053,7 +1053,7 @@ Non esiste una directory globale `src/schemas/`. Ogni schema resta vicino al dom
 
 `src/maestro/` implementa la modalità principale: attivazione, controlli ambientali, persistenza nella sessione Pi, istruzioni e status. `index.ts` è solo un barrel di export: non espone una funzione `registerMaestro`. Il wiring con le API Pi resta in `extensions/maestro.ts`.
 
-`src/git/` implementa le operazioni Git senza dipendere da Pi. `command.ts` esegue Git con argv, cwd e timeout, senza passare da una shell. Gli altri moduli separano repository, branch, worktree, commit, ancestry e final review.
+`src/git/` implementa le operazioni Git senza dipendere da Pi. `command.ts` esegue Git con argv, cwd e timeout, senza passare da una shell. Gli altri moduli separano repository, branch, worktree, commit, verifica della cronologia e final review.
 
 `src/config/` contiene default, schema e caricamento di `.pi/maestro.json`. Valida e applica gli override senza occuparsi della sicurezza dei percorsi, della disponibilità dei modelli o dell’interfaccia Pi.
 
@@ -1061,7 +1061,7 @@ Non esiste una directory globale `src/schemas/`. Ogni schema resta vicino al dom
 
 `src/ids.ts` resta un singolo modulo. Genera il timestamp UTC, normalizza lo slug, compone l’ID e ne valida il formato.
 
-`test/unit/` e `test/integration/` rispecchiano i percorsi sotto `src/`. Ogni file di test identifica il file sorgente principale che verifica, per esempio `src/state/store.ts` corrisponde a `test/integration/state/store.test.ts`. Non serve uno unit test per ogni file: un integration test può essere l’unica copertura diretta del modulo. Non vengono creati test aggregati generici come `state.test.ts`.
+`test/unit/` e `test/integration/` rispecchiano i percorsi sotto `src/`. Ogni file di test identifica il file sorgente principale che verifica, per esempio `src/workflow/state/store.ts` corrisponde a `test/integration/workflow/state/store.test.ts`. Non serve uno unit test per ogni file: un integration test può essere l’unica copertura diretta del modulo. Non vengono creati test aggregati generici come `state.test.ts`.
 
 <a id="plan-section-5-1"></a>
 

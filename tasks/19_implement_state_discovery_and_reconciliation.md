@@ -12,7 +12,7 @@ Find the authoritative workflow state and compare it with Git, worktrees, and ar
 
 ## Plan references
 
-- Sections [2.11](../plan.md#plan-section-2-11) and [5](../plan.md#plan-section-5), `src/state/discover.ts` and `src/state/reconcile.ts`
+- Sections [2.11](../plan.md#plan-section-2-11) and [5](../plan.md#plan-section-5), `src/workflow/state/discover.ts` and `src/workflow/state/reconcile.ts`
 - Sections [6.14](../plan.md#plan-section-6-14), [6.17](../plan.md#plan-section-6-17), [6.18](../plan.md#plan-section-6-18), [6.20](../plan.md#plan-section-6-20), and [6.22](../plan.md#plan-section-6-22)
 
 ## Work

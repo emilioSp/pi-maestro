@@ -1,6 +1,6 @@
 STATUS: TODO
 
-# Task 10: Implement Git commits and ancestry
+# Task 10: Implement Git commits and commit-history verification
 
 ## Dependency
 
@@ -12,7 +12,7 @@ Provide checkpoint commits and prove workflow history relationships.
 
 ## Plan references
 
-- Section [5](../plan.md#plan-section-5), `src/git/commits.ts` and `src/git/ancestry.ts`
+- Section [5](../plan.md#plan-section-5), `src/git/commits.ts` and `src/git/verify-commit-history.ts`
 - Sections [6.14](../plan.md#plan-section-6-14), [6.15](../plan.md#plan-section-6-15), [6.17](../plan.md#plan-section-6-17), and [6.23](../plan.md#plan-section-6-23)
 
 ## Work
