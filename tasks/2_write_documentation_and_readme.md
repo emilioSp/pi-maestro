@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task 2: Write the documentation and README
 
@@ -27,7 +27,7 @@ Write the human documentation for Maestro in simple English.
 
 ## Implementation
 
-Treat `plan.md` as authoritative. Remove legacy ideas such as UUIDv7, allowed-path lists, helper scripts, mandatory installs, mandatory pushes, old paths, old models, post-commit confirmation, and delayed cleanup. Explain that repository-specific commands come from applicable `AGENTS.md` files.
+Treat `plan.md` as authoritative. Remove legacy ideas such as UUIDv7, allowed-path lists, helper scripts, mandatory installs, mandatory pushes, old paths, old models, post-commit confirmation, and delayed cleanup.
 
 ## Tests
 

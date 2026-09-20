@@ -23,7 +23,7 @@ Expose the child-only terminal tool for verifier evidence and findings.
 3. Validate regenerated criteria and findings against the current spec.
 4. Run the product-file comparison against the recorded candidate commit.
 5. Return the exact structured `PRODUCT_FILES_MODIFIED` error when needed.
-6. Write verifier handoff and `awaiting-findings` or `candidate-ready` state only after all checks pass.
+6. Write verifier handoff and `findings-decision` or `candidate-ready` state only after all checks pass.
 7. Return instructions to commit both files together.
 
 ## Implementation

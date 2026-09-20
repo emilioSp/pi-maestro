@@ -18,7 +18,7 @@ Validate, read, and write the current builder terminal handoff.
 ## Work
 
 1. Implement the closed discriminated schema in `src/artifacts/builder-handoff.ts`.
-2. Validate version, identity, revision, status, summary, acceptance criteria, notes, and failure details.
+2. Validate semantic schema version `1.0.0`, identity, revision, status, summary, acceptance criteria, notes, and failure details.
 3. Require exact current spec acceptance criterion IDs.
 4. Enforce all-passed and all-confirmed results for `done`.
 5. Require a non-empty reason and explicit partial statuses for `failed`.

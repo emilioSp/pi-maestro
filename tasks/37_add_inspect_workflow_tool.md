@@ -30,7 +30,7 @@ Call state discovery, reconciliation, and recovery modules. Do not stage, write,
 
 ## Tests
 
-Add Vitest adapter tests for no workflow, active phase, awaiting escalation, awaiting findings, interrupted pass, dirty worktree, revision conflict, completed final review, inactive mode, and repository snapshots proving no mutation.
+Add Vitest adapter tests for no workflow, active phase, escalation decision, findings decision, interrupted pass, dirty worktree, revision conflict, completed final review, inactive mode, and repository snapshots proving no mutation.
 
 ## Completion criteria
 

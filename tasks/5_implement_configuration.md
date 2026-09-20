@@ -26,7 +26,7 @@ Load and validate optional project configuration with complete defaults.
 
 ## Implementation
 
-A missing file returns all defaults. An existing file requires `version: 1`; every other field is optional. Merge nested builder and verifier overrides without losing sibling defaults. Accept only full `provider/model` identifiers and integer timeouts from 1 to 1440. Do not check path safety, model availability, or Pi UI here.
+A missing file returns all defaults. An existing file requires `version: "1.0.0"`; every other field is optional. Validate `version` as Semantic Versioning and reject invalid or unsupported versions, including unsupported major versions. Merge nested builder and verifier overrides without losing sibling defaults. Accept only full `provider/model` identifiers and integer timeouts from 1 to 1440. Do not check path safety, model availability, or Pi UI here.
 
 ## Tests
 

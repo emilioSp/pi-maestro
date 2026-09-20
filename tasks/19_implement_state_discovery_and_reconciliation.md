@@ -18,7 +18,7 @@ Find the authoritative workflow state and compare it with Git, worktrees, and ar
 ## Work
 
 1. Discover all valid `workflow.json` files under the configured spec directory and workflow branches.
-2. Ignore completed `final-review` workflows with no managed branches or worktrees when checking for an active workflow.
+2. Treat every `final-review` workflow as concluded and exclude it from active workflows; report any associated managed branch or worktree as an inconsistency.
 3. Select the highest revision.
 4. Block equal maximum revisions that disagree.
 5. Reconcile phase, branch, worktree, commit ancestry, handoff, escalation, observations, and active subagent facts.

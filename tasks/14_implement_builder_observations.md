@@ -18,7 +18,7 @@ Validate and append immutable builder pass observations.
 
 ## Work
 
-1. Implement the closed version 1 observations schema at every level.
+1. Implement observations schema version `1.0.0` and reject unknown fields at every level.
 2. Support discriminated `done` and `failed` pass outcomes.
 3. Validate result statuses, observations, breakage values, notes, and failure reasons.
 4. Derive the next sequential `B<n>` ID.

@@ -161,13 +161,13 @@ Gli artefatti prodotti usano questa struttura:
 
 `builder.json` e `verifier.json` contengono solo l’handoff corrente e possono essere sostituiti da un passaggio successivo. Le escalation e le observations costituiscono la storia durevole della feature.
 
-`maestro_create_spec` crea subito `observations.json` insieme a `spec.md` e `workflow.json`. Il contenuto iniziale usa `version: 1`, lo `specId` appena generato e `passes: []`.
+`maestro_create_spec` crea subito `observations.json` insieme a `spec.md` e `workflow.json`. Il contenuto iniziale usa `version: "1.0.0"`, lo `specId` appena generato e `passes: []`.
 
 `observations.json` è un singolo documento JSON che conserva la storia dei passaggi builder:
 
 ```json
 {
-  "version": 1,
+  "version": "1.0.0",
   "specId": "20260321-143052-add-weather-alerts",
   "passes": [
     {
@@ -649,7 +649,7 @@ Regole degli acceptance criteria:
 1. Deve esistere almeno un acceptance criterion.
 2. Gli ID sono univoci e sequenziali: `AC1`, `AC2`, ecc.
 3. Ogni criterion dimostra una sola cosa e il titolo contiene una singola dichiarazione osservabile.
-4. Ogni goal, requirement, constraint verificabile ed edge case richiesto è coperto.
+4. Ogni goal, requirement, constraint verificabile ed edge case richiesto è coperto. Input equivalenti che producono lo stesso comportamento possono condividere un criterion.
 5. Un criterion con risultati indipendenti viene diviso.
 6. `Probe` descrive setup, input, precondizioni e un comando, chiamata o procedura esatta e riproducibile.
 7. Il probe osserva il comportamento reale e può essere rigenerato in un worktree pulito.
@@ -787,14 +787,16 @@ Il candidate commit è:
 1. Il candidate ha già superato il verifier e soddisfa tecnicamente la spec e gli acceptance criteria.
 2. Maestro esegue uno squash merge sulla base branch.
 3. Non crea il commit finale.
-4. Le modifiche restano staged insieme a `workflow.json` in fase `final-review`.
-5. Dopo aver preparato correttamente lo staging, Maestro elimina subito i branch e i worktree del workflow.
-6. `maestro_prepare_final_review` restituisce i dati strutturati della consegna; il Maestro LLM li usa per presentare all’owner un riepilogo finale delle observations e consegnare il codice staged sulla base branch.
-7. A questo punto il workflow Maestro è concluso e non può essere riaperto.
-8. L’owner esegue la propria review dopo la conclusione del workflow.
-9. Se desidera cambiare l’implementazione, la spec o un acceptance criterion, lo fa sotto la propria responsabilità fuori dal workflow Maestro.
-10. Queste modifiche non vengono verificate da Maestro o dal verifier.
-11. L’owner crea il commit finale quando è soddisfatto.
+4. Maestro prepara e verifica lo staging del candidate senza cambiare ancora la fase del workflow.
+5. Maestro elimina i branch e i worktree verificati del workflow.
+6. Solo dopo la pulizia completa, Maestro scrive e mette in staging `workflow.json` in fase `final-review`. Questa è l’ultima mutazione dell’operazione.
+7. Se un passaggio fallisce prima di `final-review`, Maestro restituisce un errore, mantiene la fase precedente e lascia il workflow in uno stato incoerente da ispezionare.
+8. `maestro_prepare_final_review` restituisce i dati strutturati della consegna; il Maestro LLM li usa per presentare all’owner un riepilogo finale delle observations e consegnare il codice staged sulla base branch.
+9. In `final-review` il workflow Maestro è concluso e non può essere riaperto.
+10. L’owner esegue la propria review dopo la conclusione del workflow.
+11. Se desidera cambiare l’implementazione, la spec o un acceptance criterion, lo fa sotto la propria responsabilità fuori dal workflow Maestro.
+12. Queste modifiche non vengono verificate da Maestro o dal verifier.
+13. L’owner crea il commit finale quando è soddisfatto.
 
 <a id="plan-section-4"></a>
 
@@ -869,15 +871,18 @@ flowchart TD
     ownerFindings -->|Spec must change| reviseSpec[Owner and Maestro revise the spec]
     reviseSpec --> ready
 
-    candidate --> staged[Maestro squash-merges the candidate and leaves it staged]
+    candidate --> staged[Maestro squash-merges the candidate and verifies the staging]
     staged --> cleanup[Maestro removes workflow branches and worktrees]
-    cleanup --> finalSummary[Maestro summarizes the observations and hands the staged code to the owner]
+    cleanup --> finalState[Maestro marks the workflow final-review]
+    finalState --> finalSummary[Maestro summarizes the observations and hands the staged code to the owner]
     finalSummary --> workflowDone[Maestro workflow is complete]
     workflowDone --> humanReview[Owner reviews the final diff]
 
     humanReview -->|Changes needed| adjust[Owner changes code, spec, or acceptance criteria outside Maestro]
     adjust --> humanReview
     humanReview -->|Satisfied| finalCommit[Owner creates the final commit]
+
+    linkStyle 0,1,2,3,15,16,17,24,25,26,27,28,29,32 stroke:#2e7d32,stroke-width:3px
 ```
 
 `docs/workflow.md` deve includere anche questo principio umano di semplicità:
@@ -1003,6 +1008,7 @@ pi-maestro/
 │           ├── record-verifier-handoff.ts
 │           └── index.ts
 ├── docs/
+│   ├── maestro.png
 │   ├── workflow.md
 │   ├── configuration.md
 │   └── recovery.md
@@ -1217,8 +1223,8 @@ Decisioni prese:
 3. Se Maestro è attivo, `/maestro` lo disattiva.
 4. Non serve un comando `/maestro-off`.
 5. La disattivazione non annulla il workflow e non elimina branch, worktree o artefatti.
-6. Alla riattivazione, Maestro legge lo stato persistente e riparte dalla fase precedente, inclusa la review finale.
-7. Prima di riprendere, Maestro verifica che repository, branch, commit e worktree siano coerenti.
+6. Alla riattivazione, Maestro legge lo stato persistente e riparte dalla fase precedente. Un workflow in `final-review` è concluso e non viene ripreso.
+7. Prima di riprendere un workflow attivo, Maestro verifica che repository, branch, commit e worktree siano coerenti.
 8. Se lo stato non è coerente, Maestro si blocca e descrive il problema. Non corregge automaticamente lo stato. Dopo la conclusione del workflow in `final-review`, eventuali modifiche dell’owner non fanno più parte dello stato Maestro.
 9. Dopo `/resume`, Maestro si riattiva automaticamente se era attivo quando la sessione è stata sospesa.
 10. Maestro può restare attivo senza una spec o un workflow in corso.
@@ -1259,7 +1265,7 @@ Schema definitivo per la prima versione:
 
 ```json
 {
-  "version": 1,
+  "version": "1.0.0",
   "specDirectory": ".specs",
   "worktreeDirectory": ".worktree",
   "builder": {
@@ -1290,8 +1296,8 @@ Decisioni prese:
 10. I campi sconosciuti non sono accettati.
 11. Un campo sconosciuto blocca l’attivazione di Maestro e produce un errore preciso.
 12. Quando `.pi/maestro.json` esiste, il campo `version` è obbligatorio.
-13. La prima versione supportata dello schema è `1`.
-14. Una versione assente o non supportata blocca l’attivazione e produce un errore preciso.
+13. `version` usa una stringa Semantic Versioning e identifica lo schema del file, separatamente dalla versione npm del pacchetto.
+14. La prima versione supportata dello schema è `1.0.0`. Una major non supportata blocca l’attivazione. Una versione assente, non valida o non supportata produce un errore preciso.
 15. Quando `.pi/maestro.json` esiste, solo `version` è obbligatorio.
 16. Tutti gli altri campi sono opzionali e sovrascrivono solo i rispettivi valori predefiniti.
 17. Gli oggetti `builder` e `verifier` possono contenere anche un solo override.
@@ -1440,7 +1446,7 @@ Responsabilità:
 3. `maestro_inspect_workflow` ricostruisce e controlla lo stato.
 4. `maestro_launch_builder` e `maestro_launch_verifier` preparano Git, aggiornano lo stato e avviano il subagent.
 5. `maestro_resolve_escalation` e `maestro_resolve_findings` registrano solo decisioni esplicite dell’owner e applicano la transizione validata, incluso il reset della spec quando richiesto esplicitamente.
-6. `maestro_prepare_final_review` esegue lo squash staged, verifica lo staging, elimina i branch e i worktree e restituisce dati strutturati sulla consegna e sulle observations. Il Maestro LLM usa questi dati per presentare il riepilogo finale e consegnare il codice staged all’owner. Questa operazione conclude il workflow Maestro.
+6. `maestro_prepare_final_review` esegue lo squash staged, verifica lo staging, elimina i branch e i worktree, quindi scrive e mette in staging `final-review` come ultima mutazione. Restituisce dati strutturati sulla consegna e sulle observations. Il Maestro LLM usa questi dati per presentare il riepilogo finale e consegnare il codice staged all’owner. Un errore precedente lascia la fase invariata e segnala uno stato incoerente. Solo `final-review` conclude il workflow Maestro.
 7. `maestro_record_builder_observation` viene chiamato una sola volta alla fine di un passaggio builder concluso con `done` o `failed`; ricava identità, revisione e prossimo `B<n>` dallo stato corrente, aggiunge il passaggio completo e valida la storia precedente. Un’escalation non genera observations.
 8. Gli altri tool child-only scrivono e validano gli artefatti terminali. `maestro_record_verifier_handoff` restituisce una diagnostica strutturata e non scrive nulla quando rileva modifiche di prodotto residue.
 9. La prima versione non offre un tool per abbandonare un workflow. L’owner gestisce manualmente risorse e artefatti quando decide di abbandonarlo.
@@ -1545,7 +1551,7 @@ Decisioni prese:
 
 ```json
 {
-  "version": 1,
+  "version": "1.0.0",
   "specId": "<id>",
   "revision": 1,
   "phase": "<phase>",
@@ -1553,7 +1559,7 @@ Decisioni prese:
 }
 ```
 
-8. Lo schema di `workflow.json` accetta solo questi cinque campi. `version` vale `1`, `revision` è un intero positivo, `phase` appartiene all’enum approvato e i campi stringa sono non vuoti.
+8. Lo schema di `workflow.json` accetta solo questi cinque campi. `version` vale `"1.0.0"`, `revision` è un intero positivo, `phase` appartiene all’enum approvato e i campi stringa sono non vuoti.
 9. `baseBranch` identifica il branch che deve ricevere lo squash finale.
 10. Il commit di approvazione non viene memorizzato. Prima del builder coincide con l’HEAD committato in fase `ready-for-builder`; in seguito viene ricostruito come parent del primo checkpoint `builder-running`.
 11. Branch operativi, worktree e altri dati vengono ricostruiti da Git, dagli artefatti e dalle convenzioni fisse dei nomi.
@@ -1564,11 +1570,11 @@ Decisioni prese:
 drafting-spec
 ready-for-builder
 builder-running
-awaiting-escalation
+escalation-decision
 builder-failed
 ready-for-verifier
 verifier-running
-awaiting-findings
+findings-decision
 candidate-ready
 final-review
 ```
@@ -1594,13 +1600,13 @@ final-review
 | Maestro crea la spec | `drafting-spec` | Maestro |
 | Owner approva la spec pronta da committare | `ready-for-builder` | Maestro |
 | Maestro avvia un builder | `builder-running` | Maestro |
-| Builder apre un’escalation | `awaiting-escalation` | Builder child-only |
+| Builder apre un’escalation | `escalation-decision` | Builder child-only |
 | Owner risolve un’escalation senza cambiare la spec | `ready-for-builder` | Maestro |
 | Owner risolve un’escalation chiedendo di cambiare la spec | `drafting-spec` | Maestro |
 | Builder termina con `failed` | `builder-failed` | Builder child-only |
 | Builder termina con `done` | `ready-for-verifier` | Builder child-only |
 | Maestro avvia un verifier | `verifier-running` | Maestro |
-| Verifier produce finding | `awaiting-findings` | Verifier child-only |
+| Verifier produce finding | `findings-decision` | Verifier child-only |
 | Verifier produce `findings: []` | `candidate-ready` | Verifier child-only |
 | Owner respinge tutti i finding | `candidate-ready` | Maestro |
 | Owner richiede correzioni | `ready-for-builder` | Maestro |
@@ -1637,14 +1643,16 @@ Quando `maestro_prepare_final_review` termina con successo, il workflow è già 
 39. Una resolution che cambia la spec entra nel percorso di reset; resolution, storia durevole, spec e nuovo `ready-for-builder` diventano autorevoli con il successivo commit dell’owner sulla base branch.
 40. La richiesta di correzioni viene committata da Maestro insieme alla transizione `ready-for-builder`.
 41. Il rifiuto dei finding viene committato da Maestro insieme alla transizione `candidate-ready`.
-42. Durante lo squash finale, `final-review` resta staged sulla base branch e viene incluso nel successivo commit dell’owner.
-43. Dopo aver verificato che lo staging atteso sia completo, Maestro elimina immediatamente i branch e i worktree gestiti dal workflow.
-44. `maestro_prepare_final_review` restituisce dati strutturati sulle observations e sullo staging; il Maestro LLM li trasforma nel riepilogo finale per l’owner e indica che il codice è staged sulla base branch.
-45. La consegna conclude il workflow senza attendere il commit dell’owner.
-46. `final-review` è l’ultima fase persistita. Non esiste una fase `completed`.
-47. Un `workflow.json` in fase `final-review` senza branch o worktree Maestro associati rappresenta un workflow concluso e archiviato, anche se le modifiche sono ancora staged.
-48. L’owner può modificare o rimuovere lo staging e crea il commit finale sotto la propria responsabilità.
-49. Dopo la conclusione non esiste una conferma del commit e Maestro non verifica le modifiche successive dell’owner.
+42. Maestro prepara e verifica lo staging del candidate mantenendo la fase precedente.
+43. Dopo aver verificato lo staging, Maestro elimina i branch e i worktree gestiti del workflow.
+44. Solo dopo la pulizia completa, Maestro scrive e mette in staging `workflow.json` in fase `final-review`. Questa è l’ultima mutazione dell’operazione e il file entra nel successivo commit dell’owner.
+45. Se squash, staging, verifica o pulizia falliscono prima della transizione finale, Maestro restituisce un errore, non scrive `final-review` e lascia il workflow in uno stato incoerente da ispezionare.
+46. `maestro_prepare_final_review` restituisce dati strutturati sulle observations e sullo staging; il Maestro LLM li trasforma nel riepilogo finale per l’owner e indica che il codice è staged sulla base branch.
+47. La consegna conclude il workflow senza attendere il commit dell’owner.
+48. `final-review` è l’ultima fase persistita. Non esiste una fase `completed`; ogni workflow in `final-review` è concluso e archiviato.
+49. Branch o worktree Maestro associati a un workflow in `final-review` costituiscono uno stato incoerente e non riaprono il workflow.
+50. L’owner può modificare o rimuovere lo staging e crea il commit finale sotto la propria responsabilità.
+51. Dopo la conclusione non esiste una conferma del commit e Maestro non verifica le modifiche successive dell’owner.
 
 <a id="plan-section-6-15"></a>
 
@@ -1652,8 +1660,8 @@ Quando `maestro_prepare_final_review` termina con successo, il workflow è già 
 
 Decisioni prese:
 
-1. Builder handoff, verifier handoff ed escalation dichiarano i campi obbligatori `"version": 1`, `"specId"` e `"revision"`.
-2. `specId` deve coincidere con il workflow corrente.
+1. Builder handoff, verifier handoff, escalation e observations dichiarano `"version": "1.0.0"`. `version` usa Semantic Versioning, identifica lo schema del file ed è separata dalla versione npm del pacchetto. Una major non supportata blocca il workflow. Una versione assente, non valida o non supportata rende l’artefatto non valido.
+2. Builder handoff, verifier handoff ed escalation dichiarano anche i campi obbligatori `"specId"` e `"revision"`. `specId` deve coincidere con il workflow corrente.
 3. `revision` deve coincidere con la revisione scritta in `workflow.json` dalla transizione che crea o aggiorna l’artefatto. Ogni singolo file viene scritto atomicamente; il checkpoint Git rende autorevole l’insieme.
 4. Gli artefatti non contengono branch, commit o timestamp. Questi dati vengono ricavati da Git quando necessari.
 5. La revisione di un artefatto storico può essere inferiore alla revisione corrente e non può essere futura. Durante il ciclo operativo deve essere riconducibile al relativo checkpoint Git; dopo un reset approvato o lo squash finale può essere preservata dal commit autorevole sulla base branch senza essere riscritta. Una versione assente o non supportata, un’identità errata o una provenienza non dimostrabile rende l’artefatto non valido e blocca la transizione.
@@ -1664,7 +1672,7 @@ Esempio `done`:
 
 ```json
 {
-  "version": 1,
+  "version": "1.0.0",
   "specId": "<id>",
   "revision": 4,
   "status": "done",
@@ -1694,7 +1702,7 @@ Esempio `done`:
 
 ```json
 {
-  "version": 1,
+  "version": "1.0.0",
   "specId": "<id>",
   "revision": 6,
   "summary": "Regenerated every probe and breakage from the candidate commit.",
@@ -1742,7 +1750,7 @@ Esempio `done`:
 
 ```json
 {
-  "version": 1,
+  "version": "1.0.0",
   "specId": "<id>",
   "revision": 3,
   "id": "E1",
@@ -1859,7 +1867,7 @@ Decisioni prese:
 1. La prima versione consente un solo workflow attivo per repository.
 2. Una seconda sessione Maestro non può avviare un altro workflow nello stesso repository finché il primo è attivo.
 3. Più spec concluse e archiviate possono restare nel repository.
-4. Un `workflow.json` in fase `final-review` senza branch o worktree Maestro associati non conta come workflow attivo.
+4. Un `workflow.json` in fase `final-review` non conta come workflow attivo. Eventuali branch o worktree Maestro ancora associati costituiscono uno stato incoerente.
 5. Se Maestro rileva un workflow attivo, mostra il relativo spec ID e blocca la creazione di una nuova spec.
 
 <a id="plan-section-6-19"></a>
@@ -1981,7 +1989,7 @@ Copertura minima approvata per la prima versione:
 14. Test del reset della spec avviato da finding ed escalation.
 15. Test delle decisioni miste di `maestro_resolve_findings` e della validazione di `expectedRevision`.
 16. Test del blocco di `write` ed `edit` sui percorsi protetti tramite percorsi relativi, assoluti, normalizzati e symlink, degli aggiornamenti di `observations.json` tramite il tool dedicato e del controllo terminale contro modifiche effettuate tramite `bash`.
-17. Test che `maestro_prepare_final_review` lasci lo squash e `workflow.json` staged, elimini branch e worktree, restituisca i dati strutturati necessari al riepilogo finale e concluda il workflow senza attendere un commit finale.
+17. Test che `maestro_prepare_final_review` verifichi lo staging, elimini branch e worktree, scriva e metta in staging `final-review` come ultima mutazione, restituisca i dati strutturati necessari al riepilogo finale e lasci la fase precedente con un errore di incoerenza quando un passaggio precedente fallisce.
 
 I test usano Vitest su Node.js 26. I comandi approvati sono definiti nel `package.json` della sezione 5.1.
 

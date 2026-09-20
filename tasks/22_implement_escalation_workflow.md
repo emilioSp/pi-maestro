@@ -19,7 +19,7 @@ Coordinate builder escalations and explicit owner resolutions.
 ## Work
 
 1. Open an escalation only from `builder-running`.
-2. Create the next escalation, move to `awaiting-escalation`, and require the child to commit both files.
+2. Create the next escalation, move to `escalation-decision`, and require the child to commit both files.
 3. Resolve only the current unresolved escalation with `expectedRevision`.
 4. Persist only selected option, decision, and reason in the resolution.
 5. With `reviseSpec: false`, commit `ready-for-builder` on the workflow branch and do not launch automatically.

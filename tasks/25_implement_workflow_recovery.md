@@ -23,7 +23,7 @@ Turn reconciliation results into safe resume and retry options without automatic
 4. Report the role, branch, worktree, commit, revision, cleanliness, and safe next actions.
 5. Allow only an explicit owner retry when the worktree is clean.
 6. Block on dirty state, conflicting revisions, broken ancestry, collision, or foreign resources.
-7. Treat `final-review` without managed resources as completed and not reopenable.
+7. Treat every `final-review` workflow as completed and not reopenable; report any remaining managed resources as an inconsistency.
 
 ## Implementation
 
@@ -31,7 +31,7 @@ Do not reset, clean, commit, relaunch, delete, or choose abandonment. Manual aba
 
 ## Tests
 
-Add Vitest integration tests for restart in every phase, active process reattachment, interrupted builder, interrupted verifier, clean retry, dirty worktree, missing handoff, conflicting revisions, completed final review, and no mutation during inspection.
+Add Vitest integration tests for restart in every phase, active process reattachment, interrupted builder, interrupted verifier, clean retry, dirty worktree, missing handoff, conflicting revisions, completed final review, final review with inconsistent remaining resources, and no mutation during inspection.
 
 ## Completion criteria
 

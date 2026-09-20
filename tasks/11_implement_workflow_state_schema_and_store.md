@@ -4,7 +4,7 @@ STATUS: TODO
 
 ## Dependency
 
-This task depends on Task 10: Implement Git commits and ancestry.
+This task depends on Task 10: Implement Git commits and commit-history verification.
 
 ## Objective
 
@@ -20,7 +20,7 @@ Validate and persist the minimal `workflow.json` document.
 
 1. Implement the closed TypeBox workflow schema.
 2. Support exactly the ten approved phases.
-3. Require version 1, a valid spec ID, a positive integer revision, and non-empty base branch.
+3. Require schema version `1.0.0`, a valid spec ID, a positive integer revision, and non-empty base branch.
 4. Implement validated reads and atomic writes.
 5. Require compare-and-set writes with `expectedRevision`.
 6. Reject unknown fields and malformed JSON.

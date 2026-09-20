@@ -18,7 +18,7 @@ Create permanent, sequential builder escalations and resolve them once.
 
 ## Work
 
-1. Implement the closed version 1 escalation schema.
+1. Implement the closed escalation schema with semantic schema version `1.0.0`.
 2. Validate questions, context, options, recommendation, resolution, and notes.
 3. Allocate the next `E<n>` ID from valid existing escalation files.
 4. Write a new escalation only with `resolution: null`.

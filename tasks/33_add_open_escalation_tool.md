@@ -23,7 +23,7 @@ Expose the child-only terminal tool that opens a builder escalation.
 3. Require valid options and an optional valid recommendation.
 4. Verify protected files against the builder launch checkpoint.
 5. Create the escalation with `resolution: null`.
-6. Write `awaiting-escalation` in the same domain operation.
+6. Write `escalation-decision` in the same domain operation.
 7. Return instructions to commit escalation and state together and then stop.
 
 ## Implementation

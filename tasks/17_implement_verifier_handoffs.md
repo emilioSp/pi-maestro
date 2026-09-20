@@ -18,7 +18,7 @@ Validate verifier evidence and current findings without allowing a verdict.
 
 ## Work
 
-1. Implement the closed version 1 verifier handoff schema.
+1. Implement the closed verifier handoff schema with semantic schema version `1.0.0`.
 2. Validate summary, all current acceptance criteria, findings, evidence, severity, confidence, rejection, and notes.
 3. Require sequential unique finding IDs.
 4. Require every failed probe or unconfirmed breakage to have a linked finding.

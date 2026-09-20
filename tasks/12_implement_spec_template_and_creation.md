@@ -23,7 +23,7 @@ Distribute the approved spec template and create a new drafting spec safely.
 2. Implement template loading in `src/specs/template.ts`.
 3. Implement initial spec creation in `src/specs/create.ts`.
 4. Generate the ID and create `spec.md`, `workflow.json`, `observations.json`, `handoffs/escalations/`, and `prototypes/`.
-5. Initialize phase `drafting-spec`, revision 1, and observations version 1 with `passes: []`.
+5. Initialize phase `drafting-spec`, revision 1, and observations schema version `1.0.0` with `passes: []`.
 6. Block creation when another active workflow exists or any target resource collides.
 
 ## Implementation

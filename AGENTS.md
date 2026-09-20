@@ -152,6 +152,7 @@ The MVP package structure is frozen. Add a new structural file or directory only
 
 | File | Responsibility |
 |---|---|
+| `docs/maestro.png` | Provide the README illustration. |
 | `docs/workflow.md` | Explain the owner, Maestro, builder, and verifier flow. |
 | `docs/configuration.md` | Explain `.pi/maestro.json`. |
 | `docs/recovery.md` | Explain recovery of interrupted workflows. |

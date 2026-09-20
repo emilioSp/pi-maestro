@@ -26,7 +26,7 @@ Prove that all modules work together and that the package is ready for review.
 6. Cover restart, active-run correlation, dirty worktrees, resource collisions, concurrent revisions, and path escape attempts.
 7. Cover product changes left by the verifier through staged, unstaged, and untracked files.
 8. Check that observations and escalation history survive resets and final squash.
-9. Check that final cleanup happens only after verified staging.
+9. Check that final cleanup happens only after verified staging and that `final-review` is written only after cleanup as the last mutation.
 10. Remove redundant tests only when the same behavior remains clearly covered in its owning test file.
 
 ## Implementation

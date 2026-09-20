@@ -24,7 +24,7 @@ Coordinate independent verifier passes and enforce an unchanged product candidat
 4. Before terminal handoff, compare all product files with the recorded candidate.
 5. Include staged, unstaged, and untracked changes in the comparison.
 6. Permit only the authorized verifier handoff and workflow state updates.
-7. Move to `awaiting-findings` or `candidate-ready` from the validated handoff.
+7. Move to `findings-decision` or `candidate-ready` from the validated handoff.
 
 ## Implementation
 
