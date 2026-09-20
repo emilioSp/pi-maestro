@@ -180,6 +180,7 @@ The package is source-only. Pi loads TypeScript directly, `src/` is published, a
 - Prefer arrow functions. Use classes only for strategies or objects with internal state.
 - Keep functions small. Split a function when it becomes hard to read.
 - Use `async` and `await`. Do not introduce callback APIs.
+- Use `Temporal`. Do not use `Date`.
 - Use named parameters for functions with multiple inputs. Define the input type close to the function.
 - Use explicit methods. Do not use property accessors.
 - Do not use `--experimental-strip-types`. We run on node version that support TypeScript stripping by default.
