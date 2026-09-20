@@ -23,7 +23,7 @@ Use only the public pi-subagents APIs for preflight and foreground launches.
 4. Implement foreground launch contracts in `src/subagents/delegation.ts`.
 5. Pass configured model, thinking, timeout, fresh context, worktree cwd, and correlation data explicitly.
 6. Track cancellation, request identity, completion, timeout, and listener cleanup.
-7. Export only the public Maestro integration from `src/subagents/index.ts`.
+7. Import the Maestro integration directly through `#subagents/*` without an export barrel.
 
 ## Implementation
 

@@ -12,7 +12,7 @@ Wire the main Pi extension without moving domain logic into the composition root
 
 ## Plan references
 
-- Sections [2.7](../plan.md#plan-section-2-7) and [5](../plan.md#plan-section-5), `extensions/maestro.ts` and `src/tools/main/index.ts`
+- Sections [2.7](../plan.md#plan-section-2-7) and [5](../plan.md#plan-section-5), `extensions/maestro.ts` and `src/tools/main/`
 - Sections [6.2](../plan.md#plan-section-6-2), [6.3](../plan.md#plan-section-6-3), [6.10](../plan.md#plan-section-6-10), [6.13](../plan.md#plan-section-6-13), and [6.20](../plan.md#plan-section-6-20)
 
 ## Work
@@ -28,7 +28,7 @@ Wire the main Pi extension without moving domain logic into the composition root
 
 ## Implementation
 
-`extensions/maestro.ts` is wiring only. Call modules under `src/maestro/` and `src/tools/main/`. Do not register child tools. Do not expose `registerMaestro` from the Maestro barrel. Preserve generic tools and tools from other extensions.
+`extensions/maestro.ts` is wiring only. Call modules under `src/maestro/` and `src/tools/main/`. Do not register child tools. Preserve generic tools and tools from other extensions.
 
 ## Tests
 

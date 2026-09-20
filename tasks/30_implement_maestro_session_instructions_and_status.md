@@ -23,7 +23,7 @@ Keep Maestro mode visible and resumable without making session state authoritati
 4. Build status text for active mode, current spec ID, phase, and blocking state.
 5. Hide Maestro status and instructions while mode is inactive.
 6. Treat session entries as UI cache only.
-7. Keep `src/maestro/index.ts` as an export barrel.
+7. Import Maestro modules directly through `#maestro/*` without an export barrel.
 
 ## Implementation
 

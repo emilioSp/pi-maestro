@@ -12,7 +12,7 @@ Register only child tools and block direct edits to Maestro protocol paths.
 
 ## Plan references
 
-- Section [5](../plan.md#plan-section-5), `extensions/maestro-child.ts` and `src/tools/child/index.ts`
+- Section [5](../plan.md#plan-section-5), `extensions/maestro-child.ts` and `src/tools/child/`
 - Sections [6.11](../plan.md#plan-section-6-11) and [6.12](../plan.md#plan-section-6-12)
 - Section [6.25](../plan.md#plan-section-6-25), protected-path tests
 

@@ -21,7 +21,7 @@ Create the shell-free Git boundary and basic repository inspection.
 2. Never pass Git commands through a shell.
 3. Implement repository discovery, root lookup, current branch, HEAD lookup, Git version checks, trust checks, and clean/dirty status in `src/git/repository.ts`.
 4. Return structured errors for missing Git, timeout, non-repository paths, detached or unexpected state, and unsupported Git versions.
-5. Export these operations from `src/git/index.ts`.
+5. Import these operations directly through `#git/*` without an export barrel.
 
 ## Implementation
 

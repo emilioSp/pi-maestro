@@ -36,6 +36,17 @@
     "LICENSE"
   ],
   "imports": {
+    "#config/*": "./src/config/*",
+    "#git/*": "./src/git/*",
+    "#specs/*": "./src/specs/*",
+    "#artifacts/*": "./src/artifacts/*",
+    "#workflow/*": "./src/workflow/*",
+    "#subagents/*": "./src/subagents/*",
+    "#maestro/*": "./src/maestro/*",
+    "#tools/*": "./src/tools/*",
+    "#paths.ts": "./src/paths.ts",
+    "#ids.ts": "./src/ids.ts",
+    "#atomic-write.ts": "./src/atomic-write.ts",
     "#*": "./*"
   },
   "scripts": {

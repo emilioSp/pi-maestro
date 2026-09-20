@@ -24,7 +24,7 @@ Validate and persist the minimal `workflow.json` document.
 4. Implement validated reads and atomic writes.
 5. Require compare-and-set writes with `expectedRevision`.
 6. Reject unknown fields and malformed JSON.
-7. Export the state API from `src/workflow/state/index.ts`.
+7. Import the state API directly through `#workflow/state/*` without an export barrel.
 
 ## Implementation
 

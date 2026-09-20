@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task 5: Implement configuration
 
@@ -19,9 +19,9 @@ Load and validate optional project configuration with complete defaults.
 ## Work
 
 1. Implement defaults in `src/config/defaults.ts`.
-2. Implement the closed TypeBox schema in `src/config/schema.ts`.
+2. Implement the closed TypeBox schema and validation in `src/config/validate.ts`.
 3. Implement `.pi/maestro.json` loading and override merging in `src/config/load.ts`.
-4. Export the public configuration API from `src/config/index.ts`.
+4. Configure subpath imports for direct module access without an export barrel.
 5. Report missing version, unsupported version, unknown fields, invalid model identifiers, invalid thinking values, and invalid timeouts precisely.
 
 ## Implementation

@@ -936,9 +936,8 @@ pi-maestro/
 ├── src/
 │   ├── config/
 │   │   ├── defaults.ts
-│   │   ├── schema.ts
-│   │   ├── load.ts
-│   │   └── index.ts
+│   │   ├── validate.ts
+│   │   └── load.ts
 │   ├── paths.ts
 │   ├── ids.ts
 │   ├── git/

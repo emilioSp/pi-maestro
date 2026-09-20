@@ -40,9 +40,8 @@ The MVP package structure is frozen. Add a new structural file or directory only
 | File | Responsibility |
 |---|---|
 | `src/config/defaults.ts` | Define default configuration values. |
-| `src/config/schema.ts` | Validate `.pi/maestro.json`. |
+| `src/config/validate.ts` | Validate `.pi/maestro.json`. |
 | `src/config/load.ts` | Load and validate configuration. |
-| `src/config/index.ts` | Export configuration modules. |
 | `src/paths.ts` | Build and validate Maestro paths. |
 | `src/ids.ts` | Generate and validate spec IDs. |
 | `src/atomic-write.ts` | Write files atomically and safely. |
@@ -58,7 +57,6 @@ The MVP package structure is frozen. Add a new structural file or directory only
 | `src/git/commits.ts` | Create and find checkpoint commits. |
 | `src/git/verify-commit-history.ts` | Verify that commit history is valid. |
 | `src/git/final-review.ts` | Prepare the squash merge for final review. |
-| `src/git/index.ts` | Export Git modules. |
 
 ### Specs
 
@@ -68,7 +66,6 @@ The MVP package structure is frozen. Add a new structural file or directory only
 | `src/specs/create.ts` | Create specs and initial artifacts. |
 | `src/specs/parse.ts` | Parse spec sections. |
 | `src/specs/validate.ts` | Validate the spec structure. |
-| `src/specs/index.ts` | Export spec modules. |
 
 ### Artifacts
 
@@ -78,7 +75,6 @@ The MVP package structure is frozen. Add a new structural file or directory only
 | `src/artifacts/verifier-handoff.ts` | Handle verifier handoff artifacts. |
 | `src/artifacts/escalation.ts` | Handle builder escalation artifacts. |
 | `src/artifacts/observations.ts` | Handle the builder evidence history. |
-| `src/artifacts/index.ts` | Export artifact modules. |
 
 ### Workflow state
 
@@ -88,7 +84,6 @@ The MVP package structure is frozen. Add a new structural file or directory only
 | `src/workflow/state/store.ts` | Read and write `workflow.json`. |
 | `src/workflow/state/discover.ts` | Find existing workflows in the repository. |
 | `src/workflow/state/reconcile.ts` | Compare state with Git, worktrees, and handoffs. |
-| `src/workflow/state/index.ts` | Export workflow-state modules. |
 
 
 ### Workflow coordination
@@ -103,7 +98,6 @@ The MVP package structure is frozen. Add a new structural file or directory only
 | `src/workflow/findings.ts` | Coordinate finding resolution. |
 | `src/workflow/final-review.ts` | Coordinate final-review preparation. |
 | `src/workflow/recovery.ts` | Coordinate recovery after interruptions. |
-| `src/workflow/index.ts` | Export workflow modules. |
 
 ### Subagent integration
 
@@ -111,7 +105,6 @@ The MVP package structure is frozen. Add a new structural file or directory only
 |---|---|
 | `src/subagents/delegation.ts` | Start, monitor, and stop builders and verifiers. |
 | `src/subagents/preflight.ts` | Check that required subagents are available. |
-| `src/subagents/index.ts` | Export subagent modules. |
 
 ### Maestro mode
 
@@ -122,7 +115,6 @@ The MVP package structure is frozen. Add a new structural file or directory only
 | `src/maestro/session.ts` | Persist Maestro state in the Pi session. |
 | `src/maestro/instructions.ts` | Provide instructions to Maestro in the session. |
 | `src/maestro/status.ts` | Show current status in the Pi UI. |
-| `src/maestro/index.ts` | Export Maestro modules. |
 
 ### Owner tools
 
@@ -136,7 +128,6 @@ The MVP package structure is frozen. Add a new structural file or directory only
 | `src/tools/main/launch-verifier.ts` | Start a verifier. |
 | `src/tools/main/resolve-findings.ts` | Record owner decisions for findings. |
 | `src/tools/main/prepare-final-review.ts` | Prepare the candidate for final review. |
-| `src/tools/main/index.ts` | Export owner-facing tools. |
 
 ### Builder and verifier tools
 
@@ -146,7 +137,6 @@ The MVP package structure is frozen. Add a new structural file or directory only
 | `src/tools/child/record-builder-handoff.ts` | Record a builder handoff. |
 | `src/tools/child/open-escalation.ts` | Open a builder escalation. |
 | `src/tools/child/record-verifier-handoff.ts` | Record a verifier handoff. |
-| `src/tools/child/index.ts` | Export child-only tools. |
 
 ### Documentation and tests
 
@@ -159,7 +149,7 @@ The MVP package structure is frozen. Add a new structural file or directory only
 | `test/support/temp-repository.ts` | Create temporary Git repositories for tests. |
 | `test/support/fake-subagents.ts` | Simulate builders and verifiers in tests. |
 
-Every `src/**/index.ts` is an export barrel. Keep schemas next to their domain. Do not add a global `src/schemas/` directory. Tool files define the input schema, register the Pi tool, call domain code, and convert the result to Pi format. They do not duplicate Git, state, artifact, or workflow logic.
+Import modules directly using subpath imports. Keep schemas next to their domain. Do not add a global `src/schemas/` directory. Tool files define the input schema, register the Pi tool, call domain code, and convert the result to Pi format. They do not duplicate Git, state, artifact, or workflow logic.
 
 `test/unit/` and `test/integration/` mirror `src/`. `test/fixtures/config/`, `test/fixtures/specs/`, and `test/fixtures/artifacts/` contain their matching scenarios. A test file identifies its main source file, for example `src/workflow/state/store.ts` maps to `test/integration/workflow/state/store.test.ts`. A module does not need both unit and integration coverage when one meaningful test level is sufficient. Do not create generic aggregate tests such as `state.test.ts`.
 
