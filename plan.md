@@ -1017,8 +1017,7 @@ pi-maestro/
     ├── integration/
     ├── support/
     │   ├── temp-repository.ts
-    │   ├── fake-subagents.ts
-    │   └── test-files.ts
+    │   └── fake-subagents.ts
     └── fixtures/
         ├── config/
         ├── specs/

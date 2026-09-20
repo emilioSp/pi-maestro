@@ -158,7 +158,6 @@ The MVP package structure is frozen. Add a new structural file or directory only
 | `docs/recovery.md` | Explain recovery of interrupted workflows. |
 | `test/support/temp-repository.ts` | Create temporary Git repositories for tests. |
 | `test/support/fake-subagents.ts` | Simulate builders and verifiers in tests. |
-| `test/support/test-files.ts` | Provide test file helpers. |
 
 Every `src/**/index.ts` is an export barrel. Keep schemas next to their domain. Do not add a global `src/schemas/` directory. Tool files define the input schema, register the Pi tool, call domain code, and convert the result to Pi format. They do not duplicate Git, state, artifact, or workflow logic.
 

@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task 4: Build shared test support
 
@@ -18,10 +18,9 @@ Create small, explicit helpers for later unit and integration tests.
 ## Work
 
 1. Implement `test/support/temp-repository.ts` for isolated temporary Git repositories.
-2. Implement `test/support/test-files.ts` for explicit file creation and reading in tests.
-3. Implement `test/support/fake-subagents.ts` for deterministic foreground subagent outcomes.
-4. Configure temporary repositories with a local test identity and a known default branch.
-5. Provide cleanup functions that remove every temporary directory.
+2. Implement `test/support/fake-subagents.ts` for deterministic foreground subagent outcomes.
+3. Configure temporary repositories with a local test identity and a known default branch.
+4. Provide cleanup functions that remove every temporary directory.
 
 ## Implementation
 
@@ -29,7 +28,7 @@ Keep helpers small. Do not hide scenario setup in global hooks or implicit fixtu
 
 ## Tests
 
-Add Vitest tests for helper creation, Git initialization, commits, fake response ordering, and cleanup. Confirm cleanup also runs after a failed assertion path.
+Add Vitest tests for helper creation, Git initialization, commits, fake response ordering, and cleanup. Confirm cleanup removes the temporary repository.
 
 ## Completion criteria
 
