@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task 3: Configure package tooling and CI
 

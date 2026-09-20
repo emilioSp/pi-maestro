@@ -41,27 +41,27 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "npm run test:unit && npm run test:integration",
-    "test:unit": "vitest 'test/unit/**/*.test.ts'",
-    "test:integration": "vitest 'test/integration/**/*.test.ts'",
+    "test:unit": "vitest run test/unit",
+    "test:integration": "vitest run test/integration",
     "check": "npm run typecheck && npm test",
     "prepublishOnly": "npm run check"
   },
   "dependencies": {
-    "pi-subagents": "0.68.0",
-    "vitest": "5.0.1"
+    "pi-subagents": "0.68.0"
+  },
+  "bundleDependencies": [
+    "pi-subagents"
+  ],
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": ">=0.85.1",
+    "typebox": "*"
   },
   "devDependencies": {
     "@types/node": "26.6.1",
     "typescript": "7.0.2",
     "vitest": "5.0.1"
   },
-  "peerDependencies": {
-    "@earendil-works/pi-coding-agent": ">=0.85.1",
-    "typebox": "*"
-  },
-  "bundleDependencies": [
-    "pi-subagents"
-  ],
   "publishConfig": {
     "access": "public"
   },
