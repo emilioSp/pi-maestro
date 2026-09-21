@@ -18,7 +18,7 @@ Parse acceptance criteria and enforce every deterministic rule for a ready spec.
 
 ## Work
 
-1. Parse the title, ten top-level sections, measurable goals, prototype entries, and acceptance criteria.
+1. Parse the title, four top-level sections, measurable goals, prototype entries, and acceptance criteria.
 2. Validate the exact top-level section names, order, and uniqueness.
 3. Reject extra top-level sections and remaining template placeholders.
 4. Validate approved empty or not-applicable phrases.

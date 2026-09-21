@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task 12: Implement the spec template and creation
 
@@ -19,7 +19,7 @@ Distribute the approved spec template and create a new drafting spec safely.
 
 ## Work
 
-1. Put the exact approved ten-section template in `templates/spec.md`.
+1. Put the exact approved four-section template in `templates/spec.md`.
 2. Implement template loading in `src/specs/template.ts`.
 3. Implement initial spec creation in `src/specs/create.ts`.
 4. Generate the ID and create `spec.md`, `workflow.json`, `observations.json`, `handoffs/escalations/`, and `prototypes/`.

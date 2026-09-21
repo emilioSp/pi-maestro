@@ -344,34 +344,34 @@ Queste regole oggi presenti in `AGENTS_CONTRIBUTING.md` sono generiche e apparte
 3. Il builder non può cambiare unilateralmente il contratto della spec.
 4. Una spec incompleta o impossibile blocca il lancio.
 5. Placeholder non sostituiti bloccano `ready-for-builder`.
-6. Tutte le dieci sezioni principali restano sempre presenti con numerazione stabile.
-7. `Prototype and user interaction`, `API specification` e `Monitoring and observability` contengono `Not applicable.` quando non applicabili.
-8. Le altre sezioni dichiarano esplicitamente quando non esistono elementi specifici.
+6. Tutte le quattro sezioni principali restano sempre presenti con numerazione stabile.
+7. Le sottosezioni `Prototype and user interaction`, `API specification` e `Monitoring and observability` contengono `Not applicable.` quando non applicabili.
+8. Le altre sottosezioni dichiarano esplicitamente quando non esistono elementi specifici.
 9. Ogni edge case o comportamento di errore richiesto deve essere coperto da un acceptance criterion.
-10. Sezioni aggiuntive sono consentite, ma non sostituiscono quelle obbligatorie.
+10. Sottosezioni aggiuntive sono consentite, ma non sostituiscono quelle obbligatorie.
 
 Template approvato:
 
 ````md
 # <id>: <short, outcome-oriented title>
 
-## 1. Context and problem
+## 1. Context, goals, and scope
 
-<Briefly describe the current situation, who or what is affected, and the problem or opportunity that motivates this change. Explain the user, business, or technical value without describing the implementation.>
+<Describe the current situation, who or what is affected, and the problem or opportunity without describing the implementation.>
 
 ### Measurable goals
 
 - <Observable outcome that must become possible.>
 - <Metric or verifiable condition that defines success.>
 
-## 2. Constraints
+### Out of scope
 
-- <Non-negotiable technical, business, legal, security, operational, or compatibility boundary.>
-- <Existing behavior or contract that must remain unchanged.>
+- <Related behavior, integration, migration, or component that must not be implemented.>
+- <Existing behavior that remains unchanged and is not being redesigned.>
 
-Write `No additional constraints.` when none are known.
+Write `No additional out-of-scope items.` when none are known.
 
-## 3. Requirements
+## 2. Requirements and constraints
 
 ### Functional requirements
 
@@ -386,105 +386,14 @@ Write `No new functional behavior.` when the change is purely technical.
 
 Write `No additional non-functional requirements.` when none apply.
 
-## 4. Technical design
+### Constraints
 
-<Describe the approved technical design and the decisions that affect the repository architecture. Do not attempt to list every file or local implementation detail.>
+- <Non-negotiable technical, business, legal, security, operational, or compatibility boundary.>
+- <Existing behavior or contract that must remain unchanged.>
 
-Include only the relevant subsections.
+Write `No additional constraints.` when none are known.
 
-Write `No architectural changes. Follow the existing repository patterns.` when the change requires no architectural decision.
-
-### Components and code structure
-
-<Describe affected components, new responsibilities, boundaries, ownership, and important relationships between modules.>
-
-### Data model
-
-<Describe entities, fields, relationships, persistence rules, validation, migrations, and data lifecycle.>
-
-### Data flow
-
-<Describe how data enters the system, moves between components, changes state, and leaves the system.>
-
-### External integrations
-
-<Describe external services, SDKs, events, queues, webhooks, failure boundaries, and retry behavior.>
-
-### Security and privacy
-
-<Describe authentication, authorization, trust boundaries, sensitive-data handling, retention, encryption, and redaction.>
-
-### Compatibility and migration
-
-<Describe backward compatibility, data migration, rollout, rollback, and coexistence with older versions.>
-
-## 5. Prototype and user interaction
-
-Write `Not applicable.` when the change has no visual or interactive behavior.
-
-### Prototype
-
-- `prototypes/<surface-name>.<html|png|jpg|jpeg>`: <surface and states represented by the prototype>
-
-### User interaction
-
-<Describe the user flow, triggers, state transitions, validation, feedback, and recovery behavior.>
-
-Cover the relevant states: default, loading, empty, success, validation error, system error, disabled, and permission denied.
-
-## 6. API specification
-
-Write `Not applicable.` when the change does not introduce or modify an API contract.
-
-Supported contracts include REST, GraphQL, JSON-RPC, events, webhooks, and repository-specific protocols.
-
-Repeat the following subsection for every operation.
-
-### <operation name>
-
-**Protocol and operation**
-
-```text
-<method, path, operation, event, topic, or procedure name>
-```
-
-**Authentication and authorization**
-
-<Describe the caller identity, required permissions, and ownership rules.>
-
-**Request or input**
-
-<Describe headers, path parameters, query parameters, arguments, or payload fields.>
-
-```json
-{
-  "example": "input"
-}
-```
-
-**Successful response or output**
-
-<Describe the success status, output fields, and side effects.>
-
-```json
-{
-  "example": "output"
-}
-```
-
-**Errors**
-
-| Condition | Result | Observable effect |
-|---|---|---|
-| <Invalid input> | `<status or error code>` | <No state change> |
-| <Missing permission> | `<status or error code>` | <No state change> |
-| <Conflict> | `<status or error code>` | <Existing state is preserved> |
-
-**Delivery and consistency**
-
-<Describe idempotency, retries, ordering, pagination, rate limits, transactional boundaries, or eventual consistency when applicable.>
-
-## 7. Edge cases and error handling
+### Edge cases and error handling
 
 | Case | Expected behavior | State and recovery |
 |---|---|---|
@@ -492,49 +401,62 @@ Repeat the following subsection for every operation.
 | <Unavailable dependency> | <Error presented to the caller or user> | <Partial state handling and retry behavior> |
 | <Repeated or concurrent operation> | <Idempotent, serialized, or conflict behavior> | <Resulting authoritative state> |
 
-Every edge case required by the spec must be covered by an acceptance criterion.
+Every required edge case must be covered by an acceptance criterion.
 
 Write `No additional edge cases.` only when none apply.
 
-## 8. Acceptance criteria
+## 3. Technical design
+
+<Describe the approved technical decisions that affect the repository architecture. Do not list every file or local implementation detail.>
+
+Include only relevant optional subsections. Write `No architectural changes. Follow the existing repository patterns.` when none apply.
+
+### Components and data flow
+
+<Describe affected components, responsibilities, data models, state changes, and important boundaries.>
+
+### API specification
+
+Write `Not applicable.` when no API contract changes.
+
+For each operation, define the protocol and operation, caller permissions, input, successful output, errors and side effects, and delivery or consistency rules.
+
+### Prototype and user interaction
+
+Write `Not applicable.` when there is no visual or interactive behavior.
+
+- `prototypes/<surface-name>.<html|png|jpg|jpeg>`: <surface and states represented by the prototype>
+
+<Describe user triggers, state transitions, validation, feedback, accessibility, and recovery behavior.>
+
+### External integrations
+
+<Describe affected services, SDKs, events, queues, webhooks, failure boundaries, and retry behavior.>
+
+### Security and privacy
+
+<Describe authentication, authorization, trust boundaries, sensitive-data handling, retention, encryption, and redaction.>
+
+### Compatibility and migration
+
+<Describe backward compatibility, migration, rollout, rollback, and coexistence with older versions.>
+
+### Monitoring and observability
+
+Write `Not applicable.` when no operational signal changes.
+
+<Describe required signals, triggers, diagnostic information, alerts, thresholds, ownership, and sensitive data that must not be recorded.>
+
+## 4. Acceptance criteria
 
 ### AC1: <short observable claim>
 
 - **Probe**: <exact command, API call, or reproducible procedure>
 - **Expected result**: <observable and measurable result>
 - **Breakage**: <specific temporary implementation change that must make the probe fail>
-
-## 9. Monitoring and observability
-
-Write `Not applicable.` when the change requires no new or modified operational signal.
-
-### Signals
-
-| Signal | Trigger | Required information |
-|---|---|---|
-| <Metric, structured log, trace, audit event, or health signal> | <When it is emitted> | <Fields, dimensions, or correlation data> |
-
-### Failure visibility
-
-<Describe how an operator detects, correlates, and diagnoses the failures introduced or affected by this change.>
-
-### Alerts and thresholds
-
-<Describe required alerts, thresholds, windows, and ownership. Remove this subsection when no new alert is required.>
-
-### Sensitive data
-
-- <Data that must not appear in logs, traces, metrics, events, or alerts.>
-
-## 10. Out of scope
-
-- <Related behavior, user flow, integration, migration, or component that must not be implemented by this spec.>
-- <Existing behavior that must remain unchanged and is not being redesigned.>
-
-Write `No additional out-of-scope items.` when none are known.
 ````
 
-Regole per `Context and problem`:
+Regole per `Context, goals, and scope`:
 
 1. Descrive brevemente situazione attuale, soggetti coinvolti e problema oppure opportunità.
 2. Spiega il valore per utenti, business o sistema senza anticipare l’implementazione.
@@ -588,7 +510,7 @@ Regole per `Prototype and user interaction`:
 
 Regole per `API specification`:
 
-1. La sezione contiene `Not applicable.` quando non introduce o modifica un contratto API.
+1. La sottosezione contiene `Not applicable.` quando non introduce o modifica un contratto API.
 2. Ogni operazione ha un nome univoco e identifica esattamente metodo, path, procedure, topic o evento.
 3. Input e output indicano campi, tipi, obbligatorietà e vincoli; gli esempi validi non sostituiscono la definizione del contratto.
 4. Authentication identifica il caller; authorization definisce cosa può fare.
@@ -617,7 +539,7 @@ Regole per `Edge cases and error handling`:
 
 Regole per `Monitoring and observability`:
 
-1. La sezione contiene `Not applicable.` quando non richiede segnali nuovi o modificati.
+1. La sottosezione contiene `Not applicable.` quando non richiede segnali nuovi o modificati.
 2. Maestro non inventa infrastruttura assente e riusa strumenti e convenzioni del repository.
 3. Ogni signal specifica tipo, trigger, informazioni richieste e correlazione.
 4. Nomi esatti di metriche o eventi vengono indicati quando fanno parte del contratto.
@@ -669,12 +591,12 @@ Regole degli acceptance criteria:
 Validazione deterministica di `maestro_mark_spec_ready`:
 
 1. Il titolo contiene l’ID corretto.
-2. Le dieci sezioni top-level `##` esistono una sola volta e nell’ordine approvato.
-3. Non esistono altre sezioni top-level `##`; contenuti aggiuntivi usano `###` dentro una sezione approvata.
+2. Le quattro sezioni top-level `##` esistono una sola volta e nell'ordine approvato.
+3. Non esistono altre sezioni top-level `##`; contenuti aggiuntivi usano `###` o livelli inferiori dentro una sezione approvata.
 4. Non restano placeholder del template.
-5. `Context and problem` contiene almeno un measurable goal.
-6. Le sezioni non applicabili usano esattamente `Not applicable.`.
-7. Le altre sezioni usano le rispettive frasi approvate quando non hanno contenuto.
+5. `Context, goals, and scope` contiene almeno un measurable goal.
+6. Le sottosezioni non applicabili usano esattamente `Not applicable.`.
+7. Le altre sottosezioni usano le rispettive frasi approvate quando non hanno contenuto.
 8. Esiste almeno un acceptance criterion con ID sequenziali.
 9. Ogni criterion contiene esattamente `Probe`, `Expected result` e `Breakage`.
 10. I prototype dichiarati esistono sotto `.specs/<id>/prototypes/`, non escono dalla spec directory e hanno estensione lowercase `.html`, `.png`, `.jpg` o `.jpeg`.
