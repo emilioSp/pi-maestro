@@ -4,15 +4,15 @@ import { type Static, Type } from 'typebox';
 import { Value } from 'typebox/value';
 import { isInside, isStrictlyInside } from '#utils/path-security.ts';
 
-export const THINKING_LEVELS = [
-  'off',
-  'minimal',
-  'low',
-  'medium',
-  'high',
-  'xhigh',
-  'max',
-] as const;
+export const THINKING_LEVELS = {
+  OFF: 'off',
+  MINIMAL: 'minimal',
+  LOW: 'low',
+  MEDIUM: 'medium',
+  HIGH: 'high',
+  XHIGH: 'xhigh',
+  MAX: 'max',
+} as const;
 
 export const MODEL_PATTERN = '^[^/\\s]+/[^/\\s]+$';
 
@@ -24,13 +24,13 @@ export const MIN_TIMEOUT_MINUTES = 1;
 export const MAX_TIMEOUT_MINUTES = 1440;
 
 export const ThinkingSchema = Type.Union([
-  Type.Literal('off'),
-  Type.Literal('minimal'),
-  Type.Literal('low'),
-  Type.Literal('medium'),
-  Type.Literal('high'),
-  Type.Literal('xhigh'),
-  Type.Literal('max'),
+  Type.Literal(THINKING_LEVELS.OFF),
+  Type.Literal(THINKING_LEVELS.MINIMAL),
+  Type.Literal(THINKING_LEVELS.LOW),
+  Type.Literal(THINKING_LEVELS.MEDIUM),
+  Type.Literal(THINKING_LEVELS.HIGH),
+  Type.Literal(THINKING_LEVELS.XHIGH),
+  Type.Literal(THINKING_LEVELS.MAX),
 ]);
 
 export const PartialAgentConfigSchema = Type.Object(
@@ -98,7 +98,7 @@ const formatError = (error: SchemaValidationError): string => {
   }
 
   if (path.endsWith('thinking')) {
-    return `Invalid thinking level at "${path}". Allowed: ${THINKING_LEVELS.join(', ')}.`;
+    return `Invalid thinking level at "${path}". Allowed: ${Object.values(THINKING_LEVELS).join(', ')}.`;
   }
 
   if (path.endsWith('timeoutMinutes')) {

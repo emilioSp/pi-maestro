@@ -13,11 +13,15 @@ export type GitCommandResult = {
   exitCode: number;
 };
 
+export const GIT_COMMAND_ERROR_CODES = {
+  COMMAND_FAILED: 'command-failed',
+  EXECUTION_FAILED: 'execution-failed',
+  NOT_FOUND: 'not-found',
+  TIMEOUT: 'timeout',
+} as const;
+
 export type GitCommandErrorCode =
-  | 'command-failed'
-  | 'execution-failed'
-  | 'not-found'
-  | 'timeout';
+  (typeof GIT_COMMAND_ERROR_CODES)[keyof typeof GIT_COMMAND_ERROR_CODES];
 
 export class GitCommandError extends Error {
   readonly code: GitCommandErrorCode;
@@ -56,6 +60,17 @@ export class GitCommandError extends Error {
     this.exitCode = exitCode;
   }
 }
+
+export const hasGitExitCode = ({
+  error,
+  exitCode,
+}: {
+  error: unknown;
+  exitCode: number;
+}): boolean =>
+  error instanceof GitCommandError &&
+  error.code === GIT_COMMAND_ERROR_CODES.COMMAND_FAILED &&
+  error.exitCode === exitCode;
 
 type RunGitCommandInput = {
   arguments: readonly string[];
@@ -104,7 +119,7 @@ export const runGitCommand = async ({
 
     if (error.killed) {
       throw new GitCommandError({
-        code: 'timeout',
+        code: GIT_COMMAND_ERROR_CODES.TIMEOUT,
         message: `Git command timed out after ${timeoutMs} ms.`,
         arguments: gitArguments,
         cwd,
@@ -116,7 +131,7 @@ export const runGitCommand = async ({
 
     if (error.code === 'ENOENT') {
       throw new GitCommandError({
-        code: 'not-found',
+        code: GIT_COMMAND_ERROR_CODES.NOT_FOUND,
         message: 'Git executable was not found.',
         arguments: gitArguments,
         cwd,
@@ -128,7 +143,10 @@ export const runGitCommand = async ({
 
     const exitCode = typeof error.code === 'number' ? error.code : null;
     throw new GitCommandError({
-      code: exitCode === null ? 'execution-failed' : 'command-failed',
+      code:
+        exitCode === null
+          ? GIT_COMMAND_ERROR_CODES.EXECUTION_FAILED
+          : GIT_COMMAND_ERROR_CODES.COMMAND_FAILED,
       message: `Git command failed: ${error.message}`,
       arguments: gitArguments,
       cwd,

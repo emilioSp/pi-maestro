@@ -1,10 +1,4 @@
-import { GitCommandError, runGitCommand } from '#git/command.ts';
-
-// Identifies Git's false-result exit code.
-const isFalseGitResult = (error: unknown): boolean =>
-  error instanceof GitCommandError &&
-  error.code === 'command-failed' &&
-  error.exitCode === 1;
+import { hasGitExitCode, runGitCommand } from '#git/command.ts';
 
 // Checks whether one commit is reachable from another.
 // git merge-base --is-ancestor <ancestor> <descendant>
@@ -24,7 +18,7 @@ export const isAncestor = async ({
     });
     return true;
   } catch (error) {
-    if (isFalseGitResult(error)) {
+    if (hasGitExitCode({ error, exitCode: 1 })) {
       // git returns exit 1 to say "no"
       return false;
     }
@@ -66,7 +60,7 @@ export const getMergeBase = async ({
     });
     return result.stdout.trim();
   } catch (error) {
-    if (isFalseGitResult(error)) {
+    if (hasGitExitCode({ error, exitCode: 1 })) {
       return undefined;
     }
     throw error;

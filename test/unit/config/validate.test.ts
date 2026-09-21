@@ -56,7 +56,7 @@ describe('configuration schema validation', () => {
   });
 
   it('accepts all supported thinking levels', () => {
-    for (const level of THINKING_LEVELS) {
+    for (const level of Object.values(THINKING_LEVELS)) {
       const input = {
         version: '1.0.0',
         builder: { thinking: level },

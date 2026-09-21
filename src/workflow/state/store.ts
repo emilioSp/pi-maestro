@@ -1,5 +1,6 @@
-import { access, type FileHandle, open, readFile, rm } from 'node:fs/promises';
+import { type FileHandle, open, readFile, rm } from 'node:fs/promises';
 import { writeJsonAtomically } from '#atomic-write.ts';
+import { pathExists } from '#utils/path-exists.ts';
 import {
   validateWorkflowState,
   type WorkflowState,
@@ -13,18 +14,6 @@ const readJson = async (path: string): Promise<unknown> => {
     throw new Error(`Workflow state contains malformed JSON: ${path}.`, {
       cause,
     });
-  }
-};
-
-const stateExists = async (path: string): Promise<boolean> => {
-  try {
-    await access(path);
-    return true;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      return false;
-    }
-    throw error;
   }
 };
 
@@ -69,7 +58,7 @@ export const writeWorkflowState = async ({
       throw cause;
     }
 
-    const exists = await stateExists(path);
+    const exists = await pathExists(path);
     if (!exists && currentRevision !== 0) {
       throw new Error(
         `Stale workflow revision: expected ${currentRevision}, but no state exists.`,

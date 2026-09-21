@@ -3,6 +3,11 @@ import type { MaestroConfig } from '#config/validate.ts';
 import { isValidSpecId } from '#ids.ts';
 import { isStrictlyInside } from '#utils/path-security.ts';
 
+export const WORKFLOW_ROLES = {
+  BUILDER: 'builder',
+  VERIFIER: 'verifier',
+} as const;
+
 const assertSpecId = (specId: string): void => {
   if (!isValidSpecId(specId)) {
     throw new Error(
@@ -137,16 +142,20 @@ export const getMaestroPaths = ({
     },
     getBuilderBranch: (specId: string): string => {
       assertSpecId(specId);
-      return `builder/${specId}`;
+      return `${WORKFLOW_ROLES.BUILDER}/${specId}`;
     },
     getVerifierBranch: ({ specId, pass }): string => {
       assertSpecId(specId);
       assertPass(pass);
-      return `verifier/${specId}/${pass}`;
+      return `${WORKFLOW_ROLES.VERIFIER}/${specId}/${pass}`;
     },
     getBuilderWorktreePath: (specId: string): string => {
       assertSpecId(specId);
-      const target = resolve(config.worktreeDirectory, 'builder', specId);
+      const target = resolve(
+        config.worktreeDirectory,
+        WORKFLOW_ROLES.BUILDER,
+        specId,
+      );
       if (!isStrictlyInside({ parent: repositoryRoot, candidate: target })) {
         throw new Error('Generated Maestro path leaves the Git root.');
       }
@@ -157,7 +166,7 @@ export const getMaestroPaths = ({
       assertPass(pass);
       const target = resolve(
         config.worktreeDirectory,
-        'verifier',
+        WORKFLOW_ROLES.VERIFIER,
         specId,
         String(pass),
       );

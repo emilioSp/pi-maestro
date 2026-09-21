@@ -1,5 +1,6 @@
 import { runGitCommand } from '#git/command.ts';
 import { getCurrentBranch } from '#git/repository.ts';
+import { WORKFLOW_ROLES } from '#paths.ts';
 
 export const CHECKPOINT_COMMIT_MESSAGE = 'maestro checkpoint';
 
@@ -23,7 +24,8 @@ const hasSamePaths = ({
 
 // Identifies branches managed by the Maestro workflow.
 const isWorkflowBranch = (branch: string): boolean =>
-  branch.startsWith('builder/') || branch.startsWith('verifier/');
+  branch.startsWith(`${WORKFLOW_ROLES.BUILDER}/`) ||
+  branch.startsWith(`${WORKFLOW_ROLES.VERIFIER}/`);
 
 // Lists the paths currently staged for commit.
 // git diff --cached --name-only -z

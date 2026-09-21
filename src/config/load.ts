@@ -1,4 +1,4 @@
-import { access, readFile, realpath } from 'node:fs/promises';
+import { readFile, realpath } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   CONFIG_FILE_PATH,
@@ -11,15 +11,7 @@ import {
   validateConfiguration,
   validateDirectories,
 } from '#config/validate.ts';
-
-const fileExists = async (path: string): Promise<boolean> => {
-  try {
-    await access(path);
-    return true;
-  } catch {
-    return false;
-  }
-};
+import { pathExists } from '#utils/path-exists.ts';
 
 export const resolveConfiguration = (
   input: PartialMaestroConfig,
@@ -51,7 +43,7 @@ export const loadConfiguration = async (): Promise<MaestroConfig> => {
   const repositoryRoot = await realpath(process.cwd());
   const targetPath = join(repositoryRoot, CONFIG_FILE_PATH);
 
-  if (!(await fileExists(targetPath))) {
+  if (!(await pathExists(targetPath))) {
     return deepFreeze(
       await validateDirectories({ repositoryRoot, config: DEFAULT_CONFIG }),
     );

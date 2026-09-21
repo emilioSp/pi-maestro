@@ -1,11 +1,6 @@
-import { GitCommandError, runGitCommand } from '#git/command.ts';
+import { hasGitExitCode, runGitCommand } from '#git/command.ts';
 
 const branchReference = (branch: string): string => `refs/heads/${branch}`;
-
-const isMissingReference = (error: unknown): boolean =>
-  error instanceof GitCommandError &&
-  error.code === 'command-failed' &&
-  error.exitCode === 1;
 
 // git show-ref --verify --quiet refs/heads/<branch>
 export const branchExists = async ({
@@ -22,7 +17,7 @@ export const branchExists = async ({
     });
     return true;
   } catch (error) {
-    if (isMissingReference(error)) {
+    if (hasGitExitCode({ error, exitCode: 1 })) {
       return false;
     }
     throw error;
@@ -80,7 +75,7 @@ export const fastForwardBranch = async ({
       cwd: repositoryRoot,
     });
   } catch (error) {
-    if (isMissingReference(error)) {
+    if (hasGitExitCode({ error, exitCode: 1 })) {
       throw new Error(
         `Cannot fast-forward ${branch}: it is not an ancestor of ${target}.`,
       );
