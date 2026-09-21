@@ -1,7 +1,8 @@
-import { access, mkdir } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { runGitCommand } from '#git/command.ts';
 import { getRepositoryStatus } from '#git/repository.ts';
+import { pathExists } from '#utils/path-exists.ts';
 import { isStrictlyInside } from '#utils/path-security.ts';
 
 export type Worktree = {
@@ -9,15 +10,6 @@ export type Worktree = {
   head: string;
   branch: string | null;
   bare: boolean;
-};
-
-const pathExists = async (path: string): Promise<boolean> => {
-  try {
-    await access(path);
-    return true;
-  } catch {
-    return false;
-  }
 };
 
 const parseWorktrees = (output: string): Worktree[] => {
