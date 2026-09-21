@@ -17,6 +17,23 @@ export const WORKFLOW_PHASES = {
   FINAL_REVIEW: 'final-review',
 } as const;
 
+export const WORKFLOW_EVENTS = {
+  MARK_SPEC_READY: 'mark-spec-ready',
+  LAUNCH_BUILDER: 'launch-builder',
+  RETRY_BUILDER: 'retry-builder',
+  OPEN_ESCALATION: 'open-escalation',
+  RESOLVE_ESCALATION: 'resolve-escalation',
+  BUILDER_FAILED: 'builder-failed',
+  BUILDER_DONE: 'builder-done',
+  LAUNCH_VERIFIER: 'launch-verifier',
+  RETRY_VERIFIER: 'retry-verifier',
+  VERIFIER_FOUND_FINDINGS: 'verifier-found-findings',
+  VERIFIER_APPROVED: 'verifier-approved',
+  REJECT_FINDINGS: 'reject-findings',
+  REQUEST_FIXES: 'request-fixes',
+  PREPARE_FINAL_REVIEW: 'prepare-final-review',
+} as const;
+
 export const WorkflowPhaseSchema = Type.Union([
   Type.Literal(WORKFLOW_PHASES.DRAFTING_SPEC),
   Type.Literal(WORKFLOW_PHASES.READY_FOR_BUILDER),
@@ -42,6 +59,8 @@ export const WorkflowStateSchema = Type.Object(
 );
 
 export type WorkflowPhase = Static<typeof WorkflowPhaseSchema>;
+export type WorkflowEvent =
+  (typeof WORKFLOW_EVENTS)[keyof typeof WORKFLOW_EVENTS];
 export type WorkflowState = Static<typeof WorkflowStateSchema>;
 
 export const validateWorkflowState = (input: unknown): WorkflowState => {
