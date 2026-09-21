@@ -8,6 +8,9 @@ export const WORKFLOW_ROLES = {
   VERIFIER: 'verifier',
 } as const;
 
+export type WorkflowRoles =
+  (typeof WORKFLOW_ROLES)[keyof typeof WORKFLOW_ROLES];
+
 const assertSpecId = (specId: string): void => {
   if (!isValidSpecId(specId)) {
     throw new Error(
