@@ -91,7 +91,7 @@ The current schema version is `1.0.0`. An unsupported major version stops Maestr
 - The paths are different.
 - Neither path contains the other.
 
-An invalid path stops Maestro activation.
+An invalid path stops Maestro activation. Maestro validates these paths while it loads configuration, but does not create the directories then. Workflow actions create a spec directory, an artifact directory, or a worktree only when they need it.
 
 ## Model access
 

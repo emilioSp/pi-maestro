@@ -940,6 +940,8 @@ pi-maestro/
 │   │   └── load.ts
 │   ├── paths.ts
 │   ├── ids.ts
+│   ├── utils/
+│   │   └── path-security.ts
 │   ├── git/
 │   │   ├── command.ts
 │   │   ├── repository.ts
@@ -1059,9 +1061,11 @@ Non esiste una directory globale `src/schemas/`. Ogni schema resta vicino al dom
 
 `src/git/` implementa le operazioni Git senza dipendere da Pi. `command.ts` esegue Git con argv, cwd e timeout, senza passare da una shell. Gli altri moduli separano repository, branch, worktree, commit, verifica della cronologia e final review.
 
-`src/config/` contiene default, schema e caricamento di `.pi/maestro.json`. Valida e applica gli override senza occuparsi della sicurezza dei percorsi, della disponibilità dei modelli o dell’interfaccia Pi.
+`src/config/` contiene default, schema e caricamento di `.pi/maestro.json`. Applica gli override e valida le directory configurate, inclusi root Git, percorsi relativi, symlink e collisioni. Non verifica la disponibilità dei modelli e non dipende dall’interfaccia Pi.
 
-`src/paths.ts` resta un singolo modulo. Contiene sia la validazione di sicurezza sia la costruzione dei percorsi Maestro. Se crescerà oltre una responsabilità gestibile, potrà essere diviso in una versione successiva.
+`src/paths.ts` resta un singolo modulo. Costruisce i percorsi, i nomi di branch e i percorsi dei worktree Maestro da una configurazione già validata. Non crea file o directory.
+
+`src/utils/path-security.ts` contiene i controlli riusabili di contenimento tra percorsi. `src/config/` e `src/paths.ts` dipendono da questo modulo neutrale.
 
 `src/ids.ts` resta un singolo modulo. Genera il timestamp UTC, normalizza lo slug, compone l’ID e ne valida il formato.
 

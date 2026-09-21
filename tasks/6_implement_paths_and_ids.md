@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task 6: Implement safe paths and spec IDs
 
@@ -18,18 +18,17 @@ Provide safe Maestro path construction and deterministic spec ID helpers.
 
 ## Work
 
-1. Implement repository-relative directory validation in `src/paths.ts`.
-2. Reject the repository root, absolute paths, escapes through `..`, unsafe symlinks, equal directories, and nested spec/worktree directories.
-3. Build every approved spec, handoff, prototype, branch, and worktree path from validated inputs.
-4. Implement UTC timestamps, slug normalization, ID composition, and ID validation in `src/ids.ts`.
+1. Build every approved spec, handoff, prototype, branch, and worktree path from validated configuration in `src/paths.ts`.
+2. Keep every generated filesystem path inside the Git root.
+3. Implement UTC timestamps, slug normalization, ID composition, and ID validation in `src/ids.ts`.
 
 ## Implementation
 
-Resolve existing ancestors and symlinks before accepting a configured directory. Keep all generated filesystem paths inside the Git root. Use the exact `YYYYMMDD-HHmmss-<slug>` format. Do not add a collision suffix or counter.
+Configured-directory validation belongs to configuration loading. `src/paths.ts` has no filesystem side effects and derives paths only from the validated configuration. Keep all generated filesystem paths inside the Git root. Use the exact `YYYYMMDD-HHmmss-<slug>` format. Do not add a collision suffix or counter.
 
 ## Tests
 
-Add Vitest unit tests for normal paths, dot segments, parent escapes, absolute paths, the root path, equal and nested directories, existing symlinks inside the repository, symlinks outside it, slug edge cases, UTC formatting, and ID validation. Include explicit tests that no constructed path can leave the Git root.
+Add Vitest unit tests for normal generated paths, prototype path escapes, slug edge cases, UTC formatting, and ID validation. Directory validation tests belong to `src/config/`. Include explicit tests that no constructed path can leave the Git root.
 
 ## Completion criteria
 

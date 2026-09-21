@@ -18,7 +18,7 @@ export const createFakeSubagents = <Request, Result>({
     results,
     run: async (request) => {
       if (remainingResponses.length === 0) {
-        throw new Error("No fake subagent response is available.");
+        throw new Error('No fake subagent response is available.');
       }
 
       const response = remainingResponses.shift() as Result;

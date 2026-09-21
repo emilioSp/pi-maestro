@@ -1,35 +1,36 @@
-import { Type, type Static } from "typebox";
-import { Value } from "typebox/value";
+import { lstat, realpath } from 'node:fs/promises';
+import { dirname, isAbsolute, relative, resolve } from 'node:path';
+import { type Static, Type } from 'typebox';
+import { Value } from 'typebox/value';
+import { isInside, isStrictlyInside } from '#utils/path-security.ts';
 
 export const THINKING_LEVELS = [
-  "off",
-  "minimal",
-  "low",
-  "medium",
-  "high",
-  "xhigh",
-  "max",
+  'off',
+  'minimal',
+  'low',
+  'medium',
+  'high',
+  'xhigh',
+  'max',
 ] as const;
 
-export type ThinkingLevel = (typeof THINKING_LEVELS)[number];
-
-export const MODEL_PATTERN = "^[^/\\s]+/[^/\\s]+$";
+export const MODEL_PATTERN = '^[^/\\s]+/[^/\\s]+$';
 
 export const SEMVER_PATTERN =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
 
-export const SUPPORTED_CONFIG_VERSION = "1.0.0";
+export const SUPPORTED_CONFIG_VERSION = '1.0.0';
 export const MIN_TIMEOUT_MINUTES = 1;
 export const MAX_TIMEOUT_MINUTES = 1440;
 
 export const ThinkingSchema = Type.Union([
-  Type.Literal("off"),
-  Type.Literal("minimal"),
-  Type.Literal("low"),
-  Type.Literal("medium"),
-  Type.Literal("high"),
-  Type.Literal("xhigh"),
-  Type.Literal("max"),
+  Type.Literal('off'),
+  Type.Literal('minimal'),
+  Type.Literal('low'),
+  Type.Literal('medium'),
+  Type.Literal('high'),
+  Type.Literal('xhigh'),
+  Type.Literal('max'),
 ]);
 
 export const PartialAgentConfigSchema = Type.Object(
@@ -80,8 +81,6 @@ export const ResolvedMaestroConfigSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export type AgentConfig = Static<typeof ResolvedAgentConfigSchema>;
-export type PartialAgentConfig = Static<typeof PartialAgentConfigSchema>;
 export type MaestroConfig = Static<typeof ResolvedMaestroConfigSchema>;
 export type PartialMaestroConfig = Static<typeof MaestroConfigInputSchema>;
 
@@ -92,29 +91,29 @@ type SchemaValidationError = {
 };
 
 const formatError = (error: SchemaValidationError): string => {
-  const path = error.instancePath.replace(/^\//, "").replace(/\//g, ".");
+  const path = error.instancePath.replace(/^\//, '').replace(/\//g, '.');
 
-  if (error.schemaPath.includes("additionalProperties")) {
+  if (error.schemaPath.includes('additionalProperties')) {
     return `Unknown configuration field: "${path}".`;
   }
 
-  if (path.endsWith("thinking")) {
-    return `Invalid thinking level at "${path}". Allowed: ${THINKING_LEVELS.join(", ")}.`;
+  if (path.endsWith('thinking')) {
+    return `Invalid thinking level at "${path}". Allowed: ${THINKING_LEVELS.join(', ')}.`;
   }
 
-  if (path.endsWith("timeoutMinutes")) {
+  if (path.endsWith('timeoutMinutes')) {
     return `Invalid timeout at "${path}". Must be an integer between ${MIN_TIMEOUT_MINUTES} and ${MAX_TIMEOUT_MINUTES}.`;
   }
 
-  if (path.endsWith("model")) {
+  if (path.endsWith('model')) {
     return `Invalid model identifier at "${path}". Must use "provider/model" format.`;
   }
 
-  if (path === "builder" || path === "verifier") {
+  if (path === 'builder' || path === 'verifier') {
     return `Invalid ${path} configuration: expected an object.`;
   }
 
-  if (path === "specDirectory" || path === "worktreeDirectory") {
+  if (path === 'specDirectory' || path === 'worktreeDirectory') {
     return `Invalid ${path}: expected a non-empty string.`;
   }
 
@@ -122,18 +121,20 @@ const formatError = (error: SchemaValidationError): string => {
 };
 
 export const validateConfiguration = (input: unknown): PartialMaestroConfig => {
-  if (typeof input !== "object" || input === null || Array.isArray(input)) {
-    throw new Error("Configuration must be a JSON object.");
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+    throw new Error('Configuration must be a JSON object.');
   }
 
   const raw = input as Record<string, unknown>;
 
-  if (!("version" in raw) || raw.version === undefined) {
-    throw new Error("Missing configuration version. The 'version' field is required.");
+  if (!('version' in raw) || raw.version === undefined) {
+    throw new Error(
+      "Missing configuration version. The 'version' field is required.",
+    );
   }
 
-  if (typeof raw.version !== "string") {
-    throw new Error("Invalid configuration version: expected a string.");
+  if (typeof raw.version !== 'string') {
+    throw new Error('Invalid configuration version: expected a string.');
   }
 
   const semverMatch = raw.version.match(SEMVER_PATTERN);
@@ -144,7 +145,7 @@ export const validateConfiguration = (input: unknown): PartialMaestroConfig => {
   }
 
   const majorVersion = semverMatch[1];
-  if (majorVersion !== "1") {
+  if (majorVersion !== '1') {
     throw new Error(
       `Unsupported configuration major version: ${majorVersion}. Expected major version 1.`,
     );
@@ -162,4 +163,130 @@ export const validateConfiguration = (input: unknown): PartialMaestroConfig => {
   }
 
   return raw as unknown as PartialMaestroConfig;
+};
+
+type ExistingAncestor = {
+  path: string;
+  realPath: string;
+};
+
+const findExistingAncestor = async (
+  path: string,
+): Promise<ExistingAncestor> => {
+  let anchestor = path;
+
+  while (true) {
+    try {
+      // lstat instead of access, because access follows symlinks
+      await lstat(anchestor);
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code !== 'ENOENT') {
+        throw error;
+      }
+
+      const parent = dirname(anchestor);
+      if (parent === anchestor) {
+        throw new Error(`Cannot resolve an existing ancestor for "${path}".`);
+      }
+      anchestor = parent;
+      continue;
+    }
+
+    try {
+      return { path: anchestor, realPath: await realpath(anchestor) };
+    } catch {
+      throw new Error(`Cannot resolve symlink "${anchestor}".`);
+    }
+  }
+};
+
+const assertSafeDirectoryInput = (value: string, name: string): void => {
+  if (value.includes('\0')) {
+    throw new Error(`${name} must not contain a null byte.`);
+  }
+
+  if (isAbsolute(value)) {
+    throw new Error(`${name} must be relative to the Git root.`);
+  }
+};
+
+const resolveSafeDirectory = async ({
+  repositoryRoot,
+  directory,
+  name,
+}: {
+  repositoryRoot: string;
+  directory: string;
+  name: string;
+}): Promise<string> => {
+  assertSafeDirectoryInput(directory, name);
+
+  const requestedDirectory = resolve(repositoryRoot, directory);
+  if (requestedDirectory === repositoryRoot) {
+    throw new Error(`${name} must not be the Git root.`);
+  }
+
+  if (
+    !isStrictlyInside({ parent: repositoryRoot, candidate: requestedDirectory })
+  ) {
+    throw new Error(`${name} must stay inside the Git root.`);
+  }
+
+  // The directory could not exist at the check time. We find the existing anchestor and do the check on that.
+  const ancestor = await findExistingAncestor(requestedDirectory);
+  if (!isInside({ parent: repositoryRoot, candidate: ancestor.realPath })) {
+    throw new Error(`${name} resolves outside the Git root through a symlink.`);
+  }
+
+  const unresolvedSuffix = relative(ancestor.path, requestedDirectory);
+  const resolvedDirectory = resolve(ancestor.realPath, unresolvedSuffix);
+  if (
+    !isStrictlyInside({ parent: repositoryRoot, candidate: resolvedDirectory })
+  ) {
+    throw new Error(`${name} resolves outside the Git root through a symlink.`);
+  }
+
+  return resolvedDirectory;
+};
+
+export const validateDirectories = async ({
+  repositoryRoot: configuredRepositoryRoot,
+  config,
+}: {
+  repositoryRoot: string;
+  config: MaestroConfig;
+}): Promise<MaestroConfig> => {
+  const repositoryRoot = await realpath(configuredRepositoryRoot);
+  const specDirectory = await resolveSafeDirectory({
+    repositoryRoot,
+    directory: config.specDirectory,
+    name: 'specDirectory',
+  });
+  const worktreeDirectory = await resolveSafeDirectory({
+    repositoryRoot,
+    directory: config.worktreeDirectory,
+    name: 'worktreeDirectory',
+  });
+
+  if (specDirectory === worktreeDirectory) {
+    throw new Error(
+      'specDirectory and worktreeDirectory must not be the same directory.',
+    );
+  }
+
+  if (
+    isStrictlyInside({ parent: specDirectory, candidate: worktreeDirectory }) ||
+    isStrictlyInside({ parent: worktreeDirectory, candidate: specDirectory })
+  ) {
+    throw new Error(
+      'specDirectory and worktreeDirectory must not contain one another.',
+    );
+  }
+
+  return {
+    ...config,
+    specDirectory,
+    worktreeDirectory,
+  };
 };

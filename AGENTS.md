@@ -4,6 +4,10 @@
 
 Pi extension that implements a multiagent spec driven development workflow.
 
+## Commands
+
+- `npm run check` | Run lint check, type checking and all tests.
+
 ## Project structure and component scope
 
 The MVP package structure is frozen. Add a new structural file or directory only after an explicit design decision.
@@ -40,10 +44,11 @@ The MVP package structure is frozen. Add a new structural file or directory only
 | File | Responsibility |
 |---|---|
 | `src/config/defaults.ts` | Define default configuration values. |
-| `src/config/validate.ts` | Validate `.pi/maestro.json`. |
+| `src/config/validate.ts` | Validate `.pi/maestro.json`, including configured directories. |
 | `src/config/load.ts` | Load and validate configuration. |
-| `src/paths.ts` | Build and validate Maestro paths. |
+| `src/paths.ts` | Build Maestro paths from validated configuration. |
 | `src/ids.ts` | Generate and validate spec IDs. |
+| `src/utils/path-security.ts` | Check whether one path contains another. |
 | `src/atomic-write.ts` | Write files atomically and safely. |
 
 ### Git

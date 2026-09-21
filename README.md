@@ -44,7 +44,7 @@ Activate Maestro:
 
 The same command disables Maestro. Disabling Maestro keeps the current workflow, branches, worktrees, and artifacts.
 
-During activation, Maestro checks the repository, configuration, models, agents, paths, and stored workflow state. A failed check leaves Maestro disabled and reports the problem.
+During activation, Maestro checks the repository, configuration including configured directories, models, agents, and stored workflow state. A failed check leaves Maestro disabled and reports the problem.
 
 ## Basic use
 

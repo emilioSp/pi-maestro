@@ -263,6 +263,8 @@ Maestro then:
 
 ## Stored artifacts
 
+Maestro creates the spec directory with `spec.md` and `workflow.json` when the owner creates a spec. It creates handoff, escalation, and prototype directories only when an action needs them. Git creates worktree directories when Maestro launches a builder or verifier.
+
 The default spec directory contains:
 
 ```text

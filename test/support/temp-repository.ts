@@ -1,8 +1,8 @@
-import { execFile } from "node:child_process";
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { promisify } from "node:util";
+import { execFile } from 'node:child_process';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 
@@ -19,27 +19,37 @@ const runGit = async ({
   arguments: string[];
   cwd: string;
 }): Promise<string> => {
-  const { stdout } = await execFileAsync("git", gitArguments, { cwd });
+  const { stdout } = await execFileAsync('git', gitArguments, { cwd });
   return stdout.trim();
 };
 
-export const createTemporaryRepository = async (): Promise<TemporaryRepository> => {
-  const path = await mkdtemp(join(tmpdir(), "pi-maestro-"));
+export const createTemporaryRepository =
+  async (): Promise<TemporaryRepository> => {
+    const path = await mkdtemp(join(tmpdir(), 'pi-maestro-'));
 
-  await runGit({ arguments: ["init", "--initial-branch", "main"], cwd: path });
-  await runGit({ arguments: ["config", "user.name", "Pi Maestro Test"], cwd: path });
-  await runGit({
-    arguments: ["config", "user.email", "pi-maestro-test@example.com"],
-    cwd: path,
-  });
+    await runGit({
+      arguments: ['init', '--initial-branch', 'main'],
+      cwd: path,
+    });
+    await runGit({
+      arguments: ['config', 'user.name', 'Pi Maestro Test'],
+      cwd: path,
+    });
+    await runGit({
+      arguments: ['config', 'user.email', 'pi-maestro-test@example.com'],
+      cwd: path,
+    });
 
-  return {
-    path,
-    commit: async ({ message }) => {
-      await runGit({ arguments: ["add", "--all"], cwd: path });
-      await runGit({ arguments: ["commit", "--message", message], cwd: path });
-      return runGit({ arguments: ["rev-parse", "HEAD"], cwd: path });
-    },
-    cleanup: async () => rm(path, { force: true, recursive: true }),
+    return {
+      path,
+      commit: async ({ message }) => {
+        await runGit({ arguments: ['add', '--all'], cwd: path });
+        await runGit({
+          arguments: ['commit', '--message', message],
+          cwd: path,
+        });
+        return runGit({ arguments: ['rev-parse', 'HEAD'], cwd: path });
+      },
+      cleanup: async () => rm(path, { force: true, recursive: true }),
+    };
   };
-};

@@ -1,15 +1,16 @@
-import { access, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { access, readFile, realpath } from 'node:fs/promises';
+import { join } from 'node:path';
 import {
   CONFIG_FILE_PATH,
   DEFAULT_CONFIG,
   deepFreeze,
-} from "#config/defaults.ts";
+} from '#config/defaults.ts';
 import {
-  validateConfiguration,
   type MaestroConfig,
   type PartialMaestroConfig,
-} from "#config/validate.ts";
+  validateConfiguration,
+  validateDirectories,
+} from '#config/validate.ts';
 
 const fileExists = async (path: string): Promise<boolean> => {
   try {
@@ -38,7 +39,8 @@ export const resolveConfiguration = (
       model: input.verifier?.model ?? DEFAULT_CONFIG.verifier.model,
       thinking: input.verifier?.thinking ?? DEFAULT_CONFIG.verifier.thinking,
       timeoutMinutes:
-        input.verifier?.timeoutMinutes ?? DEFAULT_CONFIG.verifier.timeoutMinutes,
+        input.verifier?.timeoutMinutes ??
+        DEFAULT_CONFIG.verifier.timeoutMinutes,
     },
   };
 
@@ -46,15 +48,18 @@ export const resolveConfiguration = (
 };
 
 export const loadConfiguration = async (): Promise<MaestroConfig> => {
-  const targetPath = join(process.cwd(), CONFIG_FILE_PATH);
+  const repositoryRoot = await realpath(process.cwd());
+  const targetPath = join(repositoryRoot, CONFIG_FILE_PATH);
 
   if (!(await fileExists(targetPath))) {
-    return DEFAULT_CONFIG;
+    return deepFreeze(
+      await validateDirectories({ repositoryRoot, config: DEFAULT_CONFIG }),
+    );
   }
 
   let parsed: unknown;
   try {
-    const content = await readFile(targetPath, "utf8");
+    const content = await readFile(targetPath, 'utf8');
     parsed = JSON.parse(content);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -63,6 +68,6 @@ export const loadConfiguration = async (): Promise<MaestroConfig> => {
     );
   }
 
-  const validated = validateConfiguration(parsed);
-  return resolveConfiguration(validated);
+  const config = resolveConfiguration(validateConfiguration(parsed));
+  return deepFreeze(await validateDirectories({ repositoryRoot, config }));
 };
