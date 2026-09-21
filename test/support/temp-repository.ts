@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -41,7 +41,7 @@ export const createTemporaryRepository =
     });
 
     return {
-      path,
+      path: await realpath(path), // On macOS, /var is a symlink to /private/var.
       commit: async ({ message }) => {
         await runGit({ arguments: ['add', '--all'], cwd: path });
         await runGit({
