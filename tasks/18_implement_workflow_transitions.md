@@ -20,9 +20,9 @@ Define the complete workflow state machine as pure transition logic.
 1. Define every approved event and source-to-target phase transition.
 2. Require `expectedRevision` for every transition.
 3. Increase revision exactly once for every successful transition, including a retry of the same role.
-4. Identify which role may request each transition.
-5. Reject every unapproved transition.
-6. Return a new state without mutating the input.
+4. Reject every unapproved transition.
+5. Return a new state without mutating the input.
+6. Keep role authorization in tool exposure and workflow adapters, not in the transition function.
 
 ## Implementation
 
@@ -30,7 +30,7 @@ Keep this module pure. It must not read files, run Git, create commits, or infer
 
 ## Tests
 
-Add table-driven Vitest unit tests for every approved transition and representative invalid transitions from every phase. Cover stale revisions, wrong actors, same-role retries, monotonic revisions, and immutability.
+Add minimal Vitest unit tests for one normal workflow path, one same-role retry, one spec reset, one stale revision, monotonic revisions, and input immutability.
 
 ## Completion criteria
 

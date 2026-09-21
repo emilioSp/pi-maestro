@@ -31,7 +31,7 @@ Require a recorded observation for the same builder pass. Move done to `ready-fo
 
 ## Tests
 
-Add Vitest adapter tests for done, failed, missing observation, wrong revision, changed spec, changed protocol artifact through bash, invalid result status, duplicate terminal call, and no partial write on failure.
+Add Vitest adapter tests for done and failed input schemas, derived protocol fields, one successful call, and one propagated domain error.
 
 ## Completion criteria
 

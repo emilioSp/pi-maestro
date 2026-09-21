@@ -17,24 +17,22 @@ Find the authoritative workflow state and compare it with Git, worktrees, and ar
 
 ## Work
 
-1. Discover all valid `workflow.json` files under the configured spec directory and workflow branches.
-2. Treat every `final-review` workflow as concluded and exclude it from active workflows; report any associated managed branch or worktree as an inconsistency.
-3. Select the highest revision.
-4. Block equal maximum revisions that disagree.
-5. Reconcile phase, branch, worktree, commit ancestry, handoff, escalation, observations, and active subagent facts.
-6. Detect interrupted passes, dirty worktrees, collisions, foreign resources, and unreadable state.
-7. Return structured findings without repairing anything.
+1. Find the active workflow from the configured spec directory and its expected workflow resource.
+2. Treat `final-review` as concluded and exclude it from active workflows.
+3. Reconcile the current phase, expected branch, worktree, HEAD, and terminal artifact.
+4. Detect an interrupted pass, dirty expected worktree, missing expected resource, or unreadable state.
+5. Return structured findings without repairing anything.
 
 ## Implementation
 
-Treat repository files and Git as authoritative. Session data is only a hint. A `builder-running` or `verifier-running` phase with no active process and no terminal handoff is interrupted. Do not relaunch, reset, clean, or delete.
+Treat repository files and Git as authoritative. Session data may identify the expected active resource but is not workflow truth. After restart, a `builder-running` or `verifier-running` phase without a terminal handoff is interrupted. Do not scan unrelated branches or worktrees. Do not relaunch, reset, clean, or delete.
 
 ## Tests
 
-Add Vitest integration tests for no workflow, one active workflow, archived workflows, highest revision selection, conflicting maxima, missing artifacts, wrong branch association, broken ancestry, active process, interrupted clean pass, interrupted dirty pass, and foreign worktrees.
+Add Vitest integration tests for no workflow, one active workflow, concluded workflow, missing expected artifacts, wrong expected branch, interrupted clean pass, and interrupted dirty pass.
 
 ## Completion criteria
 
-- Recovery gets one clear authoritative result or a blocking conflict.
+- Recovery gets one clear result for the active workflow.
 - Reconciliation is read-only.
-- No inconsistent workflow is silently accepted.
+- An inconsistency in the expected workflow resources blocks progress.

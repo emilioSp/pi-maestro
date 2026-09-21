@@ -4,13 +4,13 @@ Maestro checks the repository before resuming a workflow. If it finds a problem,
 
 ## Activation and resume
 
-Maestro checks the workflow when the owner runs `/maestro`, after `/resume` if Maestro was active, or when the owner asks for an inspection.
+Maestro remains inactive after `/resume`. The owner runs `/maestro` to perform checks and reactivate it, or asks for an inspection after activation.
 
-If the workflow is valid, Maestro resumes its current phase. If a builder or verifier is still running, Maestro continues monitoring it.
+If the workflow is valid, Maestro resumes its current phase. After restart, a builder or verifier phase without a terminal handoff is treated as interrupted.
 
 ## Interrupted builder or verifier pass
 
-A builder or verifier pass is interrupted when its process has stopped without producing a final handoff.
+After restart, a builder or verifier pass is interrupted when it has no final handoff.
 
 Maestro reports the last checkpoint and the worktree status.
 
@@ -51,6 +51,6 @@ After cleanup, run `/maestro` again.
 
 ## Completed final review
 
-A workflow in `final-review` has ended. Maestro does not resume it. Any remaining Maestro branch or worktree is an inconsistency.
+A workflow in `final-review` has ended. Maestro does not resume it. Any remaining Maestro branch or worktree is reported for manual cleanup.
 
 The owner controls the staged changes and the final commit. Later changes do not reopen the workflow.

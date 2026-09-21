@@ -33,7 +33,7 @@ In mixed fix-code decisions, rejected findings receive their rejection while val
 
 ## Tests
 
-Add table-driven Vitest integration tests for all-reject, all-fix, all-revise, each mixed combination, precedence of revise-spec, missing or duplicate finding decisions, unknown finding IDs, empty rejection reasons, stale revisions, fast-forward failure, and no partial mutation.
+Add table-driven Vitest integration tests for all-reject, one mixed fix-code outcome, one mixed revise-spec outcome, missing or duplicate finding decisions, unknown finding IDs, empty rejection reasons, stale revisions, fast-forward failure, and no partial mutation.
 
 ## Completion criteria
 

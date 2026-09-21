@@ -18,16 +18,11 @@ Prove that all modules work together and that the package is ready for review.
 
 ## Work
 
-1. Add full integration scenarios using temporary Git repositories and fake foreground subagents.
-2. Cover the happy path from activation and spec creation to staged final review.
-3. Cover escalation without spec change and escalation with spec reset.
-4. Cover findings rejected, fixed in code, revised in spec, and mixed decisions.
-5. Cover builder failure and explicit retry after interruption.
-6. Cover restart, active-run correlation, dirty worktrees, resource collisions, concurrent revisions, and path escape attempts.
-7. Cover product changes left by the verifier through staged, unstaged, and untracked files.
-8. Check that observations and escalation history survive resets and final squash.
-9. Check that final cleanup happens only after verified staging and that `final-review` is written only after cleanup as the last mutation.
-10. Remove redundant tests only when the same behavior remains clearly covered in its owning test file.
+1. Add one happy-path integration scenario from activation and spec creation to staged final review.
+2. Add one recovery scenario for an interrupted pass and explicit retry.
+3. Use temporary Git repositories and fake foreground subagents.
+4. Keep all other edge cases in the test file owned by their module.
+5. Remove redundant tests only when the same behavior remains clearly covered in its owning test file.
 
 ## Implementation
 

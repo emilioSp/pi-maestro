@@ -32,10 +32,10 @@ Read and validate the full escalation history before allocating an ID. Keep `rev
 
 ## Tests
 
-Add Vitest tests for sequential IDs, gaps or malformed history, duplicate option IDs, invalid recommendations, valid null recommendation, valid resolution, invalid selected option, second resolution, forbidden field changes, and atomic write failure.
+Add Vitest tests for sequential IDs, gaps or malformed history, duplicate option IDs, invalid recommendations, valid null recommendation, valid resolution, invalid selected option, second resolution, forbidden field changes, one representative unknown-field case per main schema boundary, and atomic write failure.
 
 ## Completion criteria
 
 - Escalations form an append-only history.
 - Resolution is owner data and can be written only once.
-- Unknown fields are rejected at every level.
+- Unknown fields are rejected by the closed schema.

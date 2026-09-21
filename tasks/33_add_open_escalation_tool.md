@@ -32,7 +32,7 @@ Do not write observations or a builder handoff. Do not wait for the owner. Rejec
 
 ## Tests
 
-Add Vitest adapter tests for first and later IDs, valid and null recommendation, invalid option references, wrong phase, existing terminal outcome, protected-file tampering, no observation creation, and no partial write.
+Add Vitest adapter tests for input schema validation, derived protocol fields, one successful call, and one propagated domain error.
 
 ## Completion criteria
 

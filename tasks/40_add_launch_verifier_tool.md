@@ -21,10 +21,9 @@ Expose safe foreground verifier launches from a completed builder candidate.
 1. Define input with `specId` and `expectedRevision`.
 2. Call the verifier workflow to create the next isolated verifier checkpoint.
 3. Launch `maestro.verifier` in foreground with configured model, thinking, timeout, fresh context, and verifier worktree cwd.
-4. Correlate the run with revision and candidate commit.
-5. Inspect the committed terminal handoff after the child returns.
-6. Return candidate-ready, findings, timeout, interrupted, product-modified, or protocol-error results distinctly.
-7. Never launch a builder or another verifier automatically.
+4. Inspect the committed terminal handoff against the workflow revision and candidate commit after the child returns.
+5. Return candidate-ready, findings, timeout, interrupted, product-modified, or protocol-error results distinctly.
+6. Never launch a builder or another verifier automatically.
 
 ## Implementation
 
@@ -32,7 +31,7 @@ The prompt identifies the spec and worktree and requires applicable `AGENTS.md` 
 
 ## Tests
 
-Use fake subagents for empty findings, findings, product changes, timeout, cancellation, missing handoff, dirty returned worktree, uncommitted handoff, wrong revision, wrong candidate correlation, and multiple verifier sequence numbers.
+Add adapter tests for input schema, launch-parameter mapping, one successful foreground result, one propagated workflow error, and one propagated delegation error. Use fake subagents.
 
 ## Completion criteria
 

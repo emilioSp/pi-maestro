@@ -32,7 +32,7 @@ Do not persist `reviseSpec` in the escalation JSON. Preserve all old escalation 
 
 ## Tests
 
-Add Vitest adapter tests for option and non-option decisions, unchanged contract, revised contract, invalid option, empty reason, stale revision, wrong escalation ID, already resolved escalation, inactive mode, and no automatic launch.
+Add Vitest adapter tests for input schema, decision mapping, one successful call, and one propagated domain error.
 
 ## Completion criteria
 

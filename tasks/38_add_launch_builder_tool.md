@@ -20,10 +20,9 @@ Expose safe foreground builder launches from approved workflow state.
 1. Define input with `specId`, `expectedRevision`, and an explicit retry intent when required.
 2. Call the builder workflow to validate state and create the launch checkpoint.
 3. Launch `maestro.builder` in foreground with the configured model, thinking, timeout, fresh context, and worktree cwd.
-4. Correlate the request with the workflow revision.
-5. Inspect and validate the terminal outcome after the child returns.
-6. Return done, failed, escalation, timeout, interrupted, or protocol-error results distinctly.
-7. Never relaunch automatically.
+4. Inspect and validate the terminal outcome against the workflow revision after the child returns.
+5. Return done, failed, escalation, timeout, interrupted, or protocol-error results distinctly.
+6. Never relaunch automatically.
 
 ## Implementation
 
@@ -31,7 +30,7 @@ The launch prompt identifies the spec and worktree and requires applicable `AGEN
 
 ## Tests
 
-Use fake subagents for first pass, resumed escalation pass, correction pass, explicit retry, done, failed, escalation, timeout, cancellation, missing terminal handoff, dirty returned worktree, uncommitted handoff, and mismatched correlation.
+Add adapter tests for input schema, launch-parameter mapping, one successful foreground result, one propagated workflow error, and one propagated delegation error. Use fake subagents.
 
 ## Completion criteria
 

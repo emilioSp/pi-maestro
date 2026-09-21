@@ -95,9 +95,9 @@ flowchart TD
     reviseSpec --> ready
 
     candidate --> staged[Maestro squash-merges the candidate and verifies the staging]
-    staged --> cleanup[Maestro removes workflow branches and worktrees]
-    cleanup --> finalState[Maestro marks the workflow final-review]
-    finalState --> finalSummary[Maestro summarizes the observations and hands the staged code to the owner]
+    staged --> finalState[Maestro marks the workflow final-review]
+    finalState --> cleanup[Maestro attempts workflow branch and worktree cleanup]
+    cleanup --> finalSummary[Maestro reports cleanup and hands the staged code to the owner]
     finalSummary --> workflowDone[Maestro workflow is complete]
     workflowDone --> humanReview[Owner reviews the final diff]
 
@@ -254,10 +254,10 @@ Maestro then:
 
 1. Squash-merges the candidate onto the base branch.
 2. Verifies the staged candidate.
-3. Removes the workflow branches and worktrees.
-4. Writes and stages `workflow.json` in `final-review` as the final change.
-5. Summarizes the builder observations.
-6. Hands the staged change to the owner.
+3. Writes and stages `workflow.json` in `final-review`.
+4. Attempts to remove the workflow branches and worktrees.
+5. Reports any resource that requires manual cleanup.
+6. Summarizes the builder observations and hands the staged change to the owner.
 
 `final-review` marks a completed Maestro workflow. The owner reviews the staged diff, makes any desired changes, and creates the final commit. Changes made after delivery are under the owner’s responsibility.
 

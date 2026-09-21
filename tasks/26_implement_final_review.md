@@ -22,23 +22,23 @@ Prepare the candidate as staged changes on the base branch and conclude Maestro 
 2. Require a clean and coherent base branch and managed resources.
 3. Squash the candidate onto the base branch without creating a commit.
 4. Stage and verify the candidate product changes while keeping the current phase.
-5. Remove verified workflow worktrees and branches after staging succeeds.
-6. Write and stage `workflow.json` in `final-review` as the last mutation.
-7. Return structured staging data and summarized observations for the Maestro LLM.
+5. Write and stage `workflow.json` in `final-review` after staging verification.
+6. Attempt best-effort removal of verified workflow worktrees and branches.
+7. Return structured staging data, summarized observations, and the cleanup result for the Maestro LLM.
 8. Mark the workflow concluded without waiting for an owner commit.
 
 ## Implementation
 
-Use rollback or stop-before-cleanup behavior so a failed squash or staging check does not destroy workflow resources. Do not write `final-review` until cleanup succeeds. If any earlier step fails, return an error, keep the previous phase, and leave reconciliation to report the inconsistent repository state. Never include unrelated owner changes. After `final-review`, later owner edits are outside Maestro.
+If squash or staging verification fails, return an error and keep the previous phase. After staging succeeds, write and stage `final-review`, then attempt cleanup. Cleanup failure is reported but does not roll back staging or `final-review`. Never include unrelated owner changes. After `final-review`, later owner edits are outside Maestro.
 
 Above every Git-related function, add one `// git ...` comment for each Git command it can run. Use `<...>` placeholders for runtime values.
 
 ## Tests
 
-Add Vitest integration tests for each candidate type, squash contents, staged final state, no final commit, observations data, branch and worktree cleanup, parent-directory cleanup, dirty base rejection, unexpected staging, failure before and during cleanup, unchanged phase on failure, final-review as the last mutation, and completed-workflow discovery.
+Add Vitest integration tests for each candidate type, squash contents, staged final state, no final commit, observations data, successful cleanup, cleanup failure reporting, dirty base rejection, unexpected staging, unchanged phase before final-review, and completed-workflow discovery.
 
 ## Completion criteria
 
 - The owner receives reviewable staged changes on the base branch.
-- No Maestro branch or worktree remains after success.
-- The workflow is complete at `final-review`.
+- Cleanup is attempted and its result is reported.
+- The workflow is complete at `final-review` even when cleanup requires manual follow-up.

@@ -8,7 +8,7 @@ This task depends on Task 9: Implement Git branches and worktrees.
 
 ## Objective
 
-Provide checkpoint commits and prove workflow history relationships.
+Provide checkpoint commits and verify the basic workflow history relationships needed by the MVP.
 
 ## Plan references
 
@@ -20,9 +20,7 @@ Provide checkpoint commits and prove workflow history relationships.
 1. Implement commit creation for workflow branches only.
 2. Implement staged-path inspection and exact commit lookup.
 3. Implement ancestor, parent, merge-base, and fast-forward checks.
-4. Reconstruct the approval commit as the parent of the first `builder-running` checkpoint.
-5. Prove that artifact revisions are reachable from the required checkpoint.
-6. Refuse ambiguous, rewritten, or unrelated histories.
+4. Refuse unrelated or divergent histories.
 
 ## Implementation
 
@@ -32,10 +30,10 @@ Above every Git-related function, add one `// git ...` comment for each Git comm
 
 ## Tests
 
-Add Vitest integration tests for checkpoint commits, parent discovery, linear histories, divergent histories, rewritten histories, unrelated commits, fast-forward eligibility, and accidental staged files outside the expected set.
+Add Vitest integration tests for checkpoint commits, parent discovery, linear histories, divergent histories, unrelated commits, fast-forward eligibility, and accidental staged files outside the expected set.
 
 ## Completion criteria
 
-- Higher layers can prove the approval and candidate lineage.
+- Higher layers can verify parent, ancestor, merge-base, and fast-forward relationships.
 - Base-branch commits are never created by this module.
-- Ambiguous history blocks the operation without mutation.
+- Unrelated or divergent history blocks the operation without mutation.

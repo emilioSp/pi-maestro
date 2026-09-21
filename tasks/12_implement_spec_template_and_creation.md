@@ -28,14 +28,15 @@ Distribute the approved spec template and create a new drafting spec safely.
 
 ## Implementation
 
-Perform all preflight checks before writing. Never reuse or overwrite an existing spec directory. If creation fails partway, remove only resources created by that attempt. Do not create JSON templates.
+Perform all preflight checks before writing. Never reuse or overwrite an existing spec directory. If creation fails partway, leave the partial directory in place and report its path for manual owner cleanup. A retry remains blocked until that directory is removed. Do not create JSON templates.
 
 ## Tests
 
-Add Vitest integration tests for exact template content, initial files, custom spec directory, ID insertion, initial state and observations, same-second collision, active workflow rejection, and rollback after a simulated failure.
+Add Vitest integration tests for exact template content, initial files, custom spec directory, ID insertion, initial state and observations, same-second collision, active workflow rejection, and a partial directory left after a simulated failure.
 
 ## Completion criteria
 
 - A successful call creates one complete drafting spec.
 - Existing resources are never overwritten.
 - Initial JSON files pass their domain schemas.
+- A partial creation is left for explicit owner cleanup.

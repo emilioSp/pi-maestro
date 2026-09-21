@@ -33,7 +33,7 @@ Allow `acceptanceCriterion: null` only for a finding about another spec rule. Ne
 
 ## Tests
 
-Add Vitest tests for empty findings, multiple findings, criterion linkage, null criterion, bad sequences, duplicate IDs, confidence bounds, empty evidence, uncovered failed checks, verifier-supplied rejection, owner rejection, second rejection, and unknown fields.
+Add Vitest tests for empty findings, multiple findings, criterion linkage, null criterion, bad sequences, duplicate IDs, confidence bounds, empty evidence, uncovered failed checks, verifier-supplied rejection, owner rejection, second rejection, and representative unknown-field cases.
 
 ## Completion criteria
 

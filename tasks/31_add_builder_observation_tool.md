@@ -30,7 +30,7 @@ The adapter contains no duplicate artifact logic. Its input includes only outcom
 
 ## Tests
 
-Add Vitest adapter tests for schema validation, derived fields, done, failed, wrong phase, wrong spec, duplicate call, existing-history validation, current-spec comparison, and no write on error.
+Add Vitest adapter tests for input schema validation, derived protocol fields, one successful call, and one propagated domain error.
 
 ## Completion criteria
 

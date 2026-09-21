@@ -23,7 +23,7 @@ Wire the main Pi extension without moving domain logic into the composition root
 4. Activate main Maestro tools only after successful checks.
 5. Remove only main Maestro tools on deactivation.
 6. Show activation errors through `ctx.ui.notify(..., "error")`.
-7. Restore active mode after resume only when checks and reconciliation pass.
+7. Leave Maestro inactive after resume.
 8. Keep startup silent and inactive.
 
 ## Implementation
@@ -32,7 +32,7 @@ Wire the main Pi extension without moving domain logic into the composition root
 
 ## Tests
 
-Add Vitest integration tests with a fake Pi registration context. Cover startup, activation, failed activation, toggle off, exact tool set changes, preserved foreign tools, instructions, status, error notification, suspend and resume, and one-time registration.
+Add Vitest integration tests with a fake Pi registration context. Cover startup, activation, failed activation, toggle off, exact tool set changes, preserved foreign tools, instructions, status, error notification, inactive resume, and one-time registration.
 
 ## Completion criteria
 

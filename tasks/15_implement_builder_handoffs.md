@@ -30,7 +30,7 @@ The file contains only the current builder handoff. Git history preserves older 
 
 ## Tests
 
-Add Vitest tests for valid done and failed documents, missing and extra criteria, duplicate IDs, bad statuses, missing failure reason, empty summary, unknown fields at each level, wrong identity or revision, and safe replacement.
+Add Vitest tests for valid done and failed documents, missing and extra criteria, duplicate IDs, bad statuses, missing failure reason, empty summary, representative unknown-field cases, wrong identity or revision, and safe replacement.
 
 ## Completion criteria
 

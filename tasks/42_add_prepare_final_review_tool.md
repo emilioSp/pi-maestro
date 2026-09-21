@@ -22,20 +22,20 @@ Expose the final squash, staging, cleanup, and structured owner handoff.
 2. Require `candidate-ready` and a proven candidate commit.
 3. Call the final-review workflow.
 4. Return base branch, candidate identity, staged summary, observations summary, cleanup result, and final phase.
-5. Return a structured error with the previous phase when staging or cleanup fails before the final transition.
+5. Return a structured error with the previous phase when squash or staging verification fails before the final transition.
 6. Clearly state in structured data that Maestro is concluded and the owner controls later edits and the final commit.
 7. Reject repeated preparation of an already concluded workflow.
 
 ## Implementation
 
-Do not generate the human summary inside the deterministic tool. Return structured data for the Maestro LLM. Do not commit, push, wait for owner confirmation, or keep workflow resources after success.
+Do not generate the human summary inside the deterministic tool. Return structured data for the Maestro LLM. Do not commit, push, or wait for owner confirmation. Attempt cleanup after `final-review` and report any resources that require manual cleanup.
 
 ## Tests
 
-Add Vitest adapter tests for a no-finding candidate, rejected findings candidate, dirty base, stale revision, failed staging verification, cleanup failure with unchanged phase, successful final-review as the last mutation, successful result fields, inactive mode, repeated call, and proof that no final commit exists.
+Add Vitest adapter tests for input schema, structured result mapping including cleanup status, one successful call, and one propagated domain error.
 
 ## Completion criteria
 
 - The result contains everything needed for the final owner message.
-- Successful execution leaves staged changes and no workflow resources.
+- Successful execution leaves staged changes and reports the cleanup result.
 - The tool cannot reopen or extend final review.

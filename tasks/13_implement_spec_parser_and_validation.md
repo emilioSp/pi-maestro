@@ -33,7 +33,7 @@ Do not attempt semantic interpretation. The Maestro LLM owns semantic review and
 
 ## Tests
 
-Add Vitest unit tests with focused fixtures for every accepted and rejected rule. Cover malformed headings, duplicate sections, reordered sections, placeholders, missing goals, bad IDs, duplicate criterion fields, undeclared prototypes, path escape, uppercase extensions, and valid optional subsections.
+Add Vitest unit tests with focused fixtures for every accepted and rejected rule. Cover malformed headings, duplicate sections, reordered sections, placeholders, missing goals, bad IDs, duplicate criterion fields, undeclared prototypes, path escape, uppercase extensions, and valid optional subsections. Use representative malformed-field cases instead of testing every nested field separately.
 
 ## Completion criteria
 

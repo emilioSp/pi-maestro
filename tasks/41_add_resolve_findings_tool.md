@@ -32,7 +32,7 @@ Keep the adapter thin. If any decision revises the spec, that outcome has preced
 
 ## Tests
 
-Add Vitest adapter tests for every single and mixed outcome, missing findings, duplicates, unknown IDs, reason rules, stale revision, inactive mode, transition result data, and no partial update after invalid input.
+Add Vitest adapter tests for input schema, decision mapping, one successful call, and one propagated domain error.
 
 ## Completion criteria
 

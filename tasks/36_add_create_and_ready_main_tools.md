@@ -31,7 +31,7 @@ Tool files are Pi adapters only. They call configuration, path, spec, and workfl
 
 ## Tests
 
-Add Vitest adapter tests for successful creation, collision, active workflow, custom directory, valid ready transition, every validation error shape, stale revision, inactive mode, and no automatic commit.
+Add Vitest adapter tests for both input schemas, derived protocol fields, one successful call per tool, and one propagated domain error per tool.
 
 ## Completion criteria
 

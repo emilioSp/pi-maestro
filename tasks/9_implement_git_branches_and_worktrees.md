@@ -21,7 +21,7 @@ Manage Maestro branch and worktree resources with strict ownership checks.
 2. Implement branch existence, creation, fast-forward, and deletion operations.
 3. Implement worktree listing, lookup, creation, cleanliness checks, and removal.
 4. Create parent directories only when needed and remove them only when empty.
-5. Detect all branch, path, and worktree collisions before mutation.
+5. Stop at the first branch, path, or worktree collision before mutation.
 6. Refuse to reuse or delete a resource unless its workflow ownership can be proved.
 
 ## Implementation
@@ -32,10 +32,10 @@ Above every Git-related function, add one `// git ...` comment for each Git comm
 
 ## Tests
 
-Add Vitest integration tests for builder and verifier creation, sequence numbers, parent directories, collisions, registered-path mismatch, dirty worktrees, safe cleanup, refusal to delete foreign resources, and custom worktree directories.
+Add Vitest integration tests for builder and verifier creation, sequence numbers, parent directories, one representative collision, registered-path mismatch, dirty worktrees, safe cleanup, refusal to delete foreign resources, and custom worktree directories.
 
 ## Completion criteria
 
 - Resource creation is deterministic.
-- All collisions are reported together before mutation.
+- The first collision blocks mutation with a clear error.
 - Dirty and foreign resources remain untouched.

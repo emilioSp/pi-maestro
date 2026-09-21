@@ -28,7 +28,7 @@ Coordinate spec creation, readiness, and the exceptional spec-reset path.
 
 ## Implementation
 
-Run all safety checks before mutation. The reset must stop on dirty, ambiguous, or foreign resources. Do not create an archive copy of the old spec; Git history is the archive.
+The in-place spec reset remains part of the MVP. Do not replace it with manual abandonment or a new spec ID. Run all safety checks before mutation. The reset must stop on dirty, ambiguous, or foreign resources. Do not create an archive copy of the old spec; Git history is the archive.
 
 ## Tests
 

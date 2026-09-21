@@ -28,11 +28,11 @@ Expose the child-only terminal tool for verifier evidence and findings.
 
 ## Implementation
 
-Do not expose file lists or diff summaries in the product-modified error. Use fixed read-only Git commands. Do not restore, delete, move, stage, or commit product files.
+The product-modified error contains only `PRODUCT_FILES_MODIFIED` and a clear message. Do not expose file lists, diff summaries, or suggested commands. Do not restore, delete, move, stage, or commit product files.
 
 ## Tests
 
-Add Vitest adapter tests for empty findings, findings, wrong criterion IDs, invalid rejection, staged, unstaged, and untracked changes, count fields, fixed commands, no leaked paths, clean retry after manual restoration, and no write on rejection.
+Add Vitest adapter tests for input schema validation, derived protocol fields, one successful call, and propagation of the product-modified domain error.
 
 ## Completion criteria
 

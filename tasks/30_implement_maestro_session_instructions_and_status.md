@@ -8,7 +8,7 @@ This task depends on Task 29: Implement Maestro checks and activation.
 
 ## Objective
 
-Keep Maestro mode visible and resumable without making session state authoritative.
+Keep Maestro mode visible without making session state authoritative.
 
 ## Plan references
 
@@ -17,8 +17,8 @@ Keep Maestro mode visible and resumable without making session state authoritati
 
 ## Work
 
-1. Persist whether Maestro mode was active when the Pi session was suspended.
-2. Restore mode after `/resume` only after activation checks and reconciliation pass.
+1. Keep the current Maestro activation state in the live session only.
+2. Leave Maestro inactive after `/resume`; the owner must use `/maestro` to reactivate it.
 3. Build Maestro instructions for authority, owner dialogue, semantic spec review, tool use, and no normal product edits.
 4. Build status text for active mode, current spec ID, phase, and blocking state.
 5. Hide Maestro status and instructions while mode is inactive.
@@ -31,10 +31,10 @@ Do not put workflow truth only in session state. Instructions must tell the LLM 
 
 ## Tests
 
-Add Vitest tests for inactive state, active state without a workflow, each phase label, blocking reconciliation, suspend and resume, failed resume checks, completed final review, and no repository mutation.
+Add Vitest tests for inactive state, active state without a workflow, each phase label, blocking reconciliation, inactive state after resume, completed final review, and no repository mutation.
 
 ## Completion criteria
 
 - UI state always follows successful activation.
-- Resume cannot bypass repository reconciliation.
+- Reactivation after resume uses the normal `/maestro` checks.
 - The instruction text agrees with the owner, builder, and verifier authority model.

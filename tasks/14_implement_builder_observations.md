@@ -23,7 +23,7 @@ Validate and append immutable builder pass observations.
 3. Validate result statuses, observations, breakage values, notes, and failure reasons.
 4. Derive the next sequential `B<n>` ID.
 5. Append exactly one pass for a builder revision.
-6. Keep all existing passes byte-equivalent in meaning and reject rewrites.
+6. Append the new pass without accepting replacement data for existing passes.
 7. Validate only the new pass against the current spec acceptance criteria.
 8. Read and write the document atomically.
 
@@ -33,7 +33,7 @@ For `done`, require exactly all current acceptance criteria and the complete gre
 
 ## Tests
 
-Add Vitest tests for initial empty history, done and failed passes, derived IDs, duplicate revisions, unknown fields, missing sensitive-result text, immutable history, an old pass from an older spec revision, current semantic mismatch, and write failure.
+Add Vitest tests for initial empty history, done and failed passes, derived IDs, duplicate revisions, one representative unknown-field case per main schema boundary, missing sensitive-result text, an old pass from an older spec revision, current semantic mismatch, and write failure.
 
 ## Completion criteria
 
