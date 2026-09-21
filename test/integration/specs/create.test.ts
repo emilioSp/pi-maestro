@@ -1,0 +1,134 @@
+import { createHash } from 'node:crypto';
+import { access, mkdtemp, readFile, rm, stat } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, describe, expect, it } from 'vitest';
+import { DEFAULT_CONFIG } from '#config/defaults.ts';
+import { getMaestroPaths } from '#paths.ts';
+import { createSpec } from '#specs/create.ts';
+import { loadSpecTemplate } from '#specs/template.ts';
+import { readWorkflowState } from '#workflow/state/store.ts';
+
+const INSTANT = Temporal.Instant.from('2026-03-21T14:30:52Z');
+const SPEC_ID = '20260321-143052-add-weather-alerts';
+const TEMPLATE_SHA256 =
+  'dedcc9dd4793793b4aedbaf080b8acdb091841704762334642bad3eb3fe5839d';
+const temporaryDirectories: string[] = [];
+
+const createWorkspace = async ({
+  specDirectory = 'custom-specs',
+}: {
+  specDirectory?: string;
+} = {}) => {
+  const repositoryRoot = await mkdtemp(join(tmpdir(), 'pi-maestro-spec-'));
+  temporaryDirectories.push(repositoryRoot);
+  const paths = getMaestroPaths({
+    repositoryRoot,
+    config: {
+      ...DEFAULT_CONFIG,
+      specDirectory: join(repositoryRoot, specDirectory),
+      worktreeDirectory: join(repositoryRoot, '.worktree'),
+    },
+  });
+  return { repositoryRoot, paths };
+};
+
+afterEach(async () => {
+  await Promise.all(
+    temporaryDirectories
+      .splice(0)
+      .map((path) => rm(path, { force: true, recursive: true })),
+  );
+});
+
+describe('spec template and creation', () => {
+  it('loads the exact approved ten-section template', async () => {
+    const template = await loadSpecTemplate();
+    expect(createHash('sha256').update(template).digest('hex')).toBe(
+      TEMPLATE_SHA256,
+    );
+    expect(template.match(/^## \d+\./gm)).toHaveLength(10);
+  });
+
+  it('creates a drafting spec in the configured directory', async () => {
+    const { paths } = await createWorkspace();
+
+    const created = await createSpec({
+      paths,
+      title: 'Add Weather Alerts',
+      baseBranch: 'main',
+      activeWorkflowSpecId: null,
+      instant: INSTANT,
+    });
+
+    expect(created.specId).toBe(SPEC_ID);
+    expect(created.specPath).toBe(join(paths.specDirectory, SPEC_ID));
+    await expect(readFile(created.specFilePath, 'utf8')).resolves.toContain(
+      `# ${SPEC_ID}: Add Weather Alerts`,
+    );
+    await expect(
+      readWorkflowState({ path: created.workflowPath }),
+    ).resolves.toEqual({
+      version: '1.0.0',
+      specId: SPEC_ID,
+      revision: 1,
+      phase: 'drafting-spec',
+      baseBranch: 'main',
+    });
+    await expect(
+      readFile(created.observationsPath, 'utf8').then(JSON.parse),
+    ).resolves.toEqual({
+      version: '1.0.0',
+      specId: SPEC_ID,
+      passes: [],
+    });
+    expect((await stat(paths.getEscalationsPath(SPEC_ID))).isDirectory()).toBe(
+      true,
+    );
+    expect((await stat(paths.getPrototypesPath(SPEC_ID))).isDirectory()).toBe(
+      true,
+    );
+  });
+
+  it('blocks a same-second collision without overwriting the existing spec', async () => {
+    const { paths } = await createWorkspace();
+    const first = await createSpec({
+      paths,
+      title: 'Add Weather Alerts',
+      baseBranch: 'main',
+      activeWorkflowSpecId: null,
+      instant: INSTANT,
+    });
+    const before = await readFile(first.specFilePath, 'utf8');
+
+    await expect(
+      createSpec({
+        paths,
+        title: 'Add Weather Alerts',
+        baseBranch: 'main',
+        activeWorkflowSpecId: null,
+        instant: INSTANT,
+      }),
+    ).rejects.toThrow(`Spec directory already exists: ${first.specPath}.`);
+    await expect(readFile(first.specFilePath, 'utf8')).resolves.toBe(before);
+  });
+
+  it('rejects creation while another workflow is active without writing', async () => {
+    const { paths } = await createWorkspace();
+
+    await expect(
+      createSpec({
+        paths,
+        title: 'Add Weather Alerts',
+        baseBranch: 'main',
+        activeWorkflowSpecId: '20260320-120000-current-workflow',
+        instant: INSTANT,
+      }),
+    ).rejects.toThrow(
+      'Workflow 20260320-120000-current-workflow is already active.',
+    );
+    await expect(access(paths.specDirectory)).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
+  });
+});

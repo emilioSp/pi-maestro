@@ -21,7 +21,7 @@ describe('workflow state schema', () => {
         .additionalProperties,
     ).toBe(false);
 
-    for (const phase of WORKFLOW_PHASES) {
+    for (const phase of Object.values(WORKFLOW_PHASES)) {
       expect(validateWorkflowState({ ...validState, phase })).toEqual({
         ...validState,
         phase,

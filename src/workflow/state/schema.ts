@@ -4,30 +4,30 @@ import { isValidSpecId, SPEC_ID_PATTERN } from '#ids.ts';
 
 export const WORKFLOW_STATE_VERSION = '1.0.0';
 
-export const WORKFLOW_PHASES = [
-  'drafting-spec',
-  'ready-for-builder',
-  'builder-running',
-  'escalation-decision',
-  'builder-failed',
-  'ready-for-verifier',
-  'verifier-running',
-  'findings-decision',
-  'candidate-ready',
-  'final-review',
-] as const;
+export const WORKFLOW_PHASES = {
+  DRAFTING_SPEC: 'drafting-spec',
+  READY_FOR_BUILDER: 'ready-for-builder',
+  BUILDER_RUNNING: 'builder-running',
+  ESCALATION_DECISION: 'escalation-decision',
+  BUILDER_FAILED: 'builder-failed',
+  READY_FOR_VERIFIER: 'ready-for-verifier',
+  VERIFIER_RUNNING: 'verifier-running',
+  FINDINGS_DECISION: 'findings-decision',
+  CANDIDATE_READY: 'candidate-ready',
+  FINAL_REVIEW: 'final-review',
+} as const;
 
 export const WorkflowPhaseSchema = Type.Union([
-  Type.Literal('drafting-spec'),
-  Type.Literal('ready-for-builder'),
-  Type.Literal('builder-running'),
-  Type.Literal('escalation-decision'),
-  Type.Literal('builder-failed'),
-  Type.Literal('ready-for-verifier'),
-  Type.Literal('verifier-running'),
-  Type.Literal('findings-decision'),
-  Type.Literal('candidate-ready'),
-  Type.Literal('final-review'),
+  Type.Literal(WORKFLOW_PHASES.DRAFTING_SPEC),
+  Type.Literal(WORKFLOW_PHASES.READY_FOR_BUILDER),
+  Type.Literal(WORKFLOW_PHASES.BUILDER_RUNNING),
+  Type.Literal(WORKFLOW_PHASES.ESCALATION_DECISION),
+  Type.Literal(WORKFLOW_PHASES.BUILDER_FAILED),
+  Type.Literal(WORKFLOW_PHASES.READY_FOR_VERIFIER),
+  Type.Literal(WORKFLOW_PHASES.VERIFIER_RUNNING),
+  Type.Literal(WORKFLOW_PHASES.FINDINGS_DECISION),
+  Type.Literal(WORKFLOW_PHASES.CANDIDATE_READY),
+  Type.Literal(WORKFLOW_PHASES.FINAL_REVIEW),
 ]);
 
 export const WorkflowStateSchema = Type.Object(
