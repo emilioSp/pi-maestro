@@ -10,7 +10,7 @@ Questo documento riassume le semplificazioni approvate per i Task 9–44. I task
 ## Test di schema e stato
 
 3. **Schemi chiusi:** gli schemi continuano a rifiutare campi sconosciuti, ma i test usano casi rappresentativi per i confini principali invece di verificare ogni campo annidato.
-4. **Transizioni:** i test coprono un percorso normale, un retry, un reset della spec, una revisione stale, l’incremento monotono della revisione e l’immutabilità dell’input. Non enumerano tutte le transizioni o i salti vietati.
+4. **Transizioni:** i test coprono un percorso normale, un retry, una revisione stale, l’incremento monotono della revisione e l’immutabilità dell’input. Non enumerano tutte le transizioni o i salti vietati.
 5. **Autorizzazione dei ruoli:** resta negli allowlist dei tool e negli adapter. La funzione pura delle transizioni non riceve o valida l’actor.
 
 ## Discovery e recovery
@@ -24,12 +24,12 @@ Questo documento riassume le semplificazioni approvate per i Task 9–44. I task
 
 10. **Creazione parziale:** se la creazione iniziale della spec fallisce, Maestro lascia i file già creati e segnala il percorso. L’owner esegue la pulizia manuale prima del retry.
 11. **Evidenza builder:** il builder handoff conserva l’evidenza del passaggio corrente. Non esiste una storia separata delle observations; Git conserva gli handoff precedenti.
-12. **Reset della spec:** il reset della stessa spec resta nell’MVP. Non viene sostituito da abbandono manuale e nuovo spec ID.
+12. **Revisione della spec:** una spec approvata non viene riscritta dentro un workflow attivo. L’owner abbandona manualmente il workflow e crea una nuova spec con un nuovo ID.
 
 ## Verifier e finding
 
 13. **Modifiche del verifier:** `PRODUCT_FILES_MODIFIED` contiene solo il codice errore e un messaggio chiaro. Non restituisce conteggi, percorsi, diff o comandi Git suggeriti.
-14. **Decisioni sui finding:** i test coprono tutti respinti, almeno un `fix-code` e almeno un `revise-spec`. Non enumerano tutte le combinazioni miste.
+14. **Decisioni sui finding:** i test coprono tutti respinti e almeno un `fix-code`. Un cambio del contratto richiede abbandono manuale.
 
 ## Final review
 

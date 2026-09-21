@@ -73,13 +73,12 @@ flowchart TD
     ownerAnswer --> escalationOutcome{Does the contract change?}
     escalationOutcome -->|No| recordContinue[Maestro records the resolution]
     recordContinue --> build
-    escalationOutcome -->|Yes| recordRevision[Maestro records the resolution and starts the spec reset]
-    recordRevision --> reviseSpec
+    escalationOutcome -->|Yes| manualAbandon[Owner abandons and cleans up manually]
 
     buildOutcome -->|Failed| builderFailed[Workflow stops for owner triage]
     builderFailed --> retryBuilder{Retry the builder?}
     retryBuilder -->|Yes| build
-    retryBuilder -->|No| manualAbandon[Owner abandons and cleans up manually]
+    retryBuilder -->|No| manualAbandon
 
     buildOutcome -->|Done| verify[Independent verifier regenerates every proof]
     verify --> findings{Findings?}
@@ -91,8 +90,7 @@ flowchart TD
     ownerFindings -->|Code must change| returnBuilder[Maestro returns the findings to the builder branch]
     returnBuilder --> build
 
-    ownerFindings -->|Spec must change| reviseSpec[Owner and Maestro revise the spec]
-    reviseSpec --> ready
+    ownerFindings -->|Spec must change| manualAbandon
 
     candidate --> staged[Maestro squash-merges the candidate and verifies the staging]
     staged --> finalState[Maestro marks the workflow final-review]
@@ -105,7 +103,7 @@ flowchart TD
     adjust --> humanReview
     humanReview -->|Satisfied| finalCommit[Owner creates the final commit]
 
-    linkStyle 0,1,2,3,15,16,17,24,25,26,27,28,29,32 stroke:#2e7d32,stroke-width:3px
+    linkStyle 0,1,2,3,14,15,16,22,23,25,26,27,30 stroke:#2e7d32,stroke-width:3px
 ```
 
 ## Workflow phases
@@ -177,9 +175,9 @@ The builder opens an escalation when progress needs an owner decision. The escal
 The owner chooses one path:
 
 - Continue with the current spec. Maestro records the answer and prepares another builder pass.
-- Revise the spec. Maestro returns the workflow to `drafting-spec` and preserves the durable history.
+- Change the approved contract. The owner abandons the workflow manually and creates a new spec.
 
-Each escalation stays in the workflow history.
+Each recorded escalation stays in the workflow history.
 
 ### Example
 
@@ -226,9 +224,8 @@ The owner chooses one action for each finding:
 |---|---|
 | `reject` | Requires and records the owner’s reason. When every finding is rejected, the candidate becomes ready. |
 | `fix-code` | Keeps the current spec and starts another builder cycle. |
-| `revise-spec` | Returns the workflow to `drafting-spec`. |
 
-When decisions are mixed, `revise-spec` has priority. Without it, any `fix-code` decision starts another builder cycle.
+When decisions are mixed, any `fix-code` decision starts another builder cycle. If the approved contract must change, the owner abandons the workflow manually and creates a new spec.
 
 ### Example
 

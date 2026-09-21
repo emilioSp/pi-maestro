@@ -593,13 +593,12 @@ L’estensione non interpreta né valida la struttura della spec. Maestro, build
 2. L’escalation rappresenta una decisione dell’owner.
 3. Il builder scrive l’escalation, la commette e termina.
 4. Non aspetta in processo.
-5. Il maestro registra la risposta dell’owner con `maestro_resolve_escalation`.
-6. Il tool riceve `specId`, `expectedRevision`, `escalationId`, la resolution e il booleano `reviseSpec`.
-7. La resolution persistita contiene solo `selectedOptionId`, `decision` e `reason`; `reviseSpec` serve alla macchina a stati e non entra nell’artefatto.
-8. Con `reviseSpec: false`, il workflow passa a `ready-for-builder` senza lanciare automaticamente il builder.
-9. Con `reviseSpec: true`, il workflow usa il reset della spec sulla base branch.
-10. Maestro imposta `reviseSpec: true` solo dopo una richiesta esplicita dell’owner.
-11. Le escalation non vengono riutilizzate o eliminate; dopo la creazione cambiano solo `revision` e `resolution`.
+5. Il maestro registra la risposta dell’owner con `maestro_resolve_escalation` quando la spec approvata resta valida.
+6. Il tool riceve `specId`, `expectedRevision`, `escalationId` e la resolution.
+7. La resolution persistita contiene solo `selectedOptionId`, `decision` e `reason`.
+8. Una resolution valida porta a `ready-for-builder` senza lanciare automaticamente il builder.
+9. Se l’owner vuole cambiare il contratto approvato, Maestro non chiama il tool: il workflow viene abbandonato manualmente e la nuova spec usa un nuovo ID.
+10. Le escalation non vengono riutilizzate o eliminate; dopo la creazione cambiano solo `revision` e `resolution`.
 
 <a id="plan-section-3-6"></a>
 
@@ -608,9 +607,9 @@ L’estensione non interpreta né valida la struttura della spec. Maestro, build
 1. Un finding è un’osservazione tecnica.
 2. Non è una domanda.
 3. Blocca il workflow.
-4. L’owner decide esplicitamente come trattarlo: respingerlo, accettarlo richiedendo una correzione del codice oppure cambiare il contratto della spec.
+4. L’owner decide esplicitamente se respingerlo o richiedere una correzione del codice.
 5. Solo il maestro registra il rifiuto deciso dall’owner.
-6. La spec viene riscritta solo quando l’owner decide che il contratto è errato o incompleto. Un normale finding sul codice non modifica la spec.
+6. Se il finding mostra che il contratto approvato deve cambiare, il workflow viene abbandonato manualmente e la nuova spec usa un nuovo ID.
 7. Il verifier successivo rigenera tutto da zero.
 
 `maestro_resolve_findings` riceve una decisione per ogni finding corrente:
@@ -621,12 +620,9 @@ reject
 
 fix-code
   mantiene la spec e richiede un nuovo builder pass
-
-revise-spec
-  avvia il reset della spec sulla base branch
 ```
 
-Ogni finding appare esattamente una volta e la risoluzione usa `expectedRevision`. Se almeno una decisione è `revise-spec`, prevale il reset della spec. Altrimenti, almeno un `fix-code` porta a `ready-for-builder`; se tutte le decisioni sono `reject`, il workflow passa a `candidate-ready`. Nel percorso `fix-code`, i finding respinti ricevono `rejection` e quelli validi restano senza rejection per il builder. Maestro non deduce azioni dal testo e chiama il tool solo dopo decisioni esplicite su tutti i finding.
+Ogni finding appare esattamente una volta e la risoluzione usa `expectedRevision`. Almeno un `fix-code` porta a `ready-for-builder`; se tutte le decisioni sono `reject`, il workflow passa a `candidate-ready`. Nel percorso `fix-code`, i finding respinti ricevono `rejection` e quelli validi restano senza rejection per il builder. Maestro non deduce azioni dal testo e chiama il tool solo dopo decisioni esplicite su tutti i finding.
 
 <a id="plan-section-3-7"></a>
 
@@ -707,13 +703,12 @@ flowchart TD
     ownerAnswer --> escalationOutcome{Does the contract change?}
     escalationOutcome -->|No| recordContinue[Maestro records the resolution]
     recordContinue --> build
-    escalationOutcome -->|Yes| recordRevision[Maestro records the resolution and starts the spec reset]
-    recordRevision --> reviseSpec
+    escalationOutcome -->|Yes| manualAbandon[Owner abandons and cleans up manually]
 
     buildOutcome -->|Failed| builderFailed[Workflow stops for owner triage]
     builderFailed --> retryBuilder{Retry the builder?}
     retryBuilder -->|Yes| build
-    retryBuilder -->|No| manualAbandon[Owner abandons and cleans up manually]
+    retryBuilder -->|No| manualAbandon
 
     buildOutcome -->|Done| verify[Independent verifier regenerates every proof]
     verify --> findings{Findings?}
@@ -725,8 +720,7 @@ flowchart TD
     ownerFindings -->|Code must change| returnBuilder[Maestro returns the findings to the builder branch]
     returnBuilder --> build
 
-    ownerFindings -->|Spec must change| reviseSpec[Owner and Maestro revise the spec]
-    reviseSpec --> ready
+    ownerFindings -->|Spec must change| manualAbandon
 
     candidate --> staged[Maestro squash-merges the candidate and verifies the staging]
     staged --> finalState[Maestro marks the workflow final-review]
@@ -739,7 +733,7 @@ flowchart TD
     adjust --> humanReview
     humanReview -->|Satisfied| finalCommit[Owner creates the final commit]
 
-    linkStyle 0,1,2,3,15,16,17,24,25,26,27,28,29,32 stroke:#2e7d32,stroke-width:3px
+    linkStyle 0,1,2,3,14,15,16,22,23,25,26,27,30 stroke:#2e7d32,stroke-width:3px
 ```
 
 `docs/workflow.md` deve includere anche questo principio umano di semplicità:
@@ -1298,7 +1292,7 @@ Responsabilità:
 2. `maestro_mark_spec_ready` verifica stato, revisione ed esistenza di `spec.md`, quindi imposta `ready-for-builder` dopo l’approvazione dell’owner.
 3. `maestro_inspect_workflow` ricostruisce e controlla lo stato.
 4. `maestro_launch_builder` e `maestro_launch_verifier` preparano Git, aggiornano lo stato e avviano il subagent.
-5. `maestro_resolve_escalation` e `maestro_resolve_findings` registrano solo decisioni esplicite dell’owner e applicano la transizione validata, incluso il reset della spec quando richiesto esplicitamente.
+5. `maestro_resolve_escalation` e `maestro_resolve_findings` registrano solo decisioni esplicite dell’owner che mantengono valida la spec approvata. Un cambio del contratto richiede abbandono manuale e una nuova spec.
 6. `maestro_prepare_final_review` esegue lo squash staged, verifica lo staging, scrive e mette in staging `final-review`, quindi tenta il cleanup best-effort di branch e worktree. Restituisce dati strutturati sulla consegna e sul risultato del cleanup. Un errore precedente a `final-review` lascia la fase invariata; un errore di cleanup richiede intervento manuale ma non riapre il workflow.
 7. I tool child-only scrivono e validano gli artefatti terminali. `maestro_record_verifier_handoff` restituisce una diagnostica strutturata e non scrive nulla quando rileva modifiche di prodotto residue.
 8. La prima versione non offre un tool per abbandonare un workflow. L’owner gestisce manualmente risorse e artefatti quando decide di abbandonarlo.
@@ -1452,8 +1446,7 @@ final-review
 | Owner approva la spec pronta da committare | `ready-for-builder` | Maestro |
 | Maestro avvia un builder | `builder-running` | Maestro |
 | Builder apre un’escalation | `escalation-decision` | Builder child-only |
-| Owner risolve un’escalation senza cambiare la spec | `ready-for-builder` | Maestro |
-| Owner risolve un’escalation chiedendo di cambiare la spec | `drafting-spec` | Maestro |
+| Owner risolve un’escalation mantenendo la spec | `ready-for-builder` | Maestro |
 | Builder termina con `failed` | `builder-failed` | Builder child-only |
 | Builder termina con `done` | `ready-for-verifier` | Builder child-only |
 | Maestro avvia un verifier | `verifier-running` | Maestro |
@@ -1461,21 +1454,9 @@ final-review
 | Verifier produce `findings: []` | `candidate-ready` | Verifier child-only |
 | Owner respinge tutti i finding | `candidate-ready` | Maestro |
 | Owner richiede correzioni | `ready-for-builder` | Maestro |
-| Owner richiede una nuova spec da finding o escalation | `drafting-spec` | Maestro |
 | Maestro prepara lo squash staged, conclude il workflow e tenta il cleanup di branch e worktree | `final-review` | Maestro |
 
-La riscrittura della spec è un percorso eccezionale che può essere richiesto da un finding oppure dalla resolution di un’escalation. Quando l’owner decide di cambiare il contratto:
-
-1. Maestro verifica che la base branch e tutte le risorse gestite siano coerenti e pulite. In caso contrario, il reset si blocca senza modificare nulla.
-2. Porta sulla base branch tutte le escalation.
-3. Non porta il vecchio codice, `builder.json`, `verifier.json` o i finding; la resolution dell’escalation che ha causato il reset resta invece nella storia durevole.
-4. Mantiene lo stesso `specId`, una `revision` monotona e il `baseBranch`.
-5. Imposta `drafting-spec` sulla base branch senza creare un commit.
-6. Owner e Maestro sostituiscono il contenuto dello stesso `spec.md`; non viene creato un archivio separato della vecchia spec.
-7. Dopo la nuova approvazione e la transizione a `ready-for-builder`, l’owner committa spec, stato e storia durevole sulla base branch.
-8. Solo dopo il commit, Maestro elimina i vecchi branch e worktree verificati.
-9. Maestro ricrea `builder/<id>` dal nuovo commit di approvazione e il ciclo riparte.
-10. La storia Git conserva la versione precedente della spec.
+Una spec approvata non torna a `drafting-spec`. Se un’escalation o un finding richiede un cambio del contratto, Maestro non modifica il workflow: l’owner lo abbandona manualmente, pulisce le risorse gestite e crea una nuova spec con un nuovo ID.
 
 Se i finding richiedono solo correzioni del codice, la spec non cambia e il workflow usa il normale ritorno a `ready-for-builder`. Se tutti i finding vengono respinti con una ragione, passa a `candidate-ready`.
 
@@ -1490,20 +1471,19 @@ Quando `maestro_prepare_final_review` termina con successo, il workflow è già 
 35. Sulla base branch, `drafting-spec` può restare non committato; `ready-for-builder` diventa autorevole solo con il commit dell’owner insieme alla spec.
 36. Nei branch del workflow, Maestro committa ogni transizione prima di avviare il subagent successivo.
 37. Builder e verifier committano il nuovo stato insieme al proprio handoff.
-38. Una resolution che non cambia la spec viene committata da Maestro insieme alla transizione `ready-for-builder`.
-39. Una resolution che cambia la spec entra nel percorso di reset; resolution, storia durevole, spec e nuovo `ready-for-builder` diventano autorevoli con il successivo commit dell’owner sulla base branch.
-40. La richiesta di correzioni viene committata da Maestro insieme alla transizione `ready-for-builder`.
-41. Il rifiuto dei finding viene committato da Maestro insieme alla transizione `candidate-ready`.
-42. Maestro prepara e verifica lo staging del candidate mantenendo la fase precedente.
-43. Dopo aver verificato lo staging, Maestro scrive e mette in staging `workflow.json` in fase `final-review`; il file entra nel successivo commit dell’owner.
-44. Maestro tenta quindi la pulizia best-effort dei branch e dei worktree gestiti del workflow e restituisce il risultato.
-45. Se squash, staging o verifica falliscono prima della transizione finale, Maestro restituisce un errore e non scrive `final-review`. Un errore di pulizia successivo viene segnalato senza annullare la conclusione.
-46. `maestro_prepare_final_review` restituisce dati strutturati sul candidate e sullo staging; il Maestro LLM li trasforma nel riepilogo finale per l’owner e indica che il codice è staged sulla base branch.
-47. La consegna conclude il workflow senza attendere il commit dell’owner.
-48. `final-review` è l’ultima fase persistita. Non esiste una fase `completed`; ogni workflow in `final-review` è concluso e archiviato.
-49. Branch o worktree Maestro associati a un workflow in `final-review` costituiscono uno stato incoerente e non riaprono il workflow.
-50. L’owner può modificare o rimuovere lo staging e crea il commit finale sotto la propria responsabilità.
-51. Dopo la conclusione non esiste una conferma del commit e Maestro non verifica le modifiche successive dell’owner.
+38. Una resolution che mantiene la spec viene committata da Maestro insieme alla transizione `ready-for-builder`.
+39. La richiesta di correzioni viene committata da Maestro insieme alla transizione `ready-for-builder`.
+40. Il rifiuto dei finding viene committato da Maestro insieme alla transizione `candidate-ready`.
+41. Maestro prepara e verifica lo staging del candidate mantenendo la fase precedente.
+42. Dopo aver verificato lo staging, Maestro scrive e mette in staging `workflow.json` in fase `final-review`; il file entra nel successivo commit dell’owner.
+43. Maestro tenta quindi la pulizia best-effort dei branch e dei worktree gestiti del workflow e restituisce il risultato.
+44. Se squash, staging o verifica falliscono prima della transizione finale, Maestro restituisce un errore e non scrive `final-review`. Un errore di pulizia successivo viene segnalato senza annullare la conclusione.
+45. `maestro_prepare_final_review` restituisce dati strutturati sul candidate e sullo staging; il Maestro LLM li trasforma nel riepilogo finale per l’owner e indica che il codice è staged sulla base branch.
+46. La consegna conclude il workflow senza attendere il commit dell’owner.
+47. `final-review` è l’ultima fase persistita. Non esiste una fase `completed`; ogni workflow in `final-review` è concluso e archiviato.
+48. Branch o worktree Maestro associati a un workflow in `final-review` costituiscono uno stato incoerente e non riaprono il workflow.
+49. L’owner può modificare o rimuovere lo staging e crea il commit finale sotto la propria responsabilità.
+50. Dopo la conclusione non esiste una conferma del commit e Maestro non verifica le modifiche successive dell’owner.
 
 <a id="plan-section-6-15"></a>
 
@@ -1682,7 +1662,7 @@ Decisione presa sulle collisioni:
 2. Maestro mostra all’owner tutte le risorse in collisione.
 3. Maestro non riutilizza, rinomina, sovrascrive o elimina risorse trovate in collisione o non dimostrate come proprie del workflow.
 4. Maestro non genera automaticamente un nuovo ID con un suffisso.
-5. Maestro può eliminare branch e worktree verificati come propri del workflow solo durante la conclusione eseguita da `maestro_prepare_final_review` oppure durante il reset esplicito della spec dopo il nuovo commit di approvazione. Il reset preserva prima le escalation. Questa restrizione non impedisce la pulizia manuale dell’owner dopo un abbandono.
+5. Maestro può eliminare branch e worktree verificati come propri del workflow solo durante la conclusione eseguita da `maestro_prepare_final_review`. Questa restrizione non impedisce la pulizia manuale dell’owner dopo un abbandono.
 
 Decisione presa sul recupero delle risorse esistenti:
 
@@ -1828,7 +1808,7 @@ Copertura minima approvata per la prima versione:
 2. Unit test della validazione dei percorsi e dei symlink.
 3. Unit test degli ID e degli slug.
 4. Test del template della spec e degli schemi JSON nei file unit o integration corrispondenti.
-5. Unit test minimi delle transizioni di `workflow.json`: un percorso normale, un retry, un reset della spec, una revisione stale, incremento monotono e immutabilità dell’input. L’autorizzazione dei ruoli resta negli allowlist dei tool e negli adapter.
+5. Unit test minimi delle transizioni di `workflow.json`: un percorso normale, un retry, una revisione stale, incremento monotono e immutabilità dell’input. L’autorizzazione dei ruoli resta negli allowlist dei tool e negli adapter.
 6. Integration test con repository Git temporanei.
 7. Integration test per branch, worktree, squash e pulizia.
 8. Test del ciclo builder, verifier, escalation e finding nei moduli di dominio con un fake di `pi-subagents`. I test dei tool adapter coprono schema input, derivazione dei campi, wiring di un successo e propagazione di un errore senza ripetere l’intera matrice del dominio.
@@ -1837,8 +1817,8 @@ Copertura minima approvata per la prima versione:
 11. Test che nessuna operazione esca dalla root Git.
 12. Test degli handoff builder `done` e `failed`, inclusi identità, revisione, acceptance criteria e stati terminali.
 13. Test che il verifier ripristini ogni modifica staged, unstaged o untracked prima dell’handoff e che il rifiuto restituisca `PRODUCT_FILES_MODIFIED` con un messaggio, senza modifiche a handoff e workflow.
-14. Test del reset della spec avviato da finding ed escalation.
-15. Test rappresentativi di `maestro_resolve_findings`: tutti respinti, almeno un `fix-code`, almeno un `revise-spec` e validazione di `expectedRevision`.
+14. Test che escalation e finding non possano riportare una spec approvata a `drafting-spec`.
+15. Test rappresentativi di `maestro_resolve_findings`: tutti respinti, almeno un `fix-code` e validazione di `expectedRevision`.
 16. Test del blocco di `write` ed `edit` sui percorsi protetti tramite percorsi relativi, assoluti, normalizzati e symlink e del controllo terminale contro modifiche effettuate tramite `bash`.
 17. Test che `maestro_prepare_final_review` verifichi lo staging, scriva e metta in staging `final-review`, tenti il cleanup best-effort, restituisca i dati strutturati necessari al riepilogo finale e mantenga la fase precedente quando squash o verifica falliscono.
 18. La suite end-to-end contiene un happy path completo e un percorso di recovery con retry esplicito. Gli altri edge case restano nei test dei moduli proprietari.

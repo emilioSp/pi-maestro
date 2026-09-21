@@ -18,17 +18,16 @@ Expose explicit owner resolution of the current builder escalation.
 
 ## Work
 
-1. Define input for `specId`, `expectedRevision`, `escalationId`, selected option, decision, reason, and `reviseSpec`.
+1. Define input for `specId`, `expectedRevision`, `escalationId`, selected option, decision, and reason.
 2. Use provider-compatible string enums where needed.
 3. Require a current unresolved escalation and a complete owner decision.
 4. Call the escalation workflow without interpreting the decision text.
-5. Return `ready-for-builder` details when the contract is unchanged.
-6. Return drafting reset details when the owner explicitly requests spec revision.
-7. Never launch the next builder automatically.
+5. Return `ready-for-builder` details.
+6. Never launch the next builder automatically.
 
 ## Implementation
 
-Do not persist `reviseSpec` in the escalation JSON. Preserve all old escalation fields except revision and resolution. The Maestro LLM must ask the owner before choosing true.
+Preserve all old escalation fields except revision and resolution. If the owner wants to change the approved contract, do not call this tool; explain that the workflow must be abandoned manually.
 
 ## Tests
 
@@ -37,5 +36,5 @@ Add Vitest adapter tests for input schema, decision mapping, one successful call
 ## Completion criteria
 
 - The tool records only explicit owner data.
-- The selected branch of the state machine is deterministic.
+- A valid resolution always returns to `ready-for-builder`.
 - A failed call leaves the artifact and state unchanged.

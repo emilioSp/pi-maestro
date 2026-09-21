@@ -19,24 +19,24 @@ Apply one explicit owner decision to every current finding.
 ## Work
 
 1. Accept exactly one decision for every current finding.
-2. Support `reject`, `fix-code`, and `revise-spec` only.
+2. Support `reject` and `fix-code` only.
 3. Require a non-empty owner reason for every rejection.
 4. Apply rejections once in the current verifier handoff.
-5. If any decision is `revise-spec`, use the spec-reset workflow.
-6. Otherwise, if any decision is `fix-code`, fast-forward findings to the builder branch and commit `ready-for-builder`.
-7. If every decision is `reject`, commit `candidate-ready`.
-8. Require `expectedRevision` and never infer a decision from finding text.
+5. If any decision is `fix-code`, fast-forward findings to the builder branch and commit `ready-for-builder`.
+6. If every decision is `reject`, commit `candidate-ready`.
+7. Require `expectedRevision` and never infer a decision from finding text.
+8. Do not resolve findings through this workflow when the approved contract must change.
 
 ## Implementation
 
-In mixed fix-code decisions, rejected findings receive their rejection while valid findings remain unrejected for the next builder. A later verifier starts from fresh evidence.
+In mixed decisions, rejected findings receive their rejection while valid findings remain unrejected for the next builder. A later verifier starts from fresh evidence. A contract change requires manual abandonment and a new spec.
 
 ## Tests
 
-Add table-driven Vitest integration tests for all-reject, one mixed fix-code outcome, one mixed revise-spec outcome, missing or duplicate finding decisions, unknown finding IDs, empty rejection reasons, stale revisions, fast-forward failure, and no partial mutation.
+Add table-driven Vitest integration tests for all-reject, one mixed fix-code outcome, missing or duplicate finding decisions, unknown finding IDs, empty rejection reasons, stale revisions, fast-forward failure, and no partial mutation.
 
 ## Completion criteria
 
 - Every current finding is handled exactly once per resolution call.
-- Decision precedence matches the plan.
+- Any `fix-code` decision takes precedence over all-reject.
 - Code corrections never rewrite the spec.

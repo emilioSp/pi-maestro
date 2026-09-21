@@ -22,20 +22,19 @@ Coordinate builder escalations and explicit owner resolutions.
 2. Create the next escalation, move to `escalation-decision`, and require the child to commit both files.
 3. Resolve only the current unresolved escalation with `expectedRevision`.
 4. Persist only selected option, decision, and reason in the resolution.
-5. With `reviseSpec: false`, commit `ready-for-builder` on the workflow branch and do not launch automatically.
-6. With `reviseSpec: true`, call the explicit spec-reset workflow.
-7. Never create an observation for an escalated pass.
+5. Commit `ready-for-builder` on the workflow branch and do not launch automatically.
+6. Do not resolve through this workflow when the approved contract must change.
 
 ## Implementation
 
-Do not infer `reviseSpec` from text. The Maestro LLM may pass true only after the owner explicitly asks to change the contract. Never reuse or remove an escalation.
+When the owner wants to change the approved contract, leave the escalation unresolved and instruct the owner to abandon the workflow manually. Never reuse or remove an escalation.
 
 ## Tests
 
-Add Vitest integration tests for open, sequential open after a later pass, no observation, valid resolution, invalid option, stale revision, duplicate resolution, no-spec-change checkpoint, explicit reset, and no automatic builder launch.
+Add Vitest integration tests for open, sequential open after a later pass, valid resolution, invalid option, stale revision, duplicate resolution, ready-for-builder checkpoint, and no automatic builder launch.
 
 ## Completion criteria
 
-- Every escalation corresponds to one owner decision.
+- Every resolved escalation corresponds to one owner decision.
 - The artifact and workflow revision remain consistent.
-- Contract changes use only the approved reset path.
+- Contract changes require manual abandonment and a new spec.

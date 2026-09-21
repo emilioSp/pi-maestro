@@ -8,34 +8,30 @@ This task depends on Task 19: Implement state discovery and reconciliation.
 
 ## Objective
 
-Coordinate spec creation, readiness, and the exceptional spec-reset path.
+Coordinate spec creation and readiness.
 
 ## Plan references
 
 - Sections [3.2](../plan.md#plan-section-3-2) and [5](../plan.md#plan-section-5), `src/workflow/spec.ts`
-- Sections [6.10](../plan.md#plan-section-6-10), [6.14](../plan.md#plan-section-6-14), [6.18](../plan.md#plan-section-6-18), [6.21](../plan.md#plan-section-6-21), [6.22](../plan.md#plan-section-6-22), and [6.23](../plan.md#plan-section-6-23)
+- Sections [6.10](../plan.md#plan-section-6-10), [6.14](../plan.md#plan-section-6-14), [6.18](../plan.md#plan-section-6-18), and [6.21](../plan.md#plan-section-6-21)
 
 ## Work
 
 1. Coordinate new spec creation after active-workflow checks.
 2. Mark an owner-approved drafting spec as `ready-for-builder` on the base branch without inspecting or committing its Markdown content.
-3. Require the owner commit and a clean base before the first builder launch can proceed.
-4. Implement reset to the same spec ID after an explicit owner decision.
-5. Preserve all escalations, including the triggering resolution.
-6. Exclude old product code, builder handoff, verifier handoff, and findings from the reset.
-7. Keep revision monotonic and return to `drafting-spec` on the base branch.
-8. Delete old verified workflow resources only after the owner commits the new ready spec.
+3. Require the expected spec ID, workflow revision, and existing `spec.md`.
+4. Do not revise an approved spec inside an active workflow.
 
 ## Implementation
 
-The in-place spec reset remains part of the MVP. Do not replace it with manual abandonment or a new spec ID. Run all safety checks before mutation. The reset must stop on dirty, ambiguous, or foreign resources. Do not create an archive copy of the old spec; Git history is the archive.
+If the approved contract must change after a builder starts, Maestro stops. The owner abandons the workflow manually, cleans its resources, and creates a new spec with a new ID. Maestro has no abandonment or reset tool in the MVP.
 
 ## Tests
 
-Add Vitest integration tests for create, the ready transition with expected identity and revision, uncommitted ready state, clean approval commit, reset from escalation, reset from findings, preserved escalation history, excluded current handoffs, blocked dirty reset, blocked foreign resource, and cleanup only after the new approval commit.
+Add Vitest integration tests for create, active-workflow rejection, the ready transition with expected identity and revision, stale revision, and missing spec.
 
 ## Completion criteria
 
-- Normal readiness and exceptional reset follow different explicit paths.
-- No reset loses durable history.
+- Creation and readiness follow one clear path.
+- An approved active spec is never rewritten by Maestro.
 - Maestro never creates the owner approval commit.

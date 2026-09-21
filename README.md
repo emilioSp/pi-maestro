@@ -61,6 +61,8 @@ During activation, Maestro checks the repository, configuration including config
 
 Builder and verifier passes run in the foreground. Pi waits for each pass to finish before the owner can continue the conversation.
 
+If an approved spec must change after the builder starts, abandon the workflow manually and create a new spec.
+
 For failures, escalations, findings, and recovery, see [Workflow](docs/workflow.md) and [Recovery](docs/recovery.md).
 
 ## Configuration

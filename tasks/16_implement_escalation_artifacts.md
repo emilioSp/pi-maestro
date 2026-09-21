@@ -28,7 +28,7 @@ Create permanent, sequential builder escalations and resolve them once.
 
 ## Implementation
 
-Read and validate the full escalation history before allocating an ID. Keep `reviseSpec` out of the artifact. It is only a workflow transition input.
+Read and validate the full escalation history before allocating an ID. The resolution contains only the owner decision and does not encode workflow actions.
 
 ## Tests
 

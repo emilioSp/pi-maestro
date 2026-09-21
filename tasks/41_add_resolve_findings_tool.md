@@ -19,16 +19,16 @@ Expose complete owner decisions for the current verifier findings.
 ## Work
 
 1. Define input for `specId`, `expectedRevision`, and one decision per finding.
-2. Use `StringEnum` for `reject`, `fix-code`, and `revise-spec`.
+2. Use `StringEnum` for `reject` and `fix-code`.
 3. Require reasons only for rejected findings.
 4. Validate exact finding coverage before any mutation.
-5. Call the findings workflow and return candidate, builder-correction, or spec-reset details.
+5. Call the findings workflow and return candidate or builder-correction details.
 6. Report which rejections were recorded and which findings remain actionable.
 7. Never infer decisions or launch another agent automatically.
 
 ## Implementation
 
-Keep the adapter thin. If any decision revises the spec, that outcome has precedence. Otherwise any fix-code decision has precedence over all-reject.
+Keep the adapter thin. Any fix-code decision has precedence over all-reject. If the owner wants to change the approved contract, do not call this tool; explain that the workflow must be abandoned manually.
 
 ## Tests
 
@@ -37,5 +37,5 @@ Add Vitest adapter tests for input schema, decision mapping, one successful call
 ## Completion criteria
 
 - One valid call handles every current finding exactly once.
-- Mixed outcomes follow approved precedence.
+- Mixed reject and fix-code outcomes follow approved precedence.
 - The tool does not rewrite findings beyond allowed rejection fields.

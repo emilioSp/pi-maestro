@@ -26,11 +26,11 @@ Define the complete workflow state machine as pure transition logic.
 
 ## Implementation
 
-Keep this module pure. It must not read files, run Git, create commits, or infer owner decisions. Model spec reset, builder retry, finding outcomes, and final review explicitly.
+Keep this module pure. It must not read files, run Git, create commits, or infer owner decisions. Model builder retry, finding outcomes, and final review explicitly.
 
 ## Tests
 
-Add minimal Vitest unit tests for one normal workflow path, one same-role retry, one spec reset, one stale revision, monotonic revisions, and input immutability.
+Add minimal Vitest unit tests for one normal workflow path, one same-role retry, one stale revision, monotonic revisions, and input immutability.
 
 ## Completion criteria
 

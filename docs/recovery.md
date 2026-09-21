@@ -45,9 +45,9 @@ Maestro shows the conflict. The owner repairs the repository or abandons the wor
 
 ## Manual abandonment
 
-Maestro has no abandonment command. The owner decides what to keep and manually cleans up the remaining branches, worktrees, and artifacts.
+Maestro has no abandonment command. Manual abandonment is also required when an approved spec must change after the builder starts. The owner decides what to keep and manually cleans up the remaining branches, worktrees, and artifacts.
 
-After cleanup, run `/maestro` again.
+After cleanup, run `/maestro` again and create a new spec.
 
 ## Completed final review
 
