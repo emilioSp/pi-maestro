@@ -22,7 +22,7 @@ Coordinate builder launch checkpoints and terminal builder outcomes.
 2. Create or recover the fixed builder branch and worktree.
 3. Write and commit the `builder-running` checkpoint before launch.
 4. Support an initial pass, a pass resumed after escalation, a correction pass, and an explicit retry after interruption or failure.
-5. Validate observations before accepting a `done` or `failed` handoff.
+5. Validate the terminal builder handoff.
 6. Move atomically to `ready-for-verifier` or `builder-failed` with the terminal handoff.
 7. Keep escalation handling outside this module.
 
@@ -32,7 +32,7 @@ Do not install dependencies or invent repository commands. The builder reads app
 
 ## Tests
 
-Add Vitest integration tests for first launch, recovered resources, dirty base, uncommitted approval, running checkpoint commit, done, failed, missing observation, duplicate observation, interrupted retry, correction pass, and unchanged resource state after a blocked launch.
+Add Vitest integration tests for first launch, recovered resources, dirty base, uncommitted approval, running checkpoint commit, done, failed, interrupted retry, correction pass, and unchanged resource state after a blocked launch.
 
 ## Completion criteria
 

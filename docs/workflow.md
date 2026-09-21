@@ -25,7 +25,7 @@ The owner has final authority over:
 Maestro:
 
 - Discusses the change with the owner
-- Writes and validates the spec
+- Writes and reviews the spec with the owner
 - Creates workflow branches and worktrees
 - Starts the builder and verifier
 - Reads their handoffs
@@ -58,7 +58,7 @@ Happy path is highlighted in green.
 ```mermaid
 flowchart TD
     spec[Owner and Maestro write one spec]
-    ready[Maestro validates the spec and marks it ready]
+    ready[Maestro marks the owner-approved spec ready]
     approval[Owner commits the approved spec state on the base branch]
     build[Builder works in its isolated worktree]
     buildOutcome{How did the builder pass end?}
@@ -115,7 +115,7 @@ Maestro stores the current phase in `.specs/<spec-id>/workflow.json` by default.
 | Phase | Meaning |
 |---|---|
 | `drafting-spec` | Owner and Maestro are preparing the spec. |
-| `ready-for-builder` | The spec passed validation and awaits a builder pass. |
+| `ready-for-builder` | The owner approved the spec and it awaits a builder pass. |
 | `builder-running` | A builder pass is active. |
 | `escalation-decision` | The owner must decide how to resolve the active escalation. |
 | `builder-failed` | The builder ended the pass with a failure. |
@@ -133,7 +133,7 @@ A `builder-failed` workflow remains blocked. The owner can retry with a clean wo
 
 A spec defines one reversible change. It contains goals, constraints, requirements, technical design, relevant interactions or APIs, edge cases, acceptance criteria, observability, and scope limits.
 
-Maestro validates the structure. The owner approves the content and commits the spec with `workflow.json` on the base branch. That commit becomes the approved contract for the builder.
+Maestro reviews the spec with the owner but treats its Markdown as opaque workflow data. After the owner approves it, Maestro marks it ready without parsing its structure. The owner commits the spec with `workflow.json` on the base branch. That commit becomes the approved contract for the builder.
 
 The base branch must be clean before Maestro starts the first builder pass.
 
@@ -257,7 +257,7 @@ Maestro then:
 3. Writes and stages `workflow.json` in `final-review`.
 4. Attempts to remove the workflow branches and worktrees.
 5. Reports any resource that requires manual cleanup.
-6. Summarizes the builder observations and hands the staged change to the owner.
+6. Summarizes the candidate and hands the staged change to the owner.
 
 `final-review` marks a completed Maestro workflow. The owner reviews the staged diff, makes any desired changes, and creates the final commit. Changes made after delivery are under the owner’s responsibility.
 
@@ -271,7 +271,6 @@ The default spec directory contains:
 .specs/<spec-id>/
 ├── spec.md
 ├── workflow.json
-├── observations.json
 ├── handoffs/
 │   ├── builder.json
 │   ├── verifier.json

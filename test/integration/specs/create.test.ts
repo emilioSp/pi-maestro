@@ -75,13 +75,6 @@ describe('spec template and creation', () => {
       phase: 'drafting-spec',
       baseBranch: 'main',
     });
-    await expect(
-      readFile(created.observationsPath, 'utf8').then(JSON.parse),
-    ).resolves.toEqual({
-      version: '1.0.0',
-      specId: SPEC_ID,
-      passes: [],
-    });
     expect((await stat(paths.getEscalationsPath(SPEC_ID))).isDirectory()).toBe(
       true,
     );

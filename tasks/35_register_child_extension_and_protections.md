@@ -18,8 +18,8 @@ Register only child tools and block direct edits to Maestro protocol paths.
 
 ## Work
 
-1. Export and register the four child-only tools.
-2. Add child hooks that reject direct `write` and `edit` calls for `spec.md`, `workflow.json`, `observations.json`, `prototypes/`, and `handoffs/`.
+1. Export and register the three child-only tools.
+2. Add child hooks that reject direct `write` and `edit` calls for `spec.md`, `workflow.json`, `prototypes/`, and `handoffs/`.
 3. Remove an optional leading `@` before path checks.
 4. Resolve relative and absolute paths from the worktree root.
 5. Normalize dot segments and resolve existing ancestors and symlinks.

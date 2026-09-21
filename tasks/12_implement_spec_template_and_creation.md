@@ -22,8 +22,8 @@ Distribute the approved spec template and create a new drafting spec safely.
 1. Put the exact approved four-section template in `templates/spec.md`.
 2. Implement template loading in `src/specs/template.ts`.
 3. Implement initial spec creation in `src/specs/create.ts`.
-4. Generate the ID and create `spec.md`, `workflow.json`, `observations.json`, `handoffs/escalations/`, and `prototypes/`.
-5. Initialize phase `drafting-spec`, revision 1, and observations schema version `1.0.0` with `passes: []`.
+4. Generate the ID and create `spec.md`, `workflow.json`, `handoffs/escalations/`, and `prototypes/`.
+5. Initialize phase `drafting-spec` at revision 1.
 6. Block creation when another active workflow exists or any target resource collides.
 
 ## Implementation
@@ -32,7 +32,7 @@ Perform all preflight checks before writing. Never reuse or overwrite an existin
 
 ## Tests
 
-Add Vitest integration tests for exact template content, initial files, custom spec directory, ID insertion, initial state and observations, same-second collision, active workflow rejection, and a partial directory left after a simulated failure.
+Add Vitest integration tests for exact template content, initial files, custom spec directory, ID insertion, initial state, same-second collision, active workflow rejection, and a partial directory left after a simulated failure.
 
 ## Completion criteria
 

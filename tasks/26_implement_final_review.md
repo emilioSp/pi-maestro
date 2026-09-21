@@ -24,7 +24,7 @@ Prepare the candidate as staged changes on the base branch and conclude Maestro 
 4. Stage and verify the candidate product changes while keeping the current phase.
 5. Write and stage `workflow.json` in `final-review` after staging verification.
 6. Attempt best-effort removal of verified workflow worktrees and branches.
-7. Return structured staging data, summarized observations, and the cleanup result for the Maestro LLM.
+7. Return structured staging data, candidate identity, and the cleanup result for the Maestro LLM.
 8. Mark the workflow concluded without waiting for an owner commit.
 
 ## Implementation
@@ -35,7 +35,7 @@ Above every Git-related function, add one `// git ...` comment for each Git comm
 
 ## Tests
 
-Add Vitest integration tests for each candidate type, squash contents, staged final state, no final commit, observations data, successful cleanup, cleanup failure reporting, dirty base rejection, unexpected staging, unchanged phase before final-review, and completed-workflow discovery.
+Add Vitest integration tests for each candidate type, squash contents, staged final state, no final commit, candidate data, successful cleanup, cleanup failure reporting, dirty base rejection, unexpected staging, unchanged phase before final-review, and completed-workflow discovery.
 
 ## Completion criteria
 

@@ -28,7 +28,7 @@ Expose the child-only terminal tool that opens a builder escalation.
 
 ## Implementation
 
-Do not write observations or a builder handoff. Do not wait for the owner. Reject calls outside `builder-running` and reject a second terminal outcome for the pass.
+Do not write a builder handoff. Do not wait for the owner. Reject calls outside `builder-running` and reject a second terminal outcome for the pass.
 
 ## Tests
 

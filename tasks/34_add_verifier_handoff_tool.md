@@ -20,7 +20,7 @@ Expose the child-only terminal tool for verifier evidence and findings.
 
 1. Define the closed TypeBox input schema without protocol identity fields.
 2. Derive spec ID and terminal revision.
-3. Validate regenerated criteria and findings against the current spec.
+3. Validate regenerated criteria and findings internally without parsing the current spec.
 4. Run the product-file comparison against the recorded candidate commit.
 5. Return the exact structured `PRODUCT_FILES_MODIFIED` error when needed.
 6. Write verifier handoff and `findings-decision` or `candidate-ready` state only after all checks pass.

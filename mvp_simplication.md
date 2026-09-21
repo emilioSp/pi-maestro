@@ -20,10 +20,10 @@ Questo documento riassume le semplificazioni approvate per i Task 9–44. I task
 8. **Retry:** il retry resta esplicito e viene permesso solo quando il worktree è pulito.
 9. **Resume:** dopo `/resume`, Maestro resta inattivo. L’owner usa `/maestro` per eseguire i normali controlli e riattivarlo.
 
-## Spec e observations
+## Spec e handoff
 
 10. **Creazione parziale:** se la creazione iniziale della spec fallisce, Maestro lascia i file già creati e segnala il percorso. L’owner esegue la pulizia manuale prima del retry.
-11. **Observations:** l’API valida la storia esistente e aggiunge il nuovo passaggio. Non esegue un confronto separato per dimostrare che la storia precedente è rimasta equivalente.
+11. **Evidenza builder:** il builder handoff conserva l’evidenza del passaggio corrente. Non esiste una storia separata delle observations; Git conserva gli handoff precedenti.
 12. **Reset della spec:** il reset della stessa spec resta nell’MVP. Non viene sostituito da abbandono manuale e nuovo spec ID.
 
 ## Verifier e finding

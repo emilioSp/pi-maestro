@@ -47,9 +47,6 @@ describe('Maestro paths', () => {
     expect(paths.getWorkflowPath(SPEC_ID)).toBe(
       join(root, 'custom/specs', SPEC_ID, 'workflow.json'),
     );
-    expect(paths.getObservationsPath(SPEC_ID)).toBe(
-      join(root, 'custom/specs', SPEC_ID, 'observations.json'),
-    );
     expect(paths.getBuilderHandoffPath(SPEC_ID)).toBe(
       join(root, 'custom/specs', SPEC_ID, 'handoffs', 'builder.json'),
     );
@@ -92,7 +89,6 @@ describe('Maestro paths', () => {
       paths.getSpecPath(SPEC_ID),
       paths.getSpecFilePath(SPEC_ID),
       paths.getWorkflowPath(SPEC_ID),
-      paths.getObservationsPath(SPEC_ID),
       paths.getHandoffsPath(SPEC_ID),
       paths.getBuilderHandoffPath(SPEC_ID),
       paths.getVerifierHandoffPath(SPEC_ID),

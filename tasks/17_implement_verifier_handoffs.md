@@ -19,8 +19,8 @@ Validate verifier evidence and current findings without allowing a verdict.
 ## Work
 
 1. Implement the closed verifier handoff schema with semantic schema version `1.0.0`.
-2. Validate summary, all current acceptance criteria, findings, evidence, severity, confidence, rejection, and notes.
-3. Require sequential unique finding IDs.
+2. Validate summary, submitted acceptance criteria, findings, evidence, severity, confidence, rejection, and notes.
+3. Require unique acceptance criterion IDs and sequential unique finding IDs.
 4. Require every failed probe or unconfirmed breakage to have a linked finding.
 5. Require all probes passed and breakages confirmed when findings are empty.
 6. Require newly written verifier findings to use `rejection: null`.
@@ -29,7 +29,7 @@ Validate verifier evidence and current findings without allowing a verdict.
 
 ## Implementation
 
-Allow `acceptanceCriterion: null` only for a finding about another spec rule. Never add pass/fail verdict fields. Rejection reasons must be non-empty and owner-provided.
+Allow `acceptanceCriterion: null` only for a finding about another spec rule. A non-null finding link must refer to a criterion submitted in the same handoff. Do not parse or compare against `spec.md`; the verifier is responsible for covering every criterion. Never add pass/fail verdict fields. Rejection reasons must be non-empty and owner-provided.
 
 ## Tests
 

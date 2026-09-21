@@ -1,5 +1,4 @@
 import { mkdir, writeFile } from 'node:fs/promises';
-import { writeJsonAtomically } from '#atomic-write.ts';
 import { createSpecId } from '#ids.ts';
 import type { GetMaestroPaths } from '#paths.ts';
 import { loadSpecTemplate, renderSpecTemplate } from '#specs/template.ts';
@@ -12,24 +11,14 @@ import {
 } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/store.ts';
 
-export const OBSERVATIONS_VERSION = '1.0.0';
-
-export type InitialObservations = {
-  version: typeof OBSERVATIONS_VERSION;
-  specId: string;
-  passes: [];
-};
-
 export type CreatedSpec = {
   specId: string;
   specPath: string;
   specFilePath: string;
   workflowPath: string;
-  observationsPath: string;
   escalationsPath: string;
   prototypesPath: string;
   state: WorkflowState;
-  observations: InitialObservations;
 };
 
 export const createSpec = async ({
@@ -56,7 +45,6 @@ export const createSpec = async ({
   const specPath = paths.getSpecPath(specId);
   const specFilePath = paths.getSpecFilePath(specId);
   const workflowPath = paths.getWorkflowPath(specId);
-  const observationsPath = paths.getObservationsPath(specId);
   const escalationsPath = paths.getEscalationsPath(specId);
   const prototypesPath = paths.getPrototypesPath(specId);
 
@@ -73,12 +61,6 @@ export const createSpec = async ({
     phase: WORKFLOW_PHASES.DRAFTING_SPEC,
     baseBranch,
   });
-  const observations: InitialObservations = {
-    version: OBSERVATIONS_VERSION,
-    specId,
-    passes: [],
-  };
-
   let created = false;
   try {
     await mkdir(paths.specDirectory, { recursive: true });
@@ -92,7 +74,6 @@ export const createSpec = async ({
       state,
       currentRevision: 0,
     });
-    await writeJsonAtomically({ path: observationsPath, data: observations });
   } catch (cause) {
     if (!created && (cause as NodeJS.ErrnoException).code === 'EEXIST') {
       throw new Error(`Spec directory already exists: ${specPath}.`, { cause });
@@ -111,10 +92,8 @@ export const createSpec = async ({
     specPath,
     specFilePath,
     workflowPath,
-    observationsPath,
     escalationsPath,
     prototypesPath,
     state,
-    observations,
   };
 };

@@ -148,7 +148,6 @@ Gli artefatti prodotti usano questa struttura:
 .specs/<id>/
 ├── spec.md
 ├── workflow.json
-├── observations.json
 ├── handoffs/
 │   ├── builder.json
 │   ├── verifier.json
@@ -159,60 +158,7 @@ Gli artefatti prodotti usano questa struttura:
 └── prototypes/
 ```
 
-`builder.json` e `verifier.json` contengono solo l’handoff corrente e possono essere sostituiti da un passaggio successivo. Le escalation e le observations costituiscono la storia durevole della feature.
-
-`maestro_create_spec` crea subito `observations.json` insieme a `spec.md` e `workflow.json`. Il contenuto iniziale usa `version: "1.0.0"`, lo `specId` appena generato e `passes: []`.
-
-`observations.json` è un singolo documento JSON che conserva la storia dei passaggi builder:
-
-```json
-{
-  "version": "1.0.0",
-  "specId": "20260321-143052-add-weather-alerts",
-  "passes": [
-    {
-      "id": "B1",
-      "revision": 4,
-      "outcome": "done",
-      "acceptanceCriteria": [
-        {
-          "id": "AC1",
-          "probe": "npm test -- alert",
-          "initialResult": {
-            "status": "passed",
-            "observation": "All alert tests passed."
-          },
-          "breakageApplied": "Disabled alert validation in src/alert.ts.",
-          "brokenResult": {
-            "status": "failed",
-            "observation": "The probe failed because the alert was not created."
-          },
-          "restoredResult": {
-            "status": "passed",
-            "observation": "Validation was restored and all alert tests passed."
-          }
-        }
-      ],
-      "notes": []
-    }
-  ]
-}
-```
-
-Ogni elemento di `passes` rappresenta un’intera esecuzione del builder conclusa con `done` o `failed`, non un singolo acceptance criterion. Un’esecuzione conclusa con escalation viene registrata solo nell’artefatto di escalation e non genera un elemento in `observations.json`. Gli ID `B1`, `B2`, ecc. sono sequenziali tra i passaggi effettivamente registrati e un passaggio già registrato non può essere modificato. `revision` appartiene al singolo passaggio e deve essere riconducibile al relativo checkpoint del workflow.
-
-`outcome` usa uno schema discriminato:
-
-1. `done` contiene esattamente tutti gli acceptance criteria della spec. Ogni criterio registra il ciclo `passed` iniziale, breakage applicato, risultato `failed` e risultato `passed` dopo il ripristino.
-2. `failed` può contenere risultati parziali e richiede `failure.reason` non vuoto.
-
-Ogni risultato usa `status: passed`, `failed` o `not-run` e una `observation` non vuota. `breakageApplied` è una stringa non vuota quando il breakage è stato applicato, altrimenti è `null`. I passaggi parziali usano `not-run` per le operazioni non eseguite invece di inventare risultati.
-
-Il file e ogni oggetto annidato rifiutano campi sconosciuti. Il file conserva comandi, misurazioni ed estratti rilevanti, non log completi, e non contiene credenziali, token, dati personali o percorsi locali sensibili. Il verifier non lo modifica.
-
-Il builder non modifica `observations.json` con `write`, `edit` o `bash`. Alla fine di un passaggio concluso con `done` o `failed`, chiama una sola volta il tool child-only dedicato, che registra il nuovo elemento `B<n>` completo e valida la storia esistente prima della scrittura. La storia precedente viene validata strutturalmente e preservata dall’operazione append-only, ma non viene confrontata con gli acceptance criteria della spec corrente. Solo il nuovo passaggio viene confrontato semanticamente con la spec della revisione corrente. Non viene persistito uno stato intermedio del passaggio in corso. In caso di escalation il builder non chiama il tool delle observations. I tool terminali rileggono e validano il file prima di accettare un handoff.
-
-`maestro_record_builder_observation` ricava dal workflow nel worktree corrente `specId`, la revisione del passaggio `builder-running` e il prossimo ID sequenziale `B<n>`. Il builder non può fornire o sovrascrivere questi campi. L’input del builder contiene solo `outcome`, `acceptanceCriteria`, `notes` e, per `failed`, `failure.reason`. Una seconda registrazione per la stessa revisione builder viene rifiutata.
+`builder.json` e `verifier.json` contengono l’evidenza dell’handoff corrente e possono essere sostituiti da un passaggio successivo. Git conserva le versioni precedenti. Le escalation costituiscono la storia durevole delle decisioni builder.
 
 <a id="plan-section-2-6"></a>
 
@@ -313,7 +259,7 @@ La conversazione del subagent non è un handoff.
 Le fonti autorevoli sono:
 
 1. Spec e `workflow.json`.
-2. Observations ed escalation come storia durevole.
+2. Escalation come storia durevole delle decisioni builder.
 3. Builder e verifier handoff come artefatti correnti del ciclo attivo.
 4. Commit, branch e worktree Git.
 
@@ -585,21 +531,10 @@ Regole degli acceptance criteria:
 15. Il breakage non modifica servizi o dati di produzione e viene applicato solo nel worktree isolato.
 16. Se non esiste un breakage sicuro e specifico, la spec non può diventare `ready-for-builder`.
 17. Builder e verifier ripristinano completamente ogni breakage.
-18. Il verifier rigenera il ciclo senza usare le observations del builder come prova.
+18. Il verifier rigenera il ciclo senza usare il builder handoff come prova.
 19. Builder e verifier non cambiano unilateralmente probe, expected result o breakage.
 
-Validazione deterministica di `maestro_mark_spec_ready`:
-
-1. Il titolo contiene l’ID corretto.
-2. Le quattro sezioni top-level `##` esistono una sola volta e nell'ordine approvato.
-3. Non esistono altre sezioni top-level `##`; contenuti aggiuntivi usano `###` o livelli inferiori dentro una sezione approvata.
-4. Non restano placeholder del template.
-5. `Context, goals, and scope` contiene almeno un measurable goal.
-6. Le sottosezioni non applicabili usano esattamente `Not applicable.`.
-7. Le altre sottosezioni usano le rispettive frasi approvate quando non hanno contenuto.
-8. Esiste almeno un acceptance criterion con ID sequenziali.
-9. Ogni criterion contiene esattamente `Probe`, `Expected result` e `Breakage`.
-10. I prototype dichiarati esistono sotto `.specs/<id>/prototypes/`, non escono dalla spec directory e hanno estensione lowercase `.html`, `.png`, `.jpg` o `.jpeg`.
+`maestro_mark_spec_ready` tratta `spec.md` come Markdown opaco. Verifica solo che il workflow atteso sia in `drafting-spec`, che la revisione coincida e che il file esista. Non analizza sezioni, acceptance criteria o riferimenti ai prototype.
 
 Validazione semantica del Maestro LLM prima di chiamare il tool:
 
@@ -612,7 +547,7 @@ Validazione semantica del Maestro LLM prima di chiamare il tool:
 7. Non esistono contraddizioni.
 8. L’owner approva il contratto.
 
-L’estensione non interpreta semanticamente la prosa e blocca solo errori strutturali dimostrabili.
+L’estensione non interpreta né valida la struttura della spec. Maestro, builder, verifier e owner sono responsabili di leggerla e applicarla. La chiamata a `maestro_mark_spec_ready` registra l’approvazione già espressa dall’owner.
 
 <a id="plan-section-3-3"></a>
 
@@ -621,7 +556,7 @@ L’estensione non interpreta semanticamente la prosa e blocca solo errori strut
 1. Lavora nel proprio worktree.
 2. Legge la spec e gli `AGENTS.md`.
 3. Può modificare qualsiasi file interno alla root Git necessario per rispettare la spec. Non introduce modifiche estranee al problema, ai vincoli, all’approccio approvato o agli acceptance criteria.
-4. Produce observations quando termina con `done` o `failed`; un’escalation non genera observations.
+4. Registra nel builder handoff l’evidenza del passaggio `done` o `failed`.
 5. Esegue probe e breakage.
 6. Scrive esattamente un handoff terminale.
 7. Commette il proprio lavoro e l’handoff.
@@ -635,7 +570,7 @@ L’estensione non interpreta semanticamente la prosa e blocca solo errori strut
 1. Parte in un worktree separato.
 2. Usa un contesto nuovo.
 3. Legge la spec, gli `AGENTS.md` e gli handoff.
-4. Non si fida delle osservazioni del builder.
+4. Non usa il builder handoff come prova.
 5. Rigenera probe e breakage.
 6. Non corregge il codice.
 7. Non emette un verdetto.
@@ -713,7 +648,7 @@ Il candidate commit è:
 5. Dopo la verifica dello staging, Maestro scrive e mette in staging `workflow.json` in fase `final-review`.
 6. Maestro tenta quindi la pulizia best-effort dei branch e dei worktree verificati del workflow e ne restituisce il risultato.
 7. Se squash o verifica dello staging falliscono prima di `final-review`, Maestro restituisce un errore e mantiene la fase precedente. Un errore di cleanup successivo non annulla staging o `final-review` e richiede pulizia manuale.
-8. `maestro_prepare_final_review` restituisce i dati strutturati della consegna; il Maestro LLM li usa per presentare all’owner un riepilogo finale delle observations e consegnare il codice staged sulla base branch.
+8. `maestro_prepare_final_review` restituisce i dati strutturati della consegna; il Maestro LLM li usa per presentare all’owner il candidate e consegnare il codice staged sulla base branch.
 9. In `final-review` il workflow Maestro è concluso e non può essere riaperto.
 10. L’owner esegue la propria review dopo la conclusione del workflow.
 11. Se desidera cambiare l’implementazione, la spec o un acceptance criterion, lo fa sotto la propria responsabilità fuori dal workflow Maestro.
@@ -757,7 +692,7 @@ Il flowchart umano approvato è:
 ```mermaid
 flowchart TD
     spec[Owner and Maestro write one spec]
-    ready[Maestro validates the spec and marks it ready]
+    ready[Maestro marks the owner-approved spec ready]
     approval[Owner commits the approved spec state on the base branch]
     build[Builder works in its isolated worktree]
     buildOutcome{How did the builder pass end?}
@@ -796,7 +731,7 @@ flowchart TD
     candidate --> staged[Maestro squash-merges the candidate and verifies the staging]
     staged --> finalState[Maestro marks the workflow final-review]
     finalState --> cleanup[Maestro attempts workflow branch and worktree cleanup]
-    finalState --> finalSummary[Maestro summarizes the observations and hands the staged code to the owner]
+    finalState --> finalSummary[Maestro summarizes the candidate and hands the staged code to the owner]
     finalSummary --> workflowDone[Maestro workflow is complete]
     workflowDone --> humanReview[Owner reviews the final diff]
 
@@ -877,14 +812,11 @@ pi-maestro/
 │   ├── specs/
 │   │   ├── template.ts
 │   │   ├── create.ts
-│   │   ├── parse.ts
-│   │   ├── validate.ts
 │   │   └── index.ts
 │   ├── artifacts/
 │   │   ├── builder-handoff.ts
 │   │   ├── verifier-handoff.ts
 │   │   ├── escalation.ts
-│   │   ├── observations.ts
 │   │   └── index.ts
 │   ├── workflow/
 │   │   ├── state/
@@ -925,7 +857,6 @@ pi-maestro/
 │       │   ├── prepare-final-review.ts
 │       │   └── index.ts
 │       └── child/
-│           ├── record-builder-observation.ts
 │           ├── record-builder-handoff.ts
 │           ├── open-escalation.ts
 │           ├── record-verifier-handoff.ts
@@ -965,11 +896,11 @@ Ogni tool vive in un file dedicato. Il file contiene schema degli input, registr
 
 `src/atomic-write.ts` contiene la scrittura atomica condivisa da stato e artefatti.
 
-`src/artifacts/` implementa lettura, validazione e scrittura degli handoff, delle escalation e di `observations.json` senza dipendere da Pi. I file sotto `src/tools/` sono solo adapter tra le chiamate Pi e questa logica.
+`src/artifacts/` implementa lettura, validazione e scrittura degli handoff e delle escalation senza dipendere da Pi. I file sotto `src/tools/` sono solo adapter tra le chiamate Pi e questa logica.
 
 `src/workflow/state/` contiene schema, persistenza, discovery e riconciliazione di `workflow.json`. Per l’MVP controlla il workflow attivo e confronta lo stato dichiarato con branch, worktree, HEAD e artefatto terminale attesi.
 
-`src/specs/` separa caricamento del template, creazione, parsing e validazione della spec. ID, percorsi e stato restano responsabilità dei rispettivi moduli.
+`src/specs/` gestisce il caricamento del template e la creazione della spec. Il contenuto Markdown resta opaco all’estensione. ID, percorsi e stato restano responsabilità dei rispettivi moduli.
 
 `src/workflow/` coordina i domini senza dipendere dai tool Pi. La sua directory `state/` gestisce lo stato persistente del workflow. Gli altri moduli separano transizioni, ciclo spec, builder, verifier, escalation, finding, final review e recovery.
 
@@ -1282,7 +1213,6 @@ tools:
   - bash
   - edit
   - write
-  - maestro_record_builder_observation
   - maestro_record_builder_handoff
   - maestro_open_escalation
 ```
@@ -1357,7 +1287,6 @@ maestro_prepare_final_review
 Tool child-only approvati:
 
 ```text
-maestro_record_builder_observation
 maestro_record_builder_handoff
 maestro_open_escalation
 maestro_record_verifier_handoff
@@ -1365,15 +1294,14 @@ maestro_record_verifier_handoff
 
 Responsabilità:
 
-1. `maestro_create_spec` crea ID, template, stato iniziale e `observations.json` vuoto con `passes: []`.
-2. `maestro_mark_spec_ready` valida la spec e imposta `ready-for-builder`.
+1. `maestro_create_spec` crea ID, template e stato iniziale.
+2. `maestro_mark_spec_ready` verifica stato, revisione ed esistenza di `spec.md`, quindi imposta `ready-for-builder` dopo l’approvazione dell’owner.
 3. `maestro_inspect_workflow` ricostruisce e controlla lo stato.
 4. `maestro_launch_builder` e `maestro_launch_verifier` preparano Git, aggiornano lo stato e avviano il subagent.
 5. `maestro_resolve_escalation` e `maestro_resolve_findings` registrano solo decisioni esplicite dell’owner e applicano la transizione validata, incluso il reset della spec quando richiesto esplicitamente.
-6. `maestro_prepare_final_review` esegue lo squash staged, verifica lo staging, scrive e mette in staging `final-review`, quindi tenta il cleanup best-effort di branch e worktree. Restituisce dati strutturati sulla consegna, sulle observations e sul risultato del cleanup. Un errore precedente a `final-review` lascia la fase invariata; un errore di cleanup richiede intervento manuale ma non riapre il workflow.
-7. `maestro_record_builder_observation` viene chiamato una sola volta alla fine di un passaggio builder concluso con `done` o `failed`; ricava identità, revisione e prossimo `B<n>` dallo stato corrente, aggiunge il passaggio completo e valida la storia precedente. Un’escalation non genera observations.
-8. Gli altri tool child-only scrivono e validano gli artefatti terminali. `maestro_record_verifier_handoff` restituisce una diagnostica strutturata e non scrive nulla quando rileva modifiche di prodotto residue.
-9. La prima versione non offre un tool per abbandonare un workflow. L’owner gestisce manualmente risorse e artefatti quando decide di abbandonarlo.
+6. `maestro_prepare_final_review` esegue lo squash staged, verifica lo staging, scrive e mette in staging `final-review`, quindi tenta il cleanup best-effort di branch e worktree. Restituisce dati strutturati sulla consegna e sul risultato del cleanup. Un errore precedente a `final-review` lascia la fase invariata; un errore di cleanup richiede intervento manuale ma non riapre il workflow.
+7. I tool child-only scrivono e validano gli artefatti terminali. `maestro_record_verifier_handoff` restituisce una diagnostica strutturata e non scrive nulla quando rileva modifiche di prodotto residue.
+8. La prima versione non offre un tool per abbandonare un workflow. L’owner gestisce manualmente risorse e artefatti quando decide di abbandonarlo.
 
 <a id="plan-section-6-11"></a>
 
@@ -1389,11 +1317,11 @@ Decisioni prese:
 6. I tool child-only validano percorso e formato degli artefatti prima della scrittura.
 7. L’estensione principale e quella child-only condividono i moduli interni comuni.
 8. Builder e verifier non caricano l’intera estensione Maestro.
-9. Gli hook child-only rifiutano `write` ed `edit` diretti su `spec.md`, `workflow.json`, `observations.json`, `prototypes/` e `handoffs/`. Prima del confronto rimuovono un eventuale prefisso `@`, risolvono il percorso rispetto alla root del worktree, normalizzano `.` e `..` e risolvono gli antenati e i symlink esistenti. Percorsi relativi, assoluti o alias dello stesso file ricevono quindi la stessa protezione. Solo il relativo tool Maestro può creare o aggiornare l’artefatto previsto.
-10. Poiché `bash` non è una sandbox, i tool terminali verificano che `spec.md`, `workflow.json`, `prototypes/` e `handoffs/` non siano stati modificati rispetto al checkpoint di lancio prima di scrivere la propria modifica autorizzata. `maestro_record_builder_observation` valida la storia di `observations.json` prima di ogni aggiornamento e i tool terminali ne validano nuovamente l’intero contenuto.
+9. Gli hook child-only rifiutano `write` ed `edit` diretti su `spec.md`, `workflow.json`, `prototypes/` e `handoffs/`. Prima del confronto rimuovono un eventuale prefisso `@`, risolvono il percorso rispetto alla root del worktree, normalizzano `.` e `..` e risolvono gli antenati e i symlink esistenti. Percorsi relativi, assoluti o alias dello stesso file ricevono quindi la stessa protezione. Solo il relativo tool Maestro può creare o aggiornare l’artefatto previsto.
+10. Poiché `bash` non è una sandbox, i tool terminali verificano che `spec.md`, `workflow.json`, `prototypes/` e `handoffs/` non siano stati modificati rispetto al checkpoint di lancio prima di scrivere la propria modifica autorizzata.
 11. Una modifica precedente poi ripristinata byte per byte non produce uno stato diverso e non blocca il terminal handoff.
 
-Il builder continua a usare i normali tool di modifica per il codice del prodotto e, alla fine di un passaggio `done` o `failed`, usa una sola volta `maestro_record_builder_observation` per `observations.json`. Non lo usa quando apre un’escalation. Il verifier usa `edit` e `write` solo per applicare e ripristinare i breakage previsti dal protocollo e non modifica le observations.
+Il builder continua a usare i normali tool di modifica per il codice del prodotto e conclude il passaggio con `maestro_record_builder_handoff` oppure `maestro_open_escalation`. Il verifier usa `edit` e `write` solo per applicare e ripristinare i breakage previsti dal protocollo.
 
 <a id="plan-section-6-12"></a>
 
@@ -1409,7 +1337,6 @@ ls
 bash
 edit
 write
-maestro_record_builder_observation
 maestro_record_builder_handoff
 maestro_open_escalation
 ```
@@ -1540,12 +1467,12 @@ final-review
 La riscrittura della spec è un percorso eccezionale che può essere richiesto da un finding oppure dalla resolution di un’escalation. Quando l’owner decide di cambiare il contratto:
 
 1. Maestro verifica che la base branch e tutte le risorse gestite siano coerenti e pulite. In caso contrario, il reset si blocca senza modificare nulla.
-2. Porta sulla base branch il singolo `observations.json` con tutti i passaggi builder e tutte le escalation.
+2. Porta sulla base branch tutte le escalation.
 3. Non porta il vecchio codice, `builder.json`, `verifier.json` o i finding; la resolution dell’escalation che ha causato il reset resta invece nella storia durevole.
 4. Mantiene lo stesso `specId`, una `revision` monotona e il `baseBranch`.
 5. Imposta `drafting-spec` sulla base branch senza creare un commit.
 6. Owner e Maestro sostituiscono il contenuto dello stesso `spec.md`; non viene creato un archivio separato della vecchia spec.
-7. Dopo la nuova validazione, l’owner committa spec, stato e storia durevole sulla base branch.
+7. Dopo la nuova approvazione e la transizione a `ready-for-builder`, l’owner committa spec, stato e storia durevole sulla base branch.
 8. Solo dopo il commit, Maestro elimina i vecchi branch e worktree verificati.
 9. Maestro ricrea `builder/<id>` dal nuovo commit di approvazione e il ciclo riparte.
 10. La storia Git conserva la versione precedente della spec.
@@ -1571,7 +1498,7 @@ Quando `maestro_prepare_final_review` termina con successo, il workflow è già 
 43. Dopo aver verificato lo staging, Maestro scrive e mette in staging `workflow.json` in fase `final-review`; il file entra nel successivo commit dell’owner.
 44. Maestro tenta quindi la pulizia best-effort dei branch e dei worktree gestiti del workflow e restituisce il risultato.
 45. Se squash, staging o verifica falliscono prima della transizione finale, Maestro restituisce un errore e non scrive `final-review`. Un errore di pulizia successivo viene segnalato senza annullare la conclusione.
-46. `maestro_prepare_final_review` restituisce dati strutturati sulle observations e sullo staging; il Maestro LLM li trasforma nel riepilogo finale per l’owner e indica che il codice è staged sulla base branch.
+46. `maestro_prepare_final_review` restituisce dati strutturati sul candidate e sullo staging; il Maestro LLM li trasforma nel riepilogo finale per l’owner e indica che il codice è staged sulla base branch.
 47. La consegna conclude il workflow senza attendere il commit dell’owner.
 48. `final-review` è l’ultima fase persistita. Non esiste una fase `completed`; ogni workflow in `final-review` è concluso e archiviato.
 49. Branch o worktree Maestro associati a un workflow in `final-review` costituiscono uno stato incoerente e non riaprono il workflow.
@@ -1584,7 +1511,7 @@ Quando `maestro_prepare_final_review` termina con successo, il workflow è già 
 
 Decisioni prese:
 
-1. Builder handoff, verifier handoff, escalation e observations dichiarano `"version": "1.0.0"`. `version` usa Semantic Versioning, identifica lo schema del file ed è separata dalla versione npm del pacchetto. Una major non supportata blocca il workflow. Una versione assente, non valida o non supportata rende l’artefatto non valido.
+1. Builder handoff, verifier handoff ed escalation dichiarano `"version": "1.0.0"`. `version` usa Semantic Versioning, identifica lo schema del file ed è separata dalla versione npm del pacchetto. Una major non supportata blocca il workflow. Una versione assente, non valida o non supportata rende l’artefatto non valido.
 2. Builder handoff, verifier handoff ed escalation dichiarano anche i campi obbligatori `"specId"` e `"revision"`. `specId` deve coincidere con il workflow corrente.
 3. `revision` deve coincidere con la revisione scritta in `workflow.json` dalla transizione che crea o aggiorna l’artefatto. Ogni singolo file viene scritto atomicamente; il checkpoint Git rende autorevole l’insieme.
 4. Gli artefatti non contengono branch, commit o timestamp. Questi dati vengono ricavati da Git quando necessari.
@@ -1615,13 +1542,13 @@ Esempio `done`:
 
 8. `status` accetta solo `done` o `failed`.
 9. `summary` è obbligatorio e non vuoto.
-10. Gli ID in `acceptanceCriteria` devono corrispondere alla spec.
+10. Gli ID in `acceptanceCriteria` sono univoci nel documento. Il builder è responsabile della loro corrispondenza con la spec; l’estensione non analizza il Markdown.
 11. `probeStatus` accetta `passed`, `failed` o `not-run`.
 12. `breakageStatus` accetta `confirmed`, `not-confirmed` o `not-run`.
 13. Con `status: done`, tutti i probe devono essere `passed` e tutti i breakage devono essere `confirmed`.
 14. Con `status: failed`, è obbligatorio `"failure": { "reason": "<non-empty>" }`. I risultati non eseguiti restano esplicitamente `not-run`.
 15. `notes` è sempre presente come lista di stringhe e può essere vuota. Le note non modificano la spec e non sostituiscono un’escalation.
-16. Comandi, misurazioni ed estratti di output rilevanti restano nel singolo `observations.json`. Non vengono conservati log completi o dati sensibili.
+16. Il builder handoff conserva comandi e stati sintetici, non log completi o dati sensibili.
 17. Il verifier handoff non è un array JSON diretto. Registra anche i controlli rigenerati:
 
 ```json
@@ -1659,7 +1586,7 @@ Esempio `done`:
 ```
 
 18. `summary` è obbligatorio e non vuoto.
-19. `acceptanceCriteria` contiene tutti i criteri della spec e usa gli stessi stati del builder.
+19. Il verifier inserisce tutti i criteri della spec in `acceptanceCriteria` e usa gli stessi stati del builder. L’estensione valida il documento internamente, senza confrontarlo con il Markdown.
 20. `findings` può essere vuoto. In quel caso tutti i probe devono essere `passed` e tutti i breakage `confirmed`.
 21. Ogni probe non `passed` o breakage non `confirmed` deve avere almeno un finding collegato al relativo acceptance criterion.
 22. Ogni finding usa un ID univoco `F1`, `F2`, ecc.
@@ -1755,7 +1682,7 @@ Decisione presa sulle collisioni:
 2. Maestro mostra all’owner tutte le risorse in collisione.
 3. Maestro non riutilizza, rinomina, sovrascrive o elimina risorse trovate in collisione o non dimostrate come proprie del workflow.
 4. Maestro non genera automaticamente un nuovo ID con un suffisso.
-5. Maestro può eliminare branch e worktree verificati come propri del workflow solo durante la conclusione eseguita da `maestro_prepare_final_review` oppure durante il reset esplicito della spec dopo il nuovo commit di approvazione. Il reset preserva prima observations ed escalation. Questa restrizione non impedisce la pulizia manuale dell’owner dopo un abbandono.
+5. Maestro può eliminare branch e worktree verificati come propri del workflow solo durante la conclusione eseguita da `maestro_prepare_final_review` oppure durante il reset esplicito della spec dopo il nuovo commit di approvazione. Il reset preserva prima le escalation. Questa restrizione non impedisce la pulizia manuale dell’owner dopo un abbandono.
 
 Decisione presa sul recupero delle risorse esistenti:
 
@@ -1900,7 +1827,7 @@ Copertura minima approvata per la prima versione:
 1. Unit test della configurazione e dei default.
 2. Unit test della validazione dei percorsi e dei symlink.
 3. Unit test degli ID e degli slug.
-4. Test del template della spec, del parser, della creazione iniziale di `observations.json` e degli schemi JSON nei file unit o integration corrispondenti.
+4. Test del template della spec e degli schemi JSON nei file unit o integration corrispondenti.
 5. Unit test minimi delle transizioni di `workflow.json`: un percorso normale, un retry, un reset della spec, una revisione stale, incremento monotono e immutabilità dell’input. L’autorizzazione dei ruoli resta negli allowlist dei tool e negli adapter.
 6. Integration test con repository Git temporanei.
 7. Integration test per branch, worktree, squash e pulizia.
@@ -1908,11 +1835,11 @@ Copertura minima approvata per la prima versione:
 9. Test di recupero dopo crash e worktree sporco.
 10. Test delle collisioni e delle revisioni concorrenti.
 11. Test che nessuna operazione esca dalla root Git.
-12. Test dello schema di `observations.json`, della singola scrittura per revisione builder `done` o `failed`, della derivazione di `specId`, `revision` e `B<n>`, della validazione della storia esistente, della validazione del solo nuovo passaggio contro la spec corrente e dell’assenza di observations per le escalation.
+12. Test degli handoff builder `done` e `failed`, inclusi identità, revisione, acceptance criteria e stati terminali.
 13. Test che il verifier ripristini ogni modifica staged, unstaged o untracked prima dell’handoff e che il rifiuto restituisca `PRODUCT_FILES_MODIFIED` con un messaggio, senza modifiche a handoff e workflow.
 14. Test del reset della spec avviato da finding ed escalation.
 15. Test rappresentativi di `maestro_resolve_findings`: tutti respinti, almeno un `fix-code`, almeno un `revise-spec` e validazione di `expectedRevision`.
-16. Test del blocco di `write` ed `edit` sui percorsi protetti tramite percorsi relativi, assoluti, normalizzati e symlink, degli aggiornamenti di `observations.json` tramite il tool dedicato e del controllo terminale contro modifiche effettuate tramite `bash`.
+16. Test del blocco di `write` ed `edit` sui percorsi protetti tramite percorsi relativi, assoluti, normalizzati e symlink e del controllo terminale contro modifiche effettuate tramite `bash`.
 17. Test che `maestro_prepare_final_review` verifichi lo staging, scriva e metta in staging `final-review`, tenti il cleanup best-effort, restituisca i dati strutturati necessari al riepilogo finale e mantenga la fase precedente quando squash o verifica falliscono.
 18. La suite end-to-end contiene un happy path completo e un percorso di recovery con retry esplicito. Gli altri edge case restano nei test dei moduli proprietari.
 

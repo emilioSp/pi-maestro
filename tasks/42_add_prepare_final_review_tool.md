@@ -21,7 +21,7 @@ Expose the final squash, staging, cleanup, and structured owner handoff.
 1. Define input with `specId` and `expectedRevision`.
 2. Require `candidate-ready` and a proven candidate commit.
 3. Call the final-review workflow.
-4. Return base branch, candidate identity, staged summary, observations summary, cleanup result, and final phase.
+4. Return base branch, candidate identity, staged summary, cleanup result, and final phase.
 5. Return a structured error with the previous phase when squash or staging verification fails before the final transition.
 6. Clearly state in structured data that Maestro is concluded and the owner controls later edits and the final commit.
 7. Reject repeated preparation of an already concluded workflow.

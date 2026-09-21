@@ -27,7 +27,7 @@ Expose safe foreground verifier launches from a completed builder candidate.
 
 ## Implementation
 
-The prompt identifies the spec and worktree and requires applicable `AGENTS.md` reads. It must not include builder observations as proof or weaken independent verification.
+The prompt identifies the spec and worktree and requires applicable `AGENTS.md` reads. It must not treat the builder handoff as proof or weaken independent verification.
 
 ## Tests
 

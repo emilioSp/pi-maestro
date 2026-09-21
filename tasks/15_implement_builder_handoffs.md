@@ -4,7 +4,7 @@ STATUS: TODO
 
 ## Dependency
 
-This task depends on Task 14: Implement builder observations.
+This task depends on Task 12: Implement the spec template and creation.
 
 ## Objective
 
@@ -19,18 +19,18 @@ Validate, read, and write the current builder terminal handoff.
 
 1. Implement the closed discriminated schema in `src/artifacts/builder-handoff.ts`.
 2. Validate semantic schema version `1.0.0`, identity, revision, status, summary, acceptance criteria, notes, and failure details.
-3. Require exact current spec acceptance criterion IDs.
+3. Require unique acceptance criterion IDs.
 4. Enforce all-passed and all-confirmed results for `done`.
 5. Require a non-empty reason and explicit partial statuses for `failed`.
 6. Implement validated read and atomic replacement of `handoffs/builder.json`.
 
 ## Implementation
 
-The file contains only the current builder handoff. Git history preserves older versions. Keep detailed commands and observations in `observations.json`, not in this handoff. Do not update workflow state in the artifact module.
+The file contains the evidence for the current builder pass. Git history preserves older versions. Do not parse or compare against `spec.md`. Do not update workflow state in the artifact module.
 
 ## Tests
 
-Add Vitest tests for valid done and failed documents, missing and extra criteria, duplicate IDs, bad statuses, missing failure reason, empty summary, representative unknown-field cases, wrong identity or revision, and safe replacement.
+Add Vitest tests for valid done and failed documents, duplicate IDs, bad statuses, missing failure reason, empty summary, representative unknown-field cases, wrong identity or revision, and safe replacement.
 
 ## Completion criteria
 

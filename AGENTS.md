@@ -69,8 +69,6 @@ The MVP package structure is frozen. Add a new structural file or directory only
 |---|---|
 | `src/specs/template.ts` | Load the spec template. |
 | `src/specs/create.ts` | Create specs and initial artifacts. |
-| `src/specs/parse.ts` | Parse spec sections. |
-| `src/specs/validate.ts` | Validate the spec structure. |
 
 ### Artifacts
 
@@ -79,7 +77,6 @@ The MVP package structure is frozen. Add a new structural file or directory only
 | `src/artifacts/builder-handoff.ts` | Handle builder handoff artifacts. |
 | `src/artifacts/verifier-handoff.ts` | Handle verifier handoff artifacts. |
 | `src/artifacts/escalation.ts` | Handle builder escalation artifacts. |
-| `src/artifacts/observations.ts` | Handle the builder evidence history. |
 
 ### Workflow state
 
@@ -138,7 +135,6 @@ The MVP package structure is frozen. Add a new structural file or directory only
 
 | File | Responsibility |
 |---|---|
-| `src/tools/child/record-builder-observation.ts` | Record builder evidence. |
 | `src/tools/child/record-builder-handoff.ts` | Record a builder handoff. |
 | `src/tools/child/open-escalation.ts` | Open a builder escalation. |
 | `src/tools/child/record-verifier-handoff.ts` | Record a verifier handoff. |

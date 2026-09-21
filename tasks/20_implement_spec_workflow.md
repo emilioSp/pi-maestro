@@ -18,10 +18,10 @@ Coordinate spec creation, readiness, and the exceptional spec-reset path.
 ## Work
 
 1. Coordinate new spec creation after active-workflow checks.
-2. Mark a structurally valid drafting spec as `ready-for-builder` on the base branch without committing it.
+2. Mark an owner-approved drafting spec as `ready-for-builder` on the base branch without inspecting or committing its Markdown content.
 3. Require the owner commit and a clean base before the first builder launch can proceed.
 4. Implement reset to the same spec ID after an explicit owner decision.
-5. Preserve observations and all escalations, including the triggering resolution.
+5. Preserve all escalations, including the triggering resolution.
 6. Exclude old product code, builder handoff, verifier handoff, and findings from the reset.
 7. Keep revision monotonic and return to `drafting-spec` on the base branch.
 8. Delete old verified workflow resources only after the owner commits the new ready spec.
@@ -32,7 +32,7 @@ The in-place spec reset remains part of the MVP. Do not replace it with manual a
 
 ## Tests
 
-Add Vitest integration tests for create, ready validation, uncommitted ready state, clean approval commit, reset from escalation, reset from findings, preserved history, excluded current handoffs, blocked dirty reset, blocked foreign resource, and cleanup only after the new approval commit.
+Add Vitest integration tests for create, the ready transition with expected identity and revision, uncommitted ready state, clean approval commit, reset from escalation, reset from findings, preserved escalation history, excluded current handoffs, blocked dirty reset, blocked foreign resource, and cleanup only after the new approval commit.
 
 ## Completion criteria
 

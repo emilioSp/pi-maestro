@@ -52,7 +52,6 @@ export type GetMaestroPaths = {
   getSpecPath: (specId: string) => string;
   getSpecFilePath: (specId: string) => string;
   getWorkflowPath: (specId: string) => string;
-  getObservationsPath: (specId: string) => string;
   getHandoffsPath: (specId: string) => string;
   getBuilderHandoffPath: (specId: string) => string;
   getVerifierHandoffPath: (specId: string) => string;
@@ -104,8 +103,6 @@ export const getMaestroPaths = ({
       pathInSpec({ specId, path: 'spec.md' }),
     getWorkflowPath: (specId: string): string =>
       pathInSpec({ specId, path: 'workflow.json' }),
-    getObservationsPath: (specId: string): string =>
-      pathInSpec({ specId, path: 'observations.json' }),
     getHandoffsPath: (specId: string): string =>
       pathInSpec({ specId, path: 'handoffs' }),
     getBuilderHandoffPath: (specId: string): string =>

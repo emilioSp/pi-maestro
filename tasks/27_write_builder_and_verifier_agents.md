@@ -22,8 +22,8 @@ Define the two package agents and their complete role contracts.
 2. Use package `maestro`, fresh context, foreground execution, replace-mode prompts, project context inheritance, no global context, no skills, and no nested subagents.
 3. Load only `../extensions/maestro-child.ts` as the child-only extension.
 4. Give each role only its approved tools.
-5. Explain authority, required reads, spec compliance, probe-breakage cycles, terminal handoffs, commits, and stopping conditions.
-6. Tell the builder when to record observations, fail, or escalate.
+5. Explain authority, required reads, coverage of every acceptance criterion, probe-breakage cycles, terminal handoffs, commits, and stopping conditions.
+6. Tell the builder when to finish with `done`, fail, or escalate.
 7. Tell the verifier to regenerate evidence, never repair code, never decide findings, and restore every breakage.
 
 ## Implementation

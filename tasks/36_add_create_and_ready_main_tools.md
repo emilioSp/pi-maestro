@@ -21,13 +21,13 @@ Expose the two owner-facing tools for the spec preparation phase.
 2. Generate identity and paths in the domain, not from caller-supplied protocol fields.
 3. Return created paths and drafting state in a structured result.
 4. Implement `maestro_mark_spec_ready` with `specId` and `expectedRevision`.
-5. Run deterministic spec validation and return all structural errors.
+5. Verify the drafting state, expected revision, and existence of `spec.md` without inspecting its content.
 6. Move to `ready-for-builder` without creating an owner commit.
 7. Register neither tool while Maestro mode is inactive.
 
 ## Implementation
 
-Tool files are Pi adapters only. They call configuration, path, spec, and workflow modules. Semantic review and owner approval happen before the LLM calls mark-ready.
+Tool files are Pi adapters only. They call configuration, path, spec, and workflow modules. Semantic review and owner approval happen before the LLM calls mark-ready. The tool treats `spec.md` as opaque Markdown.
 
 ## Tests
 
