@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task 11: Implement workflow state schema and store
 
