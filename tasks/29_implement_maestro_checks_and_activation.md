@@ -18,7 +18,7 @@ Activate Maestro only after complete read-only environment checks.
 
 ## Work
 
-1. Check Git repository, trust, Git version, pi-subagents, agents, configuration, models, safe directories, and readable workflow state.
+1. Check Git repository, trust, pi-subagents, agents, configuration, models, safe directories, and readable workflow state.
 2. Aggregate useful activation errors.
 3. Implement the `/maestro` toggle domain behavior.
 4. Activate only after all checks pass.

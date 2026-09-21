@@ -28,6 +28,8 @@ Provide checkpoint commits and prove workflow history relationships.
 
 Do not create commits on the base branch. Commit messages may be fixed and deterministic. Stage only expected Maestro paths for workflow checkpoints. Keep history proof separate from state discovery.
 
+Above every Git-related function, add one `// git ...` comment for each Git command it can run. Use `<...>` placeholders for runtime values.
+
 ## Tests
 
 Add Vitest integration tests for checkpoint commits, parent discovery, linear histories, divergent histories, rewritten histories, unrelated commits, fast-forward eligibility, and accidental staged files outside the expected set.

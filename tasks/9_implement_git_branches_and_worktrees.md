@@ -28,6 +28,8 @@ Manage Maestro branch and worktree resources with strict ownership checks.
 
 Use `builder/<id>` and `verifier/<id>/<n>` with matching configured worktree paths. A registered worktree must use the expected branch. Never clean, reset, force-delete, or overwrite a dirty or unrelated resource.
 
+Above every Git-related function, add one `// git ...` comment for each Git command it can run. Use `<...>` placeholders for runtime values.
+
 ## Tests
 
 Add Vitest integration tests for builder and verifier creation, sequence numbers, parent directories, collisions, registered-path mismatch, dirty worktrees, safe cleanup, refusal to delete foreign resources, and custom worktree directories.

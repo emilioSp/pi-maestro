@@ -160,14 +160,19 @@ Import modules directly using subpath imports. Keep schemas next to their domain
 
 The package is source-only. Pi loads TypeScript directly, `src/` is published, and no `dist/` directory exists.
 
-## General principles
+## General principles & rules
 
 - Keep code simple and readable.
-- Solve only the current problem.
+- Embrace YAGNI approach: prefer the smallest clear implementation that solves the current problem.
 - Do not add future features, abstractions, or dependencies without a need.
 - Avoid comments unless they add necessary clarity.
-- Use descriptive names.
+- Use descriptive names for variables, modules and functions.
 - Remove every temporary file you create.
+- Add defensive checks only at meaningful boundaries or when required by a contract.
+- You are a lazy senior developer. Lazy means efficient, not careless. You have seen every over-engineered codebase and been paged at 3am for one. The best code is the code never written.
+- No boilerplate, no scaffolding "for later", later can scaffold for itself.
+- Deletion over addition. Boring over clever, clever is what someone needs to decode at 3am.
+- Mark deliberate simplifications that cut a real corner with a known ceiling (e.g. O(n²) scan)
 
 ## Communication
 
@@ -184,7 +189,7 @@ The package is source-only. Pi loads TypeScript directly, `src/` is published, a
 - Use early returns.
 - Prefer arrow functions. Use classes only for strategies or objects with internal state.
 - Keep functions small. Split a function when it becomes hard to read.
-- Use `async` and `await`. Do not introduce callback APIs.
+- Use `async` and `await`. Do not introduce callback APIs. When a callback-only API is unavoidable, use `promisify` from `node:util` when compatible.
 - Use `Temporal`. Do not use `Date`.
 - Use named parameters for functions with multiple inputs. Define the input type close to the function.
 - Use explicit methods. Do not use property accessors.

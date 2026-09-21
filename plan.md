@@ -2032,8 +2032,8 @@ La prima versione viene sviluppata, testata e supportata solo su macOS. Il funzi
 Decisione presa per Git:
 
 ```text
-git >=2.40.0
+Git disponibile nel PATH
 ```
 
-Durante l’attivazione, Maestro verifica anche la disponibilità delle operazioni Git necessarie senza modificare il repository.
+Maestro non impone una versione minima. Durante l’attivazione verifica la disponibilità delle operazioni Git necessarie senza modificare il repository.
 

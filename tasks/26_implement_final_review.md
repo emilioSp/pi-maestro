@@ -31,6 +31,8 @@ Prepare the candidate as staged changes on the base branch and conclude Maestro 
 
 Use rollback or stop-before-cleanup behavior so a failed squash or staging check does not destroy workflow resources. Do not write `final-review` until cleanup succeeds. If any earlier step fails, return an error, keep the previous phase, and leave reconciliation to report the inconsistent repository state. Never include unrelated owner changes. After `final-review`, later owner edits are outside Maestro.
 
+Above every Git-related function, add one `// git ...` comment for each Git command it can run. Use `<...>` placeholders for runtime values.
+
 ## Tests
 
 Add Vitest integration tests for each candidate type, squash contents, staged final state, no final commit, observations data, branch and worktree cleanup, parent-directory cleanup, dirty base rejection, unexpected staging, failure before and during cleanup, unchanged phase on failure, final-review as the last mutation, and completed-workflow discovery.

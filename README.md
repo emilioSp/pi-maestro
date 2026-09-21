@@ -10,7 +10,7 @@ Maestro helps an owner define one change, send it to a builder, verify the resul
 
 - macOS
 - Node.js 26 or later
-- Git 2.40 or later
+- Git
 - Pi 0.85.1 or later
 - `pi-subagents` 0.68.0 or later, installed and enabled in Pi
 - Access to the configured builder and verifier models
