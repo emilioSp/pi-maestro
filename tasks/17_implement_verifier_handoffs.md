@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task 17: Implement verifier handoffs
 
