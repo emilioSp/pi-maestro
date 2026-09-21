@@ -35,6 +35,15 @@ export const writeAtomically = async ({
   }
 };
 
+const jsonContent = (data: unknown): string => {
+  const content = JSON.stringify(data, null, 2);
+  if (content === undefined) {
+    throw new Error('JSON data must be serializable.');
+  }
+
+  return `${content}\n`;
+};
+
 export const writeJsonAtomically = async ({
   path,
   data,
@@ -42,10 +51,5 @@ export const writeJsonAtomically = async ({
   path: string;
   data: unknown;
 }): Promise<void> => {
-  const content = JSON.stringify(data, null, 2);
-  if (content === undefined) {
-    throw new Error('JSON data must be serializable.');
-  }
-
-  await writeAtomically({ path, content: `${content}\n` });
+  await writeAtomically({ path, content: jsonContent(data) });
 };

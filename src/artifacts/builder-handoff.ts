@@ -1,8 +1,8 @@
-import { readFile } from 'node:fs/promises';
 import { type Static, Type } from 'typebox';
 import { Value } from 'typebox/value';
 import { writeJsonAtomically } from '#atomic-write.ts';
 import { isValidSpecId, SPEC_ID_PATTERN } from '#ids.ts';
+import { readJsonFile } from '#utils/read-json.ts';
 
 export const BUILDER_HANDOFF_VERSION = '1.0.0';
 
@@ -167,17 +167,6 @@ export const validateBuilderHandoffForWorkflow = ({
   return validatedHandoff;
 };
 
-const readJson = async (path: string): Promise<unknown> => {
-  const content = await readFile(path, 'utf8');
-  try {
-    return JSON.parse(content);
-  } catch (cause) {
-    throw new Error(`Builder handoff contains malformed JSON: ${path}.`, {
-      cause,
-    });
-  }
-};
-
 export const readBuilderHandoff = async ({
   path,
   specId,
@@ -188,7 +177,7 @@ export const readBuilderHandoff = async ({
   revision: number;
 }): Promise<BuilderHandoff> =>
   validateBuilderHandoffForWorkflow({
-    handoff: await readJson(path),
+    handoff: await readJsonFile({ path, description: 'Builder handoff' }),
     specId,
     revision,
   });
