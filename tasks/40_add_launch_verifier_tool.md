@@ -18,10 +18,10 @@ Expose safe foreground verifier launches from a completed builder candidate.
 
 ## Work
 
-1. Define input with `specId` and `expectedRevision`.
-2. Call the verifier workflow to create the next isolated verifier checkpoint.
+1. Define input with `specId`.
+2. Call the verifier workflow to create the isolated verifier checkpoint.
 3. Launch `maestro.verifier` in foreground with configured model, thinking, timeout, fresh context, and verifier worktree cwd.
-4. Inspect the committed terminal handoff against the workflow revision and candidate commit after the child returns.
+4. Inspect the committed terminal handoff against the candidate commit after the child returns.
 5. Return candidate-ready, findings, timeout, interrupted, product-modified, or protocol-error results distinctly.
 6. Never launch a builder or another verifier automatically.
 

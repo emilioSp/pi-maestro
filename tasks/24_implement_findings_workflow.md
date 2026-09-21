@@ -24,7 +24,7 @@ Apply one explicit owner decision to every current finding.
 4. Apply rejections once in the current verifier handoff.
 5. If any decision is `fix-code`, fast-forward findings to the builder branch and commit `ready-for-builder`.
 6. If every decision is `reject`, commit `candidate-ready`.
-7. Require `expectedRevision` and never infer a decision from finding text.
+7. Never infer a decision from finding text.
 8. Do not resolve findings through this workflow when the approved contract must change.
 
 ## Implementation
@@ -33,7 +33,7 @@ In mixed decisions, rejected findings receive their rejection while valid findin
 
 ## Tests
 
-Add table-driven Vitest integration tests for all-reject, one mixed fix-code outcome, missing or duplicate finding decisions, unknown finding IDs, empty rejection reasons, stale revisions, fast-forward failure, and no partial mutation.
+Add table-driven Vitest integration tests for all-reject, one mixed fix-code outcome, missing or duplicate finding decisions, unknown finding IDs, empty rejection reasons, fast-forward failure, and no partial mutation.
 
 ## Completion criteria
 

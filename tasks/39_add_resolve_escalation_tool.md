@@ -18,7 +18,7 @@ Expose explicit owner resolution of the current builder escalation.
 
 ## Work
 
-1. Define input for `specId`, `expectedRevision`, `escalationId`, selected option, decision, and reason.
+1. Define input for `specId`, `escalationId`, selected option, decision, and reason.
 2. Use provider-compatible string enums where needed.
 3. Require a current unresolved escalation and a complete owner decision.
 4. Call the escalation workflow without interpreting the decision text.

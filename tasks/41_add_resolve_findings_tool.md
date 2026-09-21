@@ -18,7 +18,7 @@ Expose complete owner decisions for the current verifier findings.
 
 ## Work
 
-1. Define input for `specId`, `expectedRevision`, and one decision per finding.
+1. Define input for `specId` and one decision per finding.
 2. Use `StringEnum` for `reject` and `fix-code`.
 3. Require reasons only for rejected findings.
 4. Validate exact finding coverage before any mutation.

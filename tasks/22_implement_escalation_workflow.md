@@ -20,7 +20,7 @@ Coordinate builder escalations and explicit owner resolutions.
 
 1. Open an escalation only from `builder-running`.
 2. Create the next escalation, move to `escalation-decision`, and require the child to commit both files.
-3. Resolve only the current unresolved escalation with `expectedRevision`.
+3. Resolve only the current unresolved escalation.
 4. Persist only selected option, decision, and reason in the resolution.
 5. Commit `ready-for-builder` on the workflow branch and do not launch automatically.
 6. Do not resolve through this workflow when the approved contract must change.
@@ -31,7 +31,7 @@ When the owner wants to change the approved contract, leave the escalation unres
 
 ## Tests
 
-Add Vitest integration tests for open, sequential open after a later pass, valid resolution, invalid option, stale revision, duplicate resolution, ready-for-builder checkpoint, and no automatic builder launch.
+Add Vitest integration tests for open, sequential open after a later pass, valid resolution, invalid option, duplicate resolution, ready-for-builder checkpoint, and no automatic builder launch.
 
 ## Completion criteria
 

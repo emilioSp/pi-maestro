@@ -20,8 +20,8 @@ Expose the two owner-facing tools for the spec preparation phase.
 1. Implement `maestro_create_spec` with a small TypeBox input schema.
 2. Generate identity and paths in the domain, not from caller-supplied protocol fields.
 3. Return created paths and drafting state in a structured result.
-4. Implement `maestro_mark_spec_ready` with `specId` and `expectedRevision`.
-5. Verify the drafting state, expected revision, and existence of `spec.md` without inspecting its content.
+4. Implement `maestro_mark_spec_ready` with `specId`.
+5. Verify the drafting state and existence of `spec.md` without inspecting its content.
 6. Move to `ready-for-builder` without creating an owner commit.
 7. Register neither tool while Maestro mode is inactive.
 

@@ -19,7 +19,7 @@ Coordinate spec creation and readiness.
 
 1. Coordinate new spec creation after active-workflow checks.
 2. Mark an owner-approved drafting spec as `ready-for-builder` on the base branch without inspecting or committing its Markdown content.
-3. Require the expected spec ID, workflow revision, and existing `spec.md`.
+3. Require the expected spec ID and existing `spec.md`.
 4. Do not revise an approved spec inside an active workflow.
 
 ## Implementation
@@ -28,7 +28,7 @@ If the approved contract must change after a builder starts, Maestro stops. The 
 
 ## Tests
 
-Add Vitest integration tests for create, active-workflow rejection, the ready transition with expected identity and revision, stale revision, and missing spec.
+Add Vitest integration tests for create, active-workflow rejection, the ready transition with expected identity, and missing spec.
 
 ## Completion criteria
 

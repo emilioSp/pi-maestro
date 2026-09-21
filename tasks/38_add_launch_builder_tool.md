@@ -17,10 +17,10 @@ Expose safe foreground builder launches from approved workflow state.
 
 ## Work
 
-1. Define input with `specId`, `expectedRevision`, and an explicit retry intent when required.
+1. Define input with `specId` and an explicit retry intent when required.
 2. Call the builder workflow to validate state and create the launch checkpoint.
 3. Launch `maestro.builder` in foreground with the configured model, thinking, timeout, fresh context, and worktree cwd.
-4. Inspect and validate the terminal outcome against the workflow revision after the child returns.
+4. Inspect and validate the terminal outcome after the child returns.
 5. Return done, failed, escalation, timeout, interrupted, or protocol-error results distinctly.
 6. Never relaunch automatically.
 

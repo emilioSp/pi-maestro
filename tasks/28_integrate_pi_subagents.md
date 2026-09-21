@@ -31,7 +31,7 @@ Import only `pi-subagents/delegation` and `pi-subagents/preflight` public APIs. 
 
 ## Tests
 
-Use the fake subagent support to test missing extension, old version, missing agent, unavailable model, unauthenticated model, successful foreground result, timeout, workflow revision validation, and repeated launches.
+Use the fake subagent support to test missing extension, old version, missing agent, unavailable model, unauthenticated model, successful foreground result, and timeout.
 
 ## Completion criteria
 

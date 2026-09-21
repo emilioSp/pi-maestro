@@ -19,10 +19,10 @@ Turn reconciliation results into safe resume and retry options without automatic
 
 1. Recover the current phase during explicit activation after restart or crash.
 2. Classify a running phase without a terminal handoff as interrupted after restart.
-3. Report the role, branch, worktree, commit, revision, cleanliness, and safe next actions.
-4. Allow only an explicit owner retry when the worktree is clean.
-5. Block on dirty state, broken basic ancestry, collision, or foreign resources.
-6. Treat every `final-review` workflow as completed and not reopenable; report any remaining managed resources for manual cleanup.
+3. Report the interrupted role, branch, worktree, cleanliness, and retry action.
+4. Allow only an explicit owner retry when the expected worktree is clean.
+5. Block on a dirty worktree, missing resource, or broken basic ancestry.
+6. Treat every `final-review` workflow as completed and not reopenable.
 
 ## Implementation
 
@@ -30,7 +30,7 @@ Do not reset, clean, commit, relaunch, delete, or choose abandonment. Manual aba
 
 ## Tests
 
-Add Vitest integration tests for restart in every phase, interrupted builder, interrupted verifier, clean retry, dirty worktree, missing handoff, broken basic ancestry, completed final review, final review with remaining resources, and no mutation during inspection.
+Add Vitest integration tests for interrupted builder, interrupted verifier, clean retry, dirty worktree, missing handoff, broken basic ancestry, completed final review, and no mutation during inspection.
 
 ## Completion criteria
 

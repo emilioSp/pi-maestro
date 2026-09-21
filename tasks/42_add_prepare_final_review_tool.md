@@ -18,7 +18,7 @@ Expose the final squash, staging, cleanup, and structured owner handoff.
 
 ## Work
 
-1. Define input with `specId` and `expectedRevision`.
+1. Define input with `specId`.
 2. Require `candidate-ready` and a proven candidate commit.
 3. Call the final-review workflow.
 4. Return base branch, candidate identity, staged summary, cleanup result, and final phase.

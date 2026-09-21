@@ -534,7 +534,7 @@ Regole degli acceptance criteria:
 18. Il verifier rigenera il ciclo senza usare il builder handoff come prova.
 19. Builder e verifier non cambiano unilateralmente probe, expected result o breakage.
 
-`maestro_mark_spec_ready` tratta `spec.md` come Markdown opaco. Verifica solo che il workflow atteso sia in `drafting-spec`, che la revisione coincida e che il file esista. Non analizza sezioni, acceptance criteria o riferimenti ai prototype.
+`maestro_mark_spec_ready` tratta `spec.md` come Markdown opaco. Verifica solo che il workflow sia in `drafting-spec` e che il file esista. Non analizza sezioni, acceptance criteria o riferimenti ai prototype.
 
 Validazione semantica del Maestro LLM prima di chiamare il tool:
 
@@ -594,7 +594,7 @@ L’estensione non interpreta né valida la struttura della spec. Maestro, build
 3. Il builder scrive l’escalation, la commette e termina.
 4. Non aspetta in processo.
 5. Il maestro registra la risposta dell’owner con `maestro_resolve_escalation` quando la spec approvata resta valida.
-6. Il tool riceve `specId`, `expectedRevision`, `escalationId` e la resolution.
+6. Il tool riceve `specId`, `escalationId` e la resolution.
 7. La resolution persistita contiene solo `selectedOptionId`, `decision` e `reason`.
 8. Una resolution valida porta a `ready-for-builder` senza lanciare automaticamente il builder.
 9. Se l’owner vuole cambiare il contratto approvato, Maestro non chiama il tool: il workflow viene abbandonato manualmente e la nuova spec usa un nuovo ID.
@@ -622,7 +622,7 @@ fix-code
   mantiene la spec e richiede un nuovo builder pass
 ```
 
-Ogni finding appare esattamente una volta e la risoluzione usa `expectedRevision`. Almeno un `fix-code` porta a `ready-for-builder`; se tutte le decisioni sono `reject`, il workflow passa a `candidate-ready`. Nel percorso `fix-code`, i finding respinti ricevono `rejection` e quelli validi restano senza rejection per il builder. Maestro non deduce azioni dal testo e chiama il tool solo dopo decisioni esplicite su tutti i finding.
+Ogni finding appare esattamente una volta nella risoluzione. Almeno un `fix-code` porta a `ready-for-builder`; se tutte le decisioni sono `reject`, il workflow passa a `candidate-ready`. Nel percorso `fix-code`, i finding respinti ricevono `rejection` e quelli validi restano senza rejection per il builder. Maestro non deduce azioni dal testo e chiama il tool solo dopo decisioni esplicite su tutti i finding.
 
 <a id="plan-section-3-7"></a>
 
@@ -1289,7 +1289,7 @@ maestro_record_verifier_handoff
 Responsabilità:
 
 1. `maestro_create_spec` crea ID, template e stato iniziale.
-2. `maestro_mark_spec_ready` verifica stato, revisione ed esistenza di `spec.md`, quindi imposta `ready-for-builder` dopo l’approvazione dell’owner.
+2. `maestro_mark_spec_ready` verifica stato ed esistenza di `spec.md`, quindi imposta `ready-for-builder` dopo l’approvazione dell’owner.
 3. `maestro_inspect_workflow` ricostruisce e controlla lo stato.
 4. `maestro_launch_builder` e `maestro_launch_verifier` preparano Git, aggiornano lo stato e avviano il subagent.
 5. `maestro_resolve_escalation` e `maestro_resolve_findings` registrano solo decisioni esplicite dell’owner che mantengono valida la spec approvata. Un cambio del contratto richiede abbandono manuale e una nuova spec.
@@ -1656,21 +1656,12 @@ verifier/<id>/<n>
 
 Branch e worktree usano la stessa gerarchia. L’estensione crea le directory genitore necessarie e le rimuove solo quando sono vuote.
 
-Decisione presa sulle collisioni:
+Decisione sulle risorse del workflow:
 
-1. Se una spec directory, un branch o un worktree da creare esiste già, Maestro si ferma.
-2. Maestro mostra all’owner tutte le risorse in collisione.
-3. Maestro non riutilizza, rinomina, sovrascrive o elimina risorse trovate in collisione o non dimostrate come proprie del workflow.
-4. Maestro non genera automaticamente un nuovo ID con un suffisso.
-5. Maestro può eliminare branch e worktree verificati come propri del workflow solo durante la conclusione eseguita da `maestro_prepare_final_review`. Questa restrizione non impedisce la pulizia manuale dell’owner dopo un abbandono.
-
-Decisione presa sul recupero delle risorse esistenti:
-
-1. Una risorsa esistente è recuperabile solo se nome, `specId`, `baseBranch`, associazione Git e revisione coincidono con il workflow attivo.
-2. Il worktree deve essere registrato da Git sul branch atteso.
-3. Le risorse estranee non possono occupare percorsi previsti dal workflow.
-4. Se tutti i controlli passano, Maestro riprende il workflow senza chiedere una conferma aggiuntiva.
-5. Se almeno un controllo fallisce, Maestro tratta il caso come collisione, si ferma e informa l’owner.
+1. Esiste un solo workflow attivo e un solo ruolo in esecuzione.
+2. Builder e verifier usano i branch e i worktree previsti dai nomi fissi.
+3. Se la risorsa attesa manca o non è utilizzabile, Maestro si ferma e informa l’owner.
+4. Maestro non riusa o pulisce automaticamente una risorsa inattesa.
 
 Decisione presa sui worktree sporchi:
 
@@ -1808,17 +1799,17 @@ Copertura minima approvata per la prima versione:
 2. Unit test della validazione dei percorsi e dei symlink.
 3. Unit test degli ID e degli slug.
 4. Test del template della spec e degli schemi JSON nei file unit o integration corrispondenti.
-5. Unit test minimi delle transizioni di `workflow.json`: un percorso normale, un retry, una revisione stale, incremento monotono e immutabilità dell’input. L’autorizzazione dei ruoli resta negli allowlist dei tool e negli adapter.
+5. Unit test minimi delle transizioni di `workflow.json`: un percorso normale, un retry, incremento monotono e immutabilità dell’input. L’autorizzazione dei ruoli resta negli allowlist dei tool e negli adapter.
 6. Integration test con repository Git temporanei.
 7. Integration test per branch, worktree, squash e pulizia.
 8. Test del ciclo builder, verifier, escalation e finding nei moduli di dominio con un fake di `pi-subagents`. I test dei tool adapter coprono schema input, derivazione dei campi, wiring di un successo e propagazione di un errore senza ripetere l’intera matrice del dominio.
 9. Test di recupero dopo crash e worktree sporco.
-10. Test delle collisioni e delle revisioni concorrenti.
+10. Test delle risorse previste per il workflow attivo.
 11. Test che nessuna operazione esca dalla root Git.
 12. Test degli handoff builder `done` e `failed`, inclusi identità, revisione, acceptance criteria e stati terminali.
 13. Test che il verifier ripristini ogni modifica staged, unstaged o untracked prima dell’handoff e che il rifiuto restituisca `PRODUCT_FILES_MODIFIED` con un messaggio, senza modifiche a handoff e workflow.
 14. Test che escalation e finding non possano riportare una spec approvata a `drafting-spec`.
-15. Test rappresentativi di `maestro_resolve_findings`: tutti respinti, almeno un `fix-code` e validazione di `expectedRevision`.
+15. Test rappresentativi di `maestro_resolve_findings`: tutti respinti e almeno un `fix-code`.
 16. Test del blocco di `write` ed `edit` sui percorsi protetti tramite percorsi relativi, assoluti, normalizzati e symlink e del controllo terminale contro modifiche effettuate tramite `bash`.
 17. Test che `maestro_prepare_final_review` verifichi lo staging, scriva e metta in staging `final-review`, tenti il cleanup best-effort, restituisca i dati strutturati necessari al riepilogo finale e mantenga la fase precedente quando squash o verifica falliscono.
 18. La suite end-to-end contiene un happy path completo e un percorso di recovery con retry esplicito. Gli altri edge case restano nei test dei moduli proprietari.
