@@ -150,9 +150,9 @@ The MVP package structure is frozen. Add a new structural file or directory only
 | `test/support/temp-repository.ts` | Create temporary Git repositories for tests. |
 | `test/support/fake-subagents.ts` | Simulate builders and verifiers in tests. |
 
-Import modules directly using subpath imports. Keep schemas next to their domain. Do not add a global `src/schemas/` directory. Tool files define the input schema, register the Pi tool, call domain code, and convert the result to Pi format. They do not duplicate Git, state, artifact, or workflow logic.
+Import modules directly using subpath imports. Keep schemas next to their domain. Do not add a global `src/schemas/` directory. Tool files define the input schema, register the Pi tool, call domain code, and convert the result to Pi format.
 
-`test/unit/` and `test/integration/` mirror `src/`. `test/fixtures/config/`, `test/fixtures/specs/`, and `test/fixtures/artifacts/` contain their matching scenarios. A test file identifies its main source file, for example `src/workflow/state/store.ts` maps to `test/integration/workflow/state/store.test.ts`. A module does not need both unit and integration coverage when one meaningful test level is sufficient. Do not create generic aggregate tests such as `state.test.ts`.
+A test file identifies its main source file, for example `src/workflow/state/store.ts` maps to `test/integration/workflow/state/store.test.ts`. A module does not need both unit and integration coverage when one meaningful test level is sufficient.
 
 The package is source-only. Pi loads TypeScript directly, `src/` is published, and no `dist/` directory exists.
 
@@ -190,9 +190,9 @@ The package is source-only. Pi loads TypeScript directly, `src/` is published, a
 - Use named parameters for functions with multiple inputs. Define the input type close to the function.
 - Use explicit methods. Do not use property accessors.
 - Do not use `--experimental-strip-types`. We run on node version that support TypeScript stripping by default.
-- Use named domain constants instead of repeated string literals.
 - Use `imports` field. Do not use relative paths.
 - Keep utility modules under a `utils` folder.
+- Do not use `string literals`! Use `const object literal`, and derive the type from the object's value.
 
 ## Testing and checks
 
