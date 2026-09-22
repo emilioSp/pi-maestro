@@ -37,7 +37,7 @@ afterEach(async () => {
 });
 
 describe('spec workflow', () => {
-  it.only('creates a drafting spec after confirming that no workflow is active', async () => {
+  it('creates a drafting spec after confirming that no workflow is active', async () => {
     const { paths } = await createRepository();
 
     const created = await createWorkflowSpec({
