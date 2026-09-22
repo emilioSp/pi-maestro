@@ -821,7 +821,10 @@ pi-maestro/
 │   │   │   └── index.ts
 │   │   ├── transitions.ts
 │   │   ├── spec.ts
-│   │   ├── builder.ts
+│   │   ├── builder/
+│   │   │   ├── prepareBuilderLauncher.ts
+│   │   │   ├── completeBuilderPass.ts
+│   │   │   └── utils.ts
 │   │   ├── verifier.ts
 │   │   ├── escalation.ts
 │   │   ├── findings.ts

@@ -94,7 +94,9 @@ The MVP package structure is frozen. Add a new structural file or directory only
 |---|---|
 | `src/workflow/transitions.ts` | Define valid workflow phase transitions. |
 | `src/workflow/spec.ts` | Coordinate spec creation and approval. |
-| `src/workflow/builder.ts` | Coordinate the builder cycle. |
+| `src/workflow/builder/prepareBuilderLauncher.ts` | Prepare committed builder launch checkpoints. |
+| `src/workflow/builder/completeBuilderPass.ts` | Complete builder passes with validated terminal handoffs. |
+| `src/workflow/builder/utils.ts` | Share builder worktree and protocol path validation. |
 | `src/workflow/verifier.ts` | Coordinate the verifier cycle. |
 | `src/workflow/escalation.ts` | Coordinate escalation resolution. |
 | `src/workflow/findings.ts` | Coordinate finding resolution. |

@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task 21: Implement the builder workflow
 
@@ -13,7 +13,7 @@ Coordinate builder launch checkpoints and terminal builder outcomes.
 ## Plan references
 
 - Section [3.3](../plan.md#plan-section-3-3)
-- Section [5](../plan.md#plan-section-5), `src/workflow/builder.ts`
+- Section [5](../plan.md#plan-section-5), `src/workflow/builder/prepareBuilderLauncher.ts` and `src/workflow/builder/completeBuilderPass.ts`
 - Sections [6.9](../plan.md#plan-section-6-9), [6.10](../plan.md#plan-section-6-10), [6.14](../plan.md#plan-section-6-14), [6.17](../plan.md#plan-section-6-17), [6.19](../plan.md#plan-section-6-19), [6.22](../plan.md#plan-section-6-22), and [6.23](../plan.md#plan-section-6-23)
 
 ## Work
