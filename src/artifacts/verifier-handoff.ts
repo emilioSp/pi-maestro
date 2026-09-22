@@ -24,6 +24,9 @@ export const FINDING_SEVERITIES = {
   LOW: 'low',
 } as const;
 
+export type FindingSeverity =
+  (typeof FINDING_SEVERITIES)[keyof typeof FINDING_SEVERITIES];
+
 const FindingSeveritySchema = Type.Union([
   Type.Literal(FINDING_SEVERITIES.HIGH),
   Type.Literal(FINDING_SEVERITIES.MEDIUM),

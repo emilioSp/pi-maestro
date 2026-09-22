@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   MaestroConfigInputSchema,
   ResolvedMaestroConfigSchema,
+  SUPPORTED_CONFIG_VERSION,
   THINKING_LEVELS,
   validateConfiguration,
 } from '#config/validate.ts';
@@ -22,17 +23,17 @@ describe('configuration schema validation', () => {
 
   it('accepts a full valid configuration', () => {
     const input = {
-      version: '1.0.0',
+      version: SUPPORTED_CONFIG_VERSION,
       specDirectory: '.specs',
       worktreeDirectory: '.worktree',
       builder: {
         model: 'openai-codex/gpt-5.6-luna',
-        thinking: 'high',
+        thinking: THINKING_LEVELS.HIGH,
         timeoutMinutes: 60,
       },
       verifier: {
         model: 'openai-codex/gpt-5.6-sol',
-        thinking: 'medium',
+        thinking: THINKING_LEVELS.MEDIUM,
         timeoutMinutes: 60,
       },
     };
@@ -41,13 +42,13 @@ describe('configuration schema validation', () => {
   });
 
   it('accepts a minimal configuration containing only version', () => {
-    const input = { version: '1.0.0' };
+    const input = { version: SUPPORTED_CONFIG_VERSION };
     expect(validateConfiguration(input)).toEqual(input);
   });
 
   it('accepts partial configurations with valid overrides', () => {
     const input = {
-      version: '1.0.0',
+      version: SUPPORTED_CONFIG_VERSION,
       builder: {
         timeoutMinutes: 90,
       },
@@ -58,7 +59,7 @@ describe('configuration schema validation', () => {
   it('accepts all supported thinking levels', () => {
     for (const level of Object.values(THINKING_LEVELS)) {
       const input = {
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         builder: { thinking: level },
       };
       expect(validateConfiguration(input)).toEqual(input);
@@ -68,21 +69,21 @@ describe('configuration schema validation', () => {
   it('accepts valid timeout bounds of 1 and 1440 minutes', () => {
     expect(
       validateConfiguration({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         builder: { timeoutMinutes: 1 },
       }),
     ).toEqual({
-      version: '1.0.0',
+      version: SUPPORTED_CONFIG_VERSION,
       builder: { timeoutMinutes: 1 },
     });
 
     expect(
       validateConfiguration({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         verifier: { timeoutMinutes: 1440 },
       }),
     ).toEqual({
-      version: '1.0.0',
+      version: SUPPORTED_CONFIG_VERSION,
       verifier: { timeoutMinutes: 1440 },
     });
   });
@@ -143,14 +144,17 @@ describe('configuration schema validation', () => {
 
   it('rejects unknown field at root level', () => {
     expect(() =>
-      validateConfiguration({ version: '1.0.0', unknownRoot: 'test' }),
+      validateConfiguration({
+        version: SUPPORTED_CONFIG_VERSION,
+        unknownRoot: 'test',
+      }),
     ).toThrow('Unknown configuration field: "unknownRoot".');
   });
 
   it('rejects unknown field in builder configuration', () => {
     expect(() =>
       validateConfiguration({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         builder: { unknownChild: 123 },
       }),
     ).toThrow('Unknown configuration field: "builder.unknownChild".');
@@ -159,7 +163,7 @@ describe('configuration schema validation', () => {
   it('rejects unknown field in verifier configuration', () => {
     expect(() =>
       validateConfiguration({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         verifier: { unknownChild: 'bad' },
       }),
     ).toThrow('Unknown configuration field: "verifier.unknownChild".');
@@ -168,7 +172,7 @@ describe('configuration schema validation', () => {
   it('rejects model identifier without provider prefix', () => {
     expect(() =>
       validateConfiguration({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         builder: { model: 'gpt-5.6-luna' },
       }),
     ).toThrow(
@@ -179,7 +183,7 @@ describe('configuration schema validation', () => {
   it('rejects model identifier with empty provider or model', () => {
     expect(() =>
       validateConfiguration({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         builder: { model: '/gpt-5.6-luna' },
       }),
     ).toThrow(
@@ -188,7 +192,7 @@ describe('configuration schema validation', () => {
 
     expect(() =>
       validateConfiguration({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         verifier: { model: 'openai-codex/' },
       }),
     ).toThrow(
@@ -199,7 +203,7 @@ describe('configuration schema validation', () => {
   it('rejects model identifier containing whitespace', () => {
     expect(() =>
       validateConfiguration({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         builder: { model: 'openai codex/gpt-5.6-luna' },
       }),
     ).toThrow(
@@ -210,7 +214,7 @@ describe('configuration schema validation', () => {
   it('rejects unsupported thinking levels', () => {
     expect(() =>
       validateConfiguration({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         builder: { thinking: 'extreme' },
       }),
     ).toThrow(
@@ -221,7 +225,7 @@ describe('configuration schema validation', () => {
   it('rejects timeout values below minimum of 1', () => {
     expect(() =>
       validateConfiguration({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         builder: { timeoutMinutes: 0 },
       }),
     ).toThrow(
@@ -229,7 +233,7 @@ describe('configuration schema validation', () => {
     );
     expect(() =>
       validateConfiguration({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         builder: { timeoutMinutes: -5 },
       }),
     ).toThrow(
@@ -240,7 +244,7 @@ describe('configuration schema validation', () => {
   it('rejects timeout values above maximum of 1440', () => {
     expect(() =>
       validateConfiguration({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         verifier: { timeoutMinutes: 1441 },
       }),
     ).toThrow(
@@ -251,7 +255,7 @@ describe('configuration schema validation', () => {
   it('rejects non-integer timeout values', () => {
     expect(() =>
       validateConfiguration({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         builder: { timeoutMinutes: 30.5 },
       }),
     ).toThrow(
@@ -259,7 +263,7 @@ describe('configuration schema validation', () => {
     );
     expect(() =>
       validateConfiguration({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         builder: { timeoutMinutes: '60' },
       }),
     ).toThrow(
@@ -270,14 +274,14 @@ describe('configuration schema validation', () => {
   it('rejects non-object builder and verifier entries', () => {
     expect(() =>
       validateConfiguration({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         builder: 'not-an-object',
       }),
     ).toThrow('Invalid builder configuration: expected an object.');
 
     expect(() =>
       validateConfiguration({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         verifier: [1, 2, 3],
       }),
     ).toThrow('Invalid verifier configuration: expected an object.');
@@ -286,14 +290,14 @@ describe('configuration schema validation', () => {
   it('rejects empty specDirectory and worktreeDirectory', () => {
     expect(() =>
       validateConfiguration({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         specDirectory: '',
       }),
     ).toThrow('Invalid specDirectory: expected a non-empty string.');
 
     expect(() =>
       validateConfiguration({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         worktreeDirectory: '',
       }),
     ).toThrow('Invalid worktreeDirectory: expected a non-empty string.');

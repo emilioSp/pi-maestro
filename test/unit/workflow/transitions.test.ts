@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   WORKFLOW_EVENTS,
   WORKFLOW_PHASES,
+  WORKFLOW_STATE_VERSION,
   type WorkflowEvent,
   type WorkflowPhase,
   type WorkflowState,
@@ -12,7 +13,7 @@ import {
 } from '#workflow/transitions.ts';
 
 const state = (phase: WorkflowPhase, revision = 1): WorkflowState => ({
-  version: '1.0.0',
+  version: WORKFLOW_STATE_VERSION,
   specId: '20260321-143052-add-weather-alerts',
   revision,
   phase,

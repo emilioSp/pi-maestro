@@ -3,8 +3,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  BREAKAGE_STATUSES,
+  PROBE_STATUSES,
+} from '#artifacts/builder-handoff.ts';
+import {
+  FINDING_SEVERITIES,
   readVerifierHandoff,
   rejectVerifierFinding,
+  VERIFIER_HANDOFF_VERSION,
   type VerifierHandoff,
   writeVerifierHandoff,
 } from '#artifacts/verifier-handoff.ts';
@@ -19,7 +25,7 @@ const createTemporaryDirectory = async (): Promise<string> => {
 };
 
 const handoff = (): VerifierHandoff => ({
-  version: '1.0.0',
+  version: VERIFIER_HANDOFF_VERSION,
   specId,
   revision: 6,
   summary: 'Regenerated the checks from the candidate commit.',
@@ -27,15 +33,15 @@ const handoff = (): VerifierHandoff => ({
     {
       id: 'AC1',
       probe: 'npm test -- alert',
-      probeStatus: 'passed',
-      breakageStatus: 'confirmed',
+      probeStatus: PROBE_STATUSES.PASSED,
+      breakageStatus: BREAKAGE_STATUSES.CONFIRMED,
     },
   ],
   findings: [
     {
       id: 'F1',
       acceptanceCriterion: 'AC1',
-      severity: 'low',
+      severity: FINDING_SEVERITIES.LOW,
       confidence: 0.9,
       summary: 'The status message lacks a full stop.',
       evidence: [

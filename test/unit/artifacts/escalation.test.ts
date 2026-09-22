@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { type Escalation, validateEscalation } from '#artifacts/escalation.ts';
+import {
+  ESCALATION_VERSION,
+  type Escalation,
+  validateEscalation,
+} from '#artifacts/escalation.ts';
 
 const escalation = (): Escalation => ({
-  version: '1.0.0',
+  version: ESCALATION_VERSION,
   specId: '20260321-143052-add-weather-alerts',
   revision: 3,
   id: 'E1',

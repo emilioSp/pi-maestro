@@ -20,6 +20,9 @@ export const THINKING_LEVELS = {
   MAX: 'max',
 } as const;
 
+export type ThinkingLevel =
+  (typeof THINKING_LEVELS)[keyof typeof THINKING_LEVELS];
+
 export const MODEL_PATTERN = '^[^/\\s]+/[^/\\s]+$';
 
 export const SEMVER_PATTERN =

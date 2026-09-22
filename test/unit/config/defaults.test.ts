@@ -31,18 +31,18 @@ describe('configuration defaults', () => {
 
   it('provides a complete default configuration object with approved values', () => {
     expect(DEFAULT_CONFIG).toEqual({
-      version: '1.0.0',
-      specDirectory: '.specs',
-      worktreeDirectory: '.worktree',
+      version: DEFAULT_CONFIG_VERSION,
+      specDirectory: DEFAULT_SPEC_DIRECTORY,
+      worktreeDirectory: DEFAULT_WORKTREE_DIRECTORY,
       builder: {
-        model: 'openai-codex/gpt-5.6-luna',
-        thinking: 'high',
-        timeoutMinutes: 60,
+        model: DEFAULT_BUILDER_MODEL,
+        thinking: DEFAULT_BUILDER_THINKING,
+        timeoutMinutes: DEFAULT_TIMEOUT_MINUTES,
       },
       verifier: {
-        model: 'openai-codex/gpt-5.6-sol',
-        thinking: 'medium',
-        timeoutMinutes: 60,
+        model: DEFAULT_VERIFIER_MODEL,
+        thinking: DEFAULT_VERIFIER_THINKING,
+        timeoutMinutes: DEFAULT_TIMEOUT_MINUTES,
       },
     });
   });

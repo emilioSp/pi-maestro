@@ -2,7 +2,11 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import type { WorkflowState } from '#workflow/state/schema.ts';
+import {
+  WORKFLOW_PHASES,
+  WORKFLOW_STATE_VERSION,
+  type WorkflowState,
+} from '#workflow/state/schema.ts';
 import {
   readWorkflowState,
   writeWorkflowState,
@@ -17,10 +21,13 @@ const createTemporaryDirectory = async (): Promise<string> => {
 };
 
 const state = (revision: number): WorkflowState => ({
-  version: '1.0.0',
+  version: WORKFLOW_STATE_VERSION,
   specId: '20260321-143052-add-weather-alerts',
   revision,
-  phase: revision === 1 ? 'drafting-spec' : 'ready-for-builder',
+  phase:
+    revision === 1
+      ? WORKFLOW_PHASES.DRAFTING_SPEC
+      : WORKFLOW_PHASES.READY_FOR_BUILDER,
   baseBranch: 'main',
 });
 
@@ -122,7 +129,7 @@ describe('workflow state store', () => {
       writeWorkflowState({ path, state: state(2), currentRevision: 1 }),
       writeWorkflowState({
         path,
-        state: { ...state(2), phase: 'builder-running' },
+        state: { ...state(2), phase: WORKFLOW_PHASES.BUILDER_RUNNING },
         currentRevision: 1,
       }),
     ]);

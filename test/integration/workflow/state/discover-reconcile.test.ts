@@ -12,13 +12,17 @@ import {
 import { createTemporaryRepository } from '#test/support/temp-repository.ts';
 import { discoverActiveWorkflow } from '#workflow/state/discover.ts';
 import { reconcileWorkflow } from '#workflow/state/reconcile.ts';
-import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
+import {
+  WORKFLOW_PHASES,
+  WORKFLOW_STATE_VERSION,
+  type WorkflowState,
+} from '#workflow/state/schema.ts';
 
 const cleanupFunctions: Array<() => Promise<void>> = [];
 const specId = '20260321-143052-add-weather-alerts';
 
 const state = (phase: WorkflowState['phase']): WorkflowState => ({
-  version: '1.0.0',
+  version: WORKFLOW_STATE_VERSION,
   specId,
   revision: 1,
   phase,

@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   createEscalation,
+  ESCALATION_VERSION,
   type Escalation,
   type EscalationResolution,
   getNextEscalationId,
@@ -50,7 +51,7 @@ const savedEscalation = ({
   revision: number;
 }): Escalation => ({
   ...newEscalation(),
-  version: '1.0.0',
+  version: ESCALATION_VERSION,
   specId,
   revision,
   id,

@@ -2,14 +2,15 @@ import { describe, expect, it } from 'vitest';
 import {
   validateWorkflowState,
   WORKFLOW_PHASES,
+  WORKFLOW_STATE_VERSION,
   WorkflowStateSchema,
 } from '#workflow/state/schema.ts';
 
 const validState = {
-  version: '1.0.0' as const,
+  version: WORKFLOW_STATE_VERSION,
   specId: '20260321-143052-add-weather-alerts',
   revision: 1,
-  phase: 'drafting-spec' as const,
+  phase: WORKFLOW_PHASES.DRAFTING_SPEC,
   baseBranch: 'main',
 };
 

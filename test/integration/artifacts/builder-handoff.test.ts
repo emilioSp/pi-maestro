@@ -3,7 +3,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  BREAKAGE_STATUSES,
+  BUILDER_HANDOFF_STATUSES,
+  BUILDER_HANDOFF_VERSION,
   type BuilderHandoff,
+  PROBE_STATUSES,
   readBuilderHandoff,
   writeBuilderHandoff,
 } from '#artifacts/builder-handoff.ts';
@@ -18,17 +22,17 @@ const createTemporaryDirectory = async (): Promise<string> => {
 };
 
 const handoff = (revision: number): BuilderHandoff => ({
-  version: '1.0.0',
+  version: BUILDER_HANDOFF_VERSION,
   specId,
   revision,
-  status: 'done',
+  status: BUILDER_HANDOFF_STATUSES.DONE,
   summary: `Implemented revision ${revision}.`,
   acceptanceCriteria: [
     {
       id: 'AC1',
       probe: 'npm test -- alert',
-      probeStatus: 'passed',
-      breakageStatus: 'confirmed',
+      probeStatus: PROBE_STATUSES.PASSED,
+      breakageStatus: BREAKAGE_STATUSES.CONFIRMED,
     },
   ],
   notes: [],
@@ -85,7 +89,10 @@ describe('builder handoff store', () => {
         handoff: {
           ...handoff(5),
           acceptanceCriteria: [
-            { ...handoff(5).acceptanceCriteria[0], probeStatus: 'failed' },
+            {
+              ...handoff(5).acceptanceCriteria[0],
+              probeStatus: PROBE_STATUSES.FAILED,
+            },
           ],
         },
         specId,

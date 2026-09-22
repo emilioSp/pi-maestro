@@ -2,7 +2,7 @@ import { access, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { runGitCommand } from '#git/command.ts';
+import { GIT_COMMAND_ERROR_CODES, runGitCommand } from '#git/command.ts';
 
 const temporaryDirectories: string[] = [];
 
@@ -37,7 +37,9 @@ describe('Git command execution', () => {
         arguments: ['rev-parse', `HEAD; touch ${marker}`],
         cwd,
       }),
-    ).rejects.toMatchObject({ code: 'command-failed' });
+    ).rejects.toMatchObject({
+      code: GIT_COMMAND_ERROR_CODES.COMMAND_FAILED,
+    });
     await expect(access(marker)).rejects.toThrow();
   });
 
@@ -49,7 +51,7 @@ describe('Git command execution', () => {
         cwd,
       }),
     ).rejects.toMatchObject({
-      code: 'command-failed',
+      code: GIT_COMMAND_ERROR_CODES.COMMAND_FAILED,
       exitCode: expect.any(Number),
       stderr: expect.stringContaining('not a git repository'),
     });
@@ -61,7 +63,7 @@ describe('Git command execution', () => {
         arguments: ['--version'],
         environment: { PATH: '' },
       }),
-    ).rejects.toMatchObject({ code: 'not-found' });
+    ).rejects.toMatchObject({ code: GIT_COMMAND_ERROR_CODES.NOT_FOUND });
   });
 
   it('returns a structured error when Git cannot execute', async () => {
@@ -73,7 +75,9 @@ describe('Git command execution', () => {
         arguments: ['--version'],
         environment: { PATH: path },
       }),
-    ).rejects.toMatchObject({ code: 'execution-failed' });
+    ).rejects.toMatchObject({
+      code: GIT_COMMAND_ERROR_CODES.EXECUTION_FAILED,
+    });
   });
 
   it('terminates a command after its timeout', async () => {
@@ -82,6 +86,6 @@ describe('Git command execution', () => {
         arguments: ['hash-object', '--stdin'],
         timeoutMs: 20,
       }),
-    ).rejects.toMatchObject({ code: 'timeout' });
+    ).rejects.toMatchObject({ code: GIT_COMMAND_ERROR_CODES.TIMEOUT });
   });
 });

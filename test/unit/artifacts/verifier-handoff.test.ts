@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BREAKAGE_STATUSES,
+  PROBE_STATUSES,
+} from '#artifacts/builder-handoff.ts';
+import {
+  FINDING_SEVERITIES,
+  VERIFIER_HANDOFF_VERSION,
   type VerifierHandoff,
   validateVerifierHandoff,
 } from '#artifacts/verifier-handoff.ts';
@@ -7,7 +13,7 @@ import {
 const specId = '20260321-143052-add-weather-alerts';
 
 const handoff = (): VerifierHandoff => ({
-  version: '1.0.0',
+  version: VERIFIER_HANDOFF_VERSION,
   specId,
   revision: 6,
   summary: 'Regenerated the checks from the candidate commit.',
@@ -15,8 +21,8 @@ const handoff = (): VerifierHandoff => ({
     {
       id: 'AC1',
       probe: 'npm test -- alert',
-      probeStatus: 'passed',
-      breakageStatus: 'confirmed',
+      probeStatus: PROBE_STATUSES.PASSED,
+      breakageStatus: BREAKAGE_STATUSES.CONFIRMED,
     },
   ],
   findings: [],
@@ -26,7 +32,7 @@ const handoff = (): VerifierHandoff => ({
 const finding = (): VerifierHandoff['findings'][number] => ({
   id: 'F1',
   acceptanceCriterion: 'AC1',
-  severity: 'high',
+  severity: FINDING_SEVERITIES.HIGH,
   confidence: 0.95,
   summary: 'The alert is not persisted after restart.',
   evidence: [
@@ -50,7 +56,7 @@ describe('verifier handoff schema', () => {
         acceptanceCriteria: [
           {
             ...handoff().acceptanceCriteria[0],
-            breakageStatus: 'not-confirmed',
+            breakageStatus: BREAKAGE_STATUSES.NOT_CONFIRMED,
           },
         ],
         findings: [
@@ -92,7 +98,10 @@ describe('verifier handoff schema', () => {
       handoff: {
         ...handoff(),
         acceptanceCriteria: [
-          { ...handoff().acceptanceCriteria[0], probeStatus: 'failed' },
+          {
+            ...handoff().acceptanceCriteria[0],
+            probeStatus: PROBE_STATUSES.FAILED,
+          },
         ],
       },
       message: 'requires a finding',

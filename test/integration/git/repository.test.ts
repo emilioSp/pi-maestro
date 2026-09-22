@@ -1,7 +1,7 @@
 import { mkdir, realpath, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { runGitCommand } from '#git/command.ts';
+import { GIT_COMMAND_ERROR_CODES, runGitCommand } from '#git/command.ts';
 import {
   assertRepositoryTrusted,
   findRepositoryRoot,
@@ -66,7 +66,9 @@ describe('Git repository inspection', () => {
 
     await expect(
       getCurrentBranch({ repositoryRoot: repository.path }),
-    ).rejects.toMatchObject({ code: 'command-failed' });
+    ).rejects.toMatchObject({
+      code: GIT_COMMAND_ERROR_CODES.COMMAND_FAILED,
+    });
   });
 
   it('rejects an unavailable HEAD before the first commit', async () => {
@@ -75,7 +77,9 @@ describe('Git repository inspection', () => {
 
     await expect(
       getHeadCommit({ repositoryRoot: repository.path }),
-    ).rejects.toMatchObject({ code: 'command-failed' });
+    ).rejects.toMatchObject({
+      code: GIT_COMMAND_ERROR_CODES.COMMAND_FAILED,
+    });
   });
 
   it('distinguishes staged, unstaged, and untracked state without changing it', async () => {

@@ -64,7 +64,8 @@ export const WorkflowStateSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export type WorkflowPhase = Static<typeof WorkflowPhaseSchema>;
+export type WorkflowPhase =
+  (typeof WORKFLOW_PHASES)[keyof typeof WORKFLOW_PHASES];
 export type WorkflowEvent =
   (typeof WORKFLOW_EVENTS)[keyof typeof WORKFLOW_EVENTS];
 export type WorkflowState = Static<typeof WorkflowStateSchema>;

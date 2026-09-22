@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { loadConfiguration } from '#config/load.ts';
+import { SUPPORTED_CONFIG_VERSION, THINKING_LEVELS } from '#config/validate.ts';
 
 const fixturePath = (fileName: string): string =>
   fileURLToPath(import.meta.resolve(`#test/fixtures/config/${fileName}`));
@@ -70,7 +71,11 @@ const writeDirectoryConfiguration = async ({
 }): Promise<void> => {
   await writeFile(
     configPath,
-    JSON.stringify({ version: '1.0.0', specDirectory, worktreeDirectory }),
+    JSON.stringify({
+      version: SUPPORTED_CONFIG_VERSION,
+      specDirectory,
+      worktreeDirectory,
+    }),
     'utf8',
   );
 };
@@ -104,17 +109,17 @@ describe('configuration loading', () => {
       process.chdir(workspace.tempDir);
       const config = await loadConfiguration();
       expect(config).toEqual({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         specDirectory: join(workspace.tempDir, 'custom-specs'),
         worktreeDirectory: join(workspace.tempDir, 'custom-worktrees'),
         builder: {
           model: 'anthropic/claude-3-7-sonnet',
-          thinking: 'max',
+          thinking: THINKING_LEVELS.MAX,
           timeoutMinutes: 120,
         },
         verifier: {
           model: 'anthropic/claude-3-5-haiku',
-          thinking: 'low',
+          thinking: THINKING_LEVELS.LOW,
           timeoutMinutes: 30,
         },
       });
@@ -134,17 +139,17 @@ describe('configuration loading', () => {
       process.chdir(workspace.tempDir);
       const config = await loadConfiguration();
       expect(config).toEqual({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         specDirectory: join(workspace.tempDir, '.specs'),
         worktreeDirectory: join(workspace.tempDir, '.worktree'),
         builder: {
           model: 'openai-codex/gpt-5.6-luna',
-          thinking: 'high',
+          thinking: THINKING_LEVELS.HIGH,
           timeoutMinutes: 90,
         },
         verifier: {
           model: 'openai-codex/gpt-5.6-sol',
-          thinking: 'medium',
+          thinking: THINKING_LEVELS.MEDIUM,
           timeoutMinutes: 60,
         },
       });
@@ -164,17 +169,17 @@ describe('configuration loading', () => {
       process.chdir(workspace.tempDir);
       const config = await loadConfiguration();
       expect(config).toEqual({
-        version: '1.0.0',
+        version: SUPPORTED_CONFIG_VERSION,
         specDirectory: join(workspace.tempDir, 'specs-dir'),
         worktreeDirectory: join(workspace.tempDir, 'worktree-dir'),
         builder: {
           model: 'openai-codex/gpt-5.6-luna',
-          thinking: 'high',
+          thinking: THINKING_LEVELS.HIGH,
           timeoutMinutes: 60,
         },
         verifier: {
           model: 'openai-codex/gpt-5.6-sol',
-          thinking: 'medium',
+          thinking: THINKING_LEVELS.MEDIUM,
           timeoutMinutes: 60,
         },
       });

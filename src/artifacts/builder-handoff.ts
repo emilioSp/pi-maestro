@@ -12,6 +12,14 @@ import { readJsonFile } from '#utils/read-json.ts';
 
 export const BUILDER_HANDOFF_VERSION = '1.0.0';
 
+export const BUILDER_HANDOFF_STATUSES = {
+  DONE: 'done',
+  FAILED: 'failed',
+} as const;
+
+export type BuilderHandoffStatus =
+  (typeof BUILDER_HANDOFF_STATUSES)[keyof typeof BUILDER_HANDOFF_STATUSES];
+
 export const PROBE_STATUSES = {
   PASSED: 'passed',
   FAILED: 'failed',
@@ -23,6 +31,10 @@ export const BREAKAGE_STATUSES = {
   NOT_CONFIRMED: 'not-confirmed',
   NOT_RUN: 'not-run',
 } as const;
+
+export type ProbeStatus = (typeof PROBE_STATUSES)[keyof typeof PROBE_STATUSES];
+export type BreakageStatus =
+  (typeof BREAKAGE_STATUSES)[keyof typeof BREAKAGE_STATUSES];
 
 const ProbeStatusSchema = Type.Union([
   Type.Literal(PROBE_STATUSES.PASSED),
@@ -58,7 +70,7 @@ const BuilderHandoffFields = {
 export const BuilderDoneHandoffSchema = Type.Object(
   {
     ...BuilderHandoffFields,
-    status: Type.Literal('done'),
+    status: Type.Literal(BUILDER_HANDOFF_STATUSES.DONE),
   },
   { additionalProperties: false },
 );
@@ -66,7 +78,7 @@ export const BuilderDoneHandoffSchema = Type.Object(
 export const BuilderFailedHandoffSchema = Type.Object(
   {
     ...BuilderHandoffFields,
-    status: Type.Literal('failed'),
+    status: Type.Literal(BUILDER_HANDOFF_STATUSES.FAILED),
     failure: Type.Object(
       { reason: Type.String({ minLength: 1 }) },
       { additionalProperties: false },
@@ -122,7 +134,7 @@ export const validateBuilderHandoff = (input: unknown): BuilderHandoff => {
     throw new Error('Builder handoff acceptance criterion IDs must be unique.');
   }
   if (
-    handoff.status === 'done' &&
+    handoff.status === BUILDER_HANDOFF_STATUSES.DONE &&
     !hasOnlyCompletedChecks(handoff.acceptanceCriteria)
   ) {
     throw new Error(
@@ -130,7 +142,7 @@ export const validateBuilderHandoff = (input: unknown): BuilderHandoff => {
     );
   }
   if (
-    handoff.status === 'failed' &&
+    handoff.status === BUILDER_HANDOFF_STATUSES.FAILED &&
     !hasPartialCheck(handoff.acceptanceCriteria)
   ) {
     throw new Error(

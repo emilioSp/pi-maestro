@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BREAKAGE_STATUSES,
+  BUILDER_HANDOFF_STATUSES,
+  BUILDER_HANDOFF_VERSION,
   type BuilderHandoff,
+  PROBE_STATUSES,
   validateBuilderHandoff,
   validateBuilderHandoffForWorkflow,
 } from '#artifacts/builder-handoff.ts';
@@ -8,34 +12,34 @@ import {
 const specId = '20260321-143052-add-weather-alerts';
 
 const doneHandoff = (): BuilderHandoff => ({
-  version: '1.0.0',
+  version: BUILDER_HANDOFF_VERSION,
   specId,
   revision: 4,
-  status: 'done',
+  status: BUILDER_HANDOFF_STATUSES.DONE,
   summary: 'Implemented the approved change.',
   acceptanceCriteria: [
     {
       id: 'AC1',
       probe: 'npm test -- alert',
-      probeStatus: 'passed',
-      breakageStatus: 'confirmed',
+      probeStatus: PROBE_STATUSES.PASSED,
+      breakageStatus: BREAKAGE_STATUSES.CONFIRMED,
     },
   ],
   notes: [],
 });
 
 const failedHandoff = (): BuilderHandoff => ({
-  version: '1.0.0',
+  version: BUILDER_HANDOFF_VERSION,
   specId,
   revision: 4,
-  status: 'failed',
+  status: BUILDER_HANDOFF_STATUSES.FAILED,
   summary: 'The migration could not be completed.',
   acceptanceCriteria: [
     {
       id: 'AC1',
       probe: 'npm test -- alert',
-      probeStatus: 'not-run',
-      breakageStatus: 'not-run',
+      probeStatus: PROBE_STATUSES.NOT_RUN,
+      breakageStatus: BREAKAGE_STATUSES.NOT_RUN,
     },
   ],
   failure: { reason: 'The required service is unavailable.' },
@@ -75,7 +79,10 @@ describe('builder handoff schema', () => {
       handoff: {
         ...doneHandoff(),
         acceptanceCriteria: [
-          { ...doneHandoff().acceptanceCriteria[0], probeStatus: 'failed' },
+          {
+            ...doneHandoff().acceptanceCriteria[0],
+            probeStatus: PROBE_STATUSES.FAILED,
+          },
         ],
       },
       message: 'Done builder handoff requires every probe to pass',
