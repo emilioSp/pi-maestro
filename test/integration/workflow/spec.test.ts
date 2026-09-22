@@ -47,7 +47,7 @@ describe('spec workflow', () => {
       instant: INSTANT,
     });
 
-    expect(created.specId).toBe(0);
+    expect(created.specId).toBe(SPEC_ID);
     expect(created.state.phase).toBe(WORKFLOW_PHASES.DRAFTING_SPEC);
   });
 
