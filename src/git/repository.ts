@@ -1,3 +1,9 @@
+/**
+ * Objective: Inspect and validate the current Git repository.
+ * Used: Before Maestro changes repository state.
+ * Entrypoint: assertRepositoryTrusted().
+ */
+
 import { realpath } from 'node:fs/promises';
 import { type GitCommandResult, runGitCommand } from '#git/command.ts';
 

@@ -1,3 +1,9 @@
+/**
+ * Objective: Define and validate the workflow state contract.
+ * Used: Whenever Maestro reads or writes workflow state.
+ * Entrypoint: validateWorkflowState().
+ */
+
 import { type Static, Type } from 'typebox';
 import { Value } from 'typebox/value';
 import { isValidSpecId, SPEC_ID_PATTERN } from '#ids.ts';

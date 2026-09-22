@@ -1,3 +1,9 @@
+/**
+ * Objective: Create and locate Maestro checkpoint commits.
+ * Used: When a workflow role hands work to the next phase.
+ * Entrypoint: createCommit().
+ */
+
 import { runGitCommand } from '#git/command.ts';
 import { getCurrentBranch } from '#git/repository.ts';
 import { WORKFLOW_ROLES } from '#paths.ts';

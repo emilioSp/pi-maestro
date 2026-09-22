@@ -1,3 +1,9 @@
+/**
+ * Objective: Verify commit ancestry and linear workflow history.
+ * Used: Before Maestro accepts a workflow branch history.
+ * Entrypoint: assertLinearHistory().
+ */
+
 import { hasGitExitCode, runGitCommand } from '#git/command.ts';
 
 // Checks whether one commit is reachable from another.

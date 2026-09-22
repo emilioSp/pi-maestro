@@ -1,4 +1,8 @@
-// Used after activation and during workflow inspection to report blockers without changing the workflow.
+/**
+ * Objective: Compare workflow state with Git resources and handoffs.
+ * Used: During activation and workflow inspection without changing state.
+ * Entrypoint: reconcileWorkflow().
+ */
 
 import { readBuilderHandoff } from '#artifacts/builder-handoff.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff.ts';

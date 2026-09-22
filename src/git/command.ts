@@ -1,3 +1,9 @@
+/**
+ * Objective: Run Git commands with consistent errors and timeouts.
+ * Used: By Maestro Git modules for every Git operation.
+ * Entrypoint: runGitCommand().
+ */
+
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 

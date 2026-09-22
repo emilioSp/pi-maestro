@@ -1,3 +1,9 @@
+/**
+ * Objective: Define and validate Maestro configuration contracts.
+ * Used: When configuration input and configured directories are checked.
+ * Entrypoint: validateConfiguration().
+ */
+
 import { lstat, realpath } from 'node:fs/promises';
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import { type Static, Type } from 'typebox';

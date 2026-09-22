@@ -1,4 +1,8 @@
-// Used during activation and workflow inspection to find the active workflow.
+/**
+ * Objective: Find the single active Maestro workflow.
+ * Used: During Maestro activation and workflow inspection.
+ * Entrypoint: discoverActiveWorkflow().
+ */
 
 import { readdir } from 'node:fs/promises';
 import { isValidSpecId } from '#ids.ts';

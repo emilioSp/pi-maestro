@@ -1,3 +1,9 @@
+/**
+ * Objective: Read JSON files with contextual parse errors.
+ * Used: When Maestro loads workflow artifact files.
+ * Entrypoint: readJsonFile().
+ */
+
 import { readFile } from 'node:fs/promises';
 
 export const readJsonFile = async ({

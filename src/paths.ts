@@ -1,3 +1,9 @@
+/**
+ * Objective: Build and validate Maestro paths from configuration.
+ * Used: When any workflow operation needs a repository path.
+ * Entrypoint: getMaestroPaths().
+ */
+
 import { isAbsolute, resolve } from 'node:path';
 import type { MaestroConfig } from '#config/validate.ts';
 import { isValidSpecId } from '#ids.ts';

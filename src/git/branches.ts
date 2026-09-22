@@ -1,3 +1,9 @@
+/**
+ * Objective: Manage branches owned by the Maestro workflow.
+ * Used: When workflow roles need branches created, updated, or removed.
+ * Entrypoint: createBranch().
+ */
+
 import { hasGitExitCode, runGitCommand } from '#git/command.ts';
 
 const branchReference = (branch: string): string => `refs/heads/${branch}`;

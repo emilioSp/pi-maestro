@@ -1,3 +1,9 @@
+/**
+ * Objective: Validate and persist verifier handoffs and findings.
+ * Used: When a verifier reports its review result.
+ * Entrypoint: writeVerifierHandoff().
+ */
+
 import { type Static, Type } from 'typebox';
 import { Value } from 'typebox/value';
 import {

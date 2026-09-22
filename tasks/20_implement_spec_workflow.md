@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task 20: Implement the spec workflow
 

@@ -1,3 +1,9 @@
+/**
+ * Objective: Read and write validated workflow state files.
+ * Used: Whenever a workflow phase or event is persisted.
+ * Entrypoint: writeWorkflowState().
+ */
+
 import { type FileHandle, open, readFile, rm } from 'node:fs/promises';
 import { writeJsonAtomically } from '#atomic-write.ts';
 import { pathExists } from '#utils/path-exists.ts';

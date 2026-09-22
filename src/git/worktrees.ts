@@ -1,3 +1,9 @@
+/**
+ * Objective: Create, find, list, and remove Git worktrees.
+ * Used: When builders and verifiers need isolated work directories.
+ * Entrypoint: createWorktree().
+ */
+
 import { mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { runGitCommand } from '#git/command.ts';

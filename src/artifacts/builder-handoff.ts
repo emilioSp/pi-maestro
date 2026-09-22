@@ -1,3 +1,9 @@
+/**
+ * Objective: Validate and persist builder terminal handoffs.
+ * Used: When a builder reports its completed or failed work.
+ * Entrypoint: writeBuilderHandoff().
+ */
+
 import { type Static, Type } from 'typebox';
 import { Value } from 'typebox/value';
 import { writeJsonAtomically } from '#atomic-write.ts';

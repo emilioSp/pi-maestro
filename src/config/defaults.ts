@@ -1,3 +1,8 @@
+/**
+ * Objective: Define immutable default Maestro configuration values.
+ * Used: When configuration is resolved from missing or partial input.
+ */
+
 import {
   type MaestroConfig,
   SUPPORTED_CONFIG_VERSION,

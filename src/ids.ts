@@ -1,4 +1,8 @@
-// Maestro spec identifier utilities.
+/**
+ * Objective: Create and validate Maestro spec identifiers.
+ * Used: When a spec and its workflow paths are created or read.
+ * Entrypoint: createSpecId().
+ */
 
 export const SPEC_ID_PATTERN = /^(\d{8})-(\d{6})-([a-z0-9]+(?:-[a-z0-9]+)*)$/;
 

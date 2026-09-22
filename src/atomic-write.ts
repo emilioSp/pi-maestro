@@ -1,4 +1,8 @@
-// Shared atomic file writing.
+/**
+ * Objective: Safely replace files with complete content.
+ * Used: When Maestro writes state or artifact files.
+ * Entrypoint: writeAtomically().
+ */
 
 import { randomUUID } from 'node:crypto';
 import { type FileHandle, open, rename, rm } from 'node:fs/promises';

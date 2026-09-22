@@ -1,3 +1,9 @@
+/**
+ * Objective: Load and render the spec document template.
+ * Used: When Maestro creates a new spec file.
+ * Entrypoint: renderSpecTemplate().
+ */
+
 import { readFile } from 'node:fs/promises';
 
 const TEMPLATE_URL = new URL('../../templates/spec.md', import.meta.url);

@@ -1,3 +1,9 @@
+/**
+ * Objective: Load, validate, and resolve Maestro configuration.
+ * Used: When Maestro initializes for a repository.
+ * Entrypoint: loadConfiguration().
+ */
+
 import { readFile, realpath } from 'node:fs/promises';
 import { join } from 'node:path';
 import {

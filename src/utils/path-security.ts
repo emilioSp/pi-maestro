@@ -1,3 +1,9 @@
+/**
+ * Objective: Check whether a path is contained by another path.
+ * Used: When Maestro validates configured and generated paths.
+ * Entrypoint: isInside().
+ */
+
 import { isAbsolute, relative, sep } from 'node:path';
 
 /*
