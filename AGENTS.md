@@ -158,7 +158,7 @@ The package is source-only. Pi loads TypeScript directly, `src/` is published, a
 
 ## General principles & rules
 
-- Keep code simple and readable.
+- Keep code simple and readable. NO OVER ENGINEERING.
 - Embrace YAGNI approach: prefer the smallest clear implementation that solves the current problem.
 - Do not add future features, abstractions, or dependencies without a need.
 - Avoid comments unless they add necessary clarity.
