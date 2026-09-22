@@ -861,11 +861,11 @@ pi-maestro/
 │   ├── configuration.md
 │   └── recovery.md
 └── test/
-    ├── unit/
-    ├── integration/
     ├── support/
     │   ├── temp-repository.ts
-    │   └── fake-subagents.ts
+    │   ├── temp-repository.integration.test.ts
+    │   ├── fake-subagents.ts
+    │   └── fake-subagents.unit.test.ts
     └── fixtures/
         ├── config/
         ├── specs/
@@ -916,7 +916,7 @@ Non esiste una directory globale `src/schemas/`. Ogni schema resta vicino al dom
 
 `src/ids.ts` resta un singolo modulo. Genera il timestamp UTC, normalizza lo slug, compone l’ID e ne valida il formato.
 
-`test/unit/` e `test/integration/` rispecchiano i percorsi sotto `src/`. Ogni file di test identifica il file sorgente principale che verifica, per esempio `src/workflow/state/store.ts` corrisponde a `test/integration/workflow/state/store.test.ts`. Non serve uno unit test per ogni file: un integration test può essere l’unica copertura diretta del modulo. Non vengono creati test aggregati generici come `state.test.ts`.
+I test restano accanto al modulo sotto `src/`. Il suffisso `.unit.test.ts` identifica gli unit test e `.integration.test.ts` identifica gli integration test, per esempio `src/workflow/state/store.ts` corrisponde a `src/workflow/state/store.integration.test.ts`. I test degli helper e le fixture restano sotto `test/`. Non serve uno unit test per ogni file: un integration test può essere l’unica copertura diretta del modulo. Non vengono creati test aggregati generici come `state.test.ts`.
 
 <a id="plan-section-5-1"></a>
 
@@ -956,6 +956,7 @@ Non esiste una directory globale `src/schemas/`. Ogni schema resta vicino al dom
     "agents/",
     "templates/",
     "src/",
+    "!src/**/*.test.ts",
     "docs/",
     "README.md",
     "LICENSE"
@@ -963,8 +964,8 @@ Non esiste una directory globale `src/schemas/`. Ogni schema resta vicino al dom
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "npm run test:unit && npm run test:integration",
-    "test:unit": "vitest run test/unit",
-    "test:integration": "vitest run test/integration",
+    "test:unit": "vitest run --exclude \"**/*.integration.test.ts\"",
+    "test:integration": "vitest run --exclude \"**/*.unit.test.ts\"",
     "check": "npm run typecheck && npm test",
     "prepublishOnly": "npm run check"
   },

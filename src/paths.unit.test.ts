@@ -3,7 +3,7 @@ import { join, relative } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { getMaestroPaths } from '#paths.ts';
-import { createTemporaryRepository } from '../support/temp-repository.ts';
+import { createTemporaryRepository } from '#test/support/temp-repository.ts';
 
 const SPEC_ID = '20260321-143052-add-weather-alerts';
 const temporaryPaths: string[] = [];

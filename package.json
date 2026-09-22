@@ -31,6 +31,7 @@
     "agents/",
     "templates/",
     "src/",
+    "!src/**/*.test.ts",
     "docs/",
     "README.md",
     "LICENSE"
@@ -53,8 +54,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "npm run test:unit && npm run test:integration",
-    "test:unit": "vitest run test/unit",
-    "test:integration": "vitest run test/integration",
+    "test:unit": "vitest run --exclude \"**/*.integration.test.ts\"",
+    "test:integration": "vitest run --exclude \"**/*.unit.test.ts\"",
     "check": "npm run lint && npm run typecheck && npm test",
     "prepublishOnly": "npm run check",
     "lint": "biome check .",

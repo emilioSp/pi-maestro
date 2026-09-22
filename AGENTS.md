@@ -152,7 +152,7 @@ The MVP package structure is frozen. Add a new structural file or directory only
 
 Import modules directly using subpath imports. Keep schemas next to their domain. Do not add a global `src/schemas/` directory. Tool files define the input schema, register the Pi tool, call domain code, and convert the result to Pi format.
 
-A test file identifies its main source file, for example `src/workflow/state/store.ts` maps to `test/integration/workflow/state/store.test.ts`. A module does not need both unit and integration coverage when one meaningful test level is sufficient.
+A test file stays next to its main source file. Unit tests use the `.unit.test.ts` suffix and integration tests use the `.integration.test.ts` suffix, for example `src/workflow/state/store.ts` maps to `src/workflow/state/store.integration.test.ts`. Support and fixture tests remain under `test/`. A module does not need both unit and integration coverage when one meaningful test level is sufficient.
 
 The package is source-only. Pi loads TypeScript directly, `src/` is published, and no `dist/` directory exists.
 
