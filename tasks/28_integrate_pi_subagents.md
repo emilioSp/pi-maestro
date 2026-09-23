@@ -17,10 +17,10 @@ Use only the public pi-subagents APIs for preflight and foreground launches.
 
 ## Work
 
-1. Implement availability and agent checks in `src/subagents/preflight.ts`.
+1. Implement availability and agent checks under `src/subagents/preflight/`.
 2. Verify the active owner extension is pi-subagents 0.68.0 or later.
 3. Verify both qualified agents and configured models are available and authenticated.
-4. Implement foreground launch contracts in `src/subagents/delegation.ts`.
+4. Implement foreground launch contracts under `src/subagents/delegation/`.
 5. Pass configured model, thinking, timeout, fresh context, worktree cwd, and workflow revision explicitly.
 6. Use the foreground result and timeout behavior provided by the public API.
 7. Import the Maestro integration directly through `#subagents/*` without an export barrel.
@@ -28,6 +28,8 @@ Use only the public pi-subagents APIs for preflight and foreground launches.
 ## Implementation
 
 Import only `pi-subagents/delegation` and `pi-subagents/preflight` public APIs. Do not load the nested extension from Maestro's manifest. Do not fall back to the current model or another agent. A launch timeout is not a completed pass.
+
+Give each exported function its own module under `preflight/` or `delegation/`. Keep private helpers with the function they serve, and import modules directly without a barrel. Place tests beside their main module. Remove the unused `src/subagents/preflight.ts` and `src/subagents/delegation.ts` placeholders; do not add parallel implementations.
 
 ## Tests
 

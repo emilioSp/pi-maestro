@@ -795,7 +795,9 @@ Ogni tool vive in un file dedicato. Il file contiene schema degli input, registr
 
 Non esiste una directory globale `src/schemas/`. Ogni schema resta vicino al dominio che lo usa e viene esportato dal relativo `index.ts`.
 
-`src/subagents/` integra Maestro con le API pubbliche `pi-subagents/delegation` e `pi-subagents/preflight`. Usa il risultato foreground e il timeout forniti dall’API pubblica. Maestro conserva la revisione del workflow e valida l’handoff al ritorno, senza duplicare tracking di richieste, cancellazione o cleanup dei listener. Non importa moduli interni di `pi-subagents`.
+`src/subagents/` integra Maestro con le API pubbliche `pi-subagents/delegation` e `pi-subagents/preflight`. Le directory `preflight/` e `delegation/` separano i controlli dai lanci. Ogni funzione pubblica ha un modulo; tipi, costanti, errori e helper privati restano con la funzione che servono. Gli import usano percorsi diretti, senza barrel. I placeholder `preflight.ts` e `delegation.ts` vengono rimossi quando si implementa il rispettivo ambito.
+
+Maestro usa il risultato foreground e il timeout forniti dall’API pubblica. Conserva la revisione del workflow e valida l’handoff al ritorno, senza duplicare tracking di richieste, cancellazione o cleanup dei listener. Non importa moduli interni di `pi-subagents`.
 
 `package.json` include `pi-subagents` 0.68.0 in `dependencies` e `bundledDependencies` per rendere disponibili questi import pubblici nel tarball. Il manifest Pi non carica l’estensione annidata. L’owner deve avere anche `pi-subagents >=0.68.0` installato e attivo come pacchetto Pi; Maestro ne verifica la presenza tramite l’API pubblica durante l’attivazione.
 
