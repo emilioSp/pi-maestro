@@ -21,7 +21,6 @@ import {
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 import { assertWorktree } from '#workflow/utils/assertWorktree.ts';
-import { getRelativePathFromRoot } from '#workflow/utils/getRelativePathFromRoot.ts';
 
 export type ResolvedBuilderEscalation = {
   escalation: Escalation;
@@ -118,16 +117,7 @@ export const resolveBuilderEscalation = async ({
 
   const checkpointCommit = await createCommit({
     repositoryRoot: builderWorktreePath,
-    expectedPaths: [
-      getRelativePathFromRoot({
-        root: builderWorktreePath,
-        target: workflowPath,
-      }),
-      getRelativePathFromRoot({
-        root: builderWorktreePath,
-        target: escalationPath,
-      }),
-    ],
+    expectedPaths: [workflowPath, escalationPath],
   });
 
   return {

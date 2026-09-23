@@ -4,10 +4,12 @@
  * Entrypoint: createCommit().
  */
 
+import { isAbsolute, relative } from 'node:path';
 import { runGitCommand } from '#git/command.ts';
 import { getStagedPaths } from '#git/commits/getStagedPaths.ts';
 import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
 import { WORKFLOW_ROLES } from '#paths.ts';
+import { isPathStrictlyWithin } from '#utils/path-strictly-within.ts';
 
 export const CHECKPOINT_COMMIT_MESSAGE = 'maestro checkpoint';
 
@@ -52,12 +54,22 @@ export const createCommit = async ({
     );
   }
 
+  const expectedGitPaths = expectedPaths.map((path) => {
+    if (
+      !isAbsolute(path) ||
+      !isPathStrictlyWithin({ parent: repositoryRoot, candidate: path })
+    ) {
+      throw new Error(`Checkpoint path must be inside the worktree: ${path}.`);
+    }
+    return relative(repositoryRoot, path);
+  });
+
   await runGitCommand({
     arguments: ['add', '--', ...expectedPaths],
     cwd: repositoryRoot,
   });
   const stagedPaths = await getStagedPaths({ repositoryRoot });
-  if (!hasSamePaths({ actual: stagedPaths, expected: expectedPaths })) {
+  if (!hasSamePaths({ actual: stagedPaths, expected: expectedGitPaths })) {
     throw new Error('Checkpoint has staged paths outside the expected set.');
   }
 

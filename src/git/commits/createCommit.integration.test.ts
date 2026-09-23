@@ -51,7 +51,7 @@ describe('checkpoint creation', () => {
 
     const commit = await createCommit({
       repositoryRoot: repository.path,
-      expectedPaths: ['workflow.json'],
+      expectedPaths: [join(repository.path, 'workflow.json')],
       message: 'maestro checkpoint B1',
     });
 
@@ -74,6 +74,35 @@ describe('checkpoint creation', () => {
     );
   });
 
+  it('rejects relative and out-of-worktree checkpoint paths before staging', async () => {
+    const repository = await createRepositoryWithCommit();
+    await runGit({
+      repositoryRoot: repository.path,
+      arguments: [
+        'checkout',
+        '-b',
+        'builder/20260321-143052-add-weather-alerts',
+      ],
+    });
+    await writeFile(join(repository.path, 'workflow.json'), '{}\n', 'utf8');
+
+    await expect(
+      createCommit({
+        repositoryRoot: repository.path,
+        expectedPaths: ['workflow.json'],
+      }),
+    ).rejects.toThrow('Checkpoint path must be inside the worktree');
+    await expect(
+      createCommit({
+        repositoryRoot: repository.path,
+        expectedPaths: [join(repository.path, '..', 'outside.txt')],
+      }),
+    ).rejects.toThrow('Checkpoint path must be inside the worktree');
+    await expect(
+      getStagedPaths({ repositoryRoot: repository.path }),
+    ).resolves.toEqual([]);
+  });
+
   it('refuses a checkpoint on the base branch and staged paths outside its expected set', async () => {
     const repository = await createRepositoryWithCommit();
     await writeFile(join(repository.path, 'workflow.json'), '{}\n', 'utf8');
@@ -81,7 +110,7 @@ describe('checkpoint creation', () => {
     await expect(
       createCommit({
         repositoryRoot: repository.path,
-        expectedPaths: ['workflow.json'],
+        expectedPaths: [join(repository.path, 'workflow.json')],
       }),
     ).rejects.toThrow('non-workflow branch: main');
 
@@ -102,7 +131,7 @@ describe('checkpoint creation', () => {
     await expect(
       createCommit({
         repositoryRoot: repository.path,
-        expectedPaths: ['workflow.json'],
+        expectedPaths: [join(repository.path, 'workflow.json')],
       }),
     ).rejects.toThrow('outside the expected set');
   });

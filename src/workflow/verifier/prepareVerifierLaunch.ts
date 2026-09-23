@@ -18,7 +18,6 @@ import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 import { assertWorktree } from '#workflow/utils/assertWorktree.ts';
-import { getRelativePathFromRoot } from '#workflow/utils/getRelativePathFromRoot.ts';
 
 export type VerifierLaunch = {
   specId: string;
@@ -134,9 +133,7 @@ export const prepareVerifierLaunch = async ({
   });
   const checkpointCommit = await createCommit({
     repositoryRoot: worktreePath,
-    expectedPaths: [
-      getRelativePathFromRoot({ root: worktreePath, target: workflowPath }),
-    ],
+    expectedPaths: [workflowPath],
   });
 
   return {

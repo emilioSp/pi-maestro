@@ -5,7 +5,7 @@
  */
 
 import { mkdir } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { dirname, relative } from 'node:path';
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
 import type { VerifierHandoff } from '#artifacts/verifier-handoff/schema.ts';
 import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
@@ -22,7 +22,6 @@ import {
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 import { assertWorktree } from '#workflow/utils/assertWorktree.ts';
-import { getRelativePathFromRoot } from '#workflow/utils/getRelativePathFromRoot.ts';
 
 export const VERIFIER_PASS_ERRORS = {
   PRODUCT_FILES_MODIFIED: 'PRODUCT_FILES_MODIFIED',
@@ -91,13 +90,16 @@ const hasProductChanges = async ({
     }),
     getRepositoryStatus({ repositoryRoot: worktreePath }),
   ]);
+
   const allowedPaths = new Set([
-    getRelativePathFromRoot({ root: worktreePath, target: workflowPath }),
-    getRelativePathFromRoot({ root: worktreePath, target: handoffPath }),
+    relative(worktreePath, workflowPath),
+    relative(worktreePath, handoffPath),
   ]);
+
   const changedTrackedPaths = [diff.stdout, stagedDiff.stdout]
     .flatMap((output) => output.split('\0'))
     .filter((path) => path.length > 0);
+
   return (
     changedTrackedPaths.some((path) => !allowedPaths.has(path)) ||
     status.untracked.some((path) => !allowedPaths.has(path))

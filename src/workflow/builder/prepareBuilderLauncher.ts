@@ -27,7 +27,6 @@ import {
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 import { assertWorktree } from '#workflow/utils/assertWorktree.ts';
-import { getRelativePathFromRoot } from '#workflow/utils/getRelativePathFromRoot.ts';
 
 export type BuilderLaunch = {
   specId: string;
@@ -40,7 +39,7 @@ export type BuilderLaunch = {
 const assertBuilderLaunchBase = async ({
   paths,
   specId,
-  allowedWorktreePath: allowedWorktree,
+  allowedWorktreePath,
 }: {
   paths: GetMaestroPaths;
   specId: string;
@@ -73,9 +72,6 @@ const assertBuilderLaunchBase = async ({
   const status = await getRepositoryStatus({
     repositoryRoot: paths.repositoryRoot,
   });
-
-  const allowedWorktreePath =
-    allowedWorktree === undefined ? undefined : resolve(allowedWorktree);
 
   const hasUnexpectedChanges =
     status.staged.length > 0 ||
@@ -271,13 +267,9 @@ export const prepareBuilderLaunch = async ({
     currentRevision: currentState.revision,
   });
 
-  const expectedPaths = [
-    getRelativePathFromRoot({ root: worktreePath, target: workflowPath }),
-  ];
+  const expectedPaths = [workflowPath];
   if (handoffExists) {
-    expectedPaths.push(
-      getRelativePathFromRoot({ root: worktreePath, target: handoffPath }),
-    );
+    expectedPaths.push(handoffPath);
   }
   const checkpointCommit = await createCommit({
     repositoryRoot: worktreePath,
