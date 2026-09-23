@@ -1,10 +1,9 @@
 /**
- * Objective: Inspect and validate the current Git repository.
- * Used: Before Maestro changes repository state.
- * Entrypoint: assertRepositoryTrusted().
+ * Objective: Read staged, unstaged, and untracked repository changes.
+ * Used: When Maestro checks whether a worktree is clean.
+ * Entrypoint: getRepositoryStatus().
  */
 
-import { realpath } from 'node:fs/promises';
 import { type GitCommandResult, runGitCommand } from '#git/command.ts';
 
 export type RepositoryStatus = {
@@ -12,51 +11,6 @@ export type RepositoryStatus = {
   staged: readonly string[];
   unstaged: readonly string[];
   untracked: readonly string[];
-};
-
-const removeFinalLineEnding = (value: string): string =>
-  value.replace(/\r?\n$/, '');
-
-// git rev-parse --path-format=absolute --show-toplevel
-export const findRepositoryRoot = async ({
-  cwd = process.cwd(),
-}: {
-  cwd?: string;
-} = {}): Promise<string> => {
-  const result = await runGitCommand({
-    arguments: ['rev-parse', '--path-format=absolute', '--show-toplevel'],
-    cwd,
-  });
-
-  return realpath(removeFinalLineEnding(result.stdout));
-};
-
-// git symbolic-ref --quiet --short HEAD
-export const getCurrentBranch = async ({
-  repositoryRoot,
-}: {
-  repositoryRoot: string;
-}): Promise<string> => {
-  const result = await runGitCommand({
-    arguments: ['symbolic-ref', '--quiet', '--short', 'HEAD'],
-    cwd: repositoryRoot,
-  });
-
-  return removeFinalLineEnding(result.stdout);
-};
-
-// git rev-parse --verify HEAD^{commit}
-export const getHeadCommit = async ({
-  repositoryRoot,
-}: {
-  repositoryRoot: string;
-}): Promise<string> => {
-  const result = await runGitCommand({
-    arguments: ['rev-parse', '--verify', 'HEAD^{commit}'],
-    cwd: repositoryRoot,
-  });
-
-  return removeFinalLineEnding(result.stdout);
 };
 
 const parseRepositoryStatus = (result: GitCommandResult): RepositoryStatus => {
@@ -115,16 +69,4 @@ export const getRepositoryStatus = async ({
     cwd: repositoryRoot,
   });
   return parseRepositoryStatus(result);
-};
-
-// git status --porcelain=v1 --untracked-files=no
-export const assertRepositoryTrusted = async ({
-  repositoryRoot,
-}: {
-  repositoryRoot: string;
-}): Promise<void> => {
-  await runGitCommand({
-    arguments: ['status', '--porcelain=v1', '--untracked-files=no'],
-    cwd: repositoryRoot,
-  });
 };

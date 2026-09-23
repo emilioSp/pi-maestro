@@ -10,7 +10,7 @@ import {
   readEscalationHistory,
   resolveEscalation,
 } from '#artifacts/escalation.ts';
-import { createCommit } from '#git/commits.ts';
+import { createCommit } from '#git/commits/createCommit.ts';
 import type { GetMaestroPaths } from '#paths.ts';
 import {
   getBuilderEscalationPath,

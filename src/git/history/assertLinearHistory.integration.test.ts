@@ -2,18 +2,10 @@ import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { runGitCommand } from '#git/command.ts';
-import {
-  createCommit,
-  findCommitByMessage,
-  getStagedPaths,
-} from '#git/commits.ts';
-import {
-  assertLinearHistory,
-  canFastForward,
-  getMergeBase,
-  getParentCommit,
-  isAncestor,
-} from '#git/verify-commit-history.ts';
+import { assertLinearHistory } from '#git/history/assertLinearHistory.ts';
+import { canFastForward } from '#git/history/canFastForward.ts';
+import { getMergeBase } from '#git/history/getMergeBase.ts';
+import { isAncestor } from '#git/history/isAncestor.ts';
 import { createTemporaryRepository } from '#test/support/temp-repository.ts';
 
 const cleanupFunctions: Array<() => Promise<void>> = [];
@@ -44,77 +36,7 @@ const createRepositoryWithCommit = async () => {
   return repository;
 };
 
-describe('Git commits and history verification', () => {
-  it('creates and finds a checkpoint that stages only expected paths', async () => {
-    const repository = await createRepositoryWithCommit();
-    await runGit({
-      repositoryRoot: repository.path,
-      arguments: [
-        'checkout',
-        '-b',
-        'builder/20260321-143052-add-weather-alerts',
-      ],
-    });
-    await writeFile(join(repository.path, 'workflow.json'), '{}\n', 'utf8');
-
-    const commit = await createCommit({
-      repositoryRoot: repository.path,
-      expectedPaths: ['workflow.json'],
-      message: 'maestro checkpoint B1',
-    });
-
-    await expect(
-      findCommitByMessage({
-        repositoryRoot: repository.path,
-        message: 'maestro checkpoint B1',
-      }),
-    ).resolves.toBe(commit);
-    await expect(
-      getStagedPaths({ repositoryRoot: repository.path }),
-    ).resolves.toEqual([]);
-    await expect(
-      getParentCommit({ repositoryRoot: repository.path, commit }),
-    ).resolves.toBe(
-      await runGit({
-        repositoryRoot: repository.path,
-        arguments: ['rev-parse', 'main'],
-      }),
-    );
-  });
-
-  it('refuses a checkpoint on the base branch and staged paths outside its expected set', async () => {
-    const repository = await createRepositoryWithCommit();
-    await writeFile(join(repository.path, 'workflow.json'), '{}\n', 'utf8');
-
-    await expect(
-      createCommit({
-        repositoryRoot: repository.path,
-        expectedPaths: ['workflow.json'],
-      }),
-    ).rejects.toThrow('non-workflow branch: main');
-
-    await runGit({
-      repositoryRoot: repository.path,
-      arguments: [
-        'checkout',
-        '-b',
-        'builder/20260321-143052-add-weather-alerts',
-      ],
-    });
-    await writeFile(join(repository.path, 'outside.txt'), 'outside\n', 'utf8');
-    await runGit({
-      repositoryRoot: repository.path,
-      arguments: ['add', 'outside.txt'],
-    });
-
-    await expect(
-      createCommit({
-        repositoryRoot: repository.path,
-        expectedPaths: ['workflow.json'],
-      }),
-    ).rejects.toThrow('outside the expected set');
-  });
-
+describe('commit history verification', () => {
   it('verifies linear, divergent, and unrelated histories', async () => {
     const repository = await createRepositoryWithCommit();
     const initial = await runGit({

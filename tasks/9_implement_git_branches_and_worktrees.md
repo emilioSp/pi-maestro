@@ -12,7 +12,7 @@ Manage Maestro branch and worktree resources with strict ownership checks.
 
 ## Plan references
 
-- Section [5](../plan.md#plan-section-5), `src/git/branches.ts` and `src/git/worktrees.ts`
+- Section [5](../plan.md#plan-section-5), `src/git/branches/` and `src/git/worktrees/`
 - Sections [6.17](../plan.md#plan-section-6-17), [6.18](../plan.md#plan-section-6-18), and [6.22](../plan.md#plan-section-6-22)
 
 ## Work

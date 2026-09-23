@@ -2,8 +2,8 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
-import { createBranch } from '#git/branches.ts';
-import { createWorktree } from '#git/worktrees.ts';
+import { createBranch } from '#git/branches/createBranch.ts';
+import { createWorktree } from '#git/worktrees/createWorktree.ts';
 import {
   type GetMaestroPaths,
   getMaestroPaths,

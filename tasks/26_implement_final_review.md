@@ -13,7 +13,7 @@ Prepare the candidate as staged changes on the base branch and conclude Maestro 
 ## Plan references
 
 - Sections [3.7](../plan.md#plan-section-3-7) and [3.8](../plan.md#plan-section-3-8)
-- Section [5](../plan.md#plan-section-5), `src/git/final-review.ts` and `src/workflow/final-review/prepareFinalReview.ts`
+- Section [5](../plan.md#plan-section-5), `src/git/final-review/` and `src/workflow/final-review/prepareFinalReview.ts`
 - Sections [6.10](../plan.md#plan-section-6-10), [6.14](../plan.md#plan-section-6-14), [6.17](../plan.md#plan-section-6-17), [6.24](../plan.md#plan-section-6-24), and [6.25](../plan.md#plan-section-6-25)
 
 ## Work
@@ -33,7 +33,7 @@ If squash or staging verification fails, return an error and keep the previous p
 
 Above every Git-related function, add one `// git ...` comment for each Git command it can run. Use `<...>` placeholders for runtime values.
 
-Put the workflow implementation and its tests in `src/workflow/final-review/`. Remove the unused `src/workflow/final-review.ts` placeholder. Do not add a second implementation.
+Put the Git operations in `src/git/final-review/`, with one public operation per module. Remove the unused `src/git/final-review.ts` placeholder. Put the workflow implementation and its tests in `src/workflow/final-review/`. Remove the unused `src/workflow/final-review.ts` placeholder. Do not add parallel implementations.
 
 ## Tests
 

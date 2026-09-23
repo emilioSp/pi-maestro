@@ -6,14 +6,14 @@
 
 import { rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { branchExists, createBranch } from '#git/branches.ts';
-import { createCommit } from '#git/commits.ts';
-import {
-  getCurrentBranch,
-  getHeadCommit,
-  getRepositoryStatus,
-} from '#git/repository.ts';
-import { createWorktree, findWorktree } from '#git/worktrees.ts';
+import { branchExists } from '#git/branches/branchExists.ts';
+import { createBranch } from '#git/branches/createBranch.ts';
+import { createCommit } from '#git/commits/createCommit.ts';
+import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
+import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
+import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
+import { createWorktree } from '#git/worktrees/createWorktree.ts';
+import { findWorktree } from '#git/worktrees/findWorktree.ts';
 import type { GetMaestroPaths } from '#paths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { isInside } from '#utils/path-security.ts';

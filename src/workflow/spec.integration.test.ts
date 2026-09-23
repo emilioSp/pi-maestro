@@ -2,7 +2,7 @@ import { readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
-import { getHeadCommit } from '#git/repository.ts';
+import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getMaestroPaths } from '#paths.ts';
 import { createTemporaryRepository } from '#test/support/temp-repository.ts';
 import { createWorkflowSpec, markSpecReady } from '#workflow/spec.ts';

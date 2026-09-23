@@ -12,7 +12,7 @@ import {
   type VerifierHandoff,
 } from '#artifacts/verifier-handoff.ts';
 import { runGitCommand } from '#git/command.ts';
-import { getHeadCommit } from '#git/repository.ts';
+import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import {
   builderWorkflowPath,
   cleanupBuilderWorkflows,

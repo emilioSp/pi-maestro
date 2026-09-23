@@ -13,7 +13,7 @@ import {
   writeVerifierHandoff,
 } from '#artifacts/verifier-handoff.ts';
 import { runGitCommand } from '#git/command.ts';
-import { getRepositoryStatus } from '#git/repository.ts';
+import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import type { GetMaestroPaths } from '#paths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import {

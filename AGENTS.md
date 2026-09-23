@@ -62,6 +62,7 @@ The package is source-only. Pi loads TypeScript directly, `src/` is published, a
 - Keep utility modules under a `utils` folder.
 - Do not use `string literals`, use `const object literal`, and derive the type from the object's value. Reuse `const object literal` you defined in source module in test files. 
 - Every source module must start with a comment that states its objective, when it is used, and its main entrypoint when applicable.
+- Each source module should own one public operation. It may also export the types, constants, and errors needed to use that operation. If a file exports two functions, put them in separate files.
 
 ## Testing and checks
 

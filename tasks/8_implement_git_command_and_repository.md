@@ -12,14 +12,14 @@ Create the shell-free Git boundary and basic repository inspection.
 
 ## Plan references
 
-- Section [5](../plan.md#plan-section-5), `src/git/command.ts` and `src/git/repository.ts`
+- Section [5](../plan.md#plan-section-5), `src/git/command.ts` and `src/git/repository/`
 - Sections [6.20](../plan.md#plan-section-6-20), [6.22](../plan.md#plan-section-6-22), [6.23](../plan.md#plan-section-6-23), and [6.26](../plan.md#plan-section-6-26)
 
 ## Work
 
 1. Implement Git execution with argv, cwd, timeout, stdout, stderr, and exit status in `src/git/command.ts`.
 2. Never pass Git commands through a shell.
-3. Implement repository discovery, root lookup, current branch, HEAD lookup, trust checks, and clean/dirty status in `src/git/repository.ts`.
+3. Implement repository discovery, root lookup, current branch, HEAD lookup, trust checks, and clean/dirty status in separate modules under `src/git/repository/`.
 4. Return structured command errors with stdout, stderr, and exit context.
 5. Import these operations directly through `#git/*` without an export barrel.
 

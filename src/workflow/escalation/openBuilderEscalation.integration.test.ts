@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { readEscalation } from '#artifacts/escalation.ts';
-import { getHeadCommit } from '#git/repository.ts';
+import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import {
   builderHandoffPath,
   builderWorkflowPath,

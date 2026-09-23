@@ -1,16 +1,12 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { branchExists } from '#git/branches.ts';
-import {
-  CHECKPOINT_COMMIT_MESSAGE,
-  findCommitByMessage,
-} from '#git/commits.ts';
-import {
-  getCurrentBranch,
-  getHeadCommit,
-  getRepositoryStatus,
-} from '#git/repository.ts';
+import { branchExists } from '#git/branches/branchExists.ts';
+import { CHECKPOINT_COMMIT_MESSAGE } from '#git/commits/createCommit.ts';
+import { findCommitByMessage } from '#git/commits/findCommitByMessage.ts';
+import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
+import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
+import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import {
   builderHandoffPath,
   builderWorkflowPath,

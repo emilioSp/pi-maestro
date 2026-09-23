@@ -12,7 +12,7 @@ Provide checkpoint commits and verify the basic workflow history relationships n
 
 ## Plan references
 
-- Section [5](../plan.md#plan-section-5), `src/git/commits.ts` and `src/git/verify-commit-history.ts`
+- Section [5](../plan.md#plan-section-5), `src/git/commits/` and `src/git/history/`
 - Sections [6.14](../plan.md#plan-section-6-14), [6.15](../plan.md#plan-section-6-15), [6.17](../plan.md#plan-section-6-17), and [6.23](../plan.md#plan-section-6-23)
 
 ## Work

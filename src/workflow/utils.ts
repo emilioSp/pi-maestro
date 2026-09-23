@@ -4,9 +4,9 @@
  */
 
 import { relative, resolve } from 'node:path';
-import { branchExists } from '#git/branches.ts';
-import { getCurrentBranch } from '#git/repository.ts';
-import { findWorktree } from '#git/worktrees.ts';
+import { branchExists } from '#git/branches/branchExists.ts';
+import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
+import { findWorktree } from '#git/worktrees/findWorktree.ts';
 import type { GetMaestroPaths } from '#paths.ts';
 
 export const relativePath = ({

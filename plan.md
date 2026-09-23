@@ -801,7 +801,9 @@ Non esiste una directory globale `src/schemas/`. Ogni schema resta vicino al dom
 
 `src/maestro/` implementa la modalità principale: attivazione, controlli ambientali, persistenza nella sessione Pi, istruzioni e status. `index.ts` è solo un barrel di export: non espone una funzione `registerMaestro`. Il wiring con le API Pi resta in `extensions/maestro.ts`.
 
-`src/git/` implementa le operazioni Git senza dipendere da Pi. `command.ts` esegue Git con argv, cwd e timeout, senza passare da una shell. Gli altri moduli separano repository, branch, worktree, commit, verifica della cronologia e final review.
+`src/git/` implementa le operazioni Git senza dipendere da Pi. `command.ts` esegue Git con argv, cwd e timeout, senza passare da una shell. Le directory `repository/`, `branches/`, `worktrees/`, `commits/` e `history/` raggruppano le operazioni per ambito.
+
+Ogni operazione pubblica ha un modulo. Tipi, costanti, errori e helper privati restano con l'operazione che servono. Gli import usano il percorso diretto del modulo, senza barrel. `utils.ts` contiene il singolo helper condiviso per gli errori Git. Il futuro codice per la final review userà `final-review/` e rimuoverà il placeholder `final-review.ts`.
 
 `src/config/` contiene default, schema e caricamento di `.pi/maestro.json`. Applica gli override e valida le directory configurate, inclusi root Git, percorsi relativi, symlink e collisioni. Non verifica la disponibilità dei modelli e non dipende dall’interfaccia Pi.
 

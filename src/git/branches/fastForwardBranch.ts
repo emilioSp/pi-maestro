@@ -1,59 +1,14 @@
 /**
- * Objective: Manage branches owned by the Maestro workflow.
- * Used: When workflow roles need branches created, updated, or removed.
- * Entrypoint: createBranch().
+ * Objective: Advance a branch only to a descendant commit.
+ * Used: When a workflow advances a branch after an owner decision.
+ * Entrypoint: fastForwardBranch().
  */
 
+import { branchExists } from '#git/branches/branchExists.ts';
 import { runGitCommand } from '#git/command.ts';
 import { hasGitExitCode } from '#git/utils.ts';
 
 const branchReference = (branch: string): string => `refs/heads/${branch}`;
-
-// git show-ref --verify --quiet refs/heads/<branch>
-export const branchExists = async ({
-  repositoryRoot,
-  branch,
-}: {
-  repositoryRoot: string;
-  branch: string;
-}): Promise<boolean> => {
-  try {
-    await runGitCommand({
-      arguments: ['show-ref', '--verify', '--quiet', branchReference(branch)],
-      cwd: repositoryRoot,
-    });
-    return true;
-  } catch (error) {
-    if (hasGitExitCode({ error, exitCode: 1 })) {
-      return false;
-    }
-    throw error;
-  }
-};
-
-// git show-ref --verify --quiet refs/heads/<branch>
-// git branch <branch> <start-point>
-export const createBranch = async ({
-  repositoryRoot,
-  branch,
-  startPoint,
-}: {
-  repositoryRoot: string;
-  branch: string;
-  startPoint: string;
-}): Promise<void> => {
-  if (startPoint.length === 0 || startPoint.includes('\0')) {
-    throw new Error('Branch start point must be non-empty.');
-  }
-  if (await branchExists({ repositoryRoot, branch })) {
-    throw new Error(`Branch already exists: ${branch}.`);
-  }
-
-  await runGitCommand({
-    arguments: ['branch', branch, startPoint],
-    cwd: repositoryRoot,
-  });
-};
 
 // git show-ref --verify --quiet refs/heads/<branch>
 // git merge-base --is-ancestor <branch> <target>
@@ -110,25 +65,6 @@ export const fastForwardBranch = async ({
       targetCommit,
       branchCommit,
     ],
-    cwd: repositoryRoot,
-  });
-};
-
-// git show-ref --verify --quiet refs/heads/<branch>
-// git branch --delete <branch>
-export const deleteBranch = async ({
-  repositoryRoot,
-  branch,
-}: {
-  repositoryRoot: string;
-  branch: string;
-}): Promise<void> => {
-  if (!(await branchExists({ repositoryRoot, branch }))) {
-    return;
-  }
-
-  await runGitCommand({
-    arguments: ['branch', '--delete', branch],
     cwd: repositoryRoot,
   });
 };
