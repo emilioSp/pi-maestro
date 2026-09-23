@@ -49,7 +49,8 @@ The package is source-only. Pi loads TypeScript directly, `src/` is published, a
 - Prefer named exports. Use a default export only when a tool requires it or for a single application entrypoint or singleton.
 - Prefer pure functions.
 - Use early returns.
-- Prefer arrow functions. Use classes only for strategies or objects with internal state.
+- Use assertion functions with the TypeScript `asserts value is Type` return type to validate and narrow types; throw an error when validation fails.
+- Prefer arrow functions. Use classes only for strategies or objects with internal state. Use function for assertion functions.
 - Keep functions small. Split a function when it becomes hard to read.
 - Use `async` and `await`. Do not introduce callback APIs. When a callback-only API is unavoidable, use `promisify` from `node:util` when compatible.
 - Use `Temporal`. Do not use `Date`.
