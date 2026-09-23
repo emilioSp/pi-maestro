@@ -13,15 +13,13 @@ import { runGitCommand } from '#git/command.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import type { GetMaestroPaths } from '#paths.ts';
 import { pathExists } from '#utils/path-exists.ts';
+import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
   WORKFLOW_EVENTS,
   WORKFLOW_PHASES,
   type WorkflowState,
 } from '#workflow/state/schema.ts';
-import {
-  readWorkflowState,
-  writeWorkflowState,
-} from '#workflow/state/store.ts';
+import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 import { assertWorktree, getPath, relativePath } from '#workflow/utils.ts';
 

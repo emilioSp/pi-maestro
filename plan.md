@@ -787,7 +787,7 @@ I tool delegano la logica condivisa ai moduli sotto `src/` invece di duplicare o
 
 `src/artifacts/` implementa lettura, validazione e scrittura degli handoff e delle escalation senza dipendere da Pi. Le directory `builder-handoff/`, `verifier-handoff/` ed `escalation/` separano gli ambiti. Ogni funzione pubblica ha un modulo, con i test accanto. Lo schema e i tipi condivisi di ogni ambito stanno nel suo `schema.ts`. Gli import usano percorsi diretti, senza barrel. I file sotto `src/tools/` sono solo adapter tra le chiamate Pi e questa logica.
 
-`src/workflow/state/` contiene schema, persistenza, discovery e riconciliazione di `workflow.json`. Per l’MVP controlla il workflow attivo e confronta lo stato dichiarato con branch, worktree, HEAD e artefatto terminale attesi.
+`src/workflow/state/` contiene schema, lettura e scrittura in moduli separati, discovery e riconciliazione di `workflow.json`. `readWorkflowState.ts` valida lo stato letto; `writeWorkflowState.ts` controlla la revisione e scrive lo stato. Per l’MVP controlla il workflow attivo e confronta lo stato dichiarato con branch, worktree, HEAD e artefatto terminale attesi.
 
 `src/specs/` gestisce il caricamento del template e la creazione della spec. Il contenuto Markdown resta opaco all’estensione. ID, percorsi e stato restano responsabilità dei rispettivi moduli.
 
@@ -821,7 +821,7 @@ La configurazione applica gli override e valida le directory configurate, inclus
 
 `src/ids/createSpecId.ts` compone l'ID da timestamp UTC e slug. `src/ids/isValidSpecId.ts` valida l'ID ed esporta il pattern condiviso dagli schemi. I dettagli di formattazione e validazione restano privati. Gli import usano percorsi diretti, senza barrel.
 
-I test restano accanto al modulo sotto `src/`. Il suffisso `.unit.test.ts` identifica gli unit test e `.integration.test.ts` identifica gli integration test, per esempio `src/workflow/state/store.ts` corrisponde a `src/workflow/state/store.integration.test.ts`. I test degli helper e le fixture restano sotto `test/`. Non serve uno unit test per ogni file: un integration test può essere l’unica copertura diretta del modulo. Non vengono creati test aggregati generici come `state.test.ts`.
+I test restano accanto al modulo sotto `src/`. Il suffisso `.unit.test.ts` identifica gli unit test e `.integration.test.ts` identifica gli integration test, per esempio `src/workflow/state/readWorkflowState.ts` corrisponde a `src/workflow/state/readWorkflowState.integration.test.ts`. I test degli helper e le fixture restano sotto `test/`. Non serve uno unit test per ogni file: un integration test può essere l’unica copertura diretta del modulo. Non vengono creati test aggregati generici come `state.test.ts`.
 
 <a id="plan-section-5-1"></a>
 

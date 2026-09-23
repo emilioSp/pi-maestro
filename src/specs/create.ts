@@ -15,7 +15,7 @@ import {
   WORKFLOW_STATE_VERSION,
   type WorkflowState,
 } from '#workflow/state/schema.ts';
-import { writeWorkflowState } from '#workflow/state/store.ts';
+import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 
 export type CreatedSpec = {
   specId: string;

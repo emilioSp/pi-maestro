@@ -7,11 +7,9 @@
 import type { GetMaestroPaths } from '#paths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { discoverActiveWorkflow } from '#workflow/state/discover.ts';
+import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_EVENTS, type WorkflowState } from '#workflow/state/schema.ts';
-import {
-  readWorkflowState,
-  writeWorkflowState,
-} from '#workflow/state/store.ts';
+import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 
 export const markSpecReady = async ({

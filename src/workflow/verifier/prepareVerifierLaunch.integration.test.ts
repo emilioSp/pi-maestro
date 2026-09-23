@@ -12,8 +12,8 @@ import {
 } from '#test/support/builder-workflow.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
+import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
-import { readWorkflowState } from '#workflow/state/store.ts';
 import { prepareVerifierLaunch } from '#workflow/verifier/prepareVerifierLaunch.ts';
 
 afterEach(cleanupBuilderWorkflows);

@@ -1,37 +1,17 @@
 /**
- * Objective: Read and write validated workflow state files.
- * Used: Whenever a workflow phase or event is persisted.
+ * Objective: Atomically write a validated workflow state at a new revision.
+ * Used: When Maestro persists a workflow transition.
  * Entrypoint: writeWorkflowState().
  */
 
-import { type FileHandle, open, readFile, rm } from 'node:fs/promises';
+import { type FileHandle, open, rm } from 'node:fs/promises';
 import { pathExists } from '#utils/path-exists.ts';
 import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
+import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
   assertWorkflowState,
   type WorkflowState,
 } from '#workflow/state/schema.ts';
-
-const readJson = async (path: string): Promise<unknown> => {
-  const content = await readFile(path, 'utf8');
-  try {
-    return JSON.parse(content);
-  } catch (cause) {
-    throw new Error(`Workflow state contains malformed JSON: ${path}.`, {
-      cause,
-    });
-  }
-};
-
-export const readWorkflowState = async ({
-  path,
-}: {
-  path: string;
-}): Promise<WorkflowState> => {
-  const state = await readJson(path);
-  assertWorkflowState(state);
-  return state;
-};
 
 export const writeWorkflowState = async ({
   path,

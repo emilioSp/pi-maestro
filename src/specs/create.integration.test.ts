@@ -7,11 +7,11 @@ import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { getMaestroPaths } from '#paths.ts';
 import { createSpec } from '#specs/create.ts';
 import { loadSpecTemplate } from '#specs/template.ts';
+import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
   WORKFLOW_PHASES,
   WORKFLOW_STATE_VERSION,
 } from '#workflow/state/schema.ts';
-import { readWorkflowState } from '#workflow/state/store.ts';
 
 const INSTANT = Temporal.Instant.from('2026-03-21T14:30:52Z');
 const SPEC_ID = '20260321-143052-add-weather-alerts';

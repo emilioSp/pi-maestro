@@ -8,8 +8,8 @@ import { readdir } from 'node:fs/promises';
 import { isValidSpecId } from '#ids/isValidSpecId.ts';
 import type { GetMaestroPaths } from '#paths.ts';
 import { pathExists } from '#utils/path-exists.ts';
+import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
-import { readWorkflowState } from '#workflow/state/store.ts';
 
 export type DiscoveredWorkflow = {
   specId: string;

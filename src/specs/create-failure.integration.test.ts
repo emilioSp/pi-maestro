@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { getMaestroPaths } from '#paths.ts';
 
-vi.mock('#workflow/state/store.ts', () => ({
+vi.mock('#workflow/state/writeWorkflowState.ts', () => ({
   writeWorkflowState: async () => {
     throw new Error('Simulated state write failure.');
   },
