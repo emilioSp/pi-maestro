@@ -775,9 +775,11 @@ Il contenuto esatto di `.gitignore` viene scelto durante l’implementazione. No
 
 `extensions/maestro.ts` è il composition root della sessione principale. Registra direttamente `/maestro`, gli eventi di sessione e i tool principali, collegandoli alle funzioni sotto `src/maestro/` e `src/tools/main/`. Contiene wiring Pi, ma non logica di workflow.
 
-`extensions/maestro-child.ts` registra direttamente i tool esportati da `src/tools/child/index.ts`. Non registra eventi, comandi, status o tool di orchestrazione e non contiene logica degli artefatti.
+`extensions/maestro-child.ts` importa e registra direttamente i tool da `src/tools/child/`, senza un barrel `index.ts`. Non registra eventi, comandi, status o tool di orchestrazione e non contiene logica degli artefatti.
 
-Ogni tool vive in un file dedicato. Il file contiene schema degli input, registrazione Pi, chiamata al dominio e conversione del risultato nel formato Pi. I tool delegano la logica condivisa ai moduli sotto `src/` invece di duplicare operazioni Git, validazione dello stato o scrittura degli artefatti. Per l’MVP non esiste un helper condiviso `src/tools/result.ts`.
+`src/tools/main/` contiene i tool dell’owner e `src/tools/child/` contiene quelli dei ruoli figli. Ogni file esporta una sola operazione: la registrazione del proprio tool Pi. Schema degli input, tipi, costanti e helper privati restano nel file del tool che li usa. Il file chiama il dominio e converte il risultato nel formato Pi. Le estensioni importano ogni registrazione dal suo file, senza barrel.
+
+I tool delegano la logica condivisa ai moduli sotto `src/` invece di duplicare operazioni Git, validazione dello stato o scrittura degli artefatti. Per l’MVP non esiste un helper condiviso `src/tools/result.ts`.
 
 `templates/spec.md` è l’unico template distribuito. Gli artefatti JSON vengono costruiti da oggetti tipizzati e validati dai relativi moduli; non esistono template JSON che possano divergere dagli schemi.
 

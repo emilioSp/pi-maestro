@@ -17,7 +17,7 @@ Wire the main Pi extension without moving domain logic into the composition root
 
 ## Work
 
-1. Export and register all eight main tools exactly once.
+1. Import each of the eight main tool registrations directly from its file in `src/tools/main/` and register it once. Do not add a tool barrel.
 2. Register the `/maestro` toggle.
 3. Register only the required session, resume, instruction, status, and tool-activation events.
 4. Activate main Maestro tools only after successful checks.
@@ -28,7 +28,7 @@ Wire the main Pi extension without moving domain logic into the composition root
 
 ## Implementation
 
-`extensions/maestro.ts` is wiring only. Import each operation directly from its module under `src/maestro/` or `src/tools/main/`; do not add a Maestro barrel. Do not register child tools. Preserve generic tools and tools from other extensions.
+`extensions/maestro.ts` is wiring only. Import each operation directly from its module under `src/maestro/` or `src/tools/main/`; do not add a barrel. Each tool file owns only its input schema, Pi registration, domain call, and result conversion. Do not register child tools. Preserve generic tools and tools from other extensions.
 
 ## Tests
 

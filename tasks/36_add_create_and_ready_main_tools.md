@@ -27,7 +27,7 @@ Expose the two owner-facing tools for the spec preparation phase.
 
 ## Implementation
 
-Tool files are Pi adapters only. They call configuration, path, spec, and workflow modules. Semantic review and owner approval happen before the LLM calls mark-ready. The tool treats `spec.md` as opaque Markdown.
+Tool files are Pi adapters only. Each file exports one Pi tool registration and keeps its input schema, domain call, and result conversion with that registration. Do not export other operations or add a barrel. They call configuration, path, spec, and workflow modules. Semantic review and owner approval happen before the LLM calls mark-ready. The tool treats `spec.md` as opaque Markdown.
 
 ## Tests
 

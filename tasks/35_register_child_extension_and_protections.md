@@ -18,7 +18,7 @@ Register only child tools and block direct edits to Maestro protocol paths.
 
 ## Work
 
-1. Export and register the three child-only tools.
+1. Import each of the three child-only tool registrations directly from its file in `src/tools/child/` and register it once. Do not add `src/tools/child/index.ts`.
 2. Add child hooks that reject direct `write` and `edit` calls for `spec.md`, `workflow.json`, `prototypes/`, and `handoffs/`.
 3. Remove an optional leading `@` before path checks.
 4. Resolve relative and absolute paths from the worktree root.
@@ -28,7 +28,7 @@ Register only child tools and block direct edits to Maestro protocol paths.
 
 ## Implementation
 
-The hook protects tool calls, but terminal domain checks remain required because bash is not a sandbox. Allow normal product files and allow protocol changes only through the dedicated Maestro tools.
+The hook protects tool calls, but terminal domain checks remain required because bash is not a sandbox. Allow normal product files and allow protocol changes only through the dedicated Maestro tools. Keep each tool's input schema, Pi registration, domain call, and result conversion in its own file; do not export extra operations from tool modules.
 
 ## Tests
 

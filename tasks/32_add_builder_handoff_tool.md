@@ -26,7 +26,7 @@ Expose the child-only terminal tool for builder done and failed handoffs.
 
 ## Implementation
 
-Move done to `ready-for-verifier` and failed to `builder-failed`. Do not commit from the tool. Reject a second terminal handoff.
+Move done to `ready-for-verifier` and failed to `builder-failed`. Do not commit from the tool. Reject a second terminal handoff. Keep the schema, one exported Pi tool registration, domain call, and result conversion in `src/tools/child/record-builder-handoff.ts`. Do not export other operations from this tool file.
 
 ## Tests
 
