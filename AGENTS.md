@@ -57,7 +57,7 @@ The package is source-only. Pi loads TypeScript directly, `src/` is published, a
 - Use named parameters for functions with multiple inputs. Define the input type close to the function.
 - Use explicit methods. Do not use property accessors.
 - Do not use `--experimental-strip-types`. We run on node version that support TypeScript stripping by default.
-- Use `imports` field. Do not use relative paths.
+- Use `imports` field in `package.json`. Do not use relative paths.
 - Keep utility modules under a `utils` folder.
 - Do not use `string literals`! Use `const object literal`, and derive the type from the object's value. Reuse `const object literal` you defined in source module in test files. 
 - Every source module must start with a comment that states its objective, when it is used, and its main entrypoint when applicable.
