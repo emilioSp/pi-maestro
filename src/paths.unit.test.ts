@@ -182,16 +182,24 @@ describe('Maestro paths', () => {
     ).toBe(join(worktreePath, '.specs', SPEC_ID, 'workflow.json'));
   });
 
-  it('rejects a configured spec directory outside the repository root', () => {
+  it('rejects configured directories outside the repository root', () => {
     const repositoryRoot = '/repo';
+    const config = {
+      ...DEFAULT_CONFIG,
+      specDirectory: join(repositoryRoot, '.specs'),
+      worktreeDirectory: join(repositoryRoot, '.worktree'),
+    };
+
     expect(() =>
       getMaestroPaths({
         repositoryRoot,
-        config: {
-          ...DEFAULT_CONFIG,
-          specDirectory: '/outside',
-          worktreeDirectory: join(repositoryRoot, '.worktree'),
-        },
+        config: { ...config, specDirectory: '/outside' },
+      }),
+    ).toThrow('Generated Maestro path leaves the Git root.');
+    expect(() =>
+      getMaestroPaths({
+        repositoryRoot,
+        config: { ...config, worktreeDirectory: '/outside' },
       }),
     ).toThrow('Generated Maestro path leaves the Git root.');
   });

@@ -112,92 +112,86 @@ export const getMaestroPaths = ({
   repositoryRoot,
   config,
 }: MaestroPathsInput): GetMaestroPaths => {
-  if (
-    !isPathStrictlyWithin({
-      parent: repositoryRoot,
-      candidate: config.specDirectory,
-    })
-  ) {
-    throw new Error('Generated Maestro path leaves the Git root.');
+  for (const directory of [config.specDirectory, config.worktreeDirectory]) {
+    if (
+      !isPathStrictlyWithin({ parent: repositoryRoot, candidate: directory })
+    ) {
+      throw new Error('Generated Maestro path leaves the Git root.');
+    }
   }
+
   const specDirectoryFromRoot = relative(repositoryRoot, config.specDirectory);
 
-  const pathAt = ({
+  // "Where is this file for this spec, under this root?"
+  const getSpecPathAtRoot = ({
     root,
     specId,
-    path,
+    name,
   }: {
     root: string;
     specId: string;
-    path: string;
+    name: string;
   }): string => {
     assertSpecId(specId);
-    const target = resolve(root, specDirectoryFromRoot, specId, path);
-    if (!isPathStrictlyWithin({ parent: root, candidate: target })) {
-      throw new Error('Generated Maestro path leaves the Git root.');
-    }
-    return target;
+    return resolve(root, specDirectoryFromRoot, specId, name);
   };
 
   const getPrototypesPath = (specId: string): string =>
-    pathAt({ root: repositoryRoot, specId, path: PATHS.PROTOTYPES });
+    getSpecPathAtRoot({ root: repositoryRoot, specId, name: PATHS.PROTOTYPES });
 
   return Object.freeze({
     repositoryRoot,
     specDirectory: config.specDirectory,
     worktreeDirectory: config.worktreeDirectory,
     getSpecPath: (specId: string): string =>
-      pathAt({ root: repositoryRoot, specId, path: '' }),
+      getSpecPathAtRoot({ root: repositoryRoot, specId, name: '' }),
     getSpecFilePath: (specId: string): string =>
-      pathAt({ root: repositoryRoot, specId, path: PATHS.SPEC_FILE }),
-    getWorkflowPath: (specId: string): string =>
-      pathAt({ root: repositoryRoot, specId, path: PATHS.WORKFLOW }),
-    getHandoffsPath: (specId: string): string =>
-      pathAt({ root: repositoryRoot, specId, path: PATHS.HANDOFFS }),
-    getBuilderHandoffPath: (specId: string): string =>
-      pathAt({
+      getSpecPathAtRoot({
         root: repositoryRoot,
         specId,
-        path: PATHS.BUILDER_HANDOFF,
+        name: PATHS.SPEC_FILE,
+      }),
+    getWorkflowPath: (specId: string): string =>
+      getSpecPathAtRoot({ root: repositoryRoot, specId, name: PATHS.WORKFLOW }),
+    getHandoffsPath: (specId: string): string =>
+      getSpecPathAtRoot({ root: repositoryRoot, specId, name: PATHS.HANDOFFS }),
+    getBuilderHandoffPath: (specId: string): string =>
+      getSpecPathAtRoot({
+        root: repositoryRoot,
+        specId,
+        name: PATHS.BUILDER_HANDOFF,
       }),
     getVerifierHandoffPath: (specId: string): string =>
-      pathAt({
+      getSpecPathAtRoot({
         root: repositoryRoot,
         specId,
-        path: PATHS.VERIFIER_HANDOFF,
+        name: PATHS.VERIFIER_HANDOFF,
       }),
     getEscalationsPath: (specId: string): string =>
-      pathAt({
+      getSpecPathAtRoot({
         root: repositoryRoot,
         specId,
-        path: PATHS.ESCALATIONS,
+        name: PATHS.ESCALATIONS,
       }),
     getEscalationPath: ({ specId, escalationNumber }): string => {
       assertEscalationNumber(escalationNumber);
-      return pathAt({
+      return getSpecPathAtRoot({
         root: repositoryRoot,
         specId,
-        path: `${PATHS.ESCALATIONS}/E${escalationNumber}.json`,
+        name: `${PATHS.ESCALATIONS}/E${escalationNumber}.json`,
       });
     },
     getPrototypesPath,
     getPrototypePath: ({ specId, relativePath }): string => {
       assertSafeRelativePrototypePath(relativePath);
-      const target = resolve(getPrototypesPath(specId), relativePath);
+      const prototypesPath = getPrototypesPath(specId);
+      const target = resolve(prototypesPath, relativePath);
       if (
-        !isPathStrictlyWithin({
-          parent: getPrototypesPath(specId),
-          candidate: target,
-        })
+        !isPathStrictlyWithin({ parent: prototypesPath, candidate: target })
       ) {
         throw new Error(
           'Prototype path must stay inside the prototypes directory.',
         );
-      }
-      if (
-        !isPathStrictlyWithin({ parent: repositoryRoot, candidate: target })
-      ) {
-        throw new Error('Generated Maestro path leaves the Git root.');
       }
       return target;
     },
@@ -212,60 +206,48 @@ export const getMaestroPaths = ({
     },
     getBuilderWorktreePath: (specId: string): string => {
       assertSpecId(specId);
-      const target = resolve(
-        config.worktreeDirectory,
-        WORKFLOW_ROLES.BUILDER,
-        specId,
-      );
-      if (
-        !isPathStrictlyWithin({ parent: repositoryRoot, candidate: target })
-      ) {
-        throw new Error('Generated Maestro path leaves the Git root.');
-      }
-      return target;
+      return resolve(config.worktreeDirectory, WORKFLOW_ROLES.BUILDER, specId);
     },
     getVerifierWorktreePath: ({ specId, pass }): string => {
       assertSpecId(specId);
       assertPass(pass);
-      const target = resolve(
+      return resolve(
         config.worktreeDirectory,
         WORKFLOW_ROLES.VERIFIER,
         specId,
         String(pass),
       );
-      if (
-        !isPathStrictlyWithin({ parent: repositoryRoot, candidate: target })
-      ) {
-        throw new Error('Generated Maestro path leaves the Git root.');
-      }
-      return target;
     },
     getWorkflowPathInWorktree: ({ specId, worktreePath }): string =>
-      pathAt({ root: worktreePath, specId, path: PATHS.WORKFLOW }),
+      getSpecPathAtRoot({ root: worktreePath, specId, name: PATHS.WORKFLOW }),
     getBuilderHandoffPathInWorktree: ({ specId, worktreePath }): string =>
-      pathAt({
+      getSpecPathAtRoot({
         root: worktreePath,
         specId,
-        path: PATHS.BUILDER_HANDOFF,
+        name: PATHS.BUILDER_HANDOFF,
       }),
     getVerifierHandoffPathInWorktree: ({ specId, worktreePath }): string =>
-      pathAt({
+      getSpecPathAtRoot({
         root: worktreePath,
         specId,
-        path: PATHS.VERIFIER_HANDOFF,
+        name: PATHS.VERIFIER_HANDOFF,
       }),
     getEscalationsPathInWorktree: ({ specId, worktreePath }): string =>
-      pathAt({ root: worktreePath, specId, path: PATHS.ESCALATIONS }),
+      getSpecPathAtRoot({
+        root: worktreePath,
+        specId,
+        name: PATHS.ESCALATIONS,
+      }),
     getEscalationPathInWorktree: ({
       specId,
       escalationNumber,
       worktreePath,
     }): string => {
       assertEscalationNumber(escalationNumber);
-      return pathAt({
+      return getSpecPathAtRoot({
         root: worktreePath,
         specId,
-        path: `${PATHS.ESCALATIONS}/E${escalationNumber}.json`,
+        name: `${PATHS.ESCALATIONS}/E${escalationNumber}.json`,
       });
     },
   });
