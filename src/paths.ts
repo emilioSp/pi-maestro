@@ -5,7 +5,7 @@
  */
 
 import { isAbsolute, resolve } from 'node:path';
-import type { MaestroConfig } from '#config/validate.ts';
+import type { MaestroConfig } from '#config/schema.ts';
 import { isValidSpecId } from '#ids.ts';
 import { isStrictlyInside } from '#utils/path-security.ts';
 

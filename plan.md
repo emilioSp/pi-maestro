@@ -805,7 +805,9 @@ Non esiste una directory globale `src/schemas/`. Ogni schema resta vicino al dom
 
 Ogni operazione pubblica ha un modulo. Tipi, costanti, errori e helper privati restano con l'operazione che servono. Gli import usano il percorso diretto del modulo, senza barrel. `utils.ts` contiene il singolo helper condiviso per gli errori Git. Il futuro codice per la final review userà `final-review/` e rimuoverà il placeholder `final-review.ts`.
 
-`src/config/` contiene default, schema e caricamento di `.pi/maestro.json`. Applica gli override e valida le directory configurate, inclusi root Git, percorsi relativi, symlink e collisioni. Non verifica la disponibilità dei modelli e non dipende dall’interfaccia Pi.
+`src/config/` contiene default, schema e caricamento di `.pi/maestro.json`. `schema.ts` definisce i contratti. `assertConfiguration.ts` e `loadConfiguration.ts` gestiscono una funzione pubblica ciascuno. `resolveConfiguration` e `resolveDirectories` sono helper privati di `loadConfiguration.ts`. `utils/deepFreeze.ts` contiene l'helper condiviso per i valori immutabili. Gli import usano percorsi diretti, senza barrel.
+
+La configurazione applica gli override e valida le directory configurate, inclusi root Git, percorsi relativi, symlink e collisioni. Non verifica la disponibilità dei modelli e non dipende dall’interfaccia Pi.
 
 `src/paths.ts` resta un singolo modulo. Costruisce i percorsi, i nomi di branch e i percorsi dei worktree Maestro da una configurazione già validata. Non crea file o directory.
 

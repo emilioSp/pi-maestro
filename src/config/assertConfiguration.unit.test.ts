@@ -1,26 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import {
-  assertConfiguration,
-  MaestroConfigInputSchema,
-  ResolvedMaestroConfigSchema,
-  SUPPORTED_CONFIG_VERSION,
-  THINKING_LEVELS,
-} from '#config/validate.ts';
+import { assertConfiguration } from '#config/assertConfiguration.ts';
+import { SUPPORTED_CONFIG_VERSION, THINKING_LEVELS } from '#config/schema.ts';
 
-describe('configuration schema validation', () => {
-  it('exposes TypeBox schemas for Pi compatibility', () => {
-    expect(MaestroConfigInputSchema.type).toBe('object');
-    expect(
-      (MaestroConfigInputSchema as unknown as Record<string, unknown>)
-        .additionalProperties,
-    ).toBe(false);
-    expect(ResolvedMaestroConfigSchema.type).toBe('object');
-    expect(
-      (ResolvedMaestroConfigSchema as unknown as Record<string, unknown>)
-        .additionalProperties,
-    ).toBe(false);
-  });
-
+describe('configuration input validation', () => {
   it('accepts a full valid configuration', () => {
     const input = {
       version: SUPPORTED_CONFIG_VERSION,

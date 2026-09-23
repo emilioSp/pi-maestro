@@ -7,7 +7,8 @@ import {
   type MaestroConfig,
   SUPPORTED_CONFIG_VERSION,
   THINKING_LEVELS,
-} from '#config/validate.ts';
+} from '#config/schema.ts';
+import { deepFreeze } from '#config/utils/deepFreeze.ts';
 
 export const DEFAULT_CONFIG_VERSION = SUPPORTED_CONFIG_VERSION;
 export const DEFAULT_SPEC_DIRECTORY = '.specs';
@@ -21,20 +22,6 @@ export const DEFAULT_TIMEOUT_MINUTES = 60;
 export const CONFIG_DIRECTORY_NAME = '.pi';
 export const CONFIG_FILE_NAME = 'maestro.json';
 export const CONFIG_FILE_PATH = `${CONFIG_DIRECTORY_NAME}/${CONFIG_FILE_NAME}`;
-
-export const deepFreeze = <T extends object>(target: T): Readonly<T> => {
-  Object.freeze(target);
-  for (const value of Object.values(target)) {
-    if (
-      value !== null &&
-      typeof value === 'object' &&
-      !Object.isFrozen(value)
-    ) {
-      deepFreeze(value);
-    }
-  }
-  return target;
-};
 
 export const DEFAULT_CONFIG: MaestroConfig = deepFreeze({
   version: DEFAULT_CONFIG_VERSION,

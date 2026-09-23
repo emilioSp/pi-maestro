@@ -18,9 +18,9 @@ Load and validate optional project configuration with complete defaults.
 
 ## Work
 
-1. Implement defaults in `src/config/defaults.ts`.
-2. Implement the closed TypeBox schema and validation in `src/config/validate.ts`.
-3. Implement `.pi/maestro.json` loading, override merging, and configured-directory validation in `src/config/load.ts`.
+1. Implement defaults in `src/config/defaults.ts` and shared freezing in `src/config/utils/deepFreeze.ts`.
+2. Implement the closed TypeBox schema in `src/config/schema.ts` and input validation in `src/config/assertConfiguration.ts`.
+3. Implement `.pi/maestro.json` loading, private override merging, and private configured-directory validation in `src/config/loadConfiguration.ts`.
 4. Configure subpath imports for direct module access without an export barrel.
 5. Report missing version, unsupported version, unknown fields, invalid model identifiers, invalid thinking values, invalid timeouts, and unsafe configured directories precisely.
 

@@ -12,8 +12,8 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
-import { loadConfiguration } from '#config/load.ts';
-import { SUPPORTED_CONFIG_VERSION, THINKING_LEVELS } from '#config/validate.ts';
+import { loadConfiguration } from '#config/loadConfiguration.ts';
+import { SUPPORTED_CONFIG_VERSION, THINKING_LEVELS } from '#config/schema.ts';
 
 const fixturePath = (fileName: string): string =>
   fileURLToPath(import.meta.resolve(`#test/fixtures/config/${fileName}`));
