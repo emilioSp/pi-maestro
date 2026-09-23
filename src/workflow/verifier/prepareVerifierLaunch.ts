@@ -17,7 +17,8 @@ import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-import { assertWorktree, getPath, relativePath } from '#workflow/utils.ts';
+import { assertWorktree } from '#workflow/utils/assertWorktree.ts';
+import { getRelativePathFromRoot } from '#workflow/utils/getRelativePathFromRoot.ts';
 
 export type VerifierLaunch = {
   specId: string;
@@ -75,10 +76,9 @@ export const prepareVerifierLaunch = async ({
     worktreePath: builderWorktreePath,
   });
 
-  const builderWorkflowPath = getPath({
-    paths,
+  const builderWorkflowPath = paths.getWorkflowPathInWorktree({
+    specId,
     worktreePath: builderWorktreePath,
-    target: paths.getWorkflowPath(specId),
   });
 
   const builderState = await readWorkflowState({ path: builderWorkflowPath });
@@ -113,10 +113,9 @@ export const prepareVerifierLaunch = async ({
     branch: verifierBranch,
   });
 
-  const workflowPath = getPath({
-    paths,
+  const workflowPath = paths.getWorkflowPathInWorktree({
+    specId,
     worktreePath,
-    target: paths.getWorkflowPath(specId),
   });
   const currentState = await readWorkflowState({ path: workflowPath });
   if (currentState.phase !== WORKFLOW_PHASES.READY_FOR_VERIFIER) {
@@ -135,7 +134,9 @@ export const prepareVerifierLaunch = async ({
   });
   const checkpointCommit = await createCommit({
     repositoryRoot: worktreePath,
-    expectedPaths: [relativePath({ root: worktreePath, target: workflowPath })],
+    expectedPaths: [
+      getRelativePathFromRoot({ root: worktreePath, target: workflowPath }),
+    ],
   });
 
   return {

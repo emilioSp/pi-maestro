@@ -26,7 +26,8 @@ import {
 } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-import { assertWorktree, getPath, relativePath } from '#workflow/utils.ts';
+import { assertWorktree } from '#workflow/utils/assertWorktree.ts';
+import { getRelativePathFromRoot } from '#workflow/utils/getRelativePathFromRoot.ts';
 
 export type BuilderLaunch = {
   specId: string;
@@ -233,15 +234,13 @@ export const prepareBuilderLaunch = async ({
     });
   }
 
-  const workflowPath = getPath({
-    paths,
+  const workflowPath = paths.getWorkflowPathInWorktree({
+    specId,
     worktreePath,
-    target: paths.getWorkflowPath(specId),
   });
-  const handoffPath = getPath({
-    paths,
+  const handoffPath = paths.getBuilderHandoffPathInWorktree({
+    specId,
     worktreePath,
-    target: paths.getBuilderHandoffPath(specId),
   });
 
   const currentState = await readWorkflowState({ path: workflowPath });
@@ -273,11 +272,11 @@ export const prepareBuilderLaunch = async ({
   });
 
   const expectedPaths = [
-    relativePath({ root: worktreePath, target: workflowPath }),
+    getRelativePathFromRoot({ root: worktreePath, target: workflowPath }),
   ];
   if (handoffExists) {
     expectedPaths.push(
-      relativePath({ root: worktreePath, target: handoffPath }),
+      getRelativePathFromRoot({ root: worktreePath, target: handoffPath }),
     );
   }
   const checkpointCommit = await createCommit({

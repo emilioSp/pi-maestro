@@ -12,10 +12,6 @@ import type {
 } from '#artifacts/escalation/schema.ts';
 import { createCommit } from '#git/commits/createCommit.ts';
 import type { GetMaestroPaths } from '#paths.ts';
-import {
-  getBuilderEscalationPath,
-  getBuilderEscalationsPath,
-} from '#workflow/escalation/utils.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
   WORKFLOW_EVENTS,
@@ -24,7 +20,8 @@ import {
 } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-import { assertWorktree, getPath, relativePath } from '#workflow/utils.ts';
+import { assertWorktree } from '#workflow/utils/assertWorktree.ts';
+import { getRelativePathFromRoot } from '#workflow/utils/getRelativePathFromRoot.ts';
 
 export type ResolvedBuilderEscalation = {
   escalation: Escalation;
@@ -68,16 +65,14 @@ export const resolveBuilderEscalation = async ({
     worktreePath: builderWorktreePath,
   });
 
-  const workflowPath = getPath({
-    paths,
+  const workflowPath = paths.getWorkflowPathInWorktree({
+    specId,
     worktreePath: builderWorktreePath,
-    target: paths.getWorkflowPath(specId),
   });
 
-  const escalationsPath = getBuilderEscalationsPath({
-    paths,
-    worktreePath: builderWorktreePath,
+  const escalationsPath = paths.getEscalationsPathInWorktree({
     specId,
+    worktreePath: builderWorktreePath,
   });
 
   const currentState = await readWorkflowState({ path: workflowPath });
@@ -102,11 +97,10 @@ export const resolveBuilderEscalation = async ({
     event: WORKFLOW_EVENTS.RESOLVE_ESCALATION,
   });
 
-  const escalationPath = getBuilderEscalationPath({
-    paths,
-    worktreePath: builderWorktreePath,
+  const escalationPath = paths.getEscalationPathInWorktree({
     specId,
     escalationNumber: Number(currentEscalation.id.slice(1)),
+    worktreePath: builderWorktreePath,
   });
 
   const resolvedEscalation = await resolveEscalation({
@@ -125,11 +119,11 @@ export const resolveBuilderEscalation = async ({
   const checkpointCommit = await createCommit({
     repositoryRoot: builderWorktreePath,
     expectedPaths: [
-      relativePath({
+      getRelativePathFromRoot({
         root: builderWorktreePath,
         target: workflowPath,
       }),
-      relativePath({
+      getRelativePathFromRoot({
         root: builderWorktreePath,
         target: escalationPath,
       }),

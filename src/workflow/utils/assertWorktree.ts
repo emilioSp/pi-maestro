@@ -1,44 +1,12 @@
 /**
- * Objective: Resolve repository paths inside a workflow worktree.
- * Used: When workflow operations access protocol files outside the base worktree.
+ * Objective: Check that a workflow worktree is registered on its expected branch.
+ * Used: Before workflow operations access a managed worktree.
+ * Entrypoint: assertWorktree().
  */
 
-import { relative, resolve } from 'node:path';
 import { branchExists } from '#git/branches/branchExists.ts';
 import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
 import { findWorktree } from '#git/worktrees/findWorktree.ts';
-import type { GetMaestroPaths } from '#paths.ts';
-
-export const relativePath = ({
-  root,
-  target,
-}: {
-  root: string;
-  target: string;
-}): string => {
-  const value = relative(root, target);
-  if (value.length === 0 || value === '..' || value.startsWith('../')) {
-    throw new Error(`Path is outside the expected root: ${target}.`);
-  }
-  return value;
-};
-
-export const getPath = ({
-  paths,
-  worktreePath,
-  target,
-}: {
-  paths: GetMaestroPaths;
-  worktreePath: string;
-  target: string;
-}): string =>
-  resolve(
-    worktreePath,
-    relativePath({
-      root: paths.repositoryRoot,
-      target,
-    }),
-  );
 
 export const assertWorktree = async ({
   repositoryRoot,

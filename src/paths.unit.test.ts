@@ -115,4 +115,84 @@ describe('Maestro paths', () => {
     ).toThrow('Prototype path must stay inside the prototypes directory.');
     expect(() => paths.getSpecPath('../outside')).toThrow('Invalid spec ID');
   });
+
+  it('maps protocol paths into a worktree with custom directories', async () => {
+    const repository = await createTemporaryRepository();
+    temporaryPaths.push(repository.path);
+    const paths = getMaestroPaths({
+      repositoryRoot: repository.path,
+      config: {
+        ...DEFAULT_CONFIG,
+        specDirectory: join(repository.path, 'custom/specs'),
+        worktreeDirectory: join(repository.path, 'custom/worktrees'),
+      },
+    });
+    const worktreePath = paths.getBuilderWorktreePath(SPEC_ID);
+    const specPath = join(worktreePath, 'custom/specs', SPEC_ID);
+
+    expect(
+      paths.getWorkflowPathInWorktree({ specId: SPEC_ID, worktreePath }),
+    ).toBe(join(specPath, 'workflow.json'));
+    expect(
+      paths.getBuilderHandoffPathInWorktree({ specId: SPEC_ID, worktreePath }),
+    ).toBe(join(specPath, 'handoffs/builder.json'));
+    expect(
+      paths.getVerifierHandoffPathInWorktree({ specId: SPEC_ID, worktreePath }),
+    ).toBe(join(specPath, 'handoffs/verifier.json'));
+    expect(
+      paths.getEscalationsPathInWorktree({ specId: SPEC_ID, worktreePath }),
+    ).toBe(join(specPath, 'handoffs/escalations'));
+    expect(
+      paths.getEscalationPathInWorktree({
+        specId: SPEC_ID,
+        escalationNumber: 2,
+        worktreePath,
+      }),
+    ).toBe(join(specPath, 'handoffs/escalations/E2.json'));
+
+    expect(() =>
+      paths.getWorkflowPathInWorktree({ specId: '../outside', worktreePath }),
+    ).toThrow('Invalid spec ID');
+    expect(() =>
+      paths.getEscalationPathInWorktree({
+        specId: SPEC_ID,
+        escalationNumber: 0,
+        worktreePath,
+      }),
+    ).toThrow('Escalation number must be a positive integer.');
+  });
+
+  it('uses the default spec directory at the same location in each root', () => {
+    const repositoryRoot = '/repo';
+    const paths = getMaestroPaths({
+      repositoryRoot,
+      config: {
+        ...DEFAULT_CONFIG,
+        specDirectory: join(repositoryRoot, '.specs'),
+        worktreeDirectory: join(repositoryRoot, '.worktree'),
+      },
+    });
+    const worktreePath = paths.getBuilderWorktreePath(SPEC_ID);
+
+    expect(paths.getWorkflowPath(SPEC_ID)).toBe(
+      join(repositoryRoot, '.specs', SPEC_ID, 'workflow.json'),
+    );
+    expect(
+      paths.getWorkflowPathInWorktree({ specId: SPEC_ID, worktreePath }),
+    ).toBe(join(worktreePath, '.specs', SPEC_ID, 'workflow.json'));
+  });
+
+  it('rejects a configured spec directory outside the repository root', () => {
+    const repositoryRoot = '/repo';
+    expect(() =>
+      getMaestroPaths({
+        repositoryRoot,
+        config: {
+          ...DEFAULT_CONFIG,
+          specDirectory: '/outside',
+          worktreeDirectory: join(repositoryRoot, '.worktree'),
+        },
+      }),
+    ).toThrow('Generated Maestro path leaves the Git root.');
+  });
 });

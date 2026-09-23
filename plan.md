@@ -793,7 +793,7 @@ I tool delegano la logica condivisa ai moduli sotto `src/` invece di duplicare o
 
 `src/workflow/` coordina i domini senza dipendere dai tool Pi. `state/`, `builder/`, `verifier/` ed `escalation/` separano le rispettive responsabilità. Le prossime attività usano `findings/`, `recovery/` e `final-review/`: ogni nuova operazione pubblica ha il proprio modulo, con test accanto e import diretti senza barrel. Tipi, costanti, errori e helper privati restano con l'operazione che servono.
 
-`spec/createWorkflowSpec.ts` e `spec/markSpecReady.ts` separano le operazioni del workflow spec, con test accanto e import diretti. `transitions.ts` e `utils.ts` restano nella root di `src/workflow/`. I placeholder `findings.ts`, `recovery.ts` e `final-review.ts` vengono rimossi quando si implementa il rispettivo workflow. Non si creano implementazioni parallele.
+`spec/createWorkflowSpec.ts` e `spec/markSpecReady.ts` separano le operazioni del workflow spec, con test accanto e import diretti. `transitions.ts` resta nella root di `src/workflow/`. `utils/` contiene `getRelativePathFromRoot.ts` per i percorsi dei file Git e `assertWorktree.ts`, con import diretti. I placeholder `findings.ts`, `recovery.ts` e `final-review.ts` vengono rimossi quando si implementa il rispettivo workflow. Non si creano implementazioni parallele.
 
 Non esiste una directory globale `src/schemas/`. Ogni schema resta vicino al dominio che lo usa e viene esportato dal relativo `index.ts`.
 
@@ -815,7 +815,7 @@ Ogni operazione pubblica ha un modulo. Tipi, costanti, errori e helper privati r
 
 La configurazione applica gli override e valida le directory configurate, inclusi root Git, percorsi relativi, symlink e collisioni. Non verifica la disponibilità dei modelli e non dipende dall’interfaccia Pi.
 
-`src/paths.ts` resta un singolo modulo. Costruisce i percorsi, i nomi di branch e i percorsi dei worktree Maestro da una configurazione già validata. Non crea file o directory.
+`src/paths.ts` resta un singolo modulo. Calcola una volta la posizione della directory delle spec dentro il repository. Un helper privato costruisce i percorsi dalla root del repository o di un worktree, senza convertire ogni percorso assoluto tra le due root. Costruisce anche i nomi di branch e i percorsi dei worktree Maestro. Usa una configurazione già validata. Non crea file o directory.
 
 `src/utils/path-within-or-equal.ts` e `src/utils/path-strictly-within.ts` contengono i controlli lessicali di contenimento tra percorsi. Ogni modulo esporta una funzione. `src/config/` e `src/paths.ts` importano direttamente il controllo necessario.
 

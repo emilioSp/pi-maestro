@@ -21,7 +21,8 @@ import {
 } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-import { assertWorktree, getPath, relativePath } from '#workflow/utils.ts';
+import { assertWorktree } from '#workflow/utils/assertWorktree.ts';
+import { getRelativePathFromRoot } from '#workflow/utils/getRelativePathFromRoot.ts';
 
 export const VERIFIER_PASS_ERRORS = {
   PRODUCT_FILES_MODIFIED: 'PRODUCT_FILES_MODIFIED',
@@ -91,8 +92,8 @@ const hasProductChanges = async ({
     getRepositoryStatus({ repositoryRoot: worktreePath }),
   ]);
   const allowedPaths = new Set([
-    relativePath({ root: worktreePath, target: workflowPath }),
-    relativePath({ root: worktreePath, target: handoffPath }),
+    getRelativePathFromRoot({ root: worktreePath, target: workflowPath }),
+    getRelativePathFromRoot({ root: worktreePath, target: handoffPath }),
   ]);
   const changedTrackedPaths = [diff.stdout, stagedDiff.stdout]
     .flatMap((output) => output.split('\0'))
@@ -122,15 +123,13 @@ export const completeVerifierPass = async ({
     branch: paths.getVerifierBranch({ specId, pass }),
     worktreePath: verifierWorktreePath,
   });
-  const workflowPath = getPath({
-    paths,
+  const workflowPath = paths.getWorkflowPathInWorktree({
+    specId,
     worktreePath: verifierWorktreePath,
-    target: paths.getWorkflowPath(specId),
   });
-  const handoffPath = getPath({
-    paths,
+  const handoffPath = paths.getVerifierHandoffPathInWorktree({
+    specId,
     worktreePath: verifierWorktreePath,
-    target: paths.getVerifierHandoffPath(specId),
   });
   const currentState = await readWorkflowState({ path: workflowPath });
   if (currentState.phase !== WORKFLOW_PHASES.VERIFIER_RUNNING) {

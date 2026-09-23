@@ -22,7 +22,7 @@ import {
 } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-import { assertWorktree, getPath } from '#workflow/utils.ts';
+import { assertWorktree } from '#workflow/utils/assertWorktree.ts';
 
 export type CompletedBuilderPass = {
   handoff: BuilderHandoff;
@@ -46,16 +46,14 @@ export const completeBuilderPass = async ({
     worktreePath: builderWorktreePath,
   });
 
-  const workflowPath = getPath({
-    paths,
+  const workflowPath = paths.getWorkflowPathInWorktree({
+    specId,
     worktreePath: builderWorktreePath,
-    target: paths.getWorkflowPath(specId),
   });
 
-  const handoffPath = getPath({
-    paths,
+  const handoffPath = paths.getBuilderHandoffPathInWorktree({
+    specId,
     worktreePath: builderWorktreePath,
-    target: paths.getBuilderHandoffPath(specId),
   });
 
   const currentState = await readWorkflowState({ path: workflowPath });
