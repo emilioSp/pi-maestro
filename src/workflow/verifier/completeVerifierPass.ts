@@ -6,12 +6,10 @@
 
 import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import {
-  assertVerifierHandoff,
-  assertVerifierHandoffForWorkflow,
-  type VerifierHandoff,
-  writeVerifierHandoff,
-} from '#artifacts/verifier-handoff.ts';
+import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
+import { assertVerifierHandoffHasExpectedFields } from '#artifacts/verifier-handoff/assertVerifierHandoffHasExpectedFields.ts';
+import type { VerifierHandoff } from '#artifacts/verifier-handoff/schema.ts';
+import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
 import { runGitCommand } from '#git/command.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import type { GetMaestroPaths } from '#paths.ts';
@@ -163,7 +161,7 @@ export const completeVerifierPass = async ({
   }
 
   assertVerifierHandoff(handoff);
-  assertVerifierHandoffForWorkflow({
+  assertVerifierHandoffHasExpectedFields({
     handoff,
     specId,
     revision: currentState.revision + 1,

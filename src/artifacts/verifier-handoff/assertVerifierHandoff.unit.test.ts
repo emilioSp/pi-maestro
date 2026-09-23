@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   BREAKAGE_STATUSES,
   PROBE_STATUSES,
-} from '#artifacts/builder-handoff.ts';
+} from '#artifacts/builder-handoff/schema.ts';
+import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
 import {
-  assertVerifierHandoff,
   FINDING_SEVERITIES,
   VERIFIER_HANDOFF_VERSION,
   type VerifierHandoff,
-} from '#artifacts/verifier-handoff.ts';
+} from '#artifacts/verifier-handoff/schema.ts';
 
 const specId = '20260321-143052-add-weather-alerts';
 

@@ -6,13 +6,13 @@
 
 import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
+import { assertBuilderHandoff } from '#artifacts/builder-handoff/assertBuilderHandoff.ts';
+import { assertBuilderHandoffHasExpectedFields } from '#artifacts/builder-handoff/assertBuilderHandoffHasExpectedFields.ts';
 import {
-  assertBuilderHandoff,
-  assertBuilderHandoffForWorkflow,
   BUILDER_HANDOFF_STATUSES,
   type BuilderHandoff,
-  writeBuilderHandoff,
-} from '#artifacts/builder-handoff.ts';
+} from '#artifacts/builder-handoff/schema.ts';
+import { writeBuilderHandoff } from '#artifacts/builder-handoff/writeBuilderHandoff.ts';
 import type { GetMaestroPaths } from '#paths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import {
@@ -82,7 +82,7 @@ export const completeBuilderPass = async ({
         : WORKFLOW_EVENTS.BUILDER_FAILED,
   });
 
-  assertBuilderHandoffForWorkflow({
+  assertBuilderHandoffHasExpectedFields({
     handoff,
     specId,
     revision: nextState.revision,

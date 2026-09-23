@@ -4,8 +4,8 @@
  * Entrypoint: reconcileWorkflow().
  */
 
-import { readBuilderHandoff } from '#artifacts/builder-handoff.ts';
-import { readVerifierHandoff } from '#artifacts/verifier-handoff.ts';
+import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
+import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import { findWorktree } from '#git/worktrees/findWorktree.ts';
 import { listWorktrees } from '#git/worktrees/listWorktrees.ts';

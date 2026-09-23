@@ -13,7 +13,7 @@ Create permanent, sequential builder escalations and resolve them once.
 ## Plan references
 
 - Section [3.5](../plan.md#plan-section-3-5), escalation rules
-- Section [5](../plan.md#plan-section-5), `src/artifacts/escalation.ts`
+- Section [5](../plan.md#plan-section-5), `src/artifacts/escalation/`
 - Section [6.15](../plan.md#plan-section-6-15), escalation schema
 
 ## Work

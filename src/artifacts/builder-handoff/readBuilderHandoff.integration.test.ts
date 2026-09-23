@@ -1,16 +1,15 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import {
   BREAKAGE_STATUSES,
   BUILDER_HANDOFF_STATUSES,
   BUILDER_HANDOFF_VERSION,
   type BuilderHandoff,
   PROBE_STATUSES,
-  readBuilderHandoff,
-  writeBuilderHandoff,
-} from '#artifacts/builder-handoff.ts';
+} from '#artifacts/builder-handoff/schema.ts';
 
 const temporaryDirectories: string[] = [];
 const specId = '20260321-143052-add-weather-alerts';
@@ -46,62 +45,7 @@ afterEach(async () => {
   );
 });
 
-describe('builder handoff store', () => {
-  it('atomically replaces a validated handoff', async () => {
-    const directory = await createTemporaryDirectory();
-    const path = join(directory, 'builder.json');
-
-    await writeBuilderHandoff({
-      path,
-      handoff: handoff(4),
-      specId,
-      revision: 4,
-    });
-    await writeBuilderHandoff({
-      path,
-      handoff: handoff(5),
-      specId,
-      revision: 5,
-    });
-
-    await expect(
-      readBuilderHandoff({ path, specId, revision: 5 }),
-    ).resolves.toEqual(handoff(5));
-    await expect(readFile(path, 'utf8')).resolves.toBe(
-      `${JSON.stringify(handoff(5), null, 2)}\n`,
-    );
-  });
-
-  it('rejects invalid writes without replacing the current handoff', async () => {
-    const directory = await createTemporaryDirectory();
-    const path = join(directory, 'builder.json');
-    await writeBuilderHandoff({
-      path,
-      handoff: handoff(4),
-      specId,
-      revision: 4,
-    });
-    const before = await readFile(path, 'utf8');
-
-    await expect(
-      writeBuilderHandoff({
-        path,
-        handoff: {
-          ...handoff(5),
-          acceptanceCriteria: [
-            {
-              ...handoff(5).acceptanceCriteria[0],
-              probeStatus: PROBE_STATUSES.FAILED,
-            },
-          ],
-        },
-        specId,
-        revision: 5,
-      }),
-    ).rejects.toThrow('Done builder handoff requires every probe to pass');
-    await expect(readFile(path, 'utf8')).resolves.toBe(before);
-  });
-
+describe('builder handoff reads', () => {
   it('rejects malformed, invalid, and mismatched handoffs on read', async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, 'builder.json');

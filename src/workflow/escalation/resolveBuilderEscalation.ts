@@ -4,12 +4,12 @@
  * Entrypoint: resolveBuilderEscalation().
  */
 
-import {
-  type Escalation,
-  type EscalationResolution,
-  readEscalationHistory,
-  resolveEscalation,
-} from '#artifacts/escalation.ts';
+import { readEscalationHistory } from '#artifacts/escalation/readEscalationHistory.ts';
+import { resolveEscalation } from '#artifacts/escalation/resolveEscalation.ts';
+import type {
+  Escalation,
+  EscalationResolution,
+} from '#artifacts/escalation/schema.ts';
 import { createCommit } from '#git/commits/createCommit.ts';
 import type { GetMaestroPaths } from '#paths.ts';
 import {

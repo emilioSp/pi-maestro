@@ -5,12 +5,12 @@ import {
   BREAKAGE_STATUSES,
   type BreakageStatus,
   PROBE_STATUSES,
-} from '#artifacts/builder-handoff.ts';
+} from '#artifacts/builder-handoff/schema.ts';
 import {
   FINDING_SEVERITIES,
   VERIFIER_HANDOFF_VERSION,
   type VerifierHandoff,
-} from '#artifacts/verifier-handoff.ts';
+} from '#artifacts/verifier-handoff/schema.ts';
 import { runGitCommand } from '#git/command.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import {

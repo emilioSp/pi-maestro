@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { assertEscalation } from '#artifacts/escalation/assertEscalation.ts';
 import {
-  assertEscalation,
   ESCALATION_VERSION,
   type Escalation,
-} from '#artifacts/escalation.ts';
+} from '#artifacts/escalation/schema.ts';
 
 const escalation = (): Escalation => ({
   version: ESCALATION_VERSION,

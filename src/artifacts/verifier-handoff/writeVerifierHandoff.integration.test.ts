@@ -5,15 +5,14 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   BREAKAGE_STATUSES,
   PROBE_STATUSES,
-} from '#artifacts/builder-handoff.ts';
+} from '#artifacts/builder-handoff/schema.ts';
+import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import {
   FINDING_SEVERITIES,
-  readVerifierHandoff,
-  rejectVerifierFinding,
   VERIFIER_HANDOFF_VERSION,
   type VerifierHandoff,
-  writeVerifierHandoff,
-} from '#artifacts/verifier-handoff.ts';
+} from '#artifacts/verifier-handoff/schema.ts';
+import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
 
 const temporaryDirectories: string[] = [];
 const specId = '20260321-143052-add-weather-alerts';
@@ -64,7 +63,7 @@ afterEach(async () => {
   );
 });
 
-describe('verifier handoff store', () => {
+describe('verifier handoff writes', () => {
   it('writes and reads a valid verifier handoff', async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, 'verifier.json');
@@ -106,43 +105,5 @@ describe('verifier handoff store', () => {
       }),
     ).rejects.toThrow('New verifier handoff findings must have no rejection');
     await expect(readFile(path, 'utf8')).resolves.toBe(before);
-  });
-
-  it('records one owner rejection without changing other finding data', async () => {
-    const directory = await createTemporaryDirectory();
-    const path = join(directory, 'verifier.json');
-    await writeVerifierHandoff({
-      path,
-      handoff: handoff(),
-      specId,
-      revision: 6,
-    });
-
-    const rejected = await rejectVerifierFinding({
-      path,
-      specId,
-      revision: 6,
-      findingId: 'F1',
-      reason: 'The owner accepts this style difference.',
-    });
-
-    expect(rejected).toEqual({
-      ...handoff(),
-      findings: [
-        {
-          ...handoff().findings[0],
-          rejection: { reason: 'The owner accepts this style difference.' },
-        },
-      ],
-    });
-    await expect(
-      rejectVerifierFinding({
-        path,
-        specId,
-        revision: 6,
-        findingId: 'F1',
-        reason: 'Another reason.',
-      }),
-    ).rejects.toThrow('already rejected');
   });
 });

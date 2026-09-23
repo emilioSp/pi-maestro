@@ -2,13 +2,12 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  createEscalation,
-  type EscalationResolution,
-  getNextEscalationId,
-  type NewEscalation,
-  resolveEscalation,
-} from '#artifacts/escalation.ts';
+import { createEscalation } from '#artifacts/escalation/createEscalation.ts';
+import { resolveEscalation } from '#artifacts/escalation/resolveEscalation.ts';
+import type {
+  EscalationResolution,
+  NewEscalation,
+} from '#artifacts/escalation/schema.ts';
 
 const temporaryDirectories: string[] = [];
 const specId = '20260321-143052-add-weather-alerts';
@@ -48,49 +47,7 @@ afterEach(async () => {
   );
 });
 
-describe('escalation artifacts', () => {
-  it('allocates sequential IDs from validated history', async () => {
-    const directory = await createTemporaryDirectory();
-
-    const first = await createEscalation({
-      directory,
-      specId,
-      revision: 3,
-      escalation: newEscalation(),
-    });
-    const second = await createEscalation({
-      directory,
-      specId,
-      revision: 4,
-      escalation: newEscalation(),
-    });
-
-    expect(first.escalation.id).toBe('E1');
-    expect(second.escalation.id).toBe('E2');
-    await expect(readFile(first.path, 'utf8')).resolves.toBe(
-      `${JSON.stringify(first.escalation, null, 2)}\n`,
-    );
-    await expect(
-      getNextEscalationId({ directory, specId, currentRevision: 4 }),
-    ).resolves.toBe('E3');
-  });
-
-  it('writes new escalations as unresolved documents', async () => {
-    const directory = await createTemporaryDirectory();
-
-    const { escalation } = await createEscalation({
-      directory,
-      specId,
-      revision: 3,
-      escalation: {
-        ...newEscalation(),
-        resolution: resolution(),
-      } as NewEscalation,
-    });
-
-    expect(escalation.resolution).toBeNull();
-  });
-
+describe('escalation resolution', () => {
   it('resolves an escalation once without changing its other fields', async () => {
     const directory = await createTemporaryDirectory();
     const created = await createEscalation({

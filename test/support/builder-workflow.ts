@@ -6,7 +6,7 @@ import {
   BUILDER_HANDOFF_VERSION,
   type BuilderHandoff,
   PROBE_STATUSES,
-} from '#artifacts/builder-handoff.ts';
+} from '#artifacts/builder-handoff/schema.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { runGitCommand } from '#git/command.ts';
 import { getMaestroPaths } from '#paths.ts';

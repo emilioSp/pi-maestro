@@ -13,7 +13,7 @@ Validate verifier evidence and current findings without allowing a verdict.
 ## Plan references
 
 - Sections [3.4](../plan.md#plan-section-3-4) and [3.6](../plan.md#plan-section-3-6)
-- Section [5](../plan.md#plan-section-5), `src/artifacts/verifier-handoff.ts`
+- Section [5](../plan.md#plan-section-5), `src/artifacts/verifier-handoff/`
 - Section [6.15](../plan.md#plan-section-6-15), verifier handoff schema
 
 ## Work

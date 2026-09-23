@@ -783,7 +783,7 @@ Ogni tool vive in un file dedicato. Il file contiene schema degli input, registr
 
 `src/atomic-write.ts` contiene la scrittura atomica condivisa da stato e artefatti.
 
-`src/artifacts/` implementa lettura, validazione e scrittura degli handoff e delle escalation senza dipendere da Pi. I file sotto `src/tools/` sono solo adapter tra le chiamate Pi e questa logica.
+`src/artifacts/` implementa lettura, validazione e scrittura degli handoff e delle escalation senza dipendere da Pi. Le directory `builder-handoff/`, `verifier-handoff/` ed `escalation/` separano gli ambiti. Ogni funzione pubblica ha un modulo, con i test accanto. Lo schema e i tipi condivisi di ogni ambito stanno nel suo `schema.ts`. Gli import usano percorsi diretti, senza barrel. I file sotto `src/tools/` sono solo adapter tra le chiamate Pi e questa logica.
 
 `src/workflow/state/` contiene schema, persistenza, discovery e riconciliazione di `workflow.json`. Per l’MVP controlla il workflow attivo e confronta lo stato dichiarato con branch, worktree, HEAD e artefatto terminale attesi.
 

@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { assertBuilderHandoff } from '#artifacts/builder-handoff/assertBuilderHandoff.ts';
 import {
-  assertBuilderHandoff,
-  assertBuilderHandoffForWorkflow,
   BREAKAGE_STATUSES,
   BUILDER_HANDOFF_STATUSES,
   BUILDER_HANDOFF_VERSION,
   type BuilderHandoff,
   PROBE_STATUSES,
-} from '#artifacts/builder-handoff.ts';
+} from '#artifacts/builder-handoff/schema.ts';
 
 const specId = '20260321-143052-add-weather-alerts';
 
@@ -136,23 +135,5 @@ describe('builder handoff schema', () => {
         specId: '20260230-143052-add-weather-alerts',
       }),
     ).toThrow('Invalid builder handoff spec ID');
-  });
-
-  it('requires the workflow identity and revision', () => {
-    expect(() =>
-      assertBuilderHandoffForWorkflow({
-        handoff: doneHandoff(),
-        specId: '20260321-143052-other-change',
-        revision: 4,
-      }),
-    ).toThrow('Builder handoff spec ID mismatch');
-
-    expect(() =>
-      assertBuilderHandoffForWorkflow({
-        handoff: doneHandoff(),
-        specId,
-        revision: 5,
-      }),
-    ).toThrow('Builder handoff revision mismatch');
   });
 });

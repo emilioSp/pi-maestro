@@ -5,11 +5,11 @@
  */
 
 import { mkdir } from 'node:fs/promises';
-import {
-  createEscalation,
-  type Escalation,
-  type NewEscalation,
-} from '#artifacts/escalation.ts';
+import { createEscalation } from '#artifacts/escalation/createEscalation.ts';
+import type {
+  Escalation,
+  NewEscalation,
+} from '#artifacts/escalation/schema.ts';
 import type { GetMaestroPaths } from '#paths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { getBuilderEscalationsPath } from '#workflow/escalation/utils.ts';
