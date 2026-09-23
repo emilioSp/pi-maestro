@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  assertConfiguration,
   MaestroConfigInputSchema,
   ResolvedMaestroConfigSchema,
   SUPPORTED_CONFIG_VERSION,
   THINKING_LEVELS,
-  validateConfiguration,
 } from '#config/validate.ts';
 
 describe('configuration schema validation', () => {
@@ -38,12 +38,12 @@ describe('configuration schema validation', () => {
       },
     };
 
-    expect(validateConfiguration(input)).toEqual(input);
+    expect(() => assertConfiguration(input)).not.toThrow();
   });
 
   it('accepts a minimal configuration containing only version', () => {
     const input = { version: SUPPORTED_CONFIG_VERSION };
-    expect(validateConfiguration(input)).toEqual(input);
+    expect(() => assertConfiguration(input)).not.toThrow();
   });
 
   it('accepts partial configurations with valid overrides', () => {
@@ -53,7 +53,7 @@ describe('configuration schema validation', () => {
         timeoutMinutes: 90,
       },
     };
-    expect(validateConfiguration(input)).toEqual(input);
+    expect(() => assertConfiguration(input)).not.toThrow();
   });
 
   it('accepts all supported thinking levels', () => {
@@ -62,89 +62,83 @@ describe('configuration schema validation', () => {
         version: SUPPORTED_CONFIG_VERSION,
         builder: { thinking: level },
       };
-      expect(validateConfiguration(input)).toEqual(input);
+      expect(() => assertConfiguration(input)).not.toThrow();
     }
   });
 
   it('accepts valid timeout bounds of 1 and 1440 minutes', () => {
-    expect(
-      validateConfiguration({
+    expect(() =>
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         builder: { timeoutMinutes: 1 },
       }),
-    ).toEqual({
-      version: SUPPORTED_CONFIG_VERSION,
-      builder: { timeoutMinutes: 1 },
-    });
+    ).not.toThrow();
 
-    expect(
-      validateConfiguration({
+    expect(() =>
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         verifier: { timeoutMinutes: 1440 },
       }),
-    ).toEqual({
-      version: SUPPORTED_CONFIG_VERSION,
-      verifier: { timeoutMinutes: 1440 },
-    });
+    ).not.toThrow();
   });
 
   it('rejects non-object root inputs', () => {
-    expect(() => validateConfiguration(null)).toThrow(
+    expect(() => assertConfiguration(null)).toThrow(
       'Configuration must be a JSON object.',
     );
-    expect(() => validateConfiguration('invalid')).toThrow(
+    expect(() => assertConfiguration('invalid')).toThrow(
       'Configuration must be a JSON object.',
     );
-    expect(() => validateConfiguration([1, 2, 3])).toThrow(
+    expect(() => assertConfiguration([1, 2, 3])).toThrow(
       'Configuration must be a JSON object.',
     );
   });
 
   it('rejects configuration when version is missing', () => {
-    expect(() => validateConfiguration({})).toThrow(
+    expect(() => assertConfiguration({})).toThrow(
       "Missing configuration version. The 'version' field is required.",
     );
   });
 
   it('rejects configuration when version is not a string', () => {
-    expect(() => validateConfiguration({ version: 1 })).toThrow(
+    expect(() => assertConfiguration({ version: 1 })).toThrow(
       'Invalid configuration version: expected a string.',
     );
   });
 
   it('rejects invalid semantic version format', () => {
-    expect(() => validateConfiguration({ version: 'v1.0.0' })).toThrow(
+    expect(() => assertConfiguration({ version: 'v1.0.0' })).toThrow(
       'Invalid configuration version: "v1.0.0". Expected a semantic version (e.g. "1.0.0").',
     );
-    expect(() => validateConfiguration({ version: '1.0' })).toThrow(
+    expect(() => assertConfiguration({ version: '1.0' })).toThrow(
       'Invalid configuration version: "1.0". Expected a semantic version (e.g. "1.0.0").',
     );
-    expect(() => validateConfiguration({ version: 'not-a-version' })).toThrow(
+    expect(() => assertConfiguration({ version: 'not-a-version' })).toThrow(
       'Invalid configuration version: "not-a-version". Expected a semantic version (e.g. "1.0.0").',
     );
   });
 
   it('rejects unsupported major versions', () => {
-    expect(() => validateConfiguration({ version: '2.0.0' })).toThrow(
+    expect(() => assertConfiguration({ version: '2.0.0' })).toThrow(
       'Unsupported configuration major version: 2. Expected major version 1.',
     );
-    expect(() => validateConfiguration({ version: '0.9.0' })).toThrow(
+    expect(() => assertConfiguration({ version: '0.9.0' })).toThrow(
       'Unsupported configuration major version: 0. Expected major version 1.',
     );
   });
 
   it('rejects unsupported minor or patch versions', () => {
-    expect(() => validateConfiguration({ version: '1.1.0' })).toThrow(
+    expect(() => assertConfiguration({ version: '1.1.0' })).toThrow(
       'Unsupported configuration version: "1.1.0". Supported version is 1.0.0.',
     );
-    expect(() => validateConfiguration({ version: '1.0.1' })).toThrow(
+    expect(() => assertConfiguration({ version: '1.0.1' })).toThrow(
       'Unsupported configuration version: "1.0.1". Supported version is 1.0.0.',
     );
   });
 
   it('rejects unknown field at root level', () => {
     expect(() =>
-      validateConfiguration({
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         unknownRoot: 'test',
       }),
@@ -153,7 +147,7 @@ describe('configuration schema validation', () => {
 
   it('rejects unknown field in builder configuration', () => {
     expect(() =>
-      validateConfiguration({
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         builder: { unknownChild: 123 },
       }),
@@ -162,7 +156,7 @@ describe('configuration schema validation', () => {
 
   it('rejects unknown field in verifier configuration', () => {
     expect(() =>
-      validateConfiguration({
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         verifier: { unknownChild: 'bad' },
       }),
@@ -171,7 +165,7 @@ describe('configuration schema validation', () => {
 
   it('rejects model identifier without provider prefix', () => {
     expect(() =>
-      validateConfiguration({
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         builder: { model: 'gpt-5.6-luna' },
       }),
@@ -182,7 +176,7 @@ describe('configuration schema validation', () => {
 
   it('rejects model identifier with empty provider or model', () => {
     expect(() =>
-      validateConfiguration({
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         builder: { model: '/gpt-5.6-luna' },
       }),
@@ -191,7 +185,7 @@ describe('configuration schema validation', () => {
     );
 
     expect(() =>
-      validateConfiguration({
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         verifier: { model: 'openai-codex/' },
       }),
@@ -202,7 +196,7 @@ describe('configuration schema validation', () => {
 
   it('rejects model identifier containing whitespace', () => {
     expect(() =>
-      validateConfiguration({
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         builder: { model: 'openai codex/gpt-5.6-luna' },
       }),
@@ -213,7 +207,7 @@ describe('configuration schema validation', () => {
 
   it('rejects unsupported thinking levels', () => {
     expect(() =>
-      validateConfiguration({
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         builder: { thinking: 'extreme' },
       }),
@@ -224,7 +218,7 @@ describe('configuration schema validation', () => {
 
   it('rejects timeout values below minimum of 1', () => {
     expect(() =>
-      validateConfiguration({
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         builder: { timeoutMinutes: 0 },
       }),
@@ -232,7 +226,7 @@ describe('configuration schema validation', () => {
       'Invalid timeout at "builder.timeoutMinutes". Must be an integer between 1 and 1440.',
     );
     expect(() =>
-      validateConfiguration({
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         builder: { timeoutMinutes: -5 },
       }),
@@ -243,7 +237,7 @@ describe('configuration schema validation', () => {
 
   it('rejects timeout values above maximum of 1440', () => {
     expect(() =>
-      validateConfiguration({
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         verifier: { timeoutMinutes: 1441 },
       }),
@@ -254,7 +248,7 @@ describe('configuration schema validation', () => {
 
   it('rejects non-integer timeout values', () => {
     expect(() =>
-      validateConfiguration({
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         builder: { timeoutMinutes: 30.5 },
       }),
@@ -262,7 +256,7 @@ describe('configuration schema validation', () => {
       'Invalid timeout at "builder.timeoutMinutes". Must be an integer between 1 and 1440.',
     );
     expect(() =>
-      validateConfiguration({
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         builder: { timeoutMinutes: '60' },
       }),
@@ -273,14 +267,14 @@ describe('configuration schema validation', () => {
 
   it('rejects non-object builder and verifier entries', () => {
     expect(() =>
-      validateConfiguration({
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         builder: 'not-an-object',
       }),
     ).toThrow('Invalid builder configuration: expected an object.');
 
     expect(() =>
-      validateConfiguration({
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         verifier: [1, 2, 3],
       }),
@@ -289,14 +283,14 @@ describe('configuration schema validation', () => {
 
   it('rejects empty specDirectory and worktreeDirectory', () => {
     expect(() =>
-      validateConfiguration({
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         specDirectory: '',
       }),
     ).toThrow('Invalid specDirectory: expected a non-empty string.');
 
     expect(() =>
-      validateConfiguration({
+      assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
         worktreeDirectory: '',
       }),

@@ -1,7 +1,7 @@
 /**
  * Objective: Define and validate the workflow state contract.
  * Used: Whenever Maestro reads or writes workflow state.
- * Entrypoint: validateWorkflowState().
+ * Entrypoint: assertWorkflowState().
  */
 
 import { type Static, Type } from 'typebox';
@@ -83,11 +83,11 @@ function assertWorkflowStateSchema(
   }
 }
 
-export const validateWorkflowState = (input: unknown): WorkflowState => {
+export function assertWorkflowState(
+  input: unknown,
+): asserts input is WorkflowState {
   assertWorkflowStateSchema(input);
   if (!isValidSpecId(input.specId)) {
     throw new Error(`Invalid workflow spec ID: "${input.specId}".`);
   }
-
-  return input;
-};
+}

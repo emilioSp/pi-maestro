@@ -1,7 +1,7 @@
 /**
  * Objective: Define and validate Maestro configuration contracts.
  * Used: When configuration input and configured directories are checked.
- * Entrypoint: validateConfiguration().
+ * Entrypoint: assertConfiguration().
  */
 
 import { lstat, realpath } from 'node:fs/promises';
@@ -129,7 +129,7 @@ const formatError = (error: SchemaValidationError): string => {
   return `Invalid configuration at "${path}": ${error.message}.`;
 };
 
-function assertConfiguration(
+export function assertConfiguration(
   input: unknown,
 ): asserts input is PartialMaestroConfig {
   if (typeof input !== 'object' || input === null || Array.isArray(input)) {
@@ -173,11 +173,6 @@ function assertConfiguration(
     throw new Error(formatError(firstError));
   }
 }
-
-export const validateConfiguration = (input: unknown): PartialMaestroConfig => {
-  assertConfiguration(input);
-  return input;
-};
 
 type ExistingAncestor = {
   path: string;
@@ -264,7 +259,7 @@ const resolveSafeDirectory = async ({
   return resolvedDirectory;
 };
 
-export const validateDirectories = async ({
+export const resolveDirectories = async ({
   repositoryRoot: configuredRepositoryRoot,
   config,
 }: {

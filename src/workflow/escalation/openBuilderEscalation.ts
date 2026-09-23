@@ -23,7 +23,7 @@ import {
   writeWorkflowState,
 } from '#workflow/state/store.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-import { getPath, validateWorktree } from '#workflow/utils.ts';
+import { assertWorktree, getPath } from '#workflow/utils.ts';
 
 export type OpenedBuilderEscalation = {
   escalation: Escalation;
@@ -43,31 +43,32 @@ const getPaths = async ({
   paths,
   specId,
 }: Omit<OpenBuilderEscalationInput, 'escalation'>) => {
-  const builderWorktree = await validateWorktree({
+  const builderWorktreePath = paths.getBuilderWorktreePath(specId);
+  await assertWorktree({
     repositoryRoot: paths.repositoryRoot,
     branch: paths.getBuilderBranch(specId),
-    worktreePath: paths.getBuilderWorktreePath(specId),
+    worktreePath: builderWorktreePath,
   });
 
   const workflowPath = getPath({
     paths,
-    worktreePath: builderWorktree.worktreePath,
+    worktreePath: builderWorktreePath,
     target: paths.getWorkflowPath(specId),
   });
 
   const handoffPath = getPath({
     paths,
-    worktreePath: builderWorktree.worktreePath,
+    worktreePath: builderWorktreePath,
     target: paths.getBuilderHandoffPath(specId),
   });
 
   const escalationsPath = getBuilderEscalationsPath({
     paths,
-    worktreePath: builderWorktree.worktreePath,
+    worktreePath: builderWorktreePath,
     specId,
   });
 
-  const worktreePath = builderWorktree.worktreePath;
+  const worktreePath = builderWorktreePath;
 
   return { worktreePath, workflowPath, handoffPath, escalationsPath };
 };

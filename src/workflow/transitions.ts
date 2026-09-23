@@ -5,7 +5,7 @@
  */
 
 import {
-  validateWorkflowState,
+  assertWorkflowState,
   WORKFLOW_EVENTS,
   WORKFLOW_PHASES,
   type WorkflowEvent,
@@ -84,7 +84,8 @@ export const transitionWorkflow = ({
   state: WorkflowState;
   event: WorkflowEvent;
 }): WorkflowState => {
-  const current = validateWorkflowState(state);
+  assertWorkflowState(state);
+  const current = state;
   const transition = WORKFLOW_TRANSITIONS[event];
   if (transition === undefined) {
     throw new Error(`Unknown workflow event: "${event}".`);

@@ -129,7 +129,9 @@ function assertBuilderHandoffSchema(
   }
 }
 
-export const validateBuilderHandoff = (input: unknown): BuilderHandoff => {
+export function assertBuilderHandoff(
+  input: unknown,
+): asserts input is BuilderHandoff {
   assertBuilderHandoffSchema(input);
   const handoff = input;
   if (!isValidSpecId(handoff.specId)) {
@@ -154,20 +156,17 @@ export const validateBuilderHandoff = (input: unknown): BuilderHandoff => {
       'Failed builder handoff requires at least one failed, unconfirmed, or not-run check.',
     );
   }
+}
 
-  return handoff;
-};
-
-export const validateBuilderHandoffForWorkflow = ({
+export const assertBuilderHandoffForWorkflow = ({
   handoff,
   specId,
   revision,
 }: {
-  handoff: unknown;
+  handoff: BuilderHandoff;
   specId: string;
   revision: number;
-}): BuilderHandoff => {
-  const validatedHandoff = validateBuilderHandoff(handoff);
+}): void => {
   if (!isValidSpecId(specId)) {
     throw new Error(`Invalid expected builder handoff spec ID: "${specId}".`);
   }
@@ -176,18 +175,16 @@ export const validateBuilderHandoffForWorkflow = ({
       'Expected builder handoff revision must be a positive integer.',
     );
   }
-  if (validatedHandoff.specId !== specId) {
+  if (handoff.specId !== specId) {
     throw new Error(
-      `Builder handoff spec ID mismatch: expected "${specId}", found "${validatedHandoff.specId}".`,
+      `Builder handoff spec ID mismatch: expected "${specId}", found "${handoff.specId}".`,
     );
   }
-  if (validatedHandoff.revision !== revision) {
+  if (handoff.revision !== revision) {
     throw new Error(
-      `Builder handoff revision mismatch: expected ${revision}, found ${validatedHandoff.revision}.`,
+      `Builder handoff revision mismatch: expected ${revision}, found ${handoff.revision}.`,
     );
   }
-
-  return validatedHandoff;
 };
 
 export const readBuilderHandoff = async ({
@@ -198,12 +195,12 @@ export const readBuilderHandoff = async ({
   path: string;
   specId: string;
   revision: number;
-}): Promise<BuilderHandoff> =>
-  validateBuilderHandoffForWorkflow({
-    handoff: await readJsonFile({ path, description: 'Builder handoff' }),
-    specId,
-    revision,
-  });
+}): Promise<BuilderHandoff> => {
+  const handoff = await readJsonFile({ path, description: 'Builder handoff' });
+  assertBuilderHandoff(handoff);
+  assertBuilderHandoffForWorkflow({ handoff, specId, revision });
+  return handoff;
+};
 
 export const writeBuilderHandoff = async ({
   path,
@@ -216,10 +213,7 @@ export const writeBuilderHandoff = async ({
   specId: string;
   revision: number;
 }): Promise<void> => {
-  const validatedHandoff = validateBuilderHandoffForWorkflow({
-    handoff,
-    specId,
-    revision,
-  });
-  await writeJsonAtomically({ path, data: validatedHandoff });
+  assertBuilderHandoff(handoff);
+  assertBuilderHandoffForWorkflow({ handoff, specId, revision });
+  await writeJsonAtomically({ path, data: handoff });
 };

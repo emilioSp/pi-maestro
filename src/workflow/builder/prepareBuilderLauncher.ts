@@ -28,7 +28,7 @@ import {
   writeWorkflowState,
 } from '#workflow/state/store.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-import { getPath, relativePath, validateWorktree } from '#workflow/utils.ts';
+import { assertWorktree, getPath, relativePath } from '#workflow/utils.ts';
 
 export type BuilderLaunch = {
   specId: string;
@@ -38,7 +38,7 @@ export type BuilderLaunch = {
   checkpointCommit: string;
 };
 
-const validateBuilderLaunchBase = async ({
+const assertBuilderLaunchBase = async ({
   paths,
   specId,
   allowedWorktreePath: allowedWorktree,
@@ -46,7 +46,7 @@ const validateBuilderLaunchBase = async ({
   paths: GetMaestroPaths;
   specId: string;
   allowedWorktreePath?: string;
-}): Promise<string> => {
+}): Promise<void> => {
   const state = await readWorkflowState({
     path: paths.getWorkflowPath(specId),
   });
@@ -98,11 +98,6 @@ const validateBuilderLaunchBase = async ({
   if (!(await pathExists(paths.getSpecFilePath(specId)))) {
     throw new Error(`Spec file is missing: ${paths.getSpecFilePath(specId)}.`);
   }
-
-  const commit = await getHeadCommit({
-    repositoryRoot: paths.repositoryRoot,
-  });
-  return commit;
 };
 
 const assertBuilderWorktreeClean = async (
@@ -192,11 +187,11 @@ export const prepareBuilderLaunch = async ({
   specId: string;
   retry?: boolean;
 }): Promise<BuilderLaunch> => {
-  const branch = paths.getBuilderBranch(specId);
+  const builderBranch = paths.getBuilderBranch(specId);
   const worktreePath = paths.getBuilderWorktreePath(specId);
   const existingBranch = await branchExists({
     repositoryRoot: paths.repositoryRoot,
-    branch,
+    branch: builderBranch,
   });
 
   const existingWorktree = await findWorktree({
@@ -211,30 +206,32 @@ export const prepareBuilderLaunch = async ({
     throw new Error('Builder retry requires existing builder resources.');
   }
 
-  const approvalCommit = await validateBuilderLaunchBase({
+  await assertBuilderLaunchBase({
     paths,
     specId,
     allowedWorktreePath: hasExistingResources ? worktreePath : undefined,
   });
 
   if (hasExistingResources) {
-    const builderWorktree = await validateWorktree({
+    await assertWorktree({
       repositoryRoot: paths.repositoryRoot,
-      branch,
+      branch: builderBranch,
       worktreePath,
     });
-    await assertBuilderWorktreeClean(builderWorktree.worktreePath);
+    await assertBuilderWorktreeClean(worktreePath);
   } else {
     await assertBuilderResourcesAbsent({ paths, specId }); // no worktree, no worktree path, no branch
     await createBranch({
       repositoryRoot: paths.repositoryRoot,
-      branch,
-      startPoint: approvalCommit,
+      branch: builderBranch,
+      startPoint: await getHeadCommit({
+        repositoryRoot: paths.repositoryRoot,
+      }),
     });
     await createWorktree({
       repositoryRoot: paths.repositoryRoot,
       path: worktreePath,
-      branch,
+      branch: builderBranch,
     });
   }
 
@@ -291,7 +288,7 @@ export const prepareBuilderLaunch = async ({
   });
 
   return {
-    branch,
+    branch: builderBranch,
     worktreePath,
     specId,
     revision: nextState.revision,

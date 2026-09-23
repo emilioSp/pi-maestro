@@ -10,7 +10,7 @@ import type { GetMaestroPaths } from '#paths.ts';
 import { loadSpecTemplate, renderSpecTemplate } from '#specs/template.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import {
-  validateWorkflowState,
+  assertWorkflowState,
   WORKFLOW_PHASES,
   WORKFLOW_STATE_VERSION,
   type WorkflowState,
@@ -60,13 +60,14 @@ export const createSpec = async ({
 
   const template = await loadSpecTemplate();
   const spec = renderSpecTemplate({ template, specId, title });
-  const state = validateWorkflowState({
+  const state = {
     version: WORKFLOW_STATE_VERSION,
     specId,
     revision: 1,
     phase: WORKFLOW_PHASES.DRAFTING_SPEC,
     baseBranch,
-  });
+  } as const;
+  assertWorkflowState(state);
   let created = false;
   try {
     await mkdir(paths.specDirectory, { recursive: true });

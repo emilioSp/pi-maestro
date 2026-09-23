@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  assertBuilderHandoff,
+  assertBuilderHandoffForWorkflow,
   BREAKAGE_STATUSES,
   BUILDER_HANDOFF_STATUSES,
   BUILDER_HANDOFF_VERSION,
   type BuilderHandoff,
   PROBE_STATUSES,
-  validateBuilderHandoff,
-  validateBuilderHandoffForWorkflow,
 } from '#artifacts/builder-handoff.ts';
 
 const specId = '20260321-143052-add-weather-alerts';
@@ -48,11 +48,11 @@ const failedHandoff = (): BuilderHandoff => ({
 
 describe('builder handoff schema', () => {
   it('accepts a done handoff with completed checks', () => {
-    expect(validateBuilderHandoff(doneHandoff())).toEqual(doneHandoff());
+    expect(() => assertBuilderHandoff(doneHandoff())).not.toThrow();
   });
 
   it('accepts a failed handoff with explicit partial checks', () => {
-    expect(validateBuilderHandoff(failedHandoff())).toEqual(failedHandoff());
+    expect(() => assertBuilderHandoff(failedHandoff())).not.toThrow();
   });
 
   it.each([
@@ -126,12 +126,12 @@ describe('builder handoff schema', () => {
       message: 'Invalid builder handoff',
     },
   ])('rejects invalid handoff data %#', ({ handoff, message }) => {
-    expect(() => validateBuilderHandoff(handoff)).toThrow(message);
+    expect(() => assertBuilderHandoff(handoff)).toThrow(message);
   });
 
   it('rejects a structurally valid spec ID with an invalid UTC date', () => {
     expect(() =>
-      validateBuilderHandoff({
+      assertBuilderHandoff({
         ...doneHandoff(),
         specId: '20260230-143052-add-weather-alerts',
       }),
@@ -140,7 +140,7 @@ describe('builder handoff schema', () => {
 
   it('requires the workflow identity and revision', () => {
     expect(() =>
-      validateBuilderHandoffForWorkflow({
+      assertBuilderHandoffForWorkflow({
         handoff: doneHandoff(),
         specId: '20260321-143052-other-change',
         revision: 4,
@@ -148,7 +148,7 @@ describe('builder handoff schema', () => {
     ).toThrow('Builder handoff spec ID mismatch');
 
     expect(() =>
-      validateBuilderHandoffForWorkflow({
+      assertBuilderHandoffForWorkflow({
         handoff: doneHandoff(),
         specId,
         revision: 5,

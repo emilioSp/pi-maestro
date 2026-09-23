@@ -48,8 +48,9 @@ The package is source-only. Pi loads TypeScript directly, `src/` is published, a
 - Prefer `type` over `interface`.
 - Prefer named exports. Use a default export only when a tool requires it or for a single application entrypoint or singleton.
 - Prefer pure functions.
-- Use early returns.
+- Use early returns, avoid if-else chain.
 - Use assertion functions with the TypeScript `asserts value is Type` return type to validate and narrow types; throw an error when validation fails.
+- Name every function that checks a condition and throws on failure `assert...`; return `void` (or `Promise<void>` if async), and use `asserts value is Type` when the check narrows a type.
 - Prefer arrow functions. Use classes only for strategies or objects with internal state. Use function for assertion functions.
 - Keep functions small. Split a function when it becomes hard to read.
 - Use `async` and `await`. Do not introduce callback APIs. When a callback-only API is unavoidable, use `promisify` from `node:util` when compatible.
@@ -59,7 +60,7 @@ The package is source-only. Pi loads TypeScript directly, `src/` is published, a
 - Do not use `--experimental-strip-types`. We run on node version that support TypeScript stripping by default.
 - Use `imports` field in `package.json`. Do not use relative paths.
 - Keep utility modules under a `utils` folder.
-- Do not use `string literals`! Use `const object literal`, and derive the type from the object's value. Reuse `const object literal` you defined in source module in test files. 
+- Do not use `string literals`, use `const object literal`, and derive the type from the object's value. Reuse `const object literal` you defined in source module in test files. 
 - Every source module must start with a comment that states its objective, when it is used, and its main entrypoint when applicable.
 
 ## Testing and checks

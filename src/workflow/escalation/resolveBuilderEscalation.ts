@@ -26,7 +26,7 @@ import {
   writeWorkflowState,
 } from '#workflow/state/store.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-import { getPath, relativePath, validateWorktree } from '#workflow/utils.ts';
+import { assertWorktree, getPath, relativePath } from '#workflow/utils.ts';
 
 export type ResolvedBuilderEscalation = {
   escalation: Escalation;
@@ -63,21 +63,22 @@ export const resolveBuilderEscalation = async ({
   escalationId: string;
   resolution: EscalationResolution;
 }): Promise<ResolvedBuilderEscalation> => {
-  const builderWorktree = await validateWorktree({
+  const builderWorktreePath = paths.getBuilderWorktreePath(specId);
+  await assertWorktree({
     repositoryRoot: paths.repositoryRoot,
     branch: paths.getBuilderBranch(specId),
-    worktreePath: paths.getBuilderWorktreePath(specId),
+    worktreePath: builderWorktreePath,
   });
 
   const workflowPath = getPath({
     paths,
-    worktreePath: builderWorktree.worktreePath,
+    worktreePath: builderWorktreePath,
     target: paths.getWorkflowPath(specId),
   });
 
   const escalationsPath = getBuilderEscalationsPath({
     paths,
-    worktreePath: builderWorktree.worktreePath,
+    worktreePath: builderWorktreePath,
     specId,
   });
 
@@ -105,7 +106,7 @@ export const resolveBuilderEscalation = async ({
 
   const escalationPath = getBuilderEscalationPath({
     paths,
-    worktreePath: builderWorktree.worktreePath,
+    worktreePath: builderWorktreePath,
     specId,
     escalationNumber: Number(currentEscalation.id.slice(1)),
   });
@@ -124,14 +125,14 @@ export const resolveBuilderEscalation = async ({
   });
 
   const checkpointCommit = await createCommit({
-    repositoryRoot: builderWorktree.worktreePath,
+    repositoryRoot: builderWorktreePath,
     expectedPaths: [
       relativePath({
-        root: builderWorktree.worktreePath,
+        root: builderWorktreePath,
         target: workflowPath,
       }),
       relativePath({
-        root: builderWorktree.worktreePath,
+        root: builderWorktreePath,
         target: escalationPath,
       }),
     ],
@@ -140,7 +141,7 @@ export const resolveBuilderEscalation = async ({
   return {
     escalation: resolvedEscalation,
     state: nextState,
-    worktreePath: builderWorktree.worktreePath,
+    worktreePath: builderWorktreePath,
     checkpointCommit,
   };
 };

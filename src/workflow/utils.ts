@@ -40,7 +40,7 @@ export const getPath = ({
     }),
   );
 
-export const validateWorktree = async ({
+export const assertWorktree = async ({
   repositoryRoot,
   branch,
   worktreePath,
@@ -48,7 +48,7 @@ export const validateWorktree = async ({
   repositoryRoot: string;
   branch: string;
   worktreePath: string;
-}): Promise<{ branch: string; worktreePath: string }> => {
+}): Promise<void> => {
   const worktree = await findWorktree({ repositoryRoot, path: worktreePath });
   if (worktree === undefined) {
     throw new Error(`Expected workflow worktree is missing: ${worktreePath}.`);
@@ -66,6 +66,4 @@ export const validateWorktree = async ({
   if (currentBranch !== branch) {
     throw new Error(`Expected workflow branch is missing: ${branch}.`);
   }
-
-  return { branch, worktreePath };
 };

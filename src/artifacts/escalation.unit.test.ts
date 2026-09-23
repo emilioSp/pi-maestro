@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  assertEscalation,
   ESCALATION_VERSION,
   type Escalation,
-  validateEscalation,
 } from '#artifacts/escalation.ts';
 
 const escalation = (): Escalation => ({
@@ -36,12 +36,12 @@ const escalation = (): Escalation => ({
 
 describe('escalation schema', () => {
   it('accepts a valid unresolved escalation', () => {
-    expect(validateEscalation(escalation())).toEqual(escalation());
+    expect(() => assertEscalation(escalation())).not.toThrow();
   });
 
   it('accepts a null recommendation and a valid resolution', () => {
-    expect(
-      validateEscalation({
+    expect(() =>
+      assertEscalation({
         ...escalation(),
         recommendation: null,
         resolution: {
@@ -50,12 +50,12 @@ describe('escalation schema', () => {
           reason: 'The owner selected separate storage.',
         },
       }),
-    ).toMatchObject({ resolution: { selectedOptionId: 'B' } });
+    ).not.toThrow();
   });
 
   it('allows a resolution for an owner decision outside the options', () => {
-    expect(
-      validateEscalation({
+    expect(() =>
+      assertEscalation({
         ...escalation(),
         resolution: {
           selectedOptionId: null,
@@ -63,7 +63,7 @@ describe('escalation schema', () => {
           reason: 'The owner changed the direction.',
         },
       }),
-    ).toMatchObject({ resolution: { selectedOptionId: null } });
+    ).not.toThrow();
   });
 
   it.each([
@@ -123,6 +123,6 @@ describe('escalation schema', () => {
       message: 'Invalid escalation',
     },
   ])('rejects invalid data %#', ({ value, message }) => {
-    expect(() => validateEscalation(value)).toThrow(message);
+    expect(() => assertEscalation(value)).toThrow(message);
   });
 });

@@ -7,10 +7,10 @@
 import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import {
+  assertBuilderHandoff,
+  assertBuilderHandoffForWorkflow,
   BUILDER_HANDOFF_STATUSES,
   type BuilderHandoff,
-  validateBuilderHandoff,
-  validateBuilderHandoffForWorkflow,
   writeBuilderHandoff,
 } from '#artifacts/builder-handoff.ts';
 import type { GetMaestroPaths } from '#paths.ts';
@@ -25,7 +25,7 @@ import {
   writeWorkflowState,
 } from '#workflow/state/store.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-import { getPath, validateWorktree } from '#workflow/utils.ts';
+import { assertWorktree, getPath } from '#workflow/utils.ts';
 
 export type CompletedBuilderPass = {
   handoff: BuilderHandoff;
@@ -42,21 +42,22 @@ export const completeBuilderPass = async ({
   specId: string;
   handoff: unknown;
 }): Promise<CompletedBuilderPass> => {
-  const builderWorktree = await validateWorktree({
+  const builderWorktreePath = paths.getBuilderWorktreePath(specId);
+  await assertWorktree({
     repositoryRoot: paths.repositoryRoot,
     branch: paths.getBuilderBranch(specId),
-    worktreePath: paths.getBuilderWorktreePath(specId),
+    worktreePath: builderWorktreePath,
   });
 
   const workflowPath = getPath({
     paths,
-    worktreePath: builderWorktree.worktreePath,
+    worktreePath: builderWorktreePath,
     target: paths.getWorkflowPath(specId),
   });
 
   const handoffPath = getPath({
     paths,
-    worktreePath: builderWorktree.worktreePath,
+    worktreePath: builderWorktreePath,
     target: paths.getBuilderHandoffPath(specId),
   });
 
@@ -71,18 +72,18 @@ export const completeBuilderPass = async ({
     throw new Error('Builder terminal handoff already exists.');
   }
 
-  const validatedHandoff = validateBuilderHandoff(handoff);
+  assertBuilderHandoff(handoff);
 
   const nextState = transitionWorkflow({
     state: currentState,
     event:
-      validatedHandoff.status === BUILDER_HANDOFF_STATUSES.DONE
+      handoff.status === BUILDER_HANDOFF_STATUSES.DONE
         ? WORKFLOW_EVENTS.BUILDER_DONE
         : WORKFLOW_EVENTS.BUILDER_FAILED,
   });
 
-  const workflowHandoff = validateBuilderHandoffForWorkflow({
-    handoff: validatedHandoff,
+  assertBuilderHandoffForWorkflow({
+    handoff,
     specId,
     revision: nextState.revision,
   });
@@ -91,7 +92,7 @@ export const completeBuilderPass = async ({
 
   await writeBuilderHandoff({
     path: handoffPath,
-    handoff: workflowHandoff,
+    handoff,
     specId,
     revision: nextState.revision,
   });
@@ -103,8 +104,8 @@ export const completeBuilderPass = async ({
   });
 
   return {
-    handoff: workflowHandoff,
+    handoff,
     state: nextState,
-    worktreePath: builderWorktree.worktreePath,
+    worktreePath: builderWorktreePath,
   };
 };

@@ -95,7 +95,9 @@ function assertVerifierHandoffSchema(
   }
 }
 
-export const validateVerifierHandoff = (input: unknown): VerifierHandoff => {
+export function assertVerifierHandoff(
+  input: unknown,
+): asserts input is VerifierHandoff {
   assertVerifierHandoffSchema(input);
   const handoff = input;
   if (!isValidSpecId(handoff.specId)) {
@@ -142,31 +144,27 @@ export const validateVerifierHandoff = (input: unknown): VerifierHandoff => {
       );
     }
   }
-  return handoff;
-};
+}
 
-export const validateVerifierHandoffForWorkflow = ({
+export const assertVerifierHandoffForWorkflow = ({
   handoff,
   specId,
   revision,
 }: {
-  handoff: unknown;
+  handoff: VerifierHandoff;
   specId: string;
   revision: number;
-}): VerifierHandoff => {
-  const validatedHandoff = validateVerifierHandoff(handoff);
-  if (validatedHandoff.specId !== specId) {
+}): void => {
+  if (handoff.specId !== specId) {
     throw new Error(
-      `Verifier handoff spec ID mismatch: expected "${specId}", found "${validatedHandoff.specId}".`,
+      `Verifier handoff spec ID mismatch: expected "${specId}", found "${handoff.specId}".`,
     );
   }
-  if (validatedHandoff.revision !== revision) {
+  if (handoff.revision !== revision) {
     throw new Error(
-      `Verifier handoff revision mismatch: expected ${revision}, found ${validatedHandoff.revision}.`,
+      `Verifier handoff revision mismatch: expected ${revision}, found ${handoff.revision}.`,
     );
   }
-
-  return validatedHandoff;
 };
 
 export const readVerifierHandoff = async ({
@@ -177,12 +175,12 @@ export const readVerifierHandoff = async ({
   path: string;
   specId: string;
   revision: number;
-}): Promise<VerifierHandoff> =>
-  validateVerifierHandoffForWorkflow({
-    handoff: await readJsonFile({ path, description: 'Verifier handoff' }),
-    specId,
-    revision,
-  });
+}): Promise<VerifierHandoff> => {
+  const handoff = await readJsonFile({ path, description: 'Verifier handoff' });
+  assertVerifierHandoff(handoff);
+  assertVerifierHandoffForWorkflow({ handoff, specId, revision });
+  return handoff;
+};
 
 export const writeVerifierHandoff = async ({
   path,
@@ -195,16 +193,13 @@ export const writeVerifierHandoff = async ({
   specId: string;
   revision: number;
 }): Promise<void> => {
-  const validatedHandoff = validateVerifierHandoffForWorkflow({
-    handoff,
-    specId,
-    revision,
-  });
-  if (validatedHandoff.findings.some((finding) => finding.rejection !== null)) {
+  assertVerifierHandoff(handoff);
+  assertVerifierHandoffForWorkflow({ handoff, specId, revision });
+  if (handoff.findings.some((finding) => finding.rejection !== null)) {
     throw new Error('New verifier handoff findings must have no rejection.');
   }
 
-  await writeJsonAtomically({ path, data: validatedHandoff });
+  await writeJsonAtomically({ path, data: handoff });
 };
 
 export const rejectVerifierFinding = async ({
@@ -232,14 +227,15 @@ export const rejectVerifierFinding = async ({
     throw new Error('Verifier finding rejection reason must be non-empty.');
   }
 
-  const rejectedHandoff = validateVerifierHandoff({
+  const rejectedHandoff = {
     ...handoff,
     findings: handoff.findings.map((currentFinding) =>
       currentFinding.id === findingId
         ? { ...currentFinding, rejection: { reason } }
         : currentFinding,
     ),
-  });
+  };
+  assertVerifierHandoff(rejectedHandoff);
   await writeJsonAtomically({ path, data: rejectedHandoff });
 
   return rejectedHandoff;

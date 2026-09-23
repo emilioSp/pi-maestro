@@ -4,10 +4,10 @@ import {
   PROBE_STATUSES,
 } from '#artifacts/builder-handoff.ts';
 import {
+  assertVerifierHandoff,
   FINDING_SEVERITIES,
   VERIFIER_HANDOFF_VERSION,
   type VerifierHandoff,
-  validateVerifierHandoff,
 } from '#artifacts/verifier-handoff.ts';
 
 const specId = '20260321-143052-add-weather-alerts';
@@ -46,12 +46,12 @@ const finding = (): VerifierHandoff['findings'][number] => ({
 
 describe('verifier handoff schema', () => {
   it('accepts an empty finding list with completed checks', () => {
-    expect(validateVerifierHandoff(handoff())).toEqual(handoff());
+    expect(() => assertVerifierHandoff(handoff())).not.toThrow();
   });
 
   it('accepts findings linked to incomplete checks and other spec rules', () => {
-    expect(
-      validateVerifierHandoff({
+    expect(() =>
+      assertVerifierHandoff({
         ...handoff(),
         acceptanceCriteria: [
           {
@@ -69,7 +69,7 @@ describe('verifier handoff schema', () => {
           },
         ],
       }),
-    ).toMatchObject({ findings: [{ id: 'F1' }, { id: 'F2' }] });
+    ).not.toThrow();
   });
 
   it.each([
@@ -138,6 +138,6 @@ describe('verifier handoff schema', () => {
       message: 'Invalid verifier handoff',
     },
   ])('rejects invalid handoff data %#', ({ handoff: input, message }) => {
-    expect(() => validateVerifierHandoff(input)).toThrow(message);
+    expect(() => assertVerifierHandoff(input)).toThrow(message);
   });
 });

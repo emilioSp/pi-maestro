@@ -82,7 +82,7 @@ function assertEscalationSchema(input: unknown): asserts input is Escalation {
   }
 }
 
-export const validateEscalation = (input: unknown): Escalation => {
+export function assertEscalation(input: unknown): asserts input is Escalation {
   assertEscalationSchema(input);
   const escalation = input;
   if (!isValidSpecId(escalation.specId)) {
@@ -111,11 +111,9 @@ export const validateEscalation = (input: unknown): Escalation => {
       `Escalation resolution references unknown option "${escalation.resolution.selectedOptionId}".`,
     );
   }
+}
 
-  return escalation;
-};
-
-const validateWorkflowEscalation = ({
+const assertWorkflowEscalation = ({
   escalation,
   specId,
   currentRevision,
@@ -123,7 +121,7 @@ const validateWorkflowEscalation = ({
   escalation: Escalation;
   specId: string;
   currentRevision: number;
-}): Escalation => {
+}): void => {
   if (escalation.specId !== specId) {
     throw new Error(
       `Escalation spec ID mismatch: expected "${specId}", found "${escalation.specId}".`,
@@ -134,8 +132,6 @@ const validateWorkflowEscalation = ({
       `Escalation revision ${escalation.revision} is newer than workflow revision ${currentRevision}.`,
     );
   }
-
-  return escalation;
 };
 
 export const readEscalation = async ({
@@ -146,14 +142,12 @@ export const readEscalation = async ({
   path: string;
   specId: string;
   currentRevision: number;
-}): Promise<Escalation> =>
-  validateWorkflowEscalation({
-    escalation: validateEscalation(
-      await readJsonFile({ path, description: 'Escalation' }),
-    ),
-    specId,
-    currentRevision,
-  });
+}): Promise<Escalation> => {
+  const escalation = await readJsonFile({ path, description: 'Escalation' });
+  assertEscalation(escalation);
+  assertWorkflowEscalation({ escalation, specId, currentRevision });
+  return escalation;
+};
 
 export const readEscalationHistory = async ({
   directory,
@@ -218,14 +212,15 @@ export const createEscalation = async ({
     specId,
     currentRevision: revision,
   });
-  const newEscalation = validateEscalation({
+  const newEscalation = {
     ...escalation,
     version: ESCALATION_VERSION,
     specId,
     revision,
     id,
     resolution: null,
-  });
+  };
+  assertEscalation(newEscalation);
   const path = join(directory, `${id}.json`);
   await writeJsonAtomically({ path, data: newEscalation });
 
@@ -257,11 +252,12 @@ export const resolveEscalation = async ({
     );
   }
 
-  const resolvedEscalation = validateEscalation({
+  const resolvedEscalation = {
     ...current,
     revision,
     resolution,
-  });
+  };
+  assertEscalation(resolvedEscalation);
   await writeJsonAtomically({ path, data: resolvedEscalation });
 
   return resolvedEscalation;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  validateWorkflowState,
+  assertWorkflowState,
   WORKFLOW_PHASES,
   WORKFLOW_STATE_VERSION,
   WorkflowStateSchema,
@@ -23,10 +23,7 @@ describe('workflow state schema', () => {
     ).toBe(false);
 
     for (const phase of Object.values(WORKFLOW_PHASES)) {
-      expect(validateWorkflowState({ ...validState, phase })).toEqual({
-        ...validState,
-        phase,
-      });
+      expect(() => assertWorkflowState({ ...validState, phase })).not.toThrow();
     }
   });
 
@@ -39,14 +36,12 @@ describe('workflow state schema', () => {
     { ...validState, baseBranch: '' },
     { ...validState, phase: 'unknown' },
   ])('rejects an invalid state %#', (state) => {
-    expect(() => validateWorkflowState(state)).toThrow(
-      'Invalid workflow state',
-    );
+    expect(() => assertWorkflowState(state)).toThrow('Invalid workflow state');
   });
 
   it('rejects a structurally valid ID with an invalid UTC date', () => {
     expect(() =>
-      validateWorkflowState({
+      assertWorkflowState({
         ...validState,
         specId: '20260230-143052-add-weather-alerts',
       }),
@@ -54,7 +49,7 @@ describe('workflow state schema', () => {
   });
 
   it('rejects non-object state', () => {
-    expect(() => validateWorkflowState(null)).toThrow(
+    expect(() => assertWorkflowState(null)).toThrow(
       'Workflow state must be a JSON object.',
     );
   });

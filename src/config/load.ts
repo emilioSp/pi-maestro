@@ -12,10 +12,10 @@ import {
   deepFreeze,
 } from '#config/defaults.ts';
 import {
+  assertConfiguration,
   type MaestroConfig,
   type PartialMaestroConfig,
-  validateConfiguration,
-  validateDirectories,
+  resolveDirectories,
 } from '#config/validate.ts';
 import { pathExists } from '#utils/path-exists.ts';
 
@@ -51,7 +51,7 @@ export const loadConfiguration = async (): Promise<MaestroConfig> => {
 
   if (!(await pathExists(targetPath))) {
     return deepFreeze(
-      await validateDirectories({ repositoryRoot, config: DEFAULT_CONFIG }),
+      await resolveDirectories({ repositoryRoot, config: DEFAULT_CONFIG }),
     );
   }
 
@@ -66,6 +66,7 @@ export const loadConfiguration = async (): Promise<MaestroConfig> => {
     );
   }
 
-  const config = resolveConfiguration(validateConfiguration(parsed));
-  return deepFreeze(await validateDirectories({ repositoryRoot, config }));
+  assertConfiguration(parsed);
+  const config = resolveConfiguration(parsed);
+  return deepFreeze(await resolveDirectories({ repositoryRoot, config }));
 };

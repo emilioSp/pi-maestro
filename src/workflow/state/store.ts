@@ -8,7 +8,7 @@ import { type FileHandle, open, readFile, rm } from 'node:fs/promises';
 import { writeJsonAtomically } from '#atomic-write.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import {
-  validateWorkflowState,
+  assertWorkflowState,
   type WorkflowState,
 } from '#workflow/state/schema.ts';
 
@@ -27,7 +27,11 @@ export const readWorkflowState = async ({
   path,
 }: {
   path: string;
-}): Promise<WorkflowState> => validateWorkflowState(await readJson(path));
+}): Promise<WorkflowState> => {
+  const state = await readJson(path);
+  assertWorkflowState(state);
+  return state;
+};
 
 export const writeWorkflowState = async ({
   path,
@@ -38,13 +42,13 @@ export const writeWorkflowState = async ({
   state: WorkflowState;
   currentRevision: number;
 }): Promise<void> => {
-  const validatedState = validateWorkflowState(state);
+  assertWorkflowState(state);
   if (!Number.isSafeInteger(currentRevision) || currentRevision < 0) {
     throw new Error(
       'Expected workflow revision must be a non-negative integer.',
     );
   }
-  if (validatedState.revision <= currentRevision) {
+  if (state.revision <= currentRevision) {
     throw new Error(
       `Workflow revision must be higher than expected revision ${currentRevision}.`,
     );
@@ -79,7 +83,7 @@ export const writeWorkflowState = async ({
       }
     }
 
-    await writeJsonAtomically({ path, data: validatedState });
+    await writeJsonAtomically({ path, data: state });
   } finally {
     if (lock !== undefined) {
       await lock.close();
