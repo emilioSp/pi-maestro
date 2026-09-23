@@ -70,7 +70,9 @@ export type WorkflowEvent =
   (typeof WORKFLOW_EVENTS)[keyof typeof WORKFLOW_EVENTS];
 export type WorkflowState = Static<typeof WorkflowStateSchema>;
 
-export const validateWorkflowState = (input: unknown): WorkflowState => {
+function assertWorkflowStateSchema(
+  input: unknown,
+): asserts input is WorkflowState {
   if (typeof input !== 'object' || input === null || Array.isArray(input)) {
     throw new Error('Workflow state must be a JSON object.');
   }
@@ -79,11 +81,13 @@ export const validateWorkflowState = (input: unknown): WorkflowState => {
   if (error !== undefined) {
     throw new Error(`Invalid workflow state: ${error.message}.`);
   }
+}
 
-  const state = input as WorkflowState;
-  if (!isValidSpecId(state.specId)) {
-    throw new Error(`Invalid workflow spec ID: "${state.specId}".`);
+export const validateWorkflowState = (input: unknown): WorkflowState => {
+  assertWorkflowStateSchema(input);
+  if (!isValidSpecId(input.specId)) {
+    throw new Error(`Invalid workflow spec ID: "${input.specId}".`);
   }
 
-  return state;
+  return input;
 };

@@ -129,12 +129,14 @@ const formatError = (error: SchemaValidationError): string => {
   return `Invalid configuration at "${path}": ${error.message}.`;
 };
 
-export const validateConfiguration = (input: unknown): PartialMaestroConfig => {
+function assertConfiguration(
+  input: unknown,
+): asserts input is PartialMaestroConfig {
   if (typeof input !== 'object' || input === null || Array.isArray(input)) {
     throw new Error('Configuration must be a JSON object.');
   }
 
-  const raw = input as Record<string, unknown>;
+  const raw = input;
 
   if (!('version' in raw) || raw.version === undefined) {
     throw new Error(
@@ -170,8 +172,11 @@ export const validateConfiguration = (input: unknown): PartialMaestroConfig => {
   if (firstError !== undefined) {
     throw new Error(formatError(firstError));
   }
+}
 
-  return raw as unknown as PartialMaestroConfig;
+export const validateConfiguration = (input: unknown): PartialMaestroConfig => {
+  assertConfiguration(input);
+  return input;
 };
 
 type ExistingAncestor = {

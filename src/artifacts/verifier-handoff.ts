@@ -82,7 +82,9 @@ const hasCompletedChecks = (criterion: BuilderAcceptanceCriterion): boolean =>
   criterion.probeStatus === PROBE_STATUSES.PASSED &&
   criterion.breakageStatus === BREAKAGE_STATUSES.CONFIRMED;
 
-export const validateVerifierHandoff = (input: unknown): VerifierHandoff => {
+function assertVerifierHandoffSchema(
+  input: unknown,
+): asserts input is VerifierHandoff {
   if (typeof input !== 'object' || input === null || Array.isArray(input)) {
     throw new Error('Verifier handoff must be a JSON object.');
   }
@@ -91,8 +93,11 @@ export const validateVerifierHandoff = (input: unknown): VerifierHandoff => {
   if (error !== undefined) {
     throw new Error(`Invalid verifier handoff: ${error.message}.`);
   }
+}
 
-  const handoff = input as VerifierHandoff;
+export const validateVerifierHandoff = (input: unknown): VerifierHandoff => {
+  assertVerifierHandoffSchema(input);
+  const handoff = input;
   if (!isValidSpecId(handoff.specId)) {
     throw new Error(`Invalid verifier handoff spec ID: "${handoff.specId}".`);
   }

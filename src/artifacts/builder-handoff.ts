@@ -116,7 +116,9 @@ const hasPartialCheck = (
   acceptanceCriteria: BuilderAcceptanceCriterion[],
 ): boolean => !hasOnlyCompletedChecks(acceptanceCriteria);
 
-export const validateBuilderHandoff = (input: unknown): BuilderHandoff => {
+function assertBuilderHandoffSchema(
+  input: unknown,
+): asserts input is BuilderHandoff {
   if (typeof input !== 'object' || input === null || Array.isArray(input)) {
     throw new Error('Builder handoff must be a JSON object.');
   }
@@ -125,8 +127,11 @@ export const validateBuilderHandoff = (input: unknown): BuilderHandoff => {
   if (error !== undefined) {
     throw new Error(`Invalid builder handoff: ${error.message}.`);
   }
+}
 
-  const handoff = input as BuilderHandoff;
+export const validateBuilderHandoff = (input: unknown): BuilderHandoff => {
+  assertBuilderHandoffSchema(input);
+  const handoff = input;
   if (!isValidSpecId(handoff.specId)) {
     throw new Error(`Invalid builder handoff spec ID: "${handoff.specId}".`);
   }

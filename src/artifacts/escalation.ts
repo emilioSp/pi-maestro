@@ -71,7 +71,7 @@ export type NewEscalation = Omit<
 const hasOption = (escalation: Escalation, optionId: string): boolean =>
   escalation.options.some((option) => option.id === optionId);
 
-export const validateEscalation = (input: unknown): Escalation => {
+function assertEscalationSchema(input: unknown): asserts input is Escalation {
   if (typeof input !== 'object' || input === null || Array.isArray(input)) {
     throw new Error('Escalation must be a JSON object.');
   }
@@ -80,8 +80,11 @@ export const validateEscalation = (input: unknown): Escalation => {
   if (error !== undefined) {
     throw new Error(`Invalid escalation: ${error.message}.`);
   }
+}
 
-  const escalation = input as Escalation;
+export const validateEscalation = (input: unknown): Escalation => {
+  assertEscalationSchema(input);
+  const escalation = input;
   if (!isValidSpecId(escalation.specId)) {
     throw new Error(`Invalid escalation spec ID: "${escalation.specId}".`);
   }
