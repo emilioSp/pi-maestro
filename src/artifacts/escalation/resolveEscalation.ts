@@ -1,7 +1,6 @@
 /**
  * Objective: Record an owner escalation resolution.
  * Used: When Maestro handles escalation artifacts.
- * Entrypoint: resolveEscalation().
  */
 
 import { assertEscalation } from '#artifacts/escalation/assertEscalation.ts';

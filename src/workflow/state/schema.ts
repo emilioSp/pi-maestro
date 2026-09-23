@@ -1,7 +1,6 @@
 /**
  * Objective: Define and validate the workflow state contract.
  * Used: Whenever Maestro reads or writes workflow state.
- * Entrypoint: assertWorkflowState().
  */
 
 import { type Static, Type } from 'typebox';

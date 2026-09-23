@@ -1,7 +1,6 @@
 /**
  * Objective: Prepare a committed builder launch checkpoint.
  * Used: Before Maestro launches or explicitly retries a builder pass.
- * Entrypoint: prepareBuilderLaunch().
  */
 
 import { rm } from 'node:fs/promises';

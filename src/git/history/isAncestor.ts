@@ -1,13 +1,12 @@
 /**
  * Objective: Check whether one commit precedes another.
  * Used: When Maestro checks commit ancestry.
- * Entrypoint: isAncestor().
  */
 
 import { runGitCommand } from '#git/command.ts';
 import { hasGitExitCode } from '#git/utils.ts';
 
-// Checks whether one commit is reachable from another.
+// Checks whether ancestor commit is merged into descendant commit.
 // git merge-base --is-ancestor <ancestor> <descendant>
 export const isAncestor = async ({
   repositoryRoot,

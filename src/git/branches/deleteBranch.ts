@@ -1,7 +1,6 @@
 /**
  * Objective: Delete a workflow branch if present.
  * Used: When Maestro cleans up workflow resources.
- * Entrypoint: deleteBranch().
  */
 
 import { branchExists } from '#git/branches/branchExists.ts';

@@ -1,7 +1,6 @@
 /**
  * Objective: Read and order validated escalation history.
  * Used: When Maestro handles escalation artifacts.
- * Entrypoint: readEscalationHistory().
  */
 
 import { readdir } from 'node:fs/promises';

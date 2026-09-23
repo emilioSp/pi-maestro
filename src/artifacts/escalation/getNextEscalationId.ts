@@ -1,7 +1,6 @@
 /**
  * Objective: Allocate the next escalation ID from history.
  * Used: When Maestro handles escalation artifacts.
- * Entrypoint: getNextEscalationId().
  */
 
 import { readEscalationHistory } from '#artifacts/escalation/readEscalationHistory.ts';

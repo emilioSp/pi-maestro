@@ -1,7 +1,6 @@
 /**
  * Objective: Read and check a builder handoff.
  * Used: When Maestro handles builder handoff artifacts.
- * Entrypoint: readBuilderHandoff().
  */
 
 import { assertBuilderHandoff } from '#artifacts/builder-handoff/assertBuilderHandoff.ts';

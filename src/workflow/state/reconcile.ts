@@ -1,7 +1,6 @@
 /**
  * Objective: Compare workflow state with Git resources and handoffs.
  * Used: During activation and workflow inspection without changing state.
- * Entrypoint: reconcileWorkflow().
  */
 
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';

@@ -1,7 +1,6 @@
 /**
  * Objective: Find a Git worktree by path.
  * Used: When Maestro checks an expected worktree.
- * Entrypoint: findWorktree().
  */
 
 import { resolve } from 'node:path';

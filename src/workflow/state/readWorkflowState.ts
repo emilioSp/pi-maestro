@@ -1,7 +1,6 @@
 /**
  * Objective: Read and validate a workflow state file.
  * Used: When Maestro loads a workflow phase or revision.
- * Entrypoint: readWorkflowState().
  */
 
 import { readFile } from 'node:fs/promises';

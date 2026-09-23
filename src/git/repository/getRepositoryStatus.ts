@@ -1,7 +1,6 @@
 /**
  * Objective: Read staged, unstaged, and untracked repository changes.
  * Used: When Maestro checks whether a worktree is clean.
- * Entrypoint: getRepositoryStatus().
  */
 
 import { type GitCommandResult, runGitCommand } from '#git/command.ts';

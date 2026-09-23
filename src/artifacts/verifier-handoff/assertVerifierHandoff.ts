@@ -1,7 +1,6 @@
 /**
  * Objective: Check verifier handoff content, spec ID, and revision.
  * Used: When Maestro handles verifier handoff artifacts.
- * Entrypoint: assertVerifierHandoff().
  */
 
 import { Value } from 'typebox/value';

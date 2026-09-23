@@ -1,7 +1,6 @@
 /**
  * Objective: Check whether a filesystem path exists.
  * Used: Before Maestro reads, creates, or removes files and directories.
- * Entrypoint: pathExists().
  */
 
 import { access } from 'node:fs/promises';

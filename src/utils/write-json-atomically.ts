@@ -1,7 +1,6 @@
 /**
  * Objective: Serialize JSON and replace its destination atomically.
  * Used: When Maestro writes workflow state and artifact JSON files.
- * Entrypoint: writeJsonAtomically().
  */
 
 import { writeAtomically } from '#utils/write-atomically.ts';

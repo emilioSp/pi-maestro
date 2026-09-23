@@ -1,7 +1,6 @@
 /**
  * Objective: Read the parent of a commit.
  * Used: When Maestro checks a checkpoint parent.
- * Entrypoint: getParentCommit().
  */
 
 import { runGitCommand } from '#git/command.ts';

@@ -1,7 +1,6 @@
 /**
  * Objective: Find the repository root from a working directory.
  * Used: When Maestro discovers the Git root from a working directory.
- * Entrypoint: findRepositoryRoot().
  */
 
 import { realpath } from 'node:fs/promises';

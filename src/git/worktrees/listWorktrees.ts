@@ -1,7 +1,6 @@
 /**
  * Objective: List and parse Git worktrees.
  * Used: When Maestro discovers registered worktrees.
- * Entrypoint: listWorktrees().
  */
 
 import { runGitCommand } from '#git/command.ts';

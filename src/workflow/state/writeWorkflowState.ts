@@ -1,7 +1,6 @@
 /**
  * Objective: Atomically write a validated workflow state at a new revision.
  * Used: When Maestro persists a workflow transition.
- * Entrypoint: writeWorkflowState().
  */
 
 import { type FileHandle, open, rm } from 'node:fs/promises';

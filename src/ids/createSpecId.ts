@@ -1,7 +1,6 @@
 /**
  * Objective: Create deterministic Maestro spec identifiers.
  * Used: When a new spec is created.
- * Entrypoint: createSpecId().
  */
 
 const formatUtcTimestamp = (instant: Temporal.Instant): string => {

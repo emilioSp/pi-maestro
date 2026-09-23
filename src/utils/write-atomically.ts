@@ -1,7 +1,6 @@
 /**
  * Objective: Safely replace a file with complete UTF-8 content.
  * Used: When Maestro writes state or artifact files.
- * Entrypoint: writeAtomically().
  */
 
 import { randomUUID } from 'node:crypto';

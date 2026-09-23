@@ -1,7 +1,6 @@
 /**
  * Objective: Check a configuration input against its schema and supported version.
  * Used: When Maestro reads configuration input.
- * Entrypoint: assertConfiguration().
  */
 
 import { Value } from 'typebox/value';

@@ -1,7 +1,6 @@
 /**
  * Objective: Record owner decisions for every current verifier finding.
  * Used: When the owner resolves a findings-decision handoff.
- * Entrypoint: resolveFindings().
  */
 
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';

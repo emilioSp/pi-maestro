@@ -1,7 +1,6 @@
 /**
  * Objective: Validate Maestro spec identifiers.
  * Used: When paths, workflow state, or artifacts refer to a spec.
- * Entrypoint: isValidSpecId().
  */
 
 export const SPEC_ID_PATTERN = /^(\d{8})-(\d{6})-([a-z0-9]+(?:-[a-z0-9]+)*)$/;

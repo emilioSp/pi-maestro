@@ -1,7 +1,6 @@
 /**
  * Objective: Reject divergent or unrelated commit histories.
  * Used: When Maestro accepts a workflow branch history.
- * Entrypoint: assertLinearHistory().
  */
 
 import { getMergeBase } from '#git/history/getMergeBase.ts';

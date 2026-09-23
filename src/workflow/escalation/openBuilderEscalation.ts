@@ -1,7 +1,6 @@
 /**
  * Objective: Open a builder escalation and move the workflow to a decision.
  * Used: When a builder needs an owner decision.
- * Entrypoint: openBuilderEscalation().
  */
 
 import { mkdir } from 'node:fs/promises';

@@ -1,7 +1,6 @@
 /**
  * Objective: Check that Git can inspect this repository.
  * Used: When Maestro checks that Git can inspect a repository.
- * Entrypoint: assertRepositoryTrusted().
  */
 
 import { runGitCommand } from '#git/command.ts';

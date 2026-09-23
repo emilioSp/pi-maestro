@@ -1,7 +1,6 @@
 /**
  * Objective: Check whether a Git branch exists.
  * Used: When Maestro checks for branch collisions.
- * Entrypoint: branchExists().
  */
 
 import { runGitCommand } from '#git/command.ts';

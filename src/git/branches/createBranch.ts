@@ -1,7 +1,6 @@
 /**
  * Objective: Create a workflow branch.
  * Used: When Maestro starts a workflow role.
- * Entrypoint: createBranch().
  */
 
 import { branchExists } from '#git/branches/branchExists.ts';

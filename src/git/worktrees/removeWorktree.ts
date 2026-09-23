@@ -1,7 +1,6 @@
 /**
  * Objective: Remove a clean managed worktree.
  * Used: When Maestro cleans up a managed worktree.
- * Entrypoint: removeWorktree().
  */
 
 import { resolve } from 'node:path';

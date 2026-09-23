@@ -1,7 +1,6 @@
 /**
  * Objective: Check and persist a new verifier handoff.
  * Used: When Maestro handles verifier handoff artifacts.
- * Entrypoint: writeVerifierHandoff().
  */
 
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';

@@ -1,7 +1,6 @@
 /**
  * Objective: Load and validate repository configuration.
  * Used: When Maestro initializes for a repository.
- * Entrypoint: loadConfiguration().
  */
 
 import { lstat, readFile, realpath } from 'node:fs/promises';

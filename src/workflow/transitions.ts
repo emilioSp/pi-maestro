@@ -1,7 +1,6 @@
 /**
  * Objective: Define and apply valid workflow phase transitions.
  * Used: When a workflow event moves Maestro to its next phase.
- * Entrypoint: transitionWorkflow().
  */
 
 import {

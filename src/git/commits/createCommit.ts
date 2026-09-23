@@ -1,7 +1,6 @@
 /**
  * Objective: Create a checkpoint with only the expected staged paths.
  * Used: When Maestro records a workflow checkpoint.
- * Entrypoint: createCommit().
  */
 
 import { isAbsolute, relative } from 'node:path';

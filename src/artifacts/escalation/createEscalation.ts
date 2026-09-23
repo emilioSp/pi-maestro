@@ -1,7 +1,6 @@
 /**
  * Objective: Create an unresolved escalation.
  * Used: When Maestro handles escalation artifacts.
- * Entrypoint: createEscalation().
  */
 
 import { join } from 'node:path';

@@ -1,7 +1,6 @@
 /**
  * Objective: Read the current Git branch.
  * Used: When Maestro checks the branch of a worktree.
- * Entrypoint: getCurrentBranch().
  */
 
 import { runGitCommand } from '#git/command.ts';

@@ -1,7 +1,6 @@
 /**
  * Objective: Create a workflow worktree at a safe empty path.
  * Used: When Maestro launches a builder or verifier.
- * Entrypoint: createWorktree().
  */
 
 import { mkdir } from 'node:fs/promises';

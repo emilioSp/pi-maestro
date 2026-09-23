@@ -1,7 +1,6 @@
 /**
  * Objective: Freeze a configuration and its nested values.
  * Used: When Maestro exposes immutable configuration.
- * Entrypoint: deepFreeze().
  */
 
 export const deepFreeze = <T extends object>(target: T): Readonly<T> => {

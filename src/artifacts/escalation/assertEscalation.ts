@@ -1,7 +1,6 @@
 /**
  * Objective: Check the escalation schema and option references.
  * Used: When Maestro handles escalation artifacts.
- * Entrypoint: assertEscalation().
  */
 
 import { Value } from 'typebox/value';

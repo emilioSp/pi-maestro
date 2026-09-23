@@ -1,7 +1,6 @@
 /**
  * Objective: Complete a builder pass with a validated terminal handoff.
  * Used: When the builder reports done or failed through the child tool.
- * Entrypoint: completeBuilderPass().
  */
 
 import { mkdir } from 'node:fs/promises';

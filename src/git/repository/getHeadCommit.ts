@@ -1,7 +1,6 @@
 /**
  * Objective: Read the current HEAD commit.
  * Used: When Maestro records a workflow commit.
- * Entrypoint: getHeadCommit().
  */
 
 import { runGitCommand } from '#git/command.ts';

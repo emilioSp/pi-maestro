@@ -1,7 +1,6 @@
 /**
  * Objective: Check lexical path containment excluding the parent itself.
  * Used: When Maestro requires a path below a configured directory.
- * Entrypoint: isPathStrictlyWithin().
  */
 
 import { relative } from 'node:path';

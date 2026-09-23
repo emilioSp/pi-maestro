@@ -1,7 +1,6 @@
 /**
  * Objective: Advance a branch only to a descendant commit.
  * Used: When a workflow advances a branch after an owner decision.
- * Entrypoint: fastForwardBranch().
  */
 
 import { branchExists } from '#git/branches/branchExists.ts';

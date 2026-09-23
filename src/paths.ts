@@ -1,7 +1,6 @@
 /**
  * Objective: Build and validate Maestro paths from configuration.
  * Used: When any workflow operation needs a repository path.
- * Entrypoint: getMaestroPaths().
  */
 
 import { isAbsolute, relative, resolve } from 'node:path';

@@ -1,7 +1,6 @@
 /**
  * Objective: Mark an owner-approved drafting spec ready for a builder.
  * Used: When the owner approves the spec content.
- * Entrypoint: markSpecReady().
  */
 
 import type { GetMaestroPaths } from '#paths.ts';

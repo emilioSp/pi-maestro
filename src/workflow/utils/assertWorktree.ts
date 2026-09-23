@@ -1,7 +1,6 @@
 /**
  * Objective: Check that a workflow worktree is registered on its expected branch.
  * Used: Before workflow operations access a managed worktree.
- * Entrypoint: assertWorktree().
  */
 
 import { branchExists } from '#git/branches/branchExists.ts';

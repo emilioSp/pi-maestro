@@ -1,7 +1,6 @@
 /**
  * Objective: Find the single active Maestro workflow.
  * Used: During Maestro activation and workflow inspection.
- * Entrypoint: discoverActiveWorkflow().
  */
 
 import { readdir } from 'node:fs/promises';

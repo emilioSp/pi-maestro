@@ -1,7 +1,6 @@
 /**
  * Objective: Find a commit by its exact subject.
  * Used: When Maestro finds a checkpoint by its subject.
- * Entrypoint: findCommitByMessage().
  */
 
 import { runGitCommand } from '#git/command.ts';

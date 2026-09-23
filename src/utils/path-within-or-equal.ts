@@ -1,7 +1,6 @@
 /**
  * Objective: Check lexical path containment, including the parent itself.
  * Used: When Maestro validates configured and generated paths.
- * Entrypoint: isPathWithinOrEqual().
  */
 
 import { isAbsolute, relative, sep } from 'node:path';

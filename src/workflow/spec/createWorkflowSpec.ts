@@ -1,7 +1,6 @@
 /**
  * Objective: Coordinate creation of a drafting workflow spec.
  * Used: When an owner creates a new spec.
- * Entrypoint: createWorkflowSpec().
  */
 
 import type { GetMaestroPaths } from '#paths.ts';

@@ -1,7 +1,6 @@
 /**
  * Objective: Read and check a verifier handoff.
  * Used: When Maestro handles verifier handoff artifacts.
- * Entrypoint: readVerifierHandoff().
  */
 
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';

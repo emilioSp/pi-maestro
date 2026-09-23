@@ -1,7 +1,6 @@
 /**
  * Objective: List staged paths.
  * Used: When Maestro checks the exact paths staged for a checkpoint.
- * Entrypoint: getStagedPaths().
  */
 
 import { runGitCommand } from '#git/command.ts';

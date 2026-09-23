@@ -1,7 +1,6 @@
 /**
  * Objective: Check builder handoff content, spec ID, and revision.
  * Used: When Maestro handles builder handoff artifacts.
- * Entrypoint: assertBuilderHandoff().
  */
 
 import { Value } from 'typebox/value';

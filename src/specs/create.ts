@@ -1,7 +1,6 @@
 /**
  * Objective: Create a spec directory, spec file, and initial workflow state.
  * Used: When an owner starts a new Maestro workflow.
- * Entrypoint: createSpec().
  */
 
 import { mkdir, writeFile } from 'node:fs/promises';

@@ -1,7 +1,6 @@
 /**
  * Objective: Complete a verifier pass without allowing candidate changes.
  * Used: When the verifier submits its terminal handoff.
- * Entrypoint: completeVerifierPass().
  */
 
 import { mkdir } from 'node:fs/promises';

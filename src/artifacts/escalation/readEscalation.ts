@@ -1,7 +1,6 @@
 /**
  * Objective: Read an escalation for its workflow.
  * Used: When Maestro handles escalation artifacts.
- * Entrypoint: readEscalation().
  */
 
 import { assertEscalation } from '#artifacts/escalation/assertEscalation.ts';

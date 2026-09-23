@@ -1,7 +1,6 @@
 /**
  * Objective: Record an owner rejection on one verifier finding.
  * Used: When Maestro handles verifier handoff artifacts.
- * Entrypoint: rejectVerifierFinding().
  */
 
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';

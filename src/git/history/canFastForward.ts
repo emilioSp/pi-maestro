@@ -1,7 +1,6 @@
 /**
  * Objective: Check whether a branch can advance without merging.
  * Used: When Maestro checks if a branch can advance.
- * Entrypoint: canFastForward().
  */
 
 import { isAncestor } from '#git/history/isAncestor.ts';

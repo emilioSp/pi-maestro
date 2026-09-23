@@ -1,7 +1,6 @@
 /**
  * Objective: Resolve the current builder escalation and checkpoint the decision.
  * Used: When the owner keeps the approved contract and makes a decision.
- * Entrypoint: resolveBuilderEscalation().
  */
 
 import { readEscalationHistory } from '#artifacts/escalation/readEscalationHistory.ts';

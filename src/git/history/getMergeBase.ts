@@ -1,7 +1,6 @@
 /**
  * Objective: Find the shared ancestor of two commits.
  * Used: When Maestro checks whether histories share an ancestor.
- * Entrypoint: getMergeBase().
  */
 
 import { runGitCommand } from '#git/command.ts';

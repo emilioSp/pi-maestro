@@ -1,7 +1,6 @@
 /**
  * Objective: Create a clean verifier worktree and commit its running checkpoint.
  * Used: When Maestro starts an independent verifier pass.
- * Entrypoint: prepareVerifierLaunch().
  */
 
 import { branchExists } from '#git/branches/branchExists.ts';
