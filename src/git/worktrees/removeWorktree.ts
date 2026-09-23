@@ -8,7 +8,7 @@ import { resolve } from 'node:path';
 import { runGitCommand } from '#git/command.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import { findWorktree } from '#git/worktrees/findWorktree.ts';
-import { isStrictlyInside } from '#utils/path-security.ts';
+import { isPathStrictlyWithin } from '#utils/path-strictly-within.ts';
 
 // git worktree list --porcelain
 // git status --porcelain=v1 --untracked-files=all -z
@@ -35,7 +35,7 @@ export const removeWorktree = async ({
     );
   }
   if (
-    !isStrictlyInside({
+    !isPathStrictlyWithin({
       parent: resolve(worktreeDirectory),
       candidate: normalizedPath,
     })

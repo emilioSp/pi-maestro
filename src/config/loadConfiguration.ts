@@ -11,7 +11,8 @@ import { CONFIG_FILE_PATH, DEFAULT_CONFIG } from '#config/defaults.ts';
 import type { MaestroConfig, PartialMaestroConfig } from '#config/schema.ts';
 import { deepFreeze } from '#config/utils/deepFreeze.ts';
 import { pathExists } from '#utils/path-exists.ts';
-import { isInside, isStrictlyInside } from '#utils/path-security.ts';
+import { isPathStrictlyWithin } from '#utils/path-strictly-within.ts';
+import { isPathWithinOrEqual } from '#utils/path-within-or-equal.ts';
 
 const resolveConfiguration = (input: PartialMaestroConfig): MaestroConfig => {
   const resolved: MaestroConfig = {
@@ -100,21 +101,32 @@ const resolveSafeDirectory = async ({
   }
 
   if (
-    !isStrictlyInside({ parent: repositoryRoot, candidate: requestedDirectory })
+    !isPathStrictlyWithin({
+      parent: repositoryRoot,
+      candidate: requestedDirectory,
+    })
   ) {
     throw new Error(`${name} must stay inside the Git root.`);
   }
 
   // The directory could not exist at the check time. We find the existing anchestor and do the check on that.
   const ancestor = await findExistingAncestor(requestedDirectory);
-  if (!isInside({ parent: repositoryRoot, candidate: ancestor.realPath })) {
+  if (
+    !isPathWithinOrEqual({
+      parent: repositoryRoot,
+      candidate: ancestor.realPath,
+    })
+  ) {
     throw new Error(`${name} resolves outside the Git root through a symlink.`);
   }
 
   const unresolvedSuffix = relative(ancestor.path, requestedDirectory);
   const resolvedDirectory = resolve(ancestor.realPath, unresolvedSuffix);
   if (
-    !isStrictlyInside({ parent: repositoryRoot, candidate: resolvedDirectory })
+    !isPathStrictlyWithin({
+      parent: repositoryRoot,
+      candidate: resolvedDirectory,
+    })
   ) {
     throw new Error(`${name} resolves outside the Git root through a symlink.`);
   }
@@ -148,8 +160,14 @@ const resolveDirectories = async ({
   }
 
   if (
-    isStrictlyInside({ parent: specDirectory, candidate: worktreeDirectory }) ||
-    isStrictlyInside({ parent: worktreeDirectory, candidate: specDirectory })
+    isPathStrictlyWithin({
+      parent: specDirectory,
+      candidate: worktreeDirectory,
+    }) ||
+    isPathStrictlyWithin({
+      parent: worktreeDirectory,
+      candidate: specDirectory,
+    })
   ) {
     throw new Error(
       'specDirectory and worktreeDirectory must not contain one another.',

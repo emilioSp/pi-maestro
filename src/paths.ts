@@ -7,7 +7,7 @@
 import { isAbsolute, resolve } from 'node:path';
 import type { MaestroConfig } from '#config/schema.ts';
 import { isValidSpecId } from '#ids.ts';
-import { isStrictlyInside } from '#utils/path-security.ts';
+import { isPathStrictlyWithin } from '#utils/path-strictly-within.ts';
 
 export const WORKFLOW_ROLES = {
   BUILDER: 'builder',
@@ -94,7 +94,7 @@ export const getMaestroPaths = ({
     path: string;
   }): string => {
     const target = resolve(getSpecPath(specId), path);
-    if (!isStrictlyInside({ parent: repositoryRoot, candidate: target })) {
+    if (!isPathStrictlyWithin({ parent: repositoryRoot, candidate: target })) {
       throw new Error('Generated Maestro path leaves the Git root.');
     }
     return target;
@@ -132,7 +132,7 @@ export const getMaestroPaths = ({
       assertSafeRelativePrototypePath(relativePath);
       const target = resolve(getPrototypesPath(specId), relativePath);
       if (
-        !isStrictlyInside({
+        !isPathStrictlyWithin({
           parent: getPrototypesPath(specId),
           candidate: target,
         })
@@ -141,7 +141,9 @@ export const getMaestroPaths = ({
           'Prototype path must stay inside the prototypes directory.',
         );
       }
-      if (!isStrictlyInside({ parent: repositoryRoot, candidate: target })) {
+      if (
+        !isPathStrictlyWithin({ parent: repositoryRoot, candidate: target })
+      ) {
         throw new Error('Generated Maestro path leaves the Git root.');
       }
       return target;
@@ -162,7 +164,9 @@ export const getMaestroPaths = ({
         WORKFLOW_ROLES.BUILDER,
         specId,
       );
-      if (!isStrictlyInside({ parent: repositoryRoot, candidate: target })) {
+      if (
+        !isPathStrictlyWithin({ parent: repositoryRoot, candidate: target })
+      ) {
         throw new Error('Generated Maestro path leaves the Git root.');
       }
       return target;
@@ -176,7 +180,9 @@ export const getMaestroPaths = ({
         specId,
         String(pass),
       );
-      if (!isStrictlyInside({ parent: repositoryRoot, candidate: target })) {
+      if (
+        !isPathStrictlyWithin({ parent: repositoryRoot, candidate: target })
+      ) {
         throw new Error('Generated Maestro path leaves the Git root.');
       }
       return target;

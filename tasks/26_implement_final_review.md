@@ -33,7 +33,7 @@ If squash or staging verification fails, return an error and keep the previous p
 
 Above every Git-related function, add one `// git ...` comment for each Git command it can run. Use `<...>` placeholders for runtime values.
 
-Put the Git operations in `src/git/final-review/`, with one public operation per module. Remove the unused `src/git/final-review.ts` placeholder. Put the workflow implementation and its tests in `src/workflow/final-review/`. Remove the unused `src/workflow/final-review.ts` placeholder. Do not add parallel implementations.
+Put the Git operations in `src/git/final-review/`, with one public operation per module. Remove the unused `src/git/final-review.ts` placeholder. Put `prepareFinalReview` in its own module under `src/workflow/final-review/`, with tests beside it. Give any other new public workflow operation its own module. Keep private helpers with their owner, and import modules directly without a barrel. Remove the unused `src/workflow/final-review.ts` placeholder. Do not add parallel implementations.
 
 ## Tests
 

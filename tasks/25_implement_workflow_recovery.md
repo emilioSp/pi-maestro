@@ -28,7 +28,7 @@ Turn reconciliation results into safe resume and retry options without automatic
 
 Do not reset, clean, commit, relaunch, delete, or choose abandonment. Manual abandonment remains outside the MVP tool set.
 
-Put the implementation and its tests in `src/workflow/recovery/`. Remove the unused `src/workflow/recovery.ts` placeholder. Do not add a second implementation.
+Put `inspectRecovery` in its own module under `src/workflow/recovery/`, with tests beside it. Give any other new public operation its own module. Keep private helpers with their owner, and import modules directly without a barrel. Remove the unused `src/workflow/recovery.ts` placeholder. Do not add a second implementation.
 
 ## Tests
 

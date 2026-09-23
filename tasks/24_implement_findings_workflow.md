@@ -31,7 +31,7 @@ Apply one explicit owner decision to every current finding.
 
 In mixed decisions, rejected findings receive their rejection while valid findings remain unrejected for the next builder. A later verifier starts from fresh evidence. A contract change requires manual abandonment and a new spec.
 
-Put the implementation and its tests in `src/workflow/findings/`. Remove the unused `src/workflow/findings.ts` placeholder. Do not add a second implementation.
+Put `resolveFindings` in its own module under `src/workflow/findings/`, with tests beside it. Give any other new public operation its own module. Keep private helpers with their owner, and import modules directly without a barrel. Remove the unused `src/workflow/findings.ts` placeholder. Do not add a second implementation.
 
 ## Tests
 

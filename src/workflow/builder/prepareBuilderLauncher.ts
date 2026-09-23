@@ -16,7 +16,7 @@ import { createWorktree } from '#git/worktrees/createWorktree.ts';
 import { findWorktree } from '#git/worktrees/findWorktree.ts';
 import type { GetMaestroPaths } from '#paths.ts';
 import { pathExists } from '#utils/path-exists.ts';
-import { isInside } from '#utils/path-security.ts';
+import { isPathWithinOrEqual } from '#utils/path-within-or-equal.ts';
 import {
   WORKFLOW_EVENTS,
   WORKFLOW_PHASES,
@@ -85,7 +85,7 @@ const assertBuilderLaunchBase = async ({
       if (allowedWorktreePath === undefined) {
         return true;
       }
-      return !isInside({
+      return !isPathWithinOrEqual({
         parent: allowedWorktreePath,
         candidate: resolve(paths.repositoryRoot, path),
       });
