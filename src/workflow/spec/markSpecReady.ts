@@ -1,10 +1,10 @@
 /**
- * Objective: Coordinate spec creation and approval transitions.
- * Used: When an owner creates a spec or marks it ready.
- * Entrypoint: createWorkflowSpec().
+ * Objective: Mark an owner-approved drafting spec ready for a builder.
+ * Used: When the owner approves the spec content.
+ * Entrypoint: markSpecReady().
  */
+
 import type { GetMaestroPaths } from '#paths.ts';
-import { type CreatedSpec, createSpec } from '#specs/create.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { discoverActiveWorkflow } from '#workflow/state/discover.ts';
 import { WORKFLOW_EVENTS, type WorkflowState } from '#workflow/state/schema.ts';
@@ -13,28 +13,6 @@ import {
   writeWorkflowState,
 } from '#workflow/state/store.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-
-export const createWorkflowSpec = async ({
-  paths,
-  title,
-  baseBranch,
-  instant,
-}: {
-  paths: GetMaestroPaths;
-  title: string;
-  baseBranch: string;
-  instant?: Temporal.Instant;
-}): Promise<CreatedSpec> => {
-  const activeWorkflow = await discoverActiveWorkflow({ paths });
-
-  return createSpec({
-    paths,
-    title,
-    baseBranch,
-    activeWorkflowSpecId: activeWorkflow?.specId ?? null,
-    instant,
-  });
-};
 
 export const markSpecReady = async ({
   paths,

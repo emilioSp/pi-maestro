@@ -793,7 +793,7 @@ I tool delegano la logica condivisa ai moduli sotto `src/` invece di duplicare o
 
 `src/workflow/` coordina i domini senza dipendere dai tool Pi. `state/`, `builder/`, `verifier/` ed `escalation/` separano le rispettive responsabilità. Le prossime attività usano `findings/`, `recovery/` e `final-review/`: ogni nuova operazione pubblica ha il proprio modulo, con test accanto e import diretti senza barrel. Tipi, costanti, errori e helper privati restano con l'operazione che servono.
 
-`spec.ts`, `transitions.ts` e `utils.ts` restano nella root di `src/workflow/`. I placeholder `findings.ts`, `recovery.ts` e `final-review.ts` vengono rimossi quando si implementa il rispettivo workflow. Non si creano implementazioni parallele.
+`spec/createWorkflowSpec.ts` e `spec/markSpecReady.ts` separano le operazioni del workflow spec, con test accanto e import diretti. `transitions.ts` e `utils.ts` restano nella root di `src/workflow/`. I placeholder `findings.ts`, `recovery.ts` e `final-review.ts` vengono rimossi quando si implementa il rispettivo workflow. Non si creano implementazioni parallele.
 
 Non esiste una directory globale `src/schemas/`. Ogni schema resta vicino al dominio che lo usa e viene esportato dal relativo `index.ts`.
 

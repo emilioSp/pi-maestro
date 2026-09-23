@@ -12,7 +12,7 @@ Coordinate spec creation and readiness.
 
 ## Plan references
 
-- Sections [3.2](../plan.md#plan-section-3-2) and [5](../plan.md#plan-section-5), `src/workflow/spec.ts`
+- Sections [3.2](../plan.md#plan-section-3-2) and [5](../plan.md#plan-section-5), `src/workflow/spec/createWorkflowSpec.ts` and `src/workflow/spec/markSpecReady.ts`
 - Sections [6.10](../plan.md#plan-section-6-10), [6.14](../plan.md#plan-section-6-14), [6.18](../plan.md#plan-section-6-18), and [6.21](../plan.md#plan-section-6-21)
 
 ## Work
@@ -25,6 +25,8 @@ Coordinate spec creation and readiness.
 ## Implementation
 
 If the approved contract must change after a builder starts, Maestro stops. The owner abandons the workflow manually, cleans its resources, and creates a new spec with a new ID. Maestro has no abandonment or reset tool in the MVP.
+
+Keep creation and readiness in separate modules under `src/workflow/spec/`, with tests beside each module. Import both directly without a barrel. Remove the old `src/workflow/spec.ts` and its combined test.
 
 ## Tests
 

@@ -5,7 +5,8 @@ import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getMaestroPaths } from '#paths.ts';
 import { createTemporaryRepository } from '#test/support/temp-repository.ts';
-import { createWorkflowSpec, markSpecReady } from '#workflow/spec.ts';
+import { createWorkflowSpec } from '#workflow/spec/createWorkflowSpec.ts';
+import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { readWorkflowState } from '#workflow/state/store.ts';
 
@@ -36,40 +37,7 @@ afterEach(async () => {
   await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
 });
 
-describe('spec workflow', () => {
-  it('creates a drafting spec after confirming that no workflow is active', async () => {
-    const { paths } = await createRepository();
-
-    const created = await createWorkflowSpec({
-      paths,
-      title: 'Add Weather Alerts',
-      baseBranch: 'main',
-      instant: INSTANT,
-    });
-
-    expect(created.specId).toBe(SPEC_ID);
-    expect(created.state.phase).toBe(WORKFLOW_PHASES.DRAFTING_SPEC);
-  });
-
-  it('rejects creation while a workflow is active', async () => {
-    const { paths } = await createRepository();
-    await createWorkflowSpec({
-      paths,
-      title: 'Add Weather Alerts',
-      baseBranch: 'main',
-      instant: INSTANT,
-    });
-
-    await expect(
-      createWorkflowSpec({
-        paths,
-        title: 'Add Forecasts',
-        baseBranch: 'main',
-        instant: Temporal.Instant.from('2026-03-21T14:31:52Z'),
-      }),
-    ).rejects.toThrow(`Workflow ${SPEC_ID} is already active.`);
-  });
-
+describe('markSpecReady', () => {
   it('moves only the expected drafting spec to ready without committing or reading its Markdown', async () => {
     const { repository, paths } = await createRepository();
     const created = await createWorkflowSpec({

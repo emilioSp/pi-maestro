@@ -12,7 +12,7 @@ import { runGitCommand } from '#git/command.ts';
 import { getMaestroPaths } from '#paths.ts';
 import { createSpec } from '#specs/create.ts';
 import { createTemporaryRepository } from '#test/support/temp-repository.ts';
-import { markSpecReady } from '#workflow/spec.ts';
+import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
 
 export const INSTANT = Temporal.Instant.from('2026-03-21T14:30:52Z');
 export const SPEC_ID = '20260321-143052-add-weather-alerts';
