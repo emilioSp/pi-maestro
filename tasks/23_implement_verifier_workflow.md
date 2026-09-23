@@ -13,7 +13,7 @@ Coordinate independent verifier passes and enforce an unchanged product candidat
 ## Plan references
 
 - Section [3.4](../plan.md#plan-section-3-4)
-- Section [5](../plan.md#plan-section-5), `src/workflow/verifier.ts`
+- Section [5](../plan.md#plan-section-5), `src/workflow/verifier/prepareVerifierLaunch.ts` and `src/workflow/verifier/completeVerifierPass.ts`
 - Sections [6.10](../plan.md#plan-section-6-10), [6.11](../plan.md#plan-section-6-11), [6.14](../plan.md#plan-section-6-14), [6.15](../plan.md#plan-section-6-15), and [6.17](../plan.md#plan-section-6-17)
 
 ## Work

@@ -4,7 +4,8 @@
  * Entrypoint: assertLinearHistory().
  */
 
-import { hasGitExitCode, runGitCommand } from '#git/command.ts';
+import { runGitCommand } from '#git/command.ts';
+import { hasGitExitCode } from '#git/utils.ts';
 
 // Checks whether one commit is reachable from another.
 // git merge-base --is-ancestor <ancestor> <descendant>

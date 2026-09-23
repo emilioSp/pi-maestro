@@ -789,7 +789,9 @@ Ogni tool vive in un file dedicato. Il file contiene schema degli input, registr
 
 `src/specs/` gestisce il caricamento del template e la creazione della spec. Il contenuto Markdown resta opaco all’estensione. ID, percorsi e stato restano responsabilità dei rispettivi moduli.
 
-`src/workflow/` coordina i domini senza dipendere dai tool Pi. La sua directory `state/` gestisce lo stato persistente del workflow. Gli altri moduli separano transizioni, ciclo spec, builder, verifier, escalation, finding, final review e recovery.
+`src/workflow/` coordina i domini senza dipendere dai tool Pi. `state/`, `builder/`, `verifier/` ed `escalation/` separano le rispettive responsabilità. Le prossime attività usano `findings/`, `recovery/` e `final-review/`. Ogni test resta accanto al modulo che verifica.
+
+`spec.ts`, `transitions.ts` e `utils.ts` restano nella root di `src/workflow/`. I placeholder `findings.ts`, `recovery.ts` e `final-review.ts` vengono rimossi quando si implementa il rispettivo workflow. Non si creano implementazioni parallele.
 
 Non esiste una directory globale `src/schemas/`. Ogni schema resta vicino al dominio che lo usa e viene esportato dal relativo `index.ts`.
 

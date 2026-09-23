@@ -4,7 +4,8 @@
  * Entrypoint: createBranch().
  */
 
-import { hasGitExitCode, runGitCommand } from '#git/command.ts';
+import { runGitCommand } from '#git/command.ts';
+import { hasGitExitCode } from '#git/utils.ts';
 
 const branchReference = (branch: string): string => `refs/heads/${branch}`;
 

@@ -12,7 +12,7 @@ Turn reconciliation results into safe resume and retry options without automatic
 
 ## Plan references
 
-- Section [5](../plan.md#plan-section-5), `src/workflow/recovery.ts`
+- Section [5](../plan.md#plan-section-5), `src/workflow/recovery/inspectRecovery.ts`
 - Sections [6.3](../plan.md#plan-section-6-3), [6.14](../plan.md#plan-section-6-14), [6.17](../plan.md#plan-section-6-17), [6.18](../plan.md#plan-section-6-18), and [6.20](../plan.md#plan-section-6-20)
 
 ## Work
@@ -27,6 +27,8 @@ Turn reconciliation results into safe resume and retry options without automatic
 ## Implementation
 
 Do not reset, clean, commit, relaunch, delete, or choose abandonment. Manual abandonment remains outside the MVP tool set.
+
+Put the implementation and its tests in `src/workflow/recovery/`. Remove the unused `src/workflow/recovery.ts` placeholder. Do not add a second implementation.
 
 ## Tests
 

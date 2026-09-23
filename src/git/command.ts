@@ -67,17 +67,6 @@ export class GitCommandError extends Error {
   }
 }
 
-export const hasGitExitCode = ({
-  error,
-  exitCode,
-}: {
-  error: unknown;
-  exitCode: number;
-}): boolean =>
-  error instanceof GitCommandError &&
-  error.code === GIT_COMMAND_ERROR_CODES.COMMAND_FAILED &&
-  error.exitCode === exitCode;
-
 type RunGitCommandInput = {
   arguments: readonly string[];
   cwd?: string;

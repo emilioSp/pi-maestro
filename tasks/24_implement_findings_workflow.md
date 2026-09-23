@@ -13,7 +13,7 @@ Apply one explicit owner decision to every current finding.
 ## Plan references
 
 - Section [3.6](../plan.md#plan-section-3-6)
-- Section [5](../plan.md#plan-section-5), `src/workflow/findings.ts`
+- Section [5](../plan.md#plan-section-5), `src/workflow/findings/resolveFindings.ts`
 - Sections [6.10](../plan.md#plan-section-6-10), [6.14](../plan.md#plan-section-6-14), and [6.25](../plan.md#plan-section-6-25)
 
 ## Work
@@ -30,6 +30,8 @@ Apply one explicit owner decision to every current finding.
 ## Implementation
 
 In mixed decisions, rejected findings receive their rejection while valid findings remain unrejected for the next builder. A later verifier starts from fresh evidence. A contract change requires manual abandonment and a new spec.
+
+Put the implementation and its tests in `src/workflow/findings/`. Remove the unused `src/workflow/findings.ts` placeholder. Do not add a second implementation.
 
 ## Tests
 
