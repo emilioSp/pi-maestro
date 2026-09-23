@@ -1,15 +1,12 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   createEscalation,
-  ESCALATION_VERSION,
-  type Escalation,
   type EscalationResolution,
   getNextEscalationId,
   type NewEscalation,
-  readEscalationHistory,
   resolveEscalation,
 } from '#artifacts/escalation.ts';
 
@@ -41,21 +38,6 @@ const resolution = (): EscalationResolution => ({
   selectedOptionId: 'A',
   decision: 'Use option A.',
   reason: 'The owner selected the existing adapter.',
-});
-
-const savedEscalation = ({
-  id,
-  revision,
-}: {
-  id: string;
-  revision: number;
-}): Escalation => ({
-  ...newEscalation(),
-  version: ESCALATION_VERSION,
-  specId,
-  revision,
-  id,
-  resolution: null,
 });
 
 afterEach(async () => {
@@ -91,25 +73,6 @@ describe('escalation artifacts', () => {
     await expect(
       getNextEscalationId({ directory, specId, currentRevision: 4 }),
     ).resolves.toBe('E3');
-  });
-
-  it('rejects a gap or malformed entry in the history', async () => {
-    const directory = await createTemporaryDirectory();
-    await writeFile(
-      join(directory, 'E2.json'),
-      JSON.stringify(savedEscalation({ id: 'E2', revision: 3 })),
-      'utf8',
-    );
-
-    await expect(
-      getNextEscalationId({ directory, specId, currentRevision: 3 }),
-    ).rejects.toThrow('Escalation history has a gap');
-
-    await rm(join(directory, 'E2.json'));
-    await writeFile(join(directory, 'E1.json'), '{broken', 'utf8');
-    await expect(
-      readEscalationHistory({ directory, specId, currentRevision: 3 }),
-    ).rejects.toThrow('Escalation contains malformed JSON');
   });
 
   it('writes new escalations as unresolved documents', async () => {

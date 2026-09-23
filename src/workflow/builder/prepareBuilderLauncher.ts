@@ -18,12 +18,6 @@ import type { GetMaestroPaths } from '#paths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { isInside } from '#utils/path-security.ts';
 import {
-  getBuilderHandoffPath,
-  getBuilderWorkflowPath,
-  relativePath,
-  validateBuilderWorktree,
-} from '#workflow/builder/utils.ts';
-import {
   WORKFLOW_EVENTS,
   WORKFLOW_PHASES,
   type WorkflowEvent,
@@ -34,6 +28,7 @@ import {
   writeWorkflowState,
 } from '#workflow/state/store.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
+import { getPath, relativePath, validateWorktree } from '#workflow/utils.ts';
 
 export type BuilderLaunch = {
   specId: string;
@@ -223,7 +218,11 @@ export const prepareBuilderLaunch = async ({
   });
 
   if (hasExistingResources) {
-    const builderWorktree = await validateBuilderWorktree({ paths, specId });
+    const builderWorktree = await validateWorktree({
+      repositoryRoot: paths.repositoryRoot,
+      branch,
+      worktreePath,
+    });
     await assertBuilderWorktreeClean(builderWorktree.worktreePath);
   } else {
     await assertBuilderResourcesAbsent({ paths, specId }); // no worktree, no worktree path, no branch
@@ -239,15 +238,15 @@ export const prepareBuilderLaunch = async ({
     });
   }
 
-  const workflowPath = getBuilderWorkflowPath({
+  const workflowPath = getPath({
     paths,
     worktreePath,
-    specId,
+    target: paths.getWorkflowPath(specId),
   });
-  const handoffPath = getBuilderHandoffPath({
+  const handoffPath = getPath({
     paths,
     worktreePath,
-    specId,
+    target: paths.getBuilderHandoffPath(specId),
   });
 
   const currentState = await readWorkflowState({ path: workflowPath });

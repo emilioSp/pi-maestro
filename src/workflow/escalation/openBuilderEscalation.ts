@@ -1,20 +1,18 @@
 /**
- * Objective: Complete a builder pass with a validated terminal handoff.
- * Used: When the builder reports done or failed through the child tool.
- * Entrypoint: completeBuilderPass().
+ * Objective: Open a builder escalation and move the workflow to a decision.
+ * Used: When a builder needs an owner decision.
+ * Entrypoint: openBuilderEscalation().
  */
 
 import { mkdir } from 'node:fs/promises';
-import { dirname } from 'node:path';
 import {
-  BUILDER_HANDOFF_STATUSES,
-  type BuilderHandoff,
-  validateBuilderHandoff,
-  validateBuilderHandoffForWorkflow,
-  writeBuilderHandoff,
-} from '#artifacts/builder-handoff.ts';
+  createEscalation,
+  type Escalation,
+  type NewEscalation,
+} from '#artifacts/escalation.ts';
 import type { GetMaestroPaths } from '#paths.ts';
 import { pathExists } from '#utils/path-exists.ts';
+import { getBuilderEscalationsPath } from '#workflow/escalation/utils.ts';
 import {
   WORKFLOW_EVENTS,
   WORKFLOW_PHASES,
@@ -27,21 +25,24 @@ import {
 import { transitionWorkflow } from '#workflow/transitions.ts';
 import { getPath, validateWorktree } from '#workflow/utils.ts';
 
-export type CompletedBuilderPass = {
-  handoff: BuilderHandoff;
+export type OpenedBuilderEscalation = {
+  escalation: Escalation;
   state: WorkflowState;
   worktreePath: string;
+  workflowPath: string;
+  escalationPath: string;
 };
 
-export const completeBuilderPass = async ({
-  paths,
-  specId,
-  handoff,
-}: {
+type OpenBuilderEscalationInput = {
   paths: GetMaestroPaths;
   specId: string;
-  handoff: unknown;
-}): Promise<CompletedBuilderPass> => {
+  escalation: NewEscalation;
+};
+
+const getPaths = async ({
+  paths,
+  specId,
+}: Omit<OpenBuilderEscalationInput, 'escalation'>) => {
   const builderWorktree = await validateWorktree({
     repositoryRoot: paths.repositoryRoot,
     branch: paths.getBuilderBranch(specId),
@@ -60,40 +61,48 @@ export const completeBuilderPass = async ({
     target: paths.getBuilderHandoffPath(specId),
   });
 
+  const escalationsPath = getBuilderEscalationsPath({
+    paths,
+    worktreePath: builderWorktree.worktreePath,
+    specId,
+  });
+
+  const worktreePath = builderWorktree.worktreePath;
+
+  return { worktreePath, workflowPath, handoffPath, escalationsPath };
+};
+
+export const openBuilderEscalation = async ({
+  paths,
+  specId,
+  escalation,
+}: OpenBuilderEscalationInput): Promise<OpenedBuilderEscalation> => {
+  const { worktreePath, escalationsPath, workflowPath, handoffPath } =
+    await getPaths({ paths, specId });
+
   const currentState = await readWorkflowState({ path: workflowPath });
+
   if (currentState.phase !== WORKFLOW_PHASES.BUILDER_RUNNING) {
     throw new Error(
-      `Builder handoff requires builder-running state, found "${currentState.phase}".`,
+      `Builder escalation requires builder-running state, found "${currentState.phase}".`,
     );
   }
-
   if (await pathExists(handoffPath)) {
     throw new Error('Builder terminal handoff already exists.');
   }
 
-  const validatedHandoff = validateBuilderHandoff(handoff);
-
   const nextState = transitionWorkflow({
     state: currentState,
-    event:
-      validatedHandoff.status === BUILDER_HANDOFF_STATUSES.DONE
-        ? WORKFLOW_EVENTS.BUILDER_DONE
-        : WORKFLOW_EVENTS.BUILDER_FAILED,
+    event: WORKFLOW_EVENTS.OPEN_ESCALATION,
   });
 
-  const workflowHandoff = validateBuilderHandoffForWorkflow({
-    handoff: validatedHandoff,
+  await mkdir(escalationsPath, { recursive: true });
+
+  const created = await createEscalation({
+    directory: escalationsPath,
     specId,
     revision: nextState.revision,
-  });
-
-  await mkdir(dirname(handoffPath), { recursive: true });
-
-  await writeBuilderHandoff({
-    path: handoffPath,
-    handoff: workflowHandoff,
-    specId,
-    revision: nextState.revision,
+    escalation,
   });
 
   await writeWorkflowState({
@@ -103,8 +112,10 @@ export const completeBuilderPass = async ({
   });
 
   return {
-    handoff: workflowHandoff,
+    escalation: created.escalation,
     state: nextState,
-    worktreePath: builderWorktree.worktreePath,
+    worktreePath,
+    workflowPath,
+    escalationPath: created.path,
   };
 };

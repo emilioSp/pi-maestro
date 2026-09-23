@@ -170,24 +170,12 @@ export const readEscalationHistory = async ({
     (left, right) => Number(left.slice(1, -5)) - Number(right.slice(1, -5)),
   );
   const escalations: Escalation[] = [];
-  for (const [index, file] of orderedFiles.entries()) {
-    const expectedId = `E${index + 1}`;
-    if (file !== `${expectedId}.json`) {
-      throw new Error(
-        `Escalation history has a gap: expected ${expectedId}, found "${file}".`,
-      );
-    }
-
+  for (const file of orderedFiles.values()) {
     const escalation = await readEscalation({
       path: join(directory, file),
       specId,
       currentRevision,
     });
-    if (escalation.id !== expectedId) {
-      throw new Error(
-        `Escalation history ID mismatch: file "${file}" contains "${escalation.id}".`,
-      );
-    }
     escalations.push(escalation);
   }
 

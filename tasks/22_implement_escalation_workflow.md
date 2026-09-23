@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task 22: Implement the escalation workflow
 
@@ -13,7 +13,7 @@ Coordinate builder escalations and explicit owner resolutions.
 ## Plan references
 
 - Section [3.5](../plan.md#plan-section-3-5)
-- Section [5](../plan.md#plan-section-5), `src/workflow/escalation.ts`
+- Section [5](../plan.md#plan-section-5), `src/workflow/escalation/openBuilderEscalation.ts` and `src/workflow/escalation/resolveBuilderEscalation.ts`
 - Sections [6.10](../plan.md#plan-section-6-10), [6.14](../plan.md#plan-section-6-14), and [6.15](../plan.md#plan-section-6-15)
 
 ## Work
