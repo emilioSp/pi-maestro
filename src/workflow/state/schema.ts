@@ -6,7 +6,7 @@
 
 import { type Static, Type } from 'typebox';
 import { Value } from 'typebox/value';
-import { isValidSpecId, SPEC_ID_PATTERN } from '#ids.ts';
+import { isValidSpecId, SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 
 export const WORKFLOW_STATE_VERSION = '1.0.0';
 

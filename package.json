@@ -47,7 +47,7 @@
     "#tools/*": "./src/tools/*",
     "#utils/*": "./src/utils/*",
     "#paths.ts": "./src/paths.ts",
-    "#ids.ts": "./src/ids.ts",
+    "#ids/*": "./src/ids/*",
     "#*": "./*"
   },
   "scripts": {

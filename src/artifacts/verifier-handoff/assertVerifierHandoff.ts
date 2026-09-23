@@ -14,7 +14,7 @@ import {
   type VerifierHandoff,
   VerifierHandoffSchema,
 } from '#artifacts/verifier-handoff/schema.ts';
-import { isValidSpecId } from '#ids.ts';
+import { isValidSpecId } from '#ids/isValidSpecId.ts';
 
 const hasCompletedChecks = (criterion: BuilderAcceptanceCriterion): boolean =>
   criterion.probeStatus === PROBE_STATUSES.PASSED &&

@@ -5,7 +5,7 @@
 
 import { type Static, Type } from 'typebox';
 import { BuilderAcceptanceCriterionSchema } from '#artifacts/builder-handoff/schema.ts';
-import { SPEC_ID_PATTERN } from '#ids.ts';
+import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 
 export const VERIFIER_HANDOFF_VERSION = '1.0.0';
 

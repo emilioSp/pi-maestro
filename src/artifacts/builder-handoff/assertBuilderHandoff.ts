@@ -13,7 +13,7 @@ import {
   BuilderHandoffSchema,
   PROBE_STATUSES,
 } from '#artifacts/builder-handoff/schema.ts';
-import { isValidSpecId } from '#ids.ts';
+import { isValidSpecId } from '#ids/isValidSpecId.ts';
 
 const hasUniqueAcceptanceCriterionIds = (
   acceptanceCriteria: BuilderAcceptanceCriterion[],

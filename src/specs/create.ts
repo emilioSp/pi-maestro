@@ -5,7 +5,7 @@
  */
 
 import { mkdir, writeFile } from 'node:fs/promises';
-import { createSpecId } from '#ids.ts';
+import { createSpecId } from '#ids/createSpecId.ts';
 import type { GetMaestroPaths } from '#paths.ts';
 import { loadSpecTemplate, renderSpecTemplate } from '#specs/template.ts';
 import { pathExists } from '#utils/path-exists.ts';

@@ -9,7 +9,7 @@ import {
   type Escalation,
   EscalationSchema,
 } from '#artifacts/escalation/schema.ts';
-import { isValidSpecId } from '#ids.ts';
+import { isValidSpecId } from '#ids/isValidSpecId.ts';
 
 const hasOption = (escalation: Escalation, optionId: string): boolean =>
   escalation.options.some((option) => option.id === optionId);

@@ -819,7 +819,7 @@ La configurazione applica gli override e valida le directory configurate, inclus
 
 `src/utils/path-within-or-equal.ts` e `src/utils/path-strictly-within.ts` contengono i controlli lessicali di contenimento tra percorsi. Ogni modulo esporta una funzione. `src/config/` e `src/paths.ts` importano direttamente il controllo necessario.
 
-`src/ids.ts` resta un singolo modulo. Genera il timestamp UTC, normalizza lo slug, compone l’ID e ne valida il formato.
+`src/ids/createSpecId.ts` compone l'ID da timestamp UTC e slug. `src/ids/isValidSpecId.ts` valida l'ID ed esporta il pattern condiviso dagli schemi. I dettagli di formattazione e validazione restano privati. Gli import usano percorsi diretti, senza barrel.
 
 I test restano accanto al modulo sotto `src/`. Il suffisso `.unit.test.ts` identifica gli unit test e `.integration.test.ts` identifica gli integration test, per esempio `src/workflow/state/store.ts` corrisponde a `src/workflow/state/store.integration.test.ts`. I test degli helper e le fixture restano sotto `test/`. Non serve uno unit test per ogni file: un integration test può essere l’unica copertura diretta del modulo. Non vengono creati test aggregati generici come `state.test.ts`.
 

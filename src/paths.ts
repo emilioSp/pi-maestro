@@ -6,7 +6,7 @@
 
 import { isAbsolute, resolve } from 'node:path';
 import type { MaestroConfig } from '#config/schema.ts';
-import { isValidSpecId } from '#ids.ts';
+import { isValidSpecId } from '#ids/isValidSpecId.ts';
 import { isPathStrictlyWithin } from '#utils/path-strictly-within.ts';
 
 export const WORKFLOW_ROLES = {

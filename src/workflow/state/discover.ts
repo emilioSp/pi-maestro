@@ -5,7 +5,7 @@
  */
 
 import { readdir } from 'node:fs/promises';
-import { isValidSpecId } from '#ids.ts';
+import { isValidSpecId } from '#ids/isValidSpecId.ts';
 import type { GetMaestroPaths } from '#paths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
