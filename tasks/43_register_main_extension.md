@@ -28,7 +28,7 @@ Wire the main Pi extension without moving domain logic into the composition root
 
 ## Implementation
 
-`extensions/maestro.ts` is wiring only. Call modules under `src/maestro/` and `src/tools/main/`. Do not register child tools. Preserve generic tools and tools from other extensions.
+`extensions/maestro.ts` is wiring only. Import each operation directly from its module under `src/maestro/` or `src/tools/main/`; do not add a Maestro barrel. Do not register child tools. Preserve generic tools and tools from other extensions.
 
 ## Tests
 

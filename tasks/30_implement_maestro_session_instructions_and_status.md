@@ -12,7 +12,7 @@ Keep Maestro mode visible without making session state authoritative.
 
 ## Plan references
 
-- Section [5](../plan.md#plan-section-5), `src/maestro/session.ts`, `instructions.ts`, and `status.ts`
+- Section [5](../plan.md#plan-section-5), `src/maestro/session/`, `src/maestro/instructions/`, and `src/maestro/status/`
 - Sections [3.1](../plan.md#plan-section-3-1), [6.3](../plan.md#plan-section-6-3), [6.9](../plan.md#plan-section-6-9), [6.13](../plan.md#plan-section-6-13), [6.14](../plan.md#plan-section-6-14), and [6.20](../plan.md#plan-section-6-20)
 
 ## Work
@@ -28,6 +28,8 @@ Keep Maestro mode visible without making session state authoritative.
 ## Implementation
 
 Do not put workflow truth only in session state. Instructions must tell the LLM to wait for explicit owner decisions and use deterministic tools for mutations. They must also explain that final-review is concluded.
+
+Put session state, instructions, and status in their matching directories under `src/maestro/`. Give each exported function its own module. Keep private helpers with the function they serve, and import modules directly without a barrel. Place tests beside their main module. Remove the unused `src/maestro/session.ts`, `src/maestro/instructions.ts`, and `src/maestro/status.ts` placeholders; do not add parallel implementations.
 
 ## Tests
 

@@ -799,7 +799,9 @@ Non esiste una directory globale `src/schemas/`. Ogni schema resta vicino al dom
 
 `package.json` include `pi-subagents` 0.68.0 in `dependencies` e `bundledDependencies` per rendere disponibili questi import pubblici nel tarball. Il manifest Pi non carica l’estensione annidata. L’owner deve avere anche `pi-subagents >=0.68.0` installato e attivo come pacchetto Pi; Maestro ne verifica la presenza tramite l’API pubblica durante l’attivazione.
 
-`src/maestro/` implementa la modalità principale: attivazione, controlli ambientali, persistenza nella sessione Pi, istruzioni e status. `index.ts` è solo un barrel di export: non espone una funzione `registerMaestro`. Il wiring con le API Pi resta in `extensions/maestro.ts`.
+`src/maestro/` implementa la modalità principale. Le directory `checks/`, `activation/`, `session/`, `instructions/` e `status/` separano i rispettivi ambiti. Ogni funzione pubblica ha un modulo. Tipi, costanti, errori e helper privati restano con la funzione che servono.
+
+Gli import usano percorsi diretti, senza `index.ts` o altri barrel. I placeholder nella root di `src/maestro/` vengono rimossi quando si implementa il rispettivo ambito. Il wiring con le API Pi resta in `extensions/maestro.ts`.
 
 `src/git/` implementa le operazioni Git senza dipendere da Pi. `command.ts` esegue Git con argv, cwd e timeout, senza passare da una shell. Le directory `repository/`, `branches/`, `worktrees/`, `commits/` e `history/` raggruppano le operazioni per ambito.
 

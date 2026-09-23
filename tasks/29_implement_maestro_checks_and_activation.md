@@ -13,7 +13,7 @@ Activate Maestro only after complete read-only environment checks.
 ## Plan references
 
 - Section [2.7](../plan.md#plan-section-2-7)
-- Section [5](../plan.md#plan-section-5), `src/maestro/checks.ts` and `src/maestro/activation.ts`
+- Section [5](../plan.md#plan-section-5), `src/maestro/checks/` and `src/maestro/activation/`
 - Sections [6.3](../plan.md#plan-section-6-3), [6.7](../plan.md#plan-section-6-7), [6.20](../plan.md#plan-section-6-20), [6.21](../plan.md#plan-section-6-21), [6.22](../plan.md#plan-section-6-22), and [6.26](../plan.md#plan-section-6-26)
 
 ## Work
@@ -29,6 +29,8 @@ Activate Maestro only after complete read-only environment checks.
 ## Implementation
 
 Checks must not create `.specs`, `.worktree`, or any other file. A dirty base is allowed during activation. Missing configured directories are valid. Failure leaves Maestro inactive and normal Pi behavior unchanged.
+
+Put environment checks under `src/maestro/checks/` and activation behavior under `src/maestro/activation/`. Give each exported function its own module. Keep private helpers with the function they serve, and import modules directly without a barrel. Place tests beside their main module. Remove the unused `src/maestro/checks.ts` and `src/maestro/activation.ts` placeholders; do not add parallel implementations.
 
 ## Tests
 
