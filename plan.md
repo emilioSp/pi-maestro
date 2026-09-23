@@ -783,7 +783,7 @@ I tool delegano la logica condivisa ai moduli sotto `src/` invece di duplicare o
 
 `templates/spec.md` è l’unico template distribuito. Gli artefatti JSON vengono costruiti da oggetti tipizzati e validati dai relativi moduli; non esistono template JSON che possano divergere dagli schemi.
 
-`src/atomic-write.ts` contiene la scrittura atomica condivisa da stato e artefatti.
+`src/utils/write-atomically.ts` scrive testo in modo atomico. `src/utils/write-json-atomically.ts` serializza i dati JSON e usa la stessa scrittura atomica. Stato e artefatti importano direttamente la funzione di cui hanno bisogno.
 
 `src/artifacts/` implementa lettura, validazione e scrittura degli handoff e delle escalation senza dipendere da Pi. Le directory `builder-handoff/`, `verifier-handoff/` ed `escalation/` separano gli ambiti. Ogni funzione pubblica ha un modulo, con i test accanto. Lo schema e i tipi condivisi di ogni ambito stanno nel suo `schema.ts`. Gli import usano percorsi diretti, senza barrel. I file sotto `src/tools/` sono solo adapter tra le chiamate Pi e questa logica.
 

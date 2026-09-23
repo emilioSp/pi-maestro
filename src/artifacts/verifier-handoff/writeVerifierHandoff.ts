@@ -5,7 +5,7 @@
  */
 
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
-import { writeJsonAtomically } from '#atomic-write.ts';
+import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
 
 export const writeVerifierHandoff = async ({
   path,

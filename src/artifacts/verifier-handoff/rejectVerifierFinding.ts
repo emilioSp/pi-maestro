@@ -7,7 +7,7 @@
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import type { VerifierHandoff } from '#artifacts/verifier-handoff/schema.ts';
-import { writeJsonAtomically } from '#atomic-write.ts';
+import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
 
 export const rejectVerifierFinding = async ({
   path,

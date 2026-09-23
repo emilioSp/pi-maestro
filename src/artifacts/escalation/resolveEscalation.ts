@@ -10,7 +10,7 @@ import type {
   Escalation,
   EscalationResolution,
 } from '#artifacts/escalation/schema.ts';
-import { writeJsonAtomically } from '#atomic-write.ts';
+import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
 
 export const resolveEscalation = async ({
   path,

@@ -5,8 +5,8 @@
  */
 
 import { type FileHandle, open, readFile, rm } from 'node:fs/promises';
-import { writeJsonAtomically } from '#atomic-write.ts';
 import { pathExists } from '#utils/path-exists.ts';
+import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
 import {
   assertWorkflowState,
   type WorkflowState,

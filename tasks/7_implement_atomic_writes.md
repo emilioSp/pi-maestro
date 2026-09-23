@@ -12,12 +12,12 @@ Provide one safe file-writing primitive for workflow state and JSON artifacts.
 
 ## Plan references
 
-- Section [5](../plan.md#plan-section-5), `src/atomic-write.ts`
+- Section [5](../plan.md#plan-section-5), `src/utils/write-atomically.ts` and `src/utils/write-json-atomically.ts`
 - Sections [2.11](../plan.md#plan-section-2-11), [6.14](../plan.md#plan-section-6-14), and [6.15](../plan.md#plan-section-6-15)
 
 ## Work
 
-1. Implement `src/atomic-write.ts`.
+1. Implement text writes in `src/utils/write-atomically.ts` and JSON writes in `src/utils/write-json-atomically.ts`. Give each file one public operation.
 2. Write content to a temporary file in the destination directory.
 3. Flush and rename the temporary file to the final path.
 4. Preserve the existing destination if writing fails.

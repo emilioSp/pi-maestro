@@ -11,7 +11,7 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { writeAtomically, writeJsonAtomically } from '#atomic-write.ts';
+import { writeAtomically } from '#utils/write-atomically.ts';
 
 const temporaryDirectories: string[] = [];
 
@@ -34,7 +34,7 @@ const expectNoTemporaryFiles = async (directory: string): Promise<void> => {
   expect(entries.some((entry) => entry.endsWith('.tmp'))).toBe(false);
 };
 
-describe('atomic writes', () => {
+describe('atomic text writes', () => {
   it('writes a new UTF-8 text file', async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, 'message.txt');
@@ -52,20 +52,6 @@ describe('atomic writes', () => {
     await writeAtomically({ path, content: 'new content' });
 
     await expect(readFile(path, 'utf8')).resolves.toBe('new content');
-  });
-
-  it('writes formatted JSON with a final newline', async () => {
-    const directory = await createTemporaryDirectory();
-    const path = join(directory, 'artifact.json');
-
-    await writeJsonAtomically({
-      path,
-      data: { title: 'weather', enabled: true },
-    });
-
-    await expect(readFile(path, 'utf8')).resolves.toBe(
-      '{\n  "title": "weather",\n  "enabled": true\n}\n',
-    );
   });
 
   it('preserves the destination after a write failure', async () => {

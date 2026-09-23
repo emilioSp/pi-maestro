@@ -48,7 +48,6 @@
     "#utils/*": "./src/utils/*",
     "#paths.ts": "./src/paths.ts",
     "#ids.ts": "./src/ids.ts",
-    "#atomic-write.ts": "./src/atomic-write.ts",
     "#*": "./*"
   },
   "scripts": {
