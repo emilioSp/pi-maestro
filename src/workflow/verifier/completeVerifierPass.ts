@@ -7,7 +7,6 @@
 import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
-import { assertVerifierHandoffHasExpectedFields } from '#artifacts/verifier-handoff/assertVerifierHandoffHasExpectedFields.ts';
 import type { VerifierHandoff } from '#artifacts/verifier-handoff/schema.ts';
 import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
 import { runGitCommand } from '#git/command.ts';
@@ -160,12 +159,7 @@ export const completeVerifierPass = async ({
     };
   }
 
-  assertVerifierHandoff(handoff);
-  assertVerifierHandoffHasExpectedFields({
-    handoff,
-    specId,
-    revision: currentState.revision + 1,
-  });
+  assertVerifierHandoff(handoff, specId, currentState.revision + 1);
   const nextState = transitionWorkflow({
     state: currentState,
     event:

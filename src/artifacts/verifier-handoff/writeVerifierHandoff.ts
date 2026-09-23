@@ -5,7 +5,6 @@
  */
 
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
-import { assertVerifierHandoffHasExpectedFields } from '#artifacts/verifier-handoff/assertVerifierHandoffHasExpectedFields.ts';
 import { writeJsonAtomically } from '#atomic-write.ts';
 
 export const writeVerifierHandoff = async ({
@@ -19,12 +18,7 @@ export const writeVerifierHandoff = async ({
   specId: string;
   revision: number;
 }): Promise<void> => {
-  assertVerifierHandoff(handoff);
-  assertVerifierHandoffHasExpectedFields({
-    handoff,
-    specId,
-    revision,
-  });
+  assertVerifierHandoff(handoff, specId, revision);
   if (handoff.findings.some((finding) => finding.rejection !== null)) {
     throw new Error('New verifier handoff findings must have no rejection.');
   }

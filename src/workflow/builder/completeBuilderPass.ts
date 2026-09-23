@@ -7,7 +7,6 @@
 import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { assertBuilderHandoff } from '#artifacts/builder-handoff/assertBuilderHandoff.ts';
-import { assertBuilderHandoffHasExpectedFields } from '#artifacts/builder-handoff/assertBuilderHandoffHasExpectedFields.ts';
 import {
   BUILDER_HANDOFF_STATUSES,
   type BuilderHandoff,
@@ -72,7 +71,7 @@ export const completeBuilderPass = async ({
     throw new Error('Builder terminal handoff already exists.');
   }
 
-  assertBuilderHandoff(handoff);
+  assertBuilderHandoff(handoff, specId, currentState.revision + 1);
 
   const nextState = transitionWorkflow({
     state: currentState,
@@ -80,12 +79,6 @@ export const completeBuilderPass = async ({
       handoff.status === BUILDER_HANDOFF_STATUSES.DONE
         ? WORKFLOW_EVENTS.BUILDER_DONE
         : WORKFLOW_EVENTS.BUILDER_FAILED,
-  });
-
-  assertBuilderHandoffHasExpectedFields({
-    handoff,
-    specId,
-    revision: nextState.revision,
   });
 
   await mkdir(dirname(handoffPath), { recursive: true });

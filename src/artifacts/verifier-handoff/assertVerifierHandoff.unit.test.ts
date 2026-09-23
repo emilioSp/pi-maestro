@@ -44,31 +44,35 @@ const finding = (): VerifierHandoff['findings'][number] => ({
   rejection: null,
 });
 
-describe('verifier handoff schema', () => {
+describe('verifier handoff validation', () => {
   it('accepts an empty finding list with completed checks', () => {
-    expect(() => assertVerifierHandoff(handoff())).not.toThrow();
+    expect(() => assertVerifierHandoff(handoff(), specId, 6)).not.toThrow();
   });
 
   it('accepts findings linked to incomplete checks and other spec rules', () => {
     expect(() =>
-      assertVerifierHandoff({
-        ...handoff(),
-        acceptanceCriteria: [
-          {
-            ...handoff().acceptanceCriteria[0],
-            breakageStatus: BREAKAGE_STATUSES.NOT_CONFIRMED,
-          },
-        ],
-        findings: [
-          finding(),
-          {
-            ...finding(),
-            id: 'F2',
-            acceptanceCriterion: null,
-            summary: 'The required log redaction is missing.',
-          },
-        ],
-      }),
+      assertVerifierHandoff(
+        {
+          ...handoff(),
+          acceptanceCriteria: [
+            {
+              ...handoff().acceptanceCriteria[0],
+              breakageStatus: BREAKAGE_STATUSES.NOT_CONFIRMED,
+            },
+          ],
+          findings: [
+            finding(),
+            {
+              ...finding(),
+              id: 'F2',
+              acceptanceCriterion: null,
+              summary: 'The required log redaction is missing.',
+            },
+          ],
+        },
+        specId,
+        6,
+      ),
     ).not.toThrow();
   });
 
@@ -138,6 +142,16 @@ describe('verifier handoff schema', () => {
       message: 'Invalid verifier handoff',
     },
   ])('rejects invalid handoff data %#', ({ handoff: input, message }) => {
-    expect(() => assertVerifierHandoff(input)).toThrow(message);
+    expect(() => assertVerifierHandoff(input, specId, 6)).toThrow(message);
+  });
+
+  it('requires the expected spec ID and revision', () => {
+    expect(() =>
+      assertVerifierHandoff(handoff(), '20260321-143052-other-change', 6),
+    ).toThrow('Verifier handoff spec ID mismatch');
+
+    expect(() => assertVerifierHandoff(handoff(), specId, 7)).toThrow(
+      'Verifier handoff revision mismatch',
+    );
   });
 });

@@ -1,5 +1,5 @@
 /**
- * Objective: Check the builder handoff schema and evidence.
+ * Objective: Check builder handoff content, spec ID, and revision.
  * Used: When Maestro handles builder handoff artifacts.
  * Entrypoint: assertBuilderHandoff().
  */
@@ -48,10 +48,11 @@ function assertBuilderHandoffSchema(
 }
 
 export function assertBuilderHandoff(
-  input: unknown,
-): asserts input is BuilderHandoff {
-  assertBuilderHandoffSchema(input);
-  const handoff = input;
+  handoff: unknown,
+  specId: string,
+  revision: number,
+): asserts handoff is BuilderHandoff {
+  assertBuilderHandoffSchema(handoff);
   if (!isValidSpecId(handoff.specId)) {
     throw new Error(`Invalid builder handoff spec ID: "${handoff.specId}".`);
   }
@@ -72,6 +73,24 @@ export function assertBuilderHandoff(
   ) {
     throw new Error(
       'Failed builder handoff requires at least one failed, unconfirmed, or not-run check.',
+    );
+  }
+  if (!isValidSpecId(specId)) {
+    throw new Error(`Invalid expected builder handoff spec ID: "${specId}".`);
+  }
+  if (!Number.isSafeInteger(revision) || revision < 1) {
+    throw new Error(
+      'Expected builder handoff revision must be a positive integer.',
+    );
+  }
+  if (handoff.specId !== specId) {
+    throw new Error(
+      `Builder handoff spec ID mismatch: expected "${specId}", found "${handoff.specId}".`,
+    );
+  }
+  if (handoff.revision !== revision) {
+    throw new Error(
+      `Builder handoff revision mismatch: expected ${revision}, found ${handoff.revision}.`,
     );
   }
 }

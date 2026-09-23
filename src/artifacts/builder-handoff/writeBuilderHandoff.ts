@@ -5,7 +5,6 @@
  */
 
 import { assertBuilderHandoff } from '#artifacts/builder-handoff/assertBuilderHandoff.ts';
-import { assertBuilderHandoffHasExpectedFields } from '#artifacts/builder-handoff/assertBuilderHandoffHasExpectedFields.ts';
 import { writeJsonAtomically } from '#atomic-write.ts';
 
 export const writeBuilderHandoff = async ({
@@ -19,11 +18,6 @@ export const writeBuilderHandoff = async ({
   specId: string;
   revision: number;
 }): Promise<void> => {
-  assertBuilderHandoff(handoff);
-  assertBuilderHandoffHasExpectedFields({
-    handoff,
-    specId,
-    revision,
-  });
+  assertBuilderHandoff(handoff, specId, revision);
   await writeJsonAtomically({ path, data: handoff });
 };
