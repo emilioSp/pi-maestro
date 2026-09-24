@@ -19,6 +19,7 @@ import {
   commitAll,
   createApprovedWorkflow,
   doneHandoff,
+  getBuilderWorktreePaths,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import { pathExists } from '#utils/path-exists.ts';
@@ -36,7 +37,7 @@ const prepareVerifier = async () => {
   const builderLaunch = await prepareBuilderLaunch({ paths, specId: SPEC_ID });
   await writeFile(join(builderWorktreePath, 'product.txt'), 'candidate\n');
   await completeBuilderPass({
-    paths,
+    paths: await getBuilderWorktreePaths({ worktreePath: builderWorktreePath }),
     specId: SPEC_ID,
     handoff: doneHandoff(builderLaunch.revision + 1),
   });

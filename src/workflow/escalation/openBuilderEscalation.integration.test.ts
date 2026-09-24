@@ -8,6 +8,7 @@ import {
   commitAll,
   createApprovedWorkflow,
   doneHandoff,
+  getBuilderWorktreePaths,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import { pathExists } from '#utils/path-exists.ts';
@@ -85,10 +86,12 @@ describe('opening builder escalations', () => {
   });
 
   it('rejects an escalation after the builder pass is no longer running', async () => {
-    const { paths } = await createApprovedWorkflow();
+    const { paths, builderWorktreePath } = await createApprovedWorkflow();
     const launch = await prepareBuilderLaunch({ paths, specId: SPEC_ID });
     await completeBuilderPass({
-      paths,
+      paths: await getBuilderWorktreePaths({
+        worktreePath: builderWorktreePath,
+      }),
       specId: SPEC_ID,
       handoff: doneHandoff(launch.revision + 1),
     });

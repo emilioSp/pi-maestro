@@ -1,11 +1,5 @@
-import { readdir } from 'node:fs/promises';
-import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { buildMaestroInstructions } from '#maestro/instructions/buildMaestroInstructions.ts';
-import { createMaestroSessionState } from '#maestro/session/createMaestroSessionState.ts';
 import { formatMaestroStatus } from '#maestro/status/formatMaestroStatus.ts';
-import { createTemporaryRepository } from '#test/support/temp-repository.ts';
-import { pathExists } from '#utils/path-exists.ts';
 import {
   WORKFLOW_PHASES,
   WORKFLOW_STATE_VERSION,

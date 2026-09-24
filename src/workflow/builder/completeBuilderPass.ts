@@ -4,13 +4,17 @@
  */
 
 import { mkdir } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { dirname, relative } from 'node:path';
 import { assertBuilderHandoff } from '#artifacts/builder-handoff/assertBuilderHandoff.ts';
 import {
   BUILDER_HANDOFF_STATUSES,
+  BUILDER_HANDOFF_VERSION,
   type BuilderHandoff,
+  type BuilderHandoffSubmissionInput,
 } from '#artifacts/builder-handoff/schema.ts';
 import { writeBuilderHandoff } from '#artifacts/builder-handoff/writeBuilderHandoff.ts';
+import { runGitCommand } from '#git/command.ts';
+import { CHECKPOINT_COMMIT_MESSAGE } from '#git/commits/createCommit.ts';
 import type { GetMaestroPaths } from '#paths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -29,33 +33,159 @@ export type CompletedBuilderPass = {
   worktreePath: string;
 };
 
-export const completeBuilderPass = async ({
+// git log --format=%H%x00%s --fixed-strings --grep=<checkpoint-message> HEAD
+const getBuilderCheckpoint = async ({
+  worktreePath,
+}: {
+  worktreePath: string;
+}): Promise<string> => {
+  const result = await runGitCommand({
+    arguments: [
+      'log',
+      '--format=%H%x00%s',
+      '--fixed-strings',
+      `--grep=${CHECKPOINT_COMMIT_MESSAGE}`,
+      'HEAD',
+    ],
+    cwd: worktreePath,
+  });
+
+  for (const line of result.stdout.split(/\r?\n/)) {
+    const [commit, subject] = line.split('\0');
+
+    if (subject === CHECKPOINT_COMMIT_MESSAGE) {
+      return commit;
+    }
+  }
+
+  throw new Error('Builder launch checkpoint was not found in Git history.');
+};
+
+// git diff --no-renames --name-only -z <checkpoint> -- <spec-path>
+// git diff --cached --no-renames --name-only -z <checkpoint> -- <spec-path>
+// git ls-files --others --exclude-standard -z -- <spec-path>
+const assertProtocolFilesUnchanged = async ({
   paths,
   specId,
-  handoff,
+  worktreePath,
+  checkpoint,
 }: {
   paths: GetMaestroPaths;
   specId: string;
-  handoff: unknown;
+  worktreePath: string;
+  checkpoint: string;
+}): Promise<void> => {
+  const specPath = relative(worktreePath, paths.getSpecPath(specId));
+
+  const [workingDiff, stagedDiff, untrackedFiles] = await Promise.all([
+    runGitCommand({
+      arguments: [
+        'diff',
+        '--no-renames',
+        '--name-only',
+        '-z',
+        checkpoint,
+        '--',
+        specPath,
+      ],
+      cwd: worktreePath,
+    }),
+    runGitCommand({
+      arguments: [
+        'diff',
+        '--cached',
+        '--no-renames',
+        '--name-only',
+        '-z',
+        checkpoint,
+        '--',
+        specPath,
+      ],
+      cwd: worktreePath,
+    }),
+    runGitCommand({
+      arguments: [
+        'ls-files',
+        '--others',
+        '--exclude-standard',
+        '-z',
+        '--',
+        specPath,
+      ],
+      cwd: worktreePath,
+    }),
+  ]);
+
+  const changedPath = [
+    workingDiff.stdout,
+    stagedDiff.stdout,
+    untrackedFiles.stdout,
+  ]
+    .flatMap((output) => output.split('\0'))
+    .find((path) => path.length > 0);
+
+  if (changedPath !== undefined) {
+    throw new Error(
+      `Builder changed a protected workflow file after launch: "${changedPath}".`,
+    );
+  }
+};
+
+const buildBuilderHandoff = ({
+  draftHandoff,
+  state,
+}: {
+  draftHandoff: BuilderHandoffSubmissionInput;
+  state: WorkflowState;
+}): unknown => ({
+  version: BUILDER_HANDOFF_VERSION,
+  specId: state.specId,
+  revision: state.revision + 1,
+  status: draftHandoff.status,
+  summary: draftHandoff.summary,
+  acceptanceCriteria: draftHandoff.acceptanceCriteria,
+  ...(draftHandoff.failure === undefined
+    ? {}
+    : { failure: draftHandoff.failure }),
+  notes: draftHandoff.notes,
+});
+
+export const completeBuilderPass = async ({
+  paths,
+  specId,
+  handoff: draftHandoff,
+}: {
+  paths: GetMaestroPaths;
+  specId: string;
+  handoff: BuilderHandoffSubmissionInput;
 }): Promise<CompletedBuilderPass> => {
-  const builderWorktreePath = paths.getBuilderWorktreePath(specId);
+  const builderWorktreePath = paths.repositoryRoot;
   await assertWorktree({
     repositoryRoot: paths.repositoryRoot,
     branch: paths.getBuilderBranch(specId),
     worktreePath: builderWorktreePath,
   });
 
-  const workflowPath = paths.getWorkflowPathInWorktree({
-    specId,
+  const checkpoint = await getBuilderCheckpoint({
     worktreePath: builderWorktreePath,
   });
 
-  const handoffPath = paths.getBuilderHandoffPathInWorktree({
+  await assertProtocolFilesUnchanged({
+    paths,
     specId,
     worktreePath: builderWorktreePath,
+    checkpoint,
   });
 
+  const workflowPath = paths.getWorkflowPath(specId);
+  const handoffPath = paths.getBuilderHandoffPath(specId);
   const currentState = await readWorkflowState({ path: workflowPath });
+
+  if (currentState.specId !== specId) {
+    throw new Error(
+      `Workflow spec ID mismatch: expected "${specId}", found "${currentState.specId}".`,
+    );
+  }
 
   if (currentState.phase !== WORKFLOW_PHASES.BUILDER_RUNNING) {
     throw new Error(
@@ -67,7 +197,8 @@ export const completeBuilderPass = async ({
     throw new Error('Builder terminal handoff already exists.');
   }
 
-  assertBuilderHandoff(handoff, specId, currentState.revision + 1);
+  const handoff = buildBuilderHandoff({ draftHandoff, state: currentState });
+  assertBuilderHandoff(handoff, currentState.specId, currentState.revision + 1);
 
   const nextState = transitionWorkflow({
     state: currentState,
@@ -82,7 +213,7 @@ export const completeBuilderPass = async ({
   await writeBuilderHandoff({
     path: handoffPath,
     handoff,
-    specId,
+    specId: currentState.specId,
     revision: nextState.revision,
   });
 

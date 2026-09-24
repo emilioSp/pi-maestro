@@ -3,6 +3,7 @@
  * Used: When Maestro handles builder handoff artifacts.
  */
 
+import { StringEnum } from '@earendil-works/pi-ai';
 import { type Static, Type } from 'typebox';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 
@@ -32,17 +33,9 @@ export type ProbeStatus = (typeof PROBE_STATUSES)[keyof typeof PROBE_STATUSES];
 export type BreakageStatus =
   (typeof BREAKAGE_STATUSES)[keyof typeof BREAKAGE_STATUSES];
 
-const ProbeStatusSchema = Type.Union([
-  Type.Literal(PROBE_STATUSES.PASSED),
-  Type.Literal(PROBE_STATUSES.FAILED),
-  Type.Literal(PROBE_STATUSES.NOT_RUN),
-]);
+const ProbeStatusSchema = StringEnum(Object.values(PROBE_STATUSES));
 
-const BreakageStatusSchema = Type.Union([
-  Type.Literal(BREAKAGE_STATUSES.CONFIRMED),
-  Type.Literal(BREAKAGE_STATUSES.NOT_CONFIRMED),
-  Type.Literal(BREAKAGE_STATUSES.NOT_RUN),
-]);
+const BreakageStatusSchema = StringEnum(Object.values(BREAKAGE_STATUSES));
 
 export const BuilderAcceptanceCriterionSchema = Type.Object(
   {
@@ -54,13 +47,22 @@ export const BuilderAcceptanceCriterionSchema = Type.Object(
   { additionalProperties: false },
 );
 
+export const BuilderHandoffFailureSchema = Type.Object(
+  { reason: Type.String({ minLength: 1 }) },
+  { additionalProperties: false },
+);
+
+const BuilderHandoffContentFields = {
+  summary: Type.String({ minLength: 1 }),
+  acceptanceCriteria: Type.Array(BuilderAcceptanceCriterionSchema),
+  notes: Type.Array(Type.String()),
+};
+
 const BuilderHandoffFields = {
   version: Type.Literal(BUILDER_HANDOFF_VERSION),
   specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
   revision: Type.Integer({ minimum: 1 }),
-  summary: Type.String({ minLength: 1 }),
-  acceptanceCriteria: Type.Array(BuilderAcceptanceCriterionSchema),
-  notes: Type.Array(Type.String()),
+  ...BuilderHandoffContentFields,
 };
 
 export const BuilderDoneHandoffSchema = Type.Object(
@@ -75,10 +77,7 @@ export const BuilderFailedHandoffSchema = Type.Object(
   {
     ...BuilderHandoffFields,
     status: Type.Literal(BUILDER_HANDOFF_STATUSES.FAILED),
-    failure: Type.Object(
-      { reason: Type.String({ minLength: 1 }) },
-      { additionalProperties: false },
-    ),
+    failure: BuilderHandoffFailureSchema,
   },
   { additionalProperties: false },
 );
@@ -88,7 +87,36 @@ export const BuilderHandoffSchema = Type.Union([
   BuilderFailedHandoffSchema,
 ]);
 
+export const BuilderHandoffSubmissionSchema = Type.Object(
+  {
+    status: StringEnum(Object.values(BUILDER_HANDOFF_STATUSES), {
+      description:
+        'Whether the builder completed the work or could not complete it.',
+    }),
+    ...BuilderHandoffContentFields,
+    failure: Type.Optional(BuilderHandoffFailureSchema),
+  },
+  { additionalProperties: false },
+);
+
 export type BuilderAcceptanceCriterion = Static<
   typeof BuilderAcceptanceCriterionSchema
 >;
 export type BuilderHandoff = Static<typeof BuilderHandoffSchema>;
+export type BuilderHandoffSubmissionInput = Static<
+  typeof BuilderHandoffSubmissionSchema
+>;
+export type BuilderHandoffSubmission =
+  | {
+      status: typeof BUILDER_HANDOFF_STATUSES.DONE;
+      summary: string;
+      acceptanceCriteria: BuilderAcceptanceCriterion[];
+      notes: string[];
+    }
+  | {
+      status: typeof BUILDER_HANDOFF_STATUSES.FAILED;
+      summary: string;
+      acceptanceCriteria: BuilderAcceptanceCriterion[];
+      failure: { reason: string };
+      notes: string[];
+    };

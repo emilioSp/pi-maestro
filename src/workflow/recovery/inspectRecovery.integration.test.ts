@@ -10,6 +10,7 @@ import {
   createApprovedWorkflow,
   doneHandoff,
   failedHandoff,
+  getBuilderWorktreePaths,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
@@ -44,7 +45,9 @@ const prepareInterruptedVerifier = async () => {
     specId: SPEC_ID,
   });
   await completeBuilderPass({
-    paths: workflow.paths,
+    paths: await getBuilderWorktreePaths({
+      worktreePath: workflow.builderWorktreePath,
+    }),
     specId: SPEC_ID,
     handoff: doneHandoff(builderLaunch.revision + 1),
   });
@@ -164,7 +167,9 @@ describe('inspectRecovery', () => {
     const { paths, state, builderWorktreePath } =
       await prepareInterruptedBuilder();
     const completed = await completeBuilderPass({
-      paths,
+      paths: await getBuilderWorktreePaths({
+        worktreePath: builderWorktreePath,
+      }),
       specId: SPEC_ID,
       handoff: failedHandoff(state.revision + 1),
     });

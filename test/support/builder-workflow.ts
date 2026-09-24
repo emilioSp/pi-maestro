@@ -1,4 +1,4 @@
-import { writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   BREAKAGE_STATUSES,
@@ -8,6 +8,7 @@ import {
   PROBE_STATUSES,
 } from '#artifacts/builder-handoff/schema.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
+import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { runGitCommand } from '#git/command.ts';
 import { getMaestroPaths } from '#paths.ts';
 import { createSpec } from '#specs/create.ts';
@@ -19,23 +20,41 @@ export const SPEC_ID = '20260321-143052-add-weather-alerts';
 
 const cleanupFunctions: Array<() => Promise<void>> = [];
 
+type CreateApprovedWorkflowInput = {
+  commitApproval?: boolean;
+  specDirectory?: string;
+  worktreeDirectory?: string;
+};
+
 export const createApprovedWorkflow = async ({
   commitApproval = true,
-}: {
-  commitApproval?: boolean;
-} = {}) => {
+  specDirectory = '.specs',
+  worktreeDirectory = '.worktree',
+}: CreateApprovedWorkflowInput = {}) => {
   const repository = await createTemporaryRepository();
   cleanupFunctions.push(repository.cleanup);
   await writeFile(join(repository.path, 'README.md'), '# Test\n', 'utf8');
+  const configDirectory = join(repository.path, '.pi');
+  await mkdir(configDirectory, { recursive: true });
+  await writeFile(
+    join(configDirectory, 'maestro.json'),
+    JSON.stringify(
+      {
+        version: DEFAULT_CONFIG.version,
+        specDirectory,
+        worktreeDirectory,
+      },
+      null,
+      2,
+    ),
+    'utf8',
+  );
   await repository.commit({ message: 'Initial commit' });
 
+  const config = await loadConfiguration({ cwd: repository.path });
   const paths = getMaestroPaths({
     repositoryRoot: repository.path,
-    config: {
-      ...DEFAULT_CONFIG,
-      specDirectory: join(repository.path, '.specs'),
-      worktreeDirectory: join(repository.path, '.worktree'),
-    },
+    config,
   });
   await createSpec({
     paths,
@@ -56,6 +75,16 @@ export const createApprovedWorkflow = async ({
     builderBranch: paths.getBuilderBranch(SPEC_ID),
     builderWorktreePath: paths.getBuilderWorktreePath(SPEC_ID),
   };
+};
+
+export const getBuilderWorktreePaths = async ({
+  worktreePath,
+}: {
+  worktreePath: string;
+}) => {
+  const config = await loadConfiguration({ cwd: worktreePath });
+
+  return getMaestroPaths({ repositoryRoot: worktreePath, config });
 };
 
 export const cleanupBuilderWorkflows = async (): Promise<void> => {

@@ -14,6 +14,7 @@ import {
   commitAll,
   createApprovedWorkflow,
   failedHandoff,
+  getBuilderWorktreePaths,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import { pathExists } from '#utils/path-exists.ts';
@@ -128,7 +129,9 @@ describe('builder launch preparation', () => {
     const { paths, builderWorktreePath } = await createApprovedWorkflow();
     const launch = await prepareBuilderLaunch({ paths, specId: SPEC_ID });
     await completeBuilderPass({
-      paths,
+      paths: await getBuilderWorktreePaths({
+        worktreePath: builderWorktreePath,
+      }),
       specId: SPEC_ID,
       handoff: failedHandoff(launch.revision + 1),
     });

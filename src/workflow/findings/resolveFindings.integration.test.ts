@@ -14,6 +14,7 @@ import {
   commitAll,
   createApprovedWorkflow,
   doneHandoff,
+  getBuilderWorktreePaths,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
@@ -33,7 +34,7 @@ const prepareFindings = async (count = 2) => {
   const { paths, builderWorktreePath } = await createApprovedWorkflow();
   const builderLaunch = await prepareBuilderLaunch({ paths, specId: SPEC_ID });
   await completeBuilderPass({
-    paths,
+    paths: await getBuilderWorktreePaths({ worktreePath: builderWorktreePath }),
     specId: SPEC_ID,
     handoff: doneHandoff(builderLaunch.revision + 1),
   });
