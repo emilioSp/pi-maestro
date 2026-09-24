@@ -11,6 +11,7 @@ import type {
 } from '#artifacts/escalation/schema.ts';
 import type { GetMaestroPaths } from '#paths.ts';
 import { pathExists } from '#utils/path-exists.ts';
+import { assertBuilderProtocolUnchanged } from '#workflow/builder/assertBuilderProtocolUnchanged.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
   WORKFLOW_EVENTS,
@@ -35,46 +36,31 @@ type OpenBuilderEscalationInput = {
   escalation: NewEscalation;
 };
 
-const getPaths = async ({
-  paths,
-  specId,
-}: Omit<OpenBuilderEscalationInput, 'escalation'>) => {
-  const builderWorktreePath = paths.getBuilderWorktreePath(specId);
-  await assertWorktree({
-    repositoryRoot: paths.repositoryRoot,
-    branch: paths.getBuilderBranch(specId),
-    worktreePath: builderWorktreePath,
-  });
-
-  const workflowPath = paths.getWorkflowPathInWorktree({
-    specId,
-    worktreePath: builderWorktreePath,
-  });
-
-  const handoffPath = paths.getBuilderHandoffPathInWorktree({
-    specId,
-    worktreePath: builderWorktreePath,
-  });
-
-  const escalationsPath = paths.getEscalationsPathInWorktree({
-    specId,
-    worktreePath: builderWorktreePath,
-  });
-
-  const worktreePath = builderWorktreePath;
-
-  return { worktreePath, workflowPath, handoffPath, escalationsPath };
-};
-
 export const openBuilderEscalation = async ({
   paths,
   specId,
   escalation,
 }: OpenBuilderEscalationInput): Promise<OpenedBuilderEscalation> => {
-  const { worktreePath, escalationsPath, workflowPath, handoffPath } =
-    await getPaths({ paths, specId });
+  const worktreePath = paths.repositoryRoot;
 
+  await assertWorktree({
+    repositoryRoot: paths.repositoryRoot,
+    branch: paths.getBuilderBranch(specId),
+    worktreePath: paths.repositoryRoot,
+  });
+
+  await assertBuilderProtocolUnchanged({ paths, specId });
+
+  const workflowPath = paths.getWorkflowPath(specId);
+  const handoffPath = paths.getBuilderHandoffPath(specId);
+  const escalationsPath = paths.getEscalationsPath(specId);
   const currentState = await readWorkflowState({ path: workflowPath });
+
+  if (currentState.specId !== specId) {
+    throw new Error(
+      `Workflow spec ID mismatch: expected "${specId}", found "${currentState.specId}".`,
+    );
+  }
 
   if (currentState.phase !== WORKFLOW_PHASES.BUILDER_RUNNING) {
     throw new Error(
@@ -95,7 +81,7 @@ export const openBuilderEscalation = async ({
 
   const created = await createEscalation({
     directory: escalationsPath,
-    specId,
+    specId: currentState.specId,
     revision: nextState.revision,
     escalation,
   });

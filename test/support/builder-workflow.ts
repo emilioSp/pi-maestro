@@ -10,7 +10,7 @@ import {
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { runGitCommand } from '#git/command.ts';
-import { getMaestroPaths } from '#paths.ts';
+import { type GetMaestroPaths, getMaestroPaths } from '#paths.ts';
 import { createSpec } from '#specs/create.ts';
 import { createTemporaryRepository } from '#test/support/temp-repository.ts';
 import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
@@ -91,11 +91,22 @@ export const cleanupBuilderWorkflows = async (): Promise<void> => {
   await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
 };
 
-export const builderWorkflowPath = (builderWorktreePath: string): string =>
-  join(builderWorktreePath, '.specs', SPEC_ID, 'workflow.json');
+type BuilderWorkflowPathInput = {
+  paths: GetMaestroPaths;
+  worktreePath: string;
+};
 
-export const builderHandoffPath = (builderWorktreePath: string): string =>
-  join(builderWorktreePath, '.specs', SPEC_ID, 'handoffs', 'builder.json');
+export const builderWorkflowPath = ({
+  paths,
+  worktreePath,
+}: BuilderWorkflowPathInput): string =>
+  paths.getWorkflowPathInWorktree({ specId: SPEC_ID, worktreePath });
+
+export const builderHandoffPath = ({
+  paths,
+  worktreePath,
+}: BuilderWorkflowPathInput): string =>
+  paths.getBuilderHandoffPathInWorktree({ specId: SPEC_ID, worktreePath });
 
 export const commitAll = async ({
   path,

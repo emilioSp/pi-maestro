@@ -55,14 +55,19 @@ describe('verifier launch preparation', () => {
     ).resolves.toBe(launch.checkpointCommit);
     await expect(
       readWorkflowState({
-        path: join(launch.worktreePath, '.specs', SPEC_ID, 'workflow.json'),
+        path: paths.getWorkflowPathInWorktree({
+          specId: SPEC_ID,
+          worktreePath: launch.worktreePath,
+        }),
       }),
     ).resolves.toMatchObject({
       revision: launch.revision,
       phase: WORKFLOW_PHASES.VERIFIER_RUNNING,
     });
     await expect(
-      readWorkflowState({ path: builderWorkflowPath(builderWorktreePath) }),
+      readWorkflowState({
+        path: builderWorkflowPath({ paths, worktreePath: builderWorktreePath }),
+      }),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.READY_FOR_VERIFIER });
   });
 

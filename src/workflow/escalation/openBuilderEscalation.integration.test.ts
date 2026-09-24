@@ -51,9 +51,12 @@ describe('opening builder escalations', () => {
   it('opens and persists an escalation from builder-running', async () => {
     const { paths, builderWorktreePath } = await createApprovedWorkflow();
     await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+    const builderPaths = await getBuilderWorktreePaths({
+      worktreePath: builderWorktreePath,
+    });
 
     const opened = await openBuilderEscalation({
-      paths,
+      paths: builderPaths,
       specId: SPEC_ID,
       escalation: escalationInput(),
     });
@@ -88,28 +91,31 @@ describe('opening builder escalations', () => {
   it('rejects an escalation after the builder pass is no longer running', async () => {
     const { paths, builderWorktreePath } = await createApprovedWorkflow();
     const launch = await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+    const builderPaths = await getBuilderWorktreePaths({
+      worktreePath: builderWorktreePath,
+    });
     await completeBuilderPass({
-      paths: await getBuilderWorktreePaths({
-        worktreePath: builderWorktreePath,
-      }),
+      paths: builderPaths,
       specId: SPEC_ID,
       handoff: doneHandoff(launch.revision + 1),
     });
 
     await expect(
       openBuilderEscalation({
-        paths,
+        paths: builderPaths,
         specId: SPEC_ID,
         escalation: escalationInput(),
       }),
-    ).rejects.toThrow('builder-running state');
+    ).rejects.toThrow('Builder changed a protected workflow file after launch');
   });
 
   it('allocates the next escalation after a later builder pass', async () => {
     const { paths, builderWorktreePath } = await createApprovedWorkflow();
     await prepareBuilderLaunch({ paths, specId: SPEC_ID });
     const first = await openBuilderEscalation({
-      paths,
+      paths: await getBuilderWorktreePaths({
+        worktreePath: builderWorktreePath,
+      }),
       specId: SPEC_ID,
       escalation: escalationInput(),
     });
@@ -130,7 +136,9 @@ describe('opening builder escalations', () => {
     await prepareBuilderLaunch({ paths, specId: SPEC_ID });
 
     const second = await openBuilderEscalation({
-      paths,
+      paths: await getBuilderWorktreePaths({
+        worktreePath: builderWorktreePath,
+      }),
       specId: SPEC_ID,
       escalation: escalationInput('Which option should the later pass use?'),
     });
@@ -141,10 +149,14 @@ describe('opening builder escalations', () => {
       resolution: null,
     });
     await expect(
-      pathExists(builderHandoffPath(builderWorktreePath)),
+      pathExists(
+        builderHandoffPath({ paths, worktreePath: builderWorktreePath }),
+      ),
     ).resolves.toBe(false);
     await expect(
-      readWorkflowState({ path: builderWorkflowPath(builderWorktreePath) }),
+      readWorkflowState({
+        path: builderWorkflowPath({ paths, worktreePath: builderWorktreePath }),
+      }),
     ).resolves.toMatchObject({
       revision: 7,
       phase: WORKFLOW_PHASES.ESCALATION_DECISION,

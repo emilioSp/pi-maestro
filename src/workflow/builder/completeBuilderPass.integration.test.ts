@@ -8,6 +8,7 @@ import {
   PROBE_STATUSES,
 } from '#artifacts/builder-handoff/schema.ts';
 import { runGitCommand } from '#git/command.ts';
+import type { GetMaestroPaths } from '#paths.ts';
 import {
   builderHandoffPath,
   builderWorkflowPath,
@@ -53,12 +54,38 @@ const FAILED_SUBMISSION: BuilderHandoffSubmission = {
   notes: [],
 };
 
-const PROTECTED_PATHS = [
-  { label: 'spec', path: '.specs/SPEC_ID/spec.md' },
-  { label: 'workflow state', path: '.specs/SPEC_ID/workflow.json' },
-  { label: 'prototype', path: '.specs/SPEC_ID/prototypes/direct-edit.txt' },
-  { label: 'handoff', path: '.specs/SPEC_ID/handoffs/direct-edit.json' },
-] as const;
+type ProtectedPathInput = {
+  paths: GetMaestroPaths;
+};
+
+type ProtectedPath = {
+  label: string;
+  getPath: (input: ProtectedPathInput) => string;
+};
+
+const PROTECTED_PATHS: ProtectedPath[] = [
+  {
+    label: 'spec',
+    getPath: ({ paths }) => paths.getSpecFilePath(SPEC_ID),
+  },
+  {
+    label: 'workflow state',
+    getPath: ({ paths }) => paths.getWorkflowPath(SPEC_ID),
+  },
+  {
+    label: 'prototype',
+    getPath: ({ paths }) =>
+      paths.getPrototypePath({
+        specId: SPEC_ID,
+        relativePath: 'direct-edit.txt',
+      }),
+  },
+  {
+    label: 'handoff',
+    getPath: ({ paths }) =>
+      join(paths.getHandoffsPath(SPEC_ID), 'direct-edit.json'),
+  },
+];
 
 const createBuilderPass = async () => {
   const { paths, builderWorktreePath } = await createApprovedWorkflow();
@@ -101,10 +128,14 @@ describe('builder pass completion', () => {
     });
 
     await expect(
-      readWorkflowState({ path: builderWorkflowPath(builderWorktreePath) }),
+      readWorkflowState({
+        path: builderWorkflowPath({ paths, worktreePath: builderWorktreePath }),
+      }),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.READY_FOR_VERIFIER });
     await expect(
-      pathExists(builderHandoffPath(builderWorktreePath)),
+      pathExists(
+        builderHandoffPath({ paths, worktreePath: builderWorktreePath }),
+      ),
     ).resolves.toBe(true);
   });
 
@@ -138,7 +169,9 @@ describe('builder pass completion', () => {
     });
 
     await expect(
-      readWorkflowState({ path: builderWorkflowPath(builderWorktreePath) }),
+      readWorkflowState({
+        path: builderWorkflowPath({ paths, worktreePath: builderWorktreePath }),
+      }),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_FAILED });
   });
 
@@ -165,24 +198,25 @@ describe('builder pass completion', () => {
     ).rejects.toThrow('Done builder handoff requires every probe to pass');
 
     await expect(
-      readWorkflowState({ path: builderWorkflowPath(builderWorktreePath) }),
+      readWorkflowState({
+        path: builderWorkflowPath({ paths, worktreePath: builderWorktreePath }),
+      }),
     ).resolves.toMatchObject({
       revision: launch.revision,
       phase: WORKFLOW_PHASES.BUILDER_RUNNING,
     });
     await expect(
-      pathExists(builderHandoffPath(builderWorktreePath)),
+      pathExists(
+        builderHandoffPath({ paths, worktreePath: builderWorktreePath }),
+      ),
     ).resolves.toBe(false);
   });
 
   it.each(PROTECTED_PATHS)(
     'rejects a direct change to the protected $label path',
-    async ({ path }) => {
+    async ({ getPath }) => {
       const { paths, builderWorktreePath } = await createBuilderPass();
-      const targetPath = join(
-        builderWorktreePath,
-        path.replace('SPEC_ID', SPEC_ID),
-      );
+      const targetPath = getPath({ paths });
       await mkdir(dirname(targetPath), { recursive: true });
       await writeFile(targetPath, 'direct change\n');
 
@@ -197,14 +231,16 @@ describe('builder pass completion', () => {
       );
 
       await expect(
-        pathExists(builderHandoffPath(builderWorktreePath)),
+        pathExists(
+          builderHandoffPath({ paths, worktreePath: builderWorktreePath }),
+        ),
       ).resolves.toBe(false);
     },
   );
 
   it('detects a staged protocol change even when the working file is restored', async () => {
     const { paths, builderWorktreePath } = await createBuilderPass();
-    const specPath = join(builderWorktreePath, '.specs', SPEC_ID, 'spec.md');
+    const specPath = paths.getSpecFilePath(SPEC_ID);
     const originalSpec = await readFile(specPath, 'utf8');
 
     await writeFile(specPath, `${originalSpec}\nchanged\n`);

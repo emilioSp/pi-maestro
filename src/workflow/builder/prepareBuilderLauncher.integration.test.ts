@@ -55,7 +55,9 @@ describe('builder launch preparation', () => {
       }),
     ).resolves.toBe(launch.checkpointCommit);
     await expect(
-      readWorkflowState({ path: builderWorkflowPath(builderWorktreePath) }),
+      readWorkflowState({
+        path: builderWorkflowPath({ paths, worktreePath: builderWorktreePath }),
+      }),
     ).resolves.toMatchObject({
       revision: 3,
       phase: WORKFLOW_PHASES.BUILDER_RUNNING,
@@ -148,10 +150,14 @@ describe('builder launch preparation', () => {
 
     expect(retry.revision).toBe(launch.revision + 2);
     await expect(
-      pathExists(builderHandoffPath(builderWorktreePath)),
+      pathExists(
+        builderHandoffPath({ paths, worktreePath: builderWorktreePath }),
+      ),
     ).resolves.toBe(false);
     await expect(
-      readWorkflowState({ path: builderWorkflowPath(builderWorktreePath) }),
+      readWorkflowState({
+        path: builderWorkflowPath({ paths, worktreePath: builderWorktreePath }),
+      }),
     ).resolves.toMatchObject({
       revision: retry.revision,
       phase: WORKFLOW_PHASES.BUILDER_RUNNING,
@@ -161,7 +167,10 @@ describe('builder launch preparation', () => {
   it('blocks a retry when the builder worktree is dirty', async () => {
     const { paths, builderWorktreePath } = await createApprovedWorkflow();
     await prepareBuilderLaunch({ paths, specId: SPEC_ID });
-    const workflowPath = builderWorkflowPath(builderWorktreePath);
+    const workflowPath = builderWorkflowPath({
+      paths,
+      worktreePath: builderWorktreePath,
+    });
     await writeFile(
       join(builderWorktreePath, 'unfinished.txt'),
       'unfinished\n',
@@ -182,7 +191,10 @@ describe('builder launch preparation', () => {
     const { paths, builderBranch, builderWorktreePath } =
       await createApprovedWorkflow();
     await prepareBuilderLaunch({ paths, specId: SPEC_ID });
-    const workflowPath = builderWorkflowPath(builderWorktreePath);
+    const workflowPath = builderWorkflowPath({
+      paths,
+      worktreePath: builderWorktreePath,
+    });
     const runningState = await readWorkflowState({ path: workflowPath });
     const correctionState = {
       ...runningState,

@@ -20,7 +20,7 @@ export const EscalationOptionSchema = Type.Object(
   { additionalProperties: false },
 );
 
-const EscalationRecommendationSchema = Type.Object(
+export const EscalationRecommendationSchema = Type.Object(
   {
     optionId: Type.String({ minLength: 1 }),
     reason: Type.String({ minLength: 1 }),
@@ -37,18 +37,30 @@ export const EscalationResolutionSchema = Type.Object(
   { additionalProperties: false },
 );
 
+const NewEscalationFields = {
+  question: Type.String({ minLength: 1 }),
+  context: Type.String({ minLength: 1 }),
+  options: Type.Array(EscalationOptionSchema, { minItems: 1 }),
+  notes: Type.Array(Type.String()),
+};
+
+export const NewEscalationSchema = Type.Object(
+  {
+    ...NewEscalationFields,
+    recommendation: Type.Union([EscalationRecommendationSchema, Type.Null()]),
+  },
+  { additionalProperties: false },
+);
+
 export const EscalationSchema = Type.Object(
   {
     version: Type.Literal(ESCALATION_VERSION),
     specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
     revision: Type.Integer({ minimum: 1 }),
     id: Type.String({ pattern: ESCALATION_ID_PATTERN.source }),
-    question: Type.String({ minLength: 1 }),
-    context: Type.String({ minLength: 1 }),
-    options: Type.Array(EscalationOptionSchema, { minItems: 1 }),
+    ...NewEscalationFields,
     recommendation: Type.Union([EscalationRecommendationSchema, Type.Null()]),
     resolution: Type.Union([EscalationResolutionSchema, Type.Null()]),
-    notes: Type.Array(Type.String()),
   },
   { additionalProperties: false },
 );
@@ -56,7 +68,4 @@ export const EscalationSchema = Type.Object(
 export type EscalationOption = Static<typeof EscalationOptionSchema>;
 export type EscalationResolution = Static<typeof EscalationResolutionSchema>;
 export type Escalation = Static<typeof EscalationSchema>;
-export type NewEscalation = Omit<
-  Escalation,
-  'version' | 'specId' | 'revision' | 'id' | 'resolution'
->;
+export type NewEscalation = Static<typeof NewEscalationSchema>;

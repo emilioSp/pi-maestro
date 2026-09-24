@@ -17,5 +17,5 @@ export const findRepositoryRoot = async ({
     cwd,
   });
 
-  return realpath(result.stdout.replace(/\r?\n$/, ''));
+  return realpath(result.stdout.trim());
 };

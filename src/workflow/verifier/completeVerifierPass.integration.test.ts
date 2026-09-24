@@ -167,18 +167,18 @@ describe('verifier pass completion', () => {
     ).resolves.toMatchObject({ error: 'PRODUCT_FILES_MODIFIED' });
     await expect(
       pathExists(
-        join(
-          launch.worktreePath,
-          '.specs',
-          SPEC_ID,
-          'handoffs',
-          'verifier.json',
-        ),
+        paths.getVerifierHandoffPathInWorktree({
+          specId: SPEC_ID,
+          worktreePath: launch.worktreePath,
+        }),
       ),
     ).resolves.toBe(false);
     await expect(
       readWorkflowState({
-        path: join(launch.worktreePath, '.specs', SPEC_ID, 'workflow.json'),
+        path: paths.getWorkflowPathInWorktree({
+          specId: SPEC_ID,
+          worktreePath: launch.worktreePath,
+        }),
       }),
     ).resolves.toMatchObject({
       revision: launch.revision,
@@ -204,18 +204,18 @@ describe('verifier pass completion', () => {
     ).resolves.toMatchObject({ error: 'PRODUCT_FILES_MODIFIED' });
     await expect(
       pathExists(
-        join(
-          launch.worktreePath,
-          '.specs',
-          SPEC_ID,
-          'handoffs',
-          'verifier.json',
-        ),
+        paths.getVerifierHandoffPathInWorktree({
+          specId: SPEC_ID,
+          worktreePath: launch.worktreePath,
+        }),
       ),
     ).resolves.toBe(false);
     await expect(
       readWorkflowState({
-        path: join(launch.worktreePath, '.specs', SPEC_ID, 'workflow.json'),
+        path: paths.getWorkflowPathInWorktree({
+          specId: SPEC_ID,
+          worktreePath: launch.worktreePath,
+        }),
       }),
     ).resolves.toMatchObject({
       revision: launch.revision,
@@ -226,12 +226,10 @@ describe('verifier pass completion', () => {
   it('rejects untracked product files with a simple error shape and no writes', async () => {
     const { paths, launch } = await prepareVerifier();
     await writeFile(join(launch.worktreePath, 'new-product.txt'), 'new file\n');
-    const workflowPath = join(
-      launch.worktreePath,
-      '.specs',
-      SPEC_ID,
-      'workflow.json',
-    );
+    const workflowPath = paths.getWorkflowPathInWorktree({
+      specId: SPEC_ID,
+      worktreePath: launch.worktreePath,
+    });
     const before = await readFile(workflowPath, 'utf8');
 
     const result = await completeVerifierPass({
@@ -251,13 +249,10 @@ describe('verifier pass completion', () => {
     await expect(readFile(workflowPath, 'utf8')).resolves.toBe(before);
     await expect(
       pathExists(
-        join(
-          launch.worktreePath,
-          '.specs',
-          SPEC_ID,
-          'handoffs',
-          'verifier.json',
-        ),
+        paths.getVerifierHandoffPathInWorktree({
+          specId: SPEC_ID,
+          worktreePath: launch.worktreePath,
+        }),
       ),
     ).resolves.toBe(false);
   });
@@ -277,9 +272,10 @@ describe('verifier pass completion', () => {
     ).resolves.toMatchObject({ error: 'PRODUCT_FILES_MODIFIED' });
     await expect(
       readWorkflowState({
-        path: builderWorkflowPath(
-          paths.getVerifierWorktreePath({ specId: SPEC_ID, pass: launch.pass }),
-        ),
+        path: builderWorkflowPath({
+          paths,
+          worktreePath: launch.worktreePath,
+        }),
       }),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.VERIFIER_RUNNING });
   });

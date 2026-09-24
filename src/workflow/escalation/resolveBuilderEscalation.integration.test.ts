@@ -6,6 +6,7 @@ import {
   cleanupBuilderWorkflows,
   commitAll,
   createApprovedWorkflow,
+  getBuilderWorktreePaths,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
@@ -42,7 +43,9 @@ const openEscalation = async () => {
   const workflow = await createApprovedWorkflow();
   await prepareBuilderLaunch({ paths: workflow.paths, specId: SPEC_ID });
   const opened = await openBuilderEscalation({
-    paths: workflow.paths,
+    paths: await getBuilderWorktreePaths({
+      worktreePath: workflow.builderWorktreePath,
+    }),
     specId: SPEC_ID,
     escalation: escalationInput,
   });
@@ -87,7 +90,9 @@ describe('resolving builder escalations', () => {
       getHeadCommit({ repositoryRoot: builderWorktreePath }),
     ).resolves.toBe(resolved.checkpointCommit);
     await expect(
-      readWorkflowState({ path: builderWorkflowPath(builderWorktreePath) }),
+      readWorkflowState({
+        path: builderWorkflowPath({ paths, worktreePath: builderWorktreePath }),
+      }),
     ).resolves.toMatchObject({
       revision: 5,
       phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
@@ -120,7 +125,9 @@ describe('resolving builder escalations', () => {
       }),
     ).rejects.toThrow('unknown option');
     await expect(
-      readWorkflowState({ path: builderWorkflowPath(builderWorktreePath) }),
+      readWorkflowState({
+        path: builderWorkflowPath({ paths, worktreePath: builderWorktreePath }),
+      }),
     ).resolves.toMatchObject({
       revision: 4,
       phase: WORKFLOW_PHASES.ESCALATION_DECISION,

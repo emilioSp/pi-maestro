@@ -1,4 +1,3 @@
-import { join } from 'node:path';
 import type {
   ExtensionAPI,
   ExtensionContext,
@@ -14,13 +13,14 @@ import {
   PROBE_STATUSES,
 } from '#artifacts/builder-handoff/schema.ts';
 import {
-  builderHandoffPath,
-  builderWorkflowPath,
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
-import { registerRecordBuilderHandoffTool } from '#tools/child/record-builder-handoff.ts';
+import {
+  BUILDER_HANDOFF_TOOL,
+  registerRecordBuilderHandoffTool,
+} from '#tools/child/record-builder-handoff.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -67,7 +67,7 @@ const getRegisteredTool = (): ToolDefinition => {
 
   const tool = tools[0];
 
-  if (tool === undefined || tool.name !== 'maestro_record_builder_handoff') {
+  if (tool === undefined || tool.name !== BUILDER_HANDOFF_TOOL.NAME) {
     throw new Error('Builder handoff tool was not registered.');
   }
 
@@ -107,7 +107,10 @@ describe('record builder handoff tool', () => {
 
     await expect(
       readBuilderHandoff({
-        path: builderHandoffPath(builderWorktreePath),
+        path: paths.getBuilderHandoffPathInWorktree({
+          specId: SPEC_ID,
+          worktreePath: builderWorktreePath,
+        }),
         specId: SPEC_ID,
         revision: launch.revision + 1,
       }),
@@ -117,7 +120,12 @@ describe('record builder handoff tool', () => {
       status: BUILDER_HANDOFF_STATUSES.DONE,
     });
     await expect(
-      readWorkflowState({ path: builderWorkflowPath(builderWorktreePath) }),
+      readWorkflowState({
+        path: paths.getWorkflowPathInWorktree({
+          specId: SPEC_ID,
+          worktreePath: builderWorktreePath,
+        }),
+      }),
     ).resolves.toMatchObject({
       revision: launch.revision + 1,
       phase: WORKFLOW_PHASES.READY_FOR_VERIFIER,
@@ -156,25 +164,20 @@ describe('record builder handoff tool', () => {
 
     await expect(
       readBuilderHandoff({
-        path: join(
-          builderWorktreePath,
-          specDirectory,
-          SPEC_ID,
-          'handoffs',
-          'builder.json',
-        ),
+        path: paths.getBuilderHandoffPathInWorktree({
+          specId: SPEC_ID,
+          worktreePath: builderWorktreePath,
+        }),
         specId: SPEC_ID,
         revision: launch.revision + 1,
       }),
     ).resolves.toMatchObject({ status: BUILDER_HANDOFF_STATUSES.DONE });
     await expect(
       readWorkflowState({
-        path: join(
-          builderWorktreePath,
-          specDirectory,
-          SPEC_ID,
-          'workflow.json',
-        ),
+        path: paths.getWorkflowPathInWorktree({
+          specId: SPEC_ID,
+          worktreePath: builderWorktreePath,
+        }),
       }),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.READY_FOR_VERIFIER });
   });
@@ -194,7 +197,10 @@ describe('record builder handoff tool', () => {
 
     await expect(
       readBuilderHandoff({
-        path: builderHandoffPath(builderWorktreePath),
+        path: paths.getBuilderHandoffPathInWorktree({
+          specId: SPEC_ID,
+          worktreePath: builderWorktreePath,
+        }),
         specId: SPEC_ID,
         revision: launch.revision + 1,
       }),
@@ -205,7 +211,12 @@ describe('record builder handoff tool', () => {
       failure: FAILED_INPUT.failure,
     });
     await expect(
-      readWorkflowState({ path: builderWorkflowPath(builderWorktreePath) }),
+      readWorkflowState({
+        path: paths.getWorkflowPathInWorktree({
+          specId: SPEC_ID,
+          worktreePath: builderWorktreePath,
+        }),
+      }),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_FAILED });
   });
 
@@ -236,13 +247,23 @@ describe('record builder handoff tool', () => {
     ).rejects.toThrow('Done builder handoff requires every probe to pass');
 
     await expect(
-      readWorkflowState({ path: builderWorkflowPath(builderWorktreePath) }),
+      readWorkflowState({
+        path: paths.getWorkflowPathInWorktree({
+          specId: SPEC_ID,
+          worktreePath: builderWorktreePath,
+        }),
+      }),
     ).resolves.toMatchObject({
       revision: launch.revision,
       phase: WORKFLOW_PHASES.BUILDER_RUNNING,
     });
     await expect(
-      pathExists(builderHandoffPath(builderWorktreePath)),
+      pathExists(
+        paths.getBuilderHandoffPathInWorktree({
+          specId: SPEC_ID,
+          worktreePath: builderWorktreePath,
+        }),
+      ),
     ).resolves.toBe(false);
   });
 
@@ -263,10 +284,20 @@ describe('record builder handoff tool', () => {
     ).rejects.toThrow('Invalid builder handoff');
 
     await expect(
-      readWorkflowState({ path: builderWorkflowPath(builderWorktreePath) }),
+      readWorkflowState({
+        path: paths.getWorkflowPathInWorktree({
+          specId: SPEC_ID,
+          worktreePath: builderWorktreePath,
+        }),
+      }),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_RUNNING });
     await expect(
-      pathExists(builderHandoffPath(builderWorktreePath)),
+      pathExists(
+        paths.getBuilderHandoffPathInWorktree({
+          specId: SPEC_ID,
+          worktreePath: builderWorktreePath,
+        }),
+      ),
     ).resolves.toBe(false);
   });
 });
