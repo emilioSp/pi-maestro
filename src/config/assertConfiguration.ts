@@ -72,6 +72,7 @@ export function assertConfiguration(
   }
 
   const semverMatch = raw.version.match(SEMVER_PATTERN);
+
   if (!semverMatch) {
     throw new Error(
       `Invalid configuration version: "${raw.version}". Expected a semantic version (e.g. "1.0.0").`,
@@ -79,6 +80,7 @@ export function assertConfiguration(
   }
 
   const majorVersion = semverMatch[1];
+
   if (majorVersion !== '1') {
     throw new Error(
       `Unsupported configuration major version: ${majorVersion}. Expected major version 1.`,
@@ -92,6 +94,7 @@ export function assertConfiguration(
   }
 
   const [firstError] = Value.Errors(MaestroConfigInputSchema, raw);
+
   if (firstError !== undefined) {
     throw new Error(formatError(firstError));
   }

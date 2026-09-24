@@ -20,6 +20,7 @@ const parseRepositoryStatus = (result: GitCommandResult): RepositoryStatus => {
 
   for (let index = 0; index < records.length; index += 1) {
     const record = records[index];
+
     if (record.length === 0) {
       continue;
     }
@@ -31,9 +32,11 @@ const parseRepositoryStatus = (result: GitCommandResult): RepositoryStatus => {
       untracked.push(path);
       continue;
     }
+
     if (indexStatus !== ' ') {
       staged.push(path);
     }
+
     if (worktreeStatus !== ' ') {
       unstaged.push(path);
     }

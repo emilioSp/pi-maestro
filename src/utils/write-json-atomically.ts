@@ -7,6 +7,7 @@ import { writeAtomically } from '#utils/write-atomically.ts';
 
 const jsonContent = (data: unknown): string => {
   const content = JSON.stringify(data, null, 2);
+
   if (content === undefined) {
     throw new Error('JSON data must be serializable.');
   }

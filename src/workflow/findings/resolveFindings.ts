@@ -54,6 +54,7 @@ const assertDecisions = ({
 }): void => {
   const expectedIds = new Set(findings.map(({ id }) => id));
   const seenIds = new Set<string>();
+
   for (const decision of decisions) {
     if (!expectedIds.has(decision.findingId)) {
       throw new Error(`Unknown finding ID: "${decision.findingId}".`);
@@ -78,6 +79,7 @@ const assertDecisions = ({
   }
 
   const missing = findings.find(({ id }) => !seenIds.has(id));
+
   if (missing !== undefined) {
     throw new Error(`Missing decision for finding "${missing.id}".`);
   }
@@ -120,6 +122,7 @@ export const resolveFindings = async ({
   });
 
   const currentState = await readWorkflowState({ path: workflowPath });
+
   if (currentState.phase !== WORKFLOW_PHASES.FINDINGS_DECISION) {
     throw new Error(
       `Finding resolution requires findings-decision state, found "${currentState.phase}".`,
@@ -130,6 +133,7 @@ export const resolveFindings = async ({
     specId,
     revision: currentState.revision,
   });
+
   if (handoff.findings.length === 0) {
     throw new Error(
       'Finding resolution requires at least one current finding.',

@@ -133,11 +133,13 @@ export const completeVerifierPass = async ({
     worktreePath: verifierWorktreePath,
   });
   const currentState = await readWorkflowState({ path: workflowPath });
+
   if (currentState.phase !== WORKFLOW_PHASES.VERIFIER_RUNNING) {
     throw new Error(
       `Verifier handoff requires verifier-running state, found "${currentState.phase}".`,
     );
   }
+
   if (await pathExists(handoffPath)) {
     throw new Error('Verifier terminal handoff already exists.');
   }

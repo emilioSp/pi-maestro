@@ -27,5 +27,6 @@ export const readWorkflowState = async ({
 }): Promise<WorkflowState> => {
   const state = await readJson(path);
   assertWorkflowState(state);
+
   return state;
 };

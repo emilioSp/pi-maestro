@@ -22,11 +22,13 @@ export const writeWorkflowState = async ({
   currentRevision: number;
 }): Promise<void> => {
   assertWorkflowState(state);
+
   if (!Number.isSafeInteger(currentRevision) || currentRevision < 0) {
     throw new Error(
       'Expected workflow revision must be a non-negative integer.',
     );
   }
+
   if (state.revision <= currentRevision) {
     throw new Error(
       `Workflow revision must be higher than expected revision ${currentRevision}.`,
@@ -48,13 +50,16 @@ export const writeWorkflowState = async ({
     }
 
     const exists = await pathExists(path);
+
     if (!exists && currentRevision !== 0) {
       throw new Error(
         `Stale workflow revision: expected ${currentRevision}, but no state exists.`,
       );
     }
+
     if (exists) {
       const current = await readWorkflowState({ path });
+
       if (current.revision !== currentRevision) {
         throw new Error(
           `Stale workflow revision: expected ${currentRevision}, found ${current.revision}.`,

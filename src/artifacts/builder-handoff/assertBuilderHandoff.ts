@@ -41,6 +41,7 @@ function assertBuilderHandoffSchema(
   }
 
   const [error] = Value.Errors(BuilderHandoffSchema, input);
+
   if (error !== undefined) {
     throw new Error(`Invalid builder handoff: ${error.message}.`);
   }
@@ -52,12 +53,15 @@ export function assertBuilderHandoff(
   revision: number,
 ): asserts handoff is BuilderHandoff {
   assertBuilderHandoffSchema(handoff);
+
   if (!isValidSpecId(handoff.specId)) {
     throw new Error(`Invalid builder handoff spec ID: "${handoff.specId}".`);
   }
+
   if (!hasUniqueAcceptanceCriterionIds(handoff.acceptanceCriteria)) {
     throw new Error('Builder handoff acceptance criterion IDs must be unique.');
   }
+
   if (
     handoff.status === BUILDER_HANDOFF_STATUSES.DONE &&
     !hasOnlyCompletedChecks(handoff.acceptanceCriteria)
@@ -66,6 +70,7 @@ export function assertBuilderHandoff(
       'Done builder handoff requires every probe to pass and every breakage check to be confirmed.',
     );
   }
+
   if (
     handoff.status === BUILDER_HANDOFF_STATUSES.FAILED &&
     !hasPartialCheck(handoff.acceptanceCriteria)
@@ -74,19 +79,23 @@ export function assertBuilderHandoff(
       'Failed builder handoff requires at least one failed, unconfirmed, or not-run check.',
     );
   }
+
   if (!isValidSpecId(specId)) {
     throw new Error(`Invalid expected builder handoff spec ID: "${specId}".`);
   }
+
   if (!Number.isSafeInteger(revision) || revision < 1) {
     throw new Error(
       'Expected builder handoff revision must be a positive integer.',
     );
   }
+
   if (handoff.specId !== specId) {
     throw new Error(
       `Builder handoff spec ID mismatch: expected "${specId}", found "${handoff.specId}".`,
     );
   }
+
   if (handoff.revision !== revision) {
     throw new Error(
       `Builder handoff revision mismatch: expected ${revision}, found ${handoff.revision}.`,

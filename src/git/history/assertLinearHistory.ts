@@ -23,9 +23,11 @@ export const assertLinearHistory = async ({
     first: base,
     second: branch,
   });
+
   if (!mergeBase) {
     throw new Error(`Refusing unrelated histories: ${base} and ${branch}.`);
   }
+
   if (
     !(await isAncestor({ repositoryRoot, ancestor: base, descendant: branch }))
   ) {

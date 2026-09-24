@@ -47,6 +47,7 @@ export const createCommit = async ({
   message?: string;
 }): Promise<string> => {
   const branch = await getCurrentBranch({ repositoryRoot });
+
   if (!isWorkflowBranch(branch)) {
     throw new Error(
       `Refusing to create a checkpoint on non-workflow branch: ${branch}.`,

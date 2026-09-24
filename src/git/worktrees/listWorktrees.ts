@@ -33,6 +33,7 @@ const parseWorktrees = (output: string): Worktree[] => {
     const separator = line.indexOf(' ');
     const key = separator === -1 ? line : line.slice(0, separator);
     const value = separator === -1 ? '' : line.slice(separator + 1);
+
     if (key === 'worktree') {
       current = { path: value };
     } else if (current && key === 'HEAD') {

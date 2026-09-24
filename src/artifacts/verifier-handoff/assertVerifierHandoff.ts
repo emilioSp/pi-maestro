@@ -27,6 +27,7 @@ function assertVerifierHandoffSchema(
   }
 
   const [error] = Value.Errors(VerifierHandoffSchema, input);
+
   if (error !== undefined) {
     throw new Error(`Invalid verifier handoff: ${error.message}.`);
   }
@@ -38,9 +39,11 @@ export function assertVerifierHandoff(
   revision: number,
 ): asserts handoff is VerifierHandoff {
   assertVerifierHandoffSchema(handoff);
+
   if (!isValidSpecId(handoff.specId)) {
     throw new Error(`Invalid verifier handoff spec ID: "${handoff.specId}".`);
   }
+
   if (
     new Set(handoff.acceptanceCriteria.map((criterion) => criterion.id))
       .size !== handoff.acceptanceCriteria.length
@@ -53,13 +56,16 @@ export function assertVerifierHandoff(
   const acceptanceCriterionIds = new Set(
     handoff.acceptanceCriteria.map((criterion) => criterion.id),
   );
+
   for (const [index, finding] of handoff.findings.entries()) {
     const expectedId = `F${index + 1}`;
+
     if (finding.id !== expectedId) {
       throw new Error(
         `Verifier handoff finding IDs must be sequential: expected "${expectedId}", found "${finding.id}".`,
       );
     }
+
     if (
       finding.acceptanceCriterion !== null &&
       !acceptanceCriterionIds.has(finding.acceptanceCriterion)
@@ -75,6 +81,7 @@ export function assertVerifierHandoff(
       finding.acceptanceCriterion === null ? [] : [finding.acceptanceCriterion],
     ),
   );
+
   for (const criterion of handoff.acceptanceCriteria) {
     if (!hasCompletedChecks(criterion) && !findingCriteria.has(criterion.id)) {
       throw new Error(
@@ -82,11 +89,13 @@ export function assertVerifierHandoff(
       );
     }
   }
+
   if (handoff.specId !== specId) {
     throw new Error(
       `Verifier handoff spec ID mismatch: expected "${specId}", found "${handoff.specId}".`,
     );
   }
+
   if (handoff.revision !== revision) {
     throw new Error(
       `Verifier handoff revision mismatch: expected ${revision}, found ${handoff.revision}.`,

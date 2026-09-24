@@ -27,6 +27,7 @@ export const discoverActiveWorkflow = async ({
 
   const entries = await readdir(paths.specDirectory, { withFileTypes: true });
   const active: DiscoveredWorkflow[] = [];
+
   for (const entry of entries) {
     if (!entry.isDirectory() || !isValidSpecId(entry.name)) {
       continue;
@@ -34,16 +35,19 @@ export const discoverActiveWorkflow = async ({
 
     const specId = entry.name;
     const workflowPath = paths.getWorkflowPath(specId);
+
     if (!(await pathExists(workflowPath))) {
       continue;
     }
 
     const state = await readWorkflowState({ path: workflowPath });
+
     if (state.specId !== specId) {
       throw new Error(
         `Workflow state ID mismatch: directory "${specId}" contains "${state.specId}".`,
       );
     }
+
     if (state.phase !== WORKFLOW_PHASES.FINAL_REVIEW) {
       active.push({ specId, state });
     }

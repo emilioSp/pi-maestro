@@ -18,6 +18,7 @@ export const writeVerifierHandoff = async ({
   revision: number;
 }): Promise<void> => {
   assertVerifierHandoff(handoff, specId, revision);
+
   if (handoff.findings.some((finding) => finding.rejection !== null)) {
     throw new Error('New verifier handoff findings must have no rejection.');
   }

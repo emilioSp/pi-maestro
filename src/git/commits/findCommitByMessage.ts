@@ -27,6 +27,7 @@ export const findCommitByMessage = async ({
 
   for (const line of result.stdout.split(/\r?\n/)) {
     const [commit, subject] = line.split('\0');
+
     if (subject === message) {
       return commit;
     }

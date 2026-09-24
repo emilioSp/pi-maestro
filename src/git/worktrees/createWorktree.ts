@@ -33,6 +33,7 @@ export const createWorktree = async ({
   if (registered) {
     throw new Error(`Worktree is already registered at ${normalizedPath}.`);
   }
+
   if (exists) {
     throw new Error(`Worktree path already exists: ${normalizedPath}.`);
   }

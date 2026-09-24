@@ -185,6 +185,7 @@ export const getMaestroPaths = ({
       assertSafeRelativePrototypePath(relativePath);
       const prototypesPath = getPrototypesPath(specId);
       const target = resolve(prototypesPath, relativePath);
+
       if (
         !isPathStrictlyWithin({ parent: prototypesPath, candidate: target })
       ) {

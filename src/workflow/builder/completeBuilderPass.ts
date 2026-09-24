@@ -56,6 +56,7 @@ export const completeBuilderPass = async ({
   });
 
   const currentState = await readWorkflowState({ path: workflowPath });
+
   if (currentState.phase !== WORKFLOW_PHASES.BUILDER_RUNNING) {
     throw new Error(
       `Builder handoff requires builder-running state, found "${currentState.phase}".`,

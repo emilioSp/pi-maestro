@@ -35,11 +35,13 @@ function assertCurrentEscalation(
   if (currentEscalation === undefined) {
     throw new Error('There is no escalation to solve.');
   }
+
   if (currentEscalation.id !== escalationId) {
     throw new Error(
       `Only the current escalation can be resolved: expected "${currentEscalation.id}", found "${escalationId}".`,
     );
   }
+
   if (currentEscalation.resolution !== null) {
     throw new Error(`Escalation "${escalationId}" is already resolved.`);
   }

@@ -36,6 +36,7 @@ const getNextPass = async ({
   specId: string;
 }): Promise<number> => {
   let pass = 1;
+
   while (true) {
     const branch = paths.getVerifierBranch({ specId, pass });
     const worktreePath = paths.getVerifierWorktreePath({ specId, pass });
@@ -47,13 +48,16 @@ const getNextPass = async ({
       }),
       pathExists(worktreePath),
     ]);
+
     if (!hasBranch && worktree === undefined && !hasPath) {
       return pass;
     }
+
     if (!hasBranch || worktree === undefined || !hasPath) {
       throw new Error('Verifier resources are incomplete or already in use.');
     }
     pass += 1;
+
     if (!Number.isSafeInteger(pass)) {
       throw new Error('Verifier pass number exceeded the safe integer range.');
     }
@@ -80,6 +84,7 @@ export const prepareVerifierLaunch = async ({
   });
 
   const builderState = await readWorkflowState({ path: builderWorkflowPath });
+
   if (builderState.phase !== WORKFLOW_PHASES.READY_FOR_VERIFIER) {
     throw new Error(
       `Verifier launch requires ready-for-verifier state, found "${builderState.phase}".`,
@@ -88,6 +93,7 @@ export const prepareVerifierLaunch = async ({
   const builderStatus = await getRepositoryStatus({
     repositoryRoot: builderWorktreePath,
   });
+
   if (!builderStatus.clean) {
     throw new Error(
       'Verifier launch requires a committed ready-for-verifier candidate.',
@@ -116,6 +122,7 @@ export const prepareVerifierLaunch = async ({
     worktreePath,
   });
   const currentState = await readWorkflowState({ path: workflowPath });
+
   if (currentState.phase !== WORKFLOW_PHASES.READY_FOR_VERIFIER) {
     throw new Error(
       `Verifier launch requires ready-for-verifier state, found "${currentState.phase}".`,

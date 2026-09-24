@@ -5,6 +5,7 @@
 
 export const deepFreeze = <T extends object>(target: T): Readonly<T> => {
   Object.freeze(target);
+
   for (const value of Object.values(target)) {
     if (
       value !== null &&

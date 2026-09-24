@@ -19,6 +19,7 @@ function assertEscalationSchema(input: unknown): asserts input is Escalation {
   }
 
   const [error] = Value.Errors(EscalationSchema, input);
+
   if (error !== undefined) {
     throw new Error(`Invalid escalation: ${error.message}.`);
   }
@@ -27,15 +28,18 @@ function assertEscalationSchema(input: unknown): asserts input is Escalation {
 export function assertEscalation(input: unknown): asserts input is Escalation {
   assertEscalationSchema(input);
   const escalation = input;
+
   if (!isValidSpecId(escalation.specId)) {
     throw new Error(`Invalid escalation spec ID: "${escalation.specId}".`);
   }
+
   if (
     new Set(escalation.options.map((option) => option.id)).size !==
     escalation.options.length
   ) {
     throw new Error('Escalation option IDs must be unique.');
   }
+
   if (
     escalation.recommendation !== null &&
     !hasOption(escalation, escalation.recommendation.optionId)
@@ -44,6 +48,7 @@ export function assertEscalation(input: unknown): asserts input is Escalation {
       `Escalation recommendation references unknown option "${escalation.recommendation.optionId}".`,
     );
   }
+
   if (
     escalation.resolution !== null &&
     escalation.resolution.selectedOptionId !== null &&

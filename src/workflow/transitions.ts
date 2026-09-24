@@ -86,9 +86,11 @@ export const transitionWorkflow = ({
   assertWorkflowState(state);
   const current = state;
   const transition = WORKFLOW_TRANSITIONS[event];
+
   if (transition === undefined) {
     throw new Error(`Unknown workflow event: "${event}".`);
   }
+
   if (!transition.from.includes(current.phase)) {
     throw new Error(
       `Workflow event "${event}" is not allowed from phase "${current.phase}".`,

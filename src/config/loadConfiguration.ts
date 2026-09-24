@@ -53,11 +53,13 @@ const findExistingAncestor = async (
       await lstat(anchestor);
     } catch (error) {
       const code = (error as NodeJS.ErrnoException).code;
+
       if (code !== 'ENOENT') {
         throw error;
       }
 
       const parent = dirname(anchestor);
+
       if (parent === anchestor) {
         throw new Error(`Cannot resolve an existing ancestor for "${path}".`);
       }
@@ -95,6 +97,7 @@ const resolveSafeDirectory = async ({
   assertSafeDirectoryInput(directory, name);
 
   const requestedDirectory = resolve(repositoryRoot, directory);
+
   if (requestedDirectory === repositoryRoot) {
     throw new Error(`${name} must not be the Git root.`);
   }
@@ -110,6 +113,7 @@ const resolveSafeDirectory = async ({
 
   // The directory could not exist at the check time. We find the existing anchestor and do the check on that.
   const ancestor = await findExistingAncestor(requestedDirectory);
+
   if (
     !isPathWithinOrEqual({
       parent: repositoryRoot,
@@ -121,6 +125,7 @@ const resolveSafeDirectory = async ({
 
   const unresolvedSuffix = relative(ancestor.path, requestedDirectory);
   const resolvedDirectory = resolve(ancestor.realPath, unresolvedSuffix);
+
   if (
     !isPathStrictlyWithin({
       parent: repositoryRoot,
@@ -203,5 +208,6 @@ export const loadConfiguration = async (): Promise<MaestroConfig> => {
 
   assertConfiguration(parsed);
   const config = resolveConfiguration(parsed);
+
   return deepFreeze(await resolveDirectories({ repositoryRoot, config }));
 };

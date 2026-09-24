@@ -77,6 +77,7 @@ function assertWorkflowStateSchema(
   }
 
   const [error] = Value.Errors(WorkflowStateSchema, input);
+
   if (error !== undefined) {
     throw new Error(`Invalid workflow state: ${error.message}.`);
   }
@@ -86,6 +87,7 @@ export function assertWorkflowState(
   input: unknown,
 ): asserts input is WorkflowState {
   assertWorkflowStateSchema(input);
+
   if (!isValidSpecId(input.specId)) {
     throw new Error(`Invalid workflow spec ID: "${input.specId}".`);
   }

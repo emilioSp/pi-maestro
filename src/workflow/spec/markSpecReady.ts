@@ -19,9 +19,11 @@ export const markSpecReady = async ({
   specId: string;
 }): Promise<WorkflowState> => {
   const activeWorkflow = await discoverActiveWorkflow({ paths });
+
   if (activeWorkflow === null) {
     throw new Error('No active Maestro workflow exists.');
   }
+
   if (activeWorkflow.specId !== specId) {
     throw new Error(
       `Active workflow spec ID mismatch: expected "${specId}", found "${activeWorkflow.specId}".`,
@@ -29,6 +31,7 @@ export const markSpecReady = async ({
   }
 
   const specFilePath = paths.getSpecFilePath(specId);
+
   if (!(await pathExists(specFilePath))) {
     throw new Error(`Spec file is missing: ${specFilePath}.`);
   }

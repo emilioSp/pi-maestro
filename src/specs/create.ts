@@ -42,6 +42,7 @@ export const createSpec = async ({
   if (activeWorkflowSpecId !== null) {
     throw new Error(`Workflow ${activeWorkflowSpecId} is already active.`);
   }
+
   if (baseBranch.trim().length === 0) {
     throw new Error('Base branch must be non-empty.');
   }
@@ -84,6 +85,7 @@ export const createSpec = async ({
     if (!created && (cause as NodeJS.ErrnoException).code === 'EEXIST') {
       throw new Error(`Spec directory already exists: ${specPath}.`, { cause });
     }
+
     if (created) {
       throw new Error(
         `Spec creation failed after creating ${specPath}. Remove this directory before retrying.`,

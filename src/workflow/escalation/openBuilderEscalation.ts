@@ -81,6 +81,7 @@ export const openBuilderEscalation = async ({
       `Builder escalation requires builder-running state, found "${currentState.phase}".`,
     );
   }
+
   if (await pathExists(handoffPath)) {
     throw new Error('Builder terminal handoff already exists.');
   }

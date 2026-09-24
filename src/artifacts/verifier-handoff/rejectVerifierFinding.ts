@@ -23,12 +23,15 @@ export const rejectVerifierFinding = async ({
 }): Promise<VerifierHandoff> => {
   const handoff = await readVerifierHandoff({ path, specId, revision });
   const finding = handoff.findings.find(({ id }) => id === findingId);
+
   if (finding === undefined) {
     throw new Error(`Verifier finding "${findingId}" does not exist.`);
   }
+
   if (finding.rejection !== null) {
     throw new Error(`Verifier finding "${findingId}" is already rejected.`);
   }
+
   if (reason.length === 0) {
     throw new Error('Verifier finding rejection reason must be non-empty.');
   }

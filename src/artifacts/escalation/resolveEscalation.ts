@@ -27,9 +27,11 @@ export const resolveEscalation = async ({
     specId,
     currentRevision: revision,
   });
+
   if (current.resolution !== null) {
     throw new Error(`Escalation "${current.id}" is already resolved.`);
   }
+
   if (revision <= current.revision) {
     throw new Error(
       `Escalation resolution revision must be greater than ${current.revision}.`,

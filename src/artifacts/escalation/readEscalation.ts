@@ -21,6 +21,7 @@ const assertWorkflowEscalation = ({
       `Escalation spec ID mismatch: expected "${specId}", found "${escalation.specId}".`,
     );
   }
+
   if (escalation.revision > currentRevision) {
     throw new Error(
       `Escalation revision ${escalation.revision} is newer than workflow revision ${currentRevision}.`,

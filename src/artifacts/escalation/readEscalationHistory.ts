@@ -20,6 +20,7 @@ export const readEscalationHistory = async ({
   currentRevision: number;
 }): Promise<Escalation[]> => {
   const files = await readdir(directory);
+
   if (!files.every((file) => ESCALATION_FILE_PATTERN.test(file))) {
     throw new Error('Escalation history contains an invalid entry.');
   }
@@ -28,6 +29,7 @@ export const readEscalationHistory = async ({
     (left, right) => Number(left.slice(1, -5)) - Number(right.slice(1, -5)),
   );
   const escalations: Escalation[] = [];
+
   for (const file of orderedFiles.values()) {
     const escalation = await readEscalation({
       path: join(directory, file),

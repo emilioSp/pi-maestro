@@ -25,14 +25,17 @@ export const removeWorktree = async ({
 }): Promise<void> => {
   const normalizedPath = resolve(path);
   const worktree = await findWorktree({ repositoryRoot, path: normalizedPath });
+
   if (!worktree) {
     throw new Error(`Worktree is not registered at ${normalizedPath}.`);
   }
+
   if (worktree.branch !== branch) {
     throw new Error(
       `Refusing to remove worktree at ${normalizedPath}: expected branch ${branch}.`,
     );
   }
+
   if (
     !isPathStrictlyWithin({
       parent: resolve(worktreeDirectory),
@@ -45,6 +48,7 @@ export const removeWorktree = async ({
   }
 
   const status = await getRepositoryStatus({ repositoryRoot: normalizedPath });
+
   if (!status.clean) {
     throw new Error(`Refusing to remove dirty worktree at ${normalizedPath}.`);
   }
