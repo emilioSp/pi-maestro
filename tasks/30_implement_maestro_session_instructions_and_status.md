@@ -18,12 +18,13 @@ Keep Maestro mode visible without making session state authoritative.
 ## Work
 
 1. Keep the current Maestro activation state in the live session only.
-2. Leave Maestro inactive after `/resume`; the owner must use `/maestro` to reactivate it.
-3. Build Maestro instructions for authority, owner dialogue, semantic spec review, tool use, and no normal product edits.
-4. Build status text for active mode, current spec ID, phase, and blocking state.
-5. Hide Maestro status and instructions while mode is inactive.
-6. Treat session entries as UI cache only.
-7. Import Maestro modules directly through `#maestro/*` without an export barrel.
+2. Leave Maestro inactive after `/resume` and expose session-state operations for later activation.
+3. Do not implement or register the `/maestro` toggle here. Task 43 wires the command to Task 29 checks and session state.
+4. Build Maestro instructions for authority, owner dialogue, semantic spec review, tool use, and no normal product edits.
+5. Build status text for active mode, current spec ID, phase, and blocking state.
+6. Hide Maestro status and instructions while mode is inactive.
+7. Treat session entries as UI cache only.
+8. Import Maestro modules directly through `#maestro/*` without an export barrel.
 
 ## Implementation
 
@@ -37,6 +38,6 @@ Add Vitest tests for inactive state, active state without a workflow, each phase
 
 ## Completion criteria
 
-- UI state always follows successful activation.
-- Reactivation after resume uses the normal `/maestro` checks.
+- Session state supports inactive and active modes; callers activate it only after checks pass.
+- Resume always starts inactive. Task 43 wires reactivation through the normal `/maestro` checks.
 - The instruction text agrees with the owner, builder, and verifier authority model.

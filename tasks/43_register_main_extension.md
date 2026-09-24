@@ -5,7 +5,7 @@ STATUS: TODO
 ## Dependency
 
 This task depends on Task 29
-This task depends on Task 42: Add the prepare-final-review tool.
+This task depends on Task 30: Implement Maestro session, instructions, and status, and Task 42: Add the prepare-final-review tool.
 
 ## Objective
 
