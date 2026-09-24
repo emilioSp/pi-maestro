@@ -8,7 +8,7 @@ This task depends on Task 39: Add the resolve-escalation tool.
 
 ## Objective
 
-Expose safe foreground verifier launches from a completed builder candidate.
+Launch a verifier in the foreground from a completed builder candidate.
 
 ## Plan references
 
@@ -19,22 +19,26 @@ Expose safe foreground verifier launches from a completed builder candidate.
 ## Work
 
 1. Define input with `specId`.
-2. Call the verifier workflow to create the isolated verifier checkpoint.
-3. Launch `maestro.verifier` in foreground with configured model, thinking, timeout, fresh context, and verifier worktree cwd.
-4. Inspect the committed terminal handoff against the candidate commit after the child returns.
-5. Return candidate-ready, findings, timeout, interrupted, product-modified, or protocol-error results distinctly.
-6. Never launch a builder or another verifier automatically.
+2. Call the verifier workflow to create a separate verifier checkpoint.
+3. Launch `maestro.verifier` in the foreground. Pass its configured model, thinking level, timeout, fresh context, and verifier worktree path.
+4. When the child returns, check its committed final handoff against the candidate commit.
+5. Return distinct results for candidate ready, findings, timeout, interruption, product changes, and protocol error.
+6. Do not launch a builder or another verifier automatically.
 
 ## Implementation
 
-Use `pi-subagents/delegation` directly in this Pi tool adapter, with `agent: "maestro.verifier"`; pi-subagents loads `agents/verifier.md` as the agent definition. Register a terminal-response listener on the injected `pi.events` before emitting the request; match the request identity and remove the listener when it ends. Do not listen for progress updates: FleetView provides live status and transcript. The `task` identifies the spec and worktree and requires applicable `AGENTS.md` reads. It must not treat the builder handoff as proof or weaken independent verification.
+Use `pi-subagents/delegation` directly in this Pi tool adapter and pass `agent: "maestro.verifier"`. pi-subagents loads the agent definition from `agents/verifier.md`.
+
+Before sending the launch request, register a listener for the final response on the injected `pi.events`. Match the response to the request. Remove the listener when the request ends.
+
+Do not listen for progress updates. FleetView shows the live status and transcript. The `task` must identify the spec and worktree and tell the verifier to read applicable `AGENTS.md` files. Do not treat the builder handoff as proof. Do not weaken the verifier's independent review.
 
 ## Tests
 
-Add adapter tests for input schema, launch-parameter mapping, response matching, listener cleanup, one successful foreground result, one propagated workflow error, and one propagated delegation error. Use a fake Pi event bus and fake subagent responses.
+Add adapter tests for the input schema, launch parameters, response matching, listener cleanup, one successful foreground result, one workflow error, and one delegation error. Use a fake Pi event bus and fake subagent responses.
 
 ## Completion criteria
 
 - Every verifier uses a separate clean worktree and fresh context.
-- A valid committed terminal handoff alone advances the workflow.
-- Product-modified errors remain recoverable by the verifier.
+- Only a valid committed final handoff advances the workflow.
+- Product-change errors leave the workflow ready for recovery by the verifier.

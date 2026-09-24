@@ -4,8 +4,7 @@ STATUS: TODO
 
 ## Dependency
 
-This task depends on Task 29
-This task depends on Task 30: Implement Maestro session, instructions, and status, and Task 42: Add the prepare-final-review tool.
+This task depends on Tasks 29, 30, and 42.
 
 ## Objective
 
@@ -18,26 +17,25 @@ Wire the main Pi extension without moving domain logic into the composition root
 
 ## Work
 
-1. Import each of the eight main tool registrations directly from its file in `src/tools/main/` and register it once. Give the launch tool registrations access to the injected `pi.events`. Do not add a tool barrel.
-2. Implement and register the `/maestro` toggle. When inactive, run the Task 29 environment checks before activation. When active, deactivate without changing workflow files, branches, worktrees, or artifacts.
-3. Register only the required session, resume, instruction, status, and tool-activation events.
-4. Activate main Maestro tools only after successful checks, and rerun checks on every activation.
-5. Remove only main Maestro tools on deactivation.
-6. Show activation errors through `ctx.ui.notify(..., "error")`.
-7. Leave Maestro inactive after resume.
-8. Keep startup silent and inactive.
+1. Register the eight main tools once. Import each directly from `src/tools/main/`. Give the launch tools access to `pi.events`.
+2. Implement and register `/maestro`:
+   - If Maestro is off, run all Task 29 checks. If they pass, turn Maestro on and enable its tools, instructions, and status. If a check fails, leave Maestro off and show the error with `ctx.ui.notify(..., "error")`.
+   - If Maestro is on, turn it off and hide its tools, instructions, and status. Do not change workflow files, branches, worktrees, or artifacts.
+   - Run all checks again each time `/maestro` turns Maestro on.
+3. Leave Maestro off after `/resume`. Do not run Maestro checks or show Maestro notifications at startup.
+4. Register only the session, resume, instruction, status, and tool-activation events that this behavior needs.
 
 ## Implementation
 
-`extensions/maestro.ts` is wiring only. Import each operation directly from its module under `src/maestro/` or `src/tools/main/`; do not add a barrel. Each tool file owns only its input schema, Pi registration, domain call, and result conversion. Do not register child tools. Preserve generic tools and tools from other extensions.
+Keep `extensions/maestro.ts` as wiring only. Import operations directly from `src/maestro/` or `src/tools/main/`. Do not add a barrel. Tool files own their input schema, Pi registration, domain call, and result conversion. Do not register child tools. Leave generic tools and tools from other extensions unchanged.
 
 ## Tests
 
-Add Vitest integration tests with a fake Pi registration context. Cover startup, activation, failed activation, toggle off, retry after failed activation, exact tool set changes, preserved foreign tools, instructions, status, error notification, inactive resume, and one-time registration.
+Add Vitest integration tests with a fake Pi context. Test startup, activation, failed activation, deactivation, retry after failure, tool changes, preserved foreign tools, instructions, status, error notifications, inactive resume, and one-time registration.
 
 ## Completion criteria
 
-- Activation runs the complete Task 29 checks and succeeds only when all checks pass.
-- Main tools are usable only in active Maestro mode.
+- Maestro turns on only after all Task 29 checks pass.
+- Main tools are usable only while Maestro is on.
 - Child tools never appear in the owner session.
-- The composition root contains no workflow implementation.
+- `extensions/maestro.ts` contains no workflow logic.

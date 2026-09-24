@@ -8,7 +8,7 @@ This task depends on Task 41: Add the resolve-findings tool.
 
 ## Objective
 
-Expose the final squash, staging, cleanup, and structured owner handoff.
+Prepare the final squash and staging, clean up workflow resources, and return the facts for the owner's final review.
 
 ## Plan references
 
@@ -19,23 +19,23 @@ Expose the final squash, staging, cleanup, and structured owner handoff.
 ## Work
 
 1. Define input with `specId`.
-2. Require `candidate-ready` and a proven candidate commit.
+2. Require the workflow to be in `candidate-ready` and prove which commit is the candidate.
 3. Call the final-review workflow.
-4. Return base branch, candidate identity, staged summary, cleanup result, and final phase.
-5. Return a structured error with the previous phase when squash or staging verification fails before the final transition.
-6. Clearly state in structured data that Maestro is concluded and the owner controls later edits and the final commit.
-7. Reject repeated preparation of an already concluded workflow.
+4. Return the base branch, candidate identity, staged summary, cleanup result, and final phase.
+5. If squash or staging checks fail before the final transition, return a structured error that includes the previous phase.
+6. Return structured data that says Maestro is finished and the owner controls later edits and the final commit.
+7. Reject another prepare call after the workflow is already complete.
 
 ## Implementation
 
-Do not generate the human summary inside the deterministic tool. Return structured data for the Maestro LLM. Do not commit, push, or wait for owner confirmation. Attempt cleanup after `final-review` and report any resources that require manual cleanup.
+Do not write the human summary in the deterministic tool. Return structured data for the Maestro LLM to use. Do not commit, push, or wait for owner approval. After `final-review`, try to clean up. Report any resources that need manual cleanup.
 
 ## Tests
 
-Add Vitest adapter tests for input schema, structured result mapping including cleanup status, one successful call, and one propagated domain error.
+Add Vitest adapter tests for the input schema, structured result mapping including cleanup status, one successful call, and one domain error returned to the tool caller.
 
 ## Completion criteria
 
-- The result contains everything needed for the final owner message.
-- Successful execution leaves staged changes and reports the cleanup result.
-- The tool cannot reopen or extend final review.
+- The result contains the facts needed for the final owner message.
+- Success leaves the changes staged and reports cleanup results.
+- The tool cannot reopen or extend a completed final review.

@@ -1,14 +1,14 @@
 STATUS: TODO
 
-# Task 36: Add create-spec and mark-ready tools
+# Task 36: Add the create-spec and mark-ready tools
 
 ## Dependency
 
-This task depends on Task 35: Register the child extension and protections.
+This task depends on Task 35: Register the child extension and protect workflow files.
 
 ## Objective
 
-Expose the two owner-facing tools for the spec preparation phase.
+Give the owner two tools for preparing a spec.
 
 ## Plan references
 
@@ -17,24 +17,26 @@ Expose the two owner-facing tools for the spec preparation phase.
 
 ## Work
 
-1. Implement `maestro_create_spec` with a small TypeBox input schema.
-2. Generate identity and paths in the domain, not from caller-supplied protocol fields.
-3. Return created paths and drafting state in a structured result.
-4. Implement `maestro_mark_spec_ready` with `specId`.
-5. Verify the drafting state and existence of `spec.md` without inspecting its content.
-6. Move to `ready-for-builder` without creating an owner commit.
-7. Register neither tool while Maestro mode is inactive.
+1. Add `maestro_create_spec` with a small TypeBox input schema.
+2. Generate the spec ID and paths in the domain. Do not accept protocol identity fields from the caller.
+3. Return the created paths and drafting state as structured data.
+4. Add `maestro_mark_spec_ready` with a `specId` input.
+5. Check that the workflow is in the drafting phase and that `spec.md` exists. Do not inspect the file content.
+6. Move the workflow to `ready-for-builder`. Do not create an owner commit.
+7. Keep both tools inactive when Maestro mode is off.
 
 ## Implementation
 
-Tool files are Pi adapters only. Each file exports one Pi tool registration and keeps its input schema, domain call, and result conversion with that registration. Do not export other operations or add a barrel. They call configuration, path, spec, and workflow modules. Semantic review and owner approval happen before the LLM calls mark-ready. The tool treats `spec.md` as opaque Markdown.
+Tool files are Pi adapters only. Each file registers one Pi tool and keeps its input schema, domain call, and result conversion with that tool. Do not export extra operations or add a barrel.
+
+Call the existing configuration, path, spec, and workflow modules. The Maestro LLM reviews the spec and gets the owner's approval before it calls mark-ready. The tool treats `spec.md` as plain Markdown and does not interpret it.
 
 ## Tests
 
-Add Vitest adapter tests for both input schemas, derived protocol fields, one successful call per tool, and one propagated domain error per tool.
+Add Vitest adapter tests for both schemas, protocol fields read from workflow state, one successful call for each tool, and one domain error returned to the tool caller for each tool.
 
 ## Completion criteria
 
-- Tool results contain useful structured data for the Maestro LLM.
-- The tools do not duplicate domain validation.
-- A ready spec still requires the owner's commit.
+- Tool results give the Maestro LLM useful structured data.
+- The tools do not repeat domain validation.
+- The owner must still commit a ready spec.

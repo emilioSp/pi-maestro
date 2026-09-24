@@ -8,7 +8,7 @@ This task depends on Task 40: Add the launch-verifier tool.
 
 ## Objective
 
-Expose complete owner decisions for the current verifier findings.
+Let the owner decide what to do with every current verifier finding.
 
 ## Plan references
 
@@ -18,24 +18,24 @@ Expose complete owner decisions for the current verifier findings.
 
 ## Work
 
-1. Define input for `specId` and one decision per finding.
+1. Define input with `specId` and one decision for each finding.
 2. Use `StringEnum` for `reject` and `fix-code`.
-3. Require reasons only for rejected findings.
-4. Validate exact finding coverage before any mutation.
-5. Call the findings workflow and return candidate or builder-correction details.
-6. Report which rejections were recorded and which findings remain actionable.
-7. Never infer decisions or launch another agent automatically.
+3. Require a reason only when the owner rejects a finding.
+4. Check that the input covers every finding exactly before changing anything.
+5. Call the findings workflow. Return details for either a candidate or builder corrections.
+6. Report which rejections were recorded and which findings still need action.
+7. Do not guess the owner's decisions or launch another agent automatically.
 
 ## Implementation
 
-Keep the adapter thin. Any fix-code decision has precedence over all-reject. If the owner wants to change the approved contract, do not call this tool; explain that the workflow must be abandoned manually.
+Keep the Pi adapter thin. If any decision is `fix-code`, it takes priority over `reject` decisions. If the owner wants to change the approved contract, do not call this tool. Explain that the owner must abandon the workflow manually.
 
 ## Tests
 
-Add Vitest adapter tests for input schema, decision mapping, one successful call, and one propagated domain error.
+Add Vitest adapter tests for the input schema, decision mapping, one successful call, and one domain error returned to the tool caller.
 
 ## Completion criteria
 
 - One valid call handles every current finding exactly once.
-- Mixed reject and fix-code outcomes follow approved precedence.
-- The tool does not rewrite findings beyond allowed rejection fields.
+- Mixed `reject` and `fix-code` decisions follow the approved priority.
+- The tool changes only the allowed rejection fields in findings.

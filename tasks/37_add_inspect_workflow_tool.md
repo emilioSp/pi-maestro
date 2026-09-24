@@ -4,11 +4,11 @@ STATUS: TODO
 
 ## Dependency
 
-This task depends on Task 36: Add create-spec and mark-ready tools.
+This task depends on Task 36: Add the create-spec and mark-ready tools.
 
 ## Objective
 
-Expose read-only workflow discovery, reconciliation, and recovery facts.
+Let Maestro inspect workflow state and recovery facts without changing them.
 
 ## Plan references
 
@@ -17,23 +17,23 @@ Expose read-only workflow discovery, reconciliation, and recovery facts.
 
 ## Work
 
-1. Implement `maestro_inspect_workflow` as a read-only Pi adapter.
-2. Discover the active workflow and its current authoritative state.
-3. Return phase, spec ID, base branch, branch and worktree facts, current handoff summary, blockers, and allowed recovery actions.
-4. Identify interrupted passes without changing them.
-5. Identify concluded final-review workflows separately from active workflows.
-6. Keep sensitive local details out of model-visible output unless required for owner recovery.
+1. Add `maestro_inspect_workflow` as a read-only Pi tool.
+2. Find the active workflow and read its current authoritative state.
+3. Return the phase, spec ID, base branch, branch and worktree facts, current handoff summary, blockers, and allowed recovery actions.
+4. Report interrupted passes. Do not change them.
+5. Report completed `final-review` workflows separately from active workflows.
+6. Do not show local sensitive details unless the owner needs them for recovery.
 
 ## Implementation
 
-Call state discovery, reconciliation, and recovery modules. Do not stage, write, commit, relaunch, clean, or delete. Use structured results instead of prose parsing.
+Use the state discovery, reconciliation, and recovery modules. Do not stage, write, commit, relaunch, clean, or delete anything. Return structured data. Do not parse prose to determine state.
 
 ## Tests
 
-Add Vitest adapter tests for input schema, one structured successful result, one propagated domain error, and proof that the adapter does not mutate the repository.
+Add Vitest adapter tests for the input schema, one successful structured result, one domain error returned to the tool caller, and proof that the tool does not change the repository.
 
 ## Completion criteria
 
-- Inspection gives Maestro enough facts to explain the state accurately.
-- It never repairs an inconsistency.
-- Completed workflows do not block new spec creation.
+- Maestro has enough facts to explain the workflow state accurately.
+- The tool never repairs an inconsistency.
+- A completed workflow does not block creation of a new spec.

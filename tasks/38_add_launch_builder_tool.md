@@ -8,7 +8,7 @@ This task depends on Task 37: Add the inspect-workflow tool.
 
 ## Objective
 
-Expose safe foreground builder launches from approved workflow state.
+Launch a builder in the foreground only from an approved workflow state.
 
 ## Plan references
 
@@ -17,23 +17,27 @@ Expose safe foreground builder launches from approved workflow state.
 
 ## Work
 
-1. Define input with `specId` and an explicit retry intent when required.
-2. Call the builder workflow to validate state and create the launch checkpoint.
-3. Launch `maestro.builder` in foreground with the configured model, thinking, timeout, fresh context, and worktree cwd.
-4. Inspect and validate the terminal outcome after the child returns.
-5. Return done, failed, escalation, timeout, interrupted, or protocol-error results distinctly.
-6. Never relaunch automatically.
+1. Define input with `specId` and, when needed, an explicit retry choice.
+2. Call the builder workflow to check the state and create a launch checkpoint.
+3. Launch `maestro.builder` in the foreground. Pass its configured model, thinking level, timeout, fresh context, and worktree path.
+4. When the child returns, inspect and validate its final result.
+5. Return distinct results for done, failed, escalation, timeout, interruption, and protocol error.
+6. Never relaunch the builder automatically.
 
 ## Implementation
 
-Use `pi-subagents/delegation` directly in this Pi tool adapter, with `agent: "maestro.builder"`; pi-subagents loads `agents/builder.md` as the agent definition. Register a terminal-response listener on the injected `pi.events` before emitting the request; match the request identity and remove the listener when it ends. Do not listen for progress updates: FleetView provides live status and transcript. The `task` identifies the spec and worktree and requires applicable `AGENTS.md` reads. Do not restate or weaken the agent role. Do not install dependencies. Keep the owner blocked while the foreground run is active.
+Use `pi-subagents/delegation` directly in this Pi tool adapter and pass `agent: "maestro.builder"`. pi-subagents loads the agent definition from `agents/builder.md`.
+
+Before sending the launch request, register a listener for the final response on the injected `pi.events`. Match the response to the request. Remove the listener when the request ends.
+
+Do not listen for progress updates. FleetView shows the live status and transcript. The `task` must identify the spec and worktree and tell the builder to read applicable `AGENTS.md` files. Do not restate or weaken the builder's role. Do not install dependencies. Keep the owner waiting while the foreground run is active.
 
 ## Tests
 
-Add adapter tests for input schema, launch-parameter mapping, response matching, listener cleanup, one successful foreground result, one propagated workflow error, and one propagated delegation error. Use a fake Pi event bus and fake subagent responses.
+Add adapter tests for the input schema, launch parameters, response matching, listener cleanup, one successful foreground result, one workflow error, and one delegation error. Use a fake Pi event bus and fake subagent responses.
 
 ## Completion criteria
 
 - Every launch has a committed `builder-running` checkpoint.
-- Only a committed valid terminal artifact advances the workflow.
+- Only a valid committed final artifact advances the workflow.
 - Failures leave enough state for recovery.

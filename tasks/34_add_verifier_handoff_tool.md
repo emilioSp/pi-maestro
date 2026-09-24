@@ -4,11 +4,11 @@ STATUS: TODO
 
 ## Dependency
 
-This task depends on Task 33: Add the open escalation tool.
+This task depends on Task 33: Add the open-escalation tool.
 
 ## Objective
 
-Expose the child-only terminal tool for verifier evidence and findings.
+Let the verifier record its evidence and findings through a child-only tool.
 
 ## Plan references
 
@@ -18,24 +18,24 @@ Expose the child-only terminal tool for verifier evidence and findings.
 
 ## Work
 
-1. Define the closed TypeBox input schema without protocol identity fields.
-2. Derive spec ID and terminal revision.
-3. Validate regenerated criteria and findings internally without parsing the current spec.
-4. Run the product-file comparison against the recorded candidate commit.
-5. Return the exact structured `PRODUCT_FILES_MODIFIED` error when needed.
-6. Write verifier handoff and `findings-decision` or `candidate-ready` state only after all checks pass.
-7. Return instructions to commit both files together.
+1. Define a closed TypeBox input schema. Do not include protocol identity fields.
+2. Get the spec ID and final revision from the current workflow state.
+3. Validate the regenerated criteria and findings inside the domain. Do not parse the current spec.
+4. Compare product files with the recorded candidate commit.
+5. If product files changed, return the exact structured `PRODUCT_FILES_MODIFIED` error.
+6. Only after all checks pass, write the verifier handoff and move the workflow to `findings-decision` or `candidate-ready`.
+7. Tell the verifier to commit the handoff and workflow state together.
 
 ## Implementation
 
-The product-modified error contains only `PRODUCT_FILES_MODIFIED` and a clear message. Do not expose file lists, diff summaries, or suggested commands. Do not restore, delete, move, stage, or commit product files.
+The product-change error must contain only `PRODUCT_FILES_MODIFIED` and a clear message. Do not show file names, diff summaries, or suggested commands. Do not restore, delete, move, stage, or commit product files.
 
 ## Tests
 
-Add Vitest adapter tests for input schema validation, derived protocol fields, one successful call, and propagation of the product-modified domain error.
+Add Vitest adapter tests for input validation, protocol fields read from workflow state, one successful call, and one product-change error returned to the tool caller.
 
 ## Completion criteria
 
-- Product changes always block the terminal handoff.
-- The tool behaves the same for empty and non-empty findings.
-- The verifier cannot forge identity, revision, or owner rejection.
+- Product changes always block the final handoff.
+- The tool behaves the same when findings are empty or non-empty.
+- The verifier cannot choose the identity, revision, or owner rejection.

@@ -8,7 +8,7 @@ This task depends on Task 30: Implement Maestro session, instructions, and statu
 
 ## Objective
 
-Expose the child-only terminal tool for builder done and failed handoffs.
+Let the builder record its final result as done or failed through a child-only tool.
 
 ## Plan references
 
@@ -17,23 +17,25 @@ Expose the child-only terminal tool for builder done and failed handoffs.
 
 ## Work
 
-1. Define the closed TypeBox input schema for done and failed handoffs.
-2. Derive protocol identity and the terminal revision from current state.
-3. Verify protected protocol files against the launch checkpoint.
-4. Validate the terminal handoff.
-5. Write the current builder handoff and next workflow state in one domain operation.
-6. Return instructions that the child must commit both files together.
+1. Define a closed TypeBox input schema for done and failed handoffs. Reject unknown fields.
+2. Get the protocol identity and final revision from the current workflow state. Do not take them from the tool input.
+3. Check protected protocol files against the checkpoint recorded when the builder started.
+4. Validate the final handoff.
+5. In one domain operation, write the current builder handoff and the next workflow state.
+6. Tell the child to commit both files together.
 
 ## Implementation
 
-Move done to `ready-for-verifier` and failed to `builder-failed`. Do not commit from the tool. Reject a second terminal handoff. Keep the schema, one exported Pi tool registration, domain call, and result conversion in `src/tools/child/record-builder-handoff.ts`. Do not export other operations from this tool file.
+A done handoff moves the workflow to `ready-for-verifier`. A failed handoff moves it to `builder-failed`. The tool must not commit. Reject a second final handoff for the same pass.
+
+Keep the schema, one exported Pi tool registration, domain call, and result conversion in `src/tools/child/record-builder-handoff.ts`. Do not export other operations from this file.
 
 ## Tests
 
-Add Vitest adapter tests for done and failed input schemas, derived protocol fields, one successful call, and one propagated domain error.
+Add Vitest adapter tests for both input schemas, protocol fields read from workflow state, one successful call, and one domain error returned to the tool caller.
 
 ## Completion criteria
 
-- A valid terminal call leaves handoff and state ready for one child commit.
-- Direct protocol tampering blocks the handoff.
-- Failed validation preserves both previous files.
+- A valid final call leaves the handoff and workflow state ready for one child commit.
+- Direct changes to protected protocol files block the handoff.
+- Failed validation leaves both previous files unchanged.

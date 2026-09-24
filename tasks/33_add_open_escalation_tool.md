@@ -1,6 +1,6 @@
 STATUS: TODO
 
-# Task 33: Add the open escalation tool
+# Task 33: Add the open-escalation tool
 
 ## Dependency
 
@@ -8,7 +8,7 @@ This task depends on Task 32: Add the builder handoff tool.
 
 ## Objective
 
-Expose the child-only terminal tool that opens a builder escalation.
+Let the builder end its pass by asking the owner to make an escalation decision.
 
 ## Plan references
 
@@ -18,24 +18,24 @@ Expose the child-only terminal tool that opens a builder escalation.
 
 ## Work
 
-1. Define the closed TypeBox input schema without protocol identity fields.
-2. Derive spec ID, next escalation ID, and terminal revision.
-3. Require valid options and an optional valid recommendation.
-4. Verify protected files against the builder launch checkpoint.
+1. Define a closed TypeBox input schema. Do not include protocol identity fields.
+2. Get the spec ID, next escalation ID, and final revision from the current workflow state.
+3. Require valid options. If the builder gives a recommendation, it must also be valid.
+4. Check protected files against the checkpoint recorded when the builder started.
 5. Create the escalation with `resolution: null`.
-6. Write `escalation-decision` in the same domain operation.
-7. Return instructions to commit escalation and state together and then stop.
+6. In the same domain operation, move the workflow to `escalation-decision`.
+7. Tell the builder to commit the escalation and workflow state together, then stop.
 
 ## Implementation
 
-Do not write a builder handoff. Do not wait for the owner. Reject calls outside `builder-running` and reject a second terminal outcome for the pass.
+Do not write a builder handoff or wait for the owner. Reject calls outside `builder-running`. Reject a second final outcome for the same pass.
 
 ## Tests
 
-Add Vitest adapter tests for input schema validation, derived protocol fields, one successful call, and one propagated domain error.
+Add Vitest adapter tests for input validation, protocol fields read from workflow state, one successful call, and one domain error returned to the tool caller.
 
 ## Completion criteria
 
-- An escalation is a terminal builder outcome.
-- Identity and numbering cannot be supplied by the child.
-- The active escalation is committed before the builder ends.
+- An escalation ends the builder's pass.
+- The child cannot choose the spec ID or escalation number.
+- The active escalation is committed before the builder stops.
