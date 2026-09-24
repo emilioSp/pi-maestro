@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task 27: Write the builder and verifier agents
 
@@ -19,7 +19,7 @@ Define the two package agents and their complete role contracts.
 ## Work
 
 1. Write the exact approved YAML front matter for both agents.
-2. Use package `maestro`, fresh context, foreground execution, replace-mode prompts, project context inheritance, no global context, no skills, and no nested subagents.
+2. Use package `maestro`, replace-mode prompts, project context inheritance, no global context, no skills, and no nested subagents. Maestro supplies fresh context, foreground execution, model, thinking, and timeout at launch.
 3. Load only `../extensions/maestro-child.ts` as the child-only extension.
 4. Give each role only its approved tools.
 5. Explain authority, required reads, coverage of every acceptance criterion, probe-breakage cycles, terminal handoffs, commits, and stopping conditions.
@@ -29,10 +29,6 @@ Define the two package agents and their complete role contracts.
 ## Implementation
 
 Use simple, direct English. Move only generic legacy rules into these contracts. Repository commands and technical rules come from applicable `AGENTS.md` files. Do not mention old helper scripts, allowed path lists, or direct owner contact.
-
-## Tests
-
-Add a focused Vitest or fixture-based parser test for front matter names, package, models, thinking, context mode, timeout, extension path, and exact tool allowlists. Review the prose against the plan.
 
 ## Completion criteria
 

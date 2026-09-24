@@ -214,11 +214,11 @@ Default approvati:
 
 ```text
 Builder:
-  model: openai-codex/gpt-5.6-luna
+  model: openai-codex/gpt-6-luna
   thinking: high
 
 Verifier:
-  model: openai-codex/gpt-5.6-sol
+  model: openai-codex/gpt-6-sol
   thinking: medium
 ```
 
@@ -1024,12 +1024,12 @@ Schema definitivo per la prima versione:
   "specDirectory": ".specs",
   "worktreeDirectory": ".worktree",
   "builder": {
-    "model": "openai-codex/gpt-5.6-luna",
+    "model": "openai-codex/gpt-6-luna",
     "thinking": "high",
     "timeoutMinutes": 60
   },
   "verifier": {
-    "model": "openai-codex/gpt-5.6-sol",
+    "model": "openai-codex/gpt-6-sol",
     "thinking": "medium",
     "timeoutMinutes": 60
   }
@@ -1086,16 +1086,16 @@ maestro.verifier
 
 Ogni agent definition usa il campo `package: maestro`. `pi-subagents` combina questo valore con `name: builder` o `name: verifier` per creare il nome runtime qualificato.
 
-Configurazione condivisa:
+Configurazione condivisa nei file agent:
 
-1. `async: false` e `defaultContext: fresh`.
-2. `systemPromptMode: replace`.
-3. `inheritProjectContext: true`.
-4. `inheritGlobalContext: false` e `inheritSkills: false`.
-5. `completionGuard: false`, perché Maestro usa handoff terminali propri.
-6. Nessun accesso a subagent annidati.
-7. `subagentOnlyExtensions: ../extensions/maestro-child.ts`.
-8. Il timeout nel file agent è `3600000` millisecondi. L’override di `.pi/maestro.json` viene passato esplicitamente al lancio.
+1. `systemPromptMode: replace`.
+2. `inheritProjectContext: true`.
+3. `inheritGlobalContext: false` e `inheritSkills: false`.
+4. `completionGuard: false`, perché Maestro usa handoff terminali propri.
+5. Nessun accesso a subagent annidati.
+6. `subagentOnlyExtensions: ../extensions/maestro-child.ts`.
+
+I file agent non duplicano modello, thinking, timeout, modalità foreground o contesto. Maestro passa esplicitamente modello, thinking e timeout da `.pi/maestro.json`, oppure dai default in `src/config/defaults.ts` se il file manca. Ogni lancio usa `async: false` e contesto `fresh`.
 
 Configurazione specifica del builder:
 
@@ -1103,8 +1103,6 @@ Configurazione specifica del builder:
 name: builder
 package: maestro
 description: Implements an owner-approved Maestro specification.
-model: openai-codex/gpt-5.6-luna
-thinking: high
 tools:
   - read
   - grep
@@ -1123,8 +1121,6 @@ Configurazione specifica del verifier:
 name: verifier
 package: maestro
 description: Independently verifies a Maestro candidate against its specification.
-model: openai-codex/gpt-5.6-sol
-thinking: medium
 tools:
   - read
   - grep

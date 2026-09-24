@@ -13,9 +13,9 @@ import { deepFreeze } from '#config/utils/deepFreeze.ts';
 export const DEFAULT_CONFIG_VERSION = SUPPORTED_CONFIG_VERSION;
 export const DEFAULT_SPEC_DIRECTORY = '.specs';
 export const DEFAULT_WORKTREE_DIRECTORY = '.worktree';
-export const DEFAULT_BUILDER_MODEL = 'openai-codex/gpt-5.6-luna';
+export const DEFAULT_BUILDER_MODEL = 'openai-codex/gpt-6-luna';
 export const DEFAULT_BUILDER_THINKING = THINKING_LEVELS.HIGH;
-export const DEFAULT_VERIFIER_MODEL = 'openai-codex/gpt-5.6-sol';
+export const DEFAULT_VERIFIER_MODEL = 'openai-codex/gpt-6-sol';
 export const DEFAULT_VERIFIER_THINKING = THINKING_LEVELS.MEDIUM;
 export const DEFAULT_TIMEOUT_MINUTES = 60;
 

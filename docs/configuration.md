@@ -16,12 +16,12 @@ The file is optional. Maestro uses all default values when the file is absent.
   "specDirectory": ".specs",
   "worktreeDirectory": ".worktree",
   "builder": {
-    "model": "openai-codex/gpt-5.6-luna",
+    "model": "openai-codex/gpt-6-luna",
     "thinking": "high",
     "timeoutMinutes": 60
   },
   "verifier": {
-    "model": "openai-codex/gpt-5.6-sol",
+    "model": "openai-codex/gpt-6-sol",
     "thinking": "medium",
     "timeoutMinutes": 60
   }
@@ -36,11 +36,11 @@ The file is optional. Maestro uses all default values when the file is absent.
 | `specDirectory` | No | `.specs` | Relative path inside the Git repository. |
 | `worktreeDirectory` | No | `.worktree` | Relative path inside the Git repository. |
 | `builder` | No | Builder defaults | May contain any supported builder override. |
-| `builder.model` | No | `openai-codex/gpt-5.6-luna` | Full `provider/model` identifier. |
+| `builder.model` | No | `openai-codex/gpt-6-luna` | Full `provider/model` identifier. |
 | `builder.thinking` | No | `high` | One supported thinking level. |
 | `builder.timeoutMinutes` | No | `60` | Integer from `1` to `1440`. Applies to each builder pass. |
 | `verifier` | No | Verifier defaults | May contain any supported verifier override. |
-| `verifier.model` | No | `openai-codex/gpt-5.6-sol` | Full `provider/model` identifier. |
+| `verifier.model` | No | `openai-codex/gpt-6-sol` | Full `provider/model` identifier. |
 | `verifier.thinking` | No | `medium` | One supported thinking level. |
 | `verifier.timeoutMinutes` | No | `60` | Integer from `1` to `1440`. Applies to each verifier pass. |
 

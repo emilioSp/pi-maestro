@@ -34,6 +34,7 @@ The package is source-only. Pi loads TypeScript directly, `src/` is published, a
 - No boilerplate, no scaffolding "for later", later can scaffold for itself.
 - Deletion over addition. Boring over clever, clever is what someone needs to decode at 3am.
 - Mark deliberate simplifications that cut a real corner with a known ceiling (e.g. O(n²) scan)
+- Do not propose a solution just to offer one. If no change is needed or the current approach is appropriate, say so directly. Distinguish what is technically possible from what provides a real benefit.
 
 ### Derived values and branches
 

@@ -143,12 +143,12 @@ describe('configuration loading', () => {
         specDirectory: join(workspace.tempDir, '.specs'),
         worktreeDirectory: join(workspace.tempDir, '.worktree'),
         builder: {
-          model: 'openai-codex/gpt-5.6-luna',
+          model: DEFAULT_CONFIG.builder.model,
           thinking: THINKING_LEVELS.HIGH,
           timeoutMinutes: 90,
         },
         verifier: {
-          model: 'openai-codex/gpt-5.6-sol',
+          model: DEFAULT_CONFIG.verifier.model,
           thinking: THINKING_LEVELS.MEDIUM,
           timeoutMinutes: 60,
         },
@@ -173,12 +173,12 @@ describe('configuration loading', () => {
         specDirectory: join(workspace.tempDir, 'specs-dir'),
         worktreeDirectory: join(workspace.tempDir, 'worktree-dir'),
         builder: {
-          model: 'openai-codex/gpt-5.6-luna',
+          model: DEFAULT_CONFIG.builder.model,
           thinking: THINKING_LEVELS.HIGH,
           timeoutMinutes: 60,
         },
         verifier: {
-          model: 'openai-codex/gpt-5.6-sol',
+          model: DEFAULT_CONFIG.verifier.model,
           thinking: THINKING_LEVELS.MEDIUM,
           timeoutMinutes: 60,
         },
