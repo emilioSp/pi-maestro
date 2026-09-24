@@ -4,7 +4,7 @@ STATUS: TODO
 
 ## Dependency
 
-This task depends on Task 28: Integrate pi-subagents.
+This task depends on Task 27: Write the builder and verifier agents.
 
 ## Objective
 
@@ -30,7 +30,7 @@ Activate Maestro only after complete read-only environment checks.
 
 Checks must not create `.specs`, `.worktree`, or any other file. A dirty base is allowed during activation. Missing configured directories are valid. Failure leaves Maestro inactive and normal Pi behavior unchanged.
 
-Put environment checks under `src/maestro/checks/` and activation behavior under `src/maestro/activation/`. Give each exported function its own module. Keep private helpers with the function they serve, and import modules directly without a barrel. Place tests beside their main module. Remove the unused `src/maestro/checks.ts` and `src/maestro/activation.ts` placeholders; do not add parallel implementations.
+Use `pi-subagents/preflight` directly in `src/maestro/checks/` for agent launch checks. Put environment checks under `src/maestro/checks/` and activation behavior under `src/maestro/activation/`. Give each exported function its own module. Keep private helpers with the function they serve, and import modules directly without a barrel. Place tests beside their main module. Remove the unused `src/maestro/checks.ts` and `src/maestro/activation.ts` placeholders; do not add parallel implementations.
 
 ## Tests
 

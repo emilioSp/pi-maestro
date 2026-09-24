@@ -21,7 +21,7 @@ Maestro helps an owner define one change, send it to a builder, verify the resul
 Install `pi-subagents` and Maestro:
 
 ```bash
-pi install npm:pi-subagents@0.68.0
+pi install npm:pi-subagents@0.71.0
 pi install npm:@emiliosp/pi-maestro
 ```
 
@@ -59,7 +59,7 @@ During activation, Maestro checks the repository, configuration including config
 9. Ask Maestro to prepare the final review when the candidate is ready.
 10. Review the staged changes and create the final commit.
 
-Builder and verifier passes run in the foreground. Pi waits for each pass to finish before the owner can continue the conversation.
+Builder and verifier passes run in the foreground. Pi waits for each pass to finish before the owner can continue the conversation. Maestro shows the current phase in Pi's status; use pi-subagents FleetView or `/subagents-fleet` to inspect live activity and the transcript.
 
 If an approved spec must change after the builder starts, abandon the workflow manually and create a new spec.
 

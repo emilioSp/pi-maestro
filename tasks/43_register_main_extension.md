@@ -17,7 +17,7 @@ Wire the main Pi extension without moving domain logic into the composition root
 
 ## Work
 
-1. Import each of the eight main tool registrations directly from its file in `src/tools/main/` and register it once. Do not add a tool barrel.
+1. Import each of the eight main tool registrations directly from its file in `src/tools/main/` and register it once. Give the launch tool registrations access to the injected `pi.events`. Do not add a tool barrel.
 2. Register the `/maestro` toggle.
 3. Register only the required session, resume, instruction, status, and tool-activation events.
 4. Activate main Maestro tools only after successful checks.

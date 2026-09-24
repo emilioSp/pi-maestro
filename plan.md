@@ -797,11 +797,11 @@ I tool delegano la logica condivisa ai moduli sotto `src/` invece di duplicare o
 
 Non esiste una directory globale `src/schemas/`. Ogni schema resta vicino al dominio che lo usa e viene esportato dal relativo `index.ts`.
 
-`src/subagents/` integra Maestro con le API pubbliche `pi-subagents/delegation` e `pi-subagents/preflight`. Le directory `preflight/` e `delegation/` separano i controlli dai lanci. Ogni funzione pubblica ha un modulo; tipi, costanti, errori e helper privati restano con la funzione che servono. Gli import usano percorsi diretti, senza barrel. I placeholder `preflight.ts` e `delegation.ts` vengono rimossi quando si implementa il rispettivo ambito.
+I controlli degli agent e dei modelli usano l’API pubblica `pi-subagents/preflight` nei moduli di `src/maestro/checks/`. I tool `src/tools/main/launch-builder.ts` e `launch-verifier.ts` usano direttamente `pi-subagents/delegation` e `pi.events`, ricevuto durante la registrazione. La richiesta seleziona `maestro.builder` o `maestro.verifier`, la cui definizione in `agents/` fornisce il system prompt; il `task` identifica la spec e il worktree. Non esiste una directory `src/subagents/` né un wrapper di delega.
 
-Maestro usa il risultato foreground e il timeout forniti dall’API pubblica. Conserva la revisione del workflow e valida l’handoff al ritorno, senza duplicare tracking di richieste, cancellazione o cleanup dei listener. Non importa moduli interni di `pi-subagents`.
+Ogni tool attende la risposta terminale foreground, la abbina alla richiesta e rimuove il listener. Usa il timeout dell’API, conserva la revisione del workflow e valida l’handoff committato al ritorno. Non ascolta gli aggiornamenti di progress né usa RPC `spawn`, che supporta solo l’async. Non duplica il tracking dell’esecuzione o della cancellazione gestito da `pi-subagents` e non importa i suoi moduli interni.
 
-`package.json` include `pi-subagents` 0.68.0 in `dependencies` e `bundledDependencies` per rendere disponibili questi import pubblici nel tarball. Il manifest Pi non carica l’estensione annidata. L’owner deve avere anche `pi-subagents >=0.68.0` installato e attivo come pacchetto Pi; Maestro ne verifica la presenza tramite l’API pubblica durante l’attivazione.
+`package.json` include `pi-subagents` 0.71.0 in `dependencies` e `bundleDependencies` per rendere disponibili questi import pubblici nel tarball. Il manifest Pi non carica l’estensione annidata. L’owner deve avere anche `pi-subagents >=0.68.0` installato e attivo come pacchetto Pi; Maestro ne verifica la presenza tramite l’API pubblica durante l’attivazione.
 
 `src/maestro/` implementa la modalità principale. Le directory `checks/`, `activation/`, `session/`, `instructions/` e `status/` separano i rispettivi ambiti. Ogni funzione pubblica ha un modulo. Tipi, costanti, errori e helper privati restano con la funzione che servono.
 
@@ -875,9 +875,9 @@ I test restano accanto al modulo sotto `src/`. Il suffisso `.unit.test.ts` ident
     "prepublishOnly": "npm run check"
   },
   "dependencies": {
-    "pi-subagents": "0.68.0"
+    "pi-subagents": "0.71.0"
   },
-  "bundledDependencies": [
+  "bundleDependencies": [
     "pi-subagents"
   ],
   "peerDependencies": {
@@ -1095,7 +1095,7 @@ Configurazione condivisa nei file agent:
 5. Nessun accesso a subagent annidati.
 6. `subagentOnlyExtensions: ../extensions/maestro-child.ts`.
 
-I file agent non duplicano modello, thinking, timeout, modalità foreground o contesto. Maestro passa esplicitamente modello, thinking e timeout da `.pi/maestro.json`, oppure dai default in `src/config/defaults.ts` se il file manca. Ogni lancio usa `async: false` e contesto `fresh`.
+I file agent non duplicano modello, thinking, timeout, modalità foreground o contesto. Maestro passa esplicitamente modello, thinking e timeout da `.pi/maestro.json`, oppure dai default in `src/config/defaults.ts` se il file manca. Ogni delega è foreground e usa il contesto `fresh`, senza un parametro `async`.
 
 Configurazione specifica del builder:
 
@@ -1605,6 +1605,7 @@ Decisioni prese:
 3. L’owner non può continuare a conversare con Maestro mentre il passaggio è in esecuzione.
 4. Non esistono transizioni concorrenti durante un passaggio.
 5. Il supporto async è rinviato a una versione successiva.
+6. Mentre il tool attende, lo status di Maestro mostra la fase corrente; FleetView di `pi-subagents` mostra l’agent attivo e permette di leggere la sua trascrizione. Il tool Maestro non mostra il progress del subagent.
 
 <a id="plan-section-6-20"></a>
 
@@ -1736,7 +1737,7 @@ Decisione presa per `pi-subagents`:
 pi-subagents >=0.68.0
 ```
 
-La prima versione include `pi-subagents` 0.68.0 come library bundled per gli import pubblici. L’estensione owner realmente caricata in Pi deve essere `pi-subagents >=0.68.0`. Il manifest Maestro non carica una seconda copia dell’estensione. Non viene garantita compatibilità con versioni precedenti.
+La prima versione include `pi-subagents` 0.71.0 come library bundled per gli import pubblici. L’estensione owner realmente caricata in Pi deve essere `pi-subagents >=0.68.0`. Il manifest Maestro non carica una seconda copia dell’estensione. Non viene garantita compatibilità con versioni precedenti.
 
 Decisione presa per Node.js:
 

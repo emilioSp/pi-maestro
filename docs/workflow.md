@@ -51,6 +51,8 @@ The verifier starts with a fresh context in a separate worktree. It reads the sp
 
 The verifier records technical findings. It leaves product code unchanged when the pass ends.
 
+Builder and verifier run in the foreground through pi-subagents delegation. Their agent definitions provide the role instructions; each task identifies the spec and worktree. While the pass runs, Maestro's Pi status shows the current phase and pi-subagents FleetView shows live activity and the transcript. The Maestro launch tool does not stream progress.
+
 ## Main flow
 
 Happy path is highlighted in green.

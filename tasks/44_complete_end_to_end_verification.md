@@ -20,7 +20,7 @@ Prove that all modules work together and that the package is ready for review.
 
 1. Add one happy-path integration scenario from activation and spec creation to staged final review.
 2. Add one recovery scenario for an interrupted pass and explicit retry.
-3. Use temporary Git repositories and fake foreground subagents.
+3. Use temporary Git repositories and a fake Pi event bus with foreground subagent responses.
 4. Keep all other edge cases in the test file owned by their module.
 5. Remove redundant tests only when the same behavior remains clearly covered in its owning test file.
 

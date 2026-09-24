@@ -27,11 +27,11 @@ Expose safe foreground verifier launches from a completed builder candidate.
 
 ## Implementation
 
-The prompt identifies the spec and worktree and requires applicable `AGENTS.md` reads. It must not treat the builder handoff as proof or weaken independent verification.
+Use `pi-subagents/delegation` directly in this Pi tool adapter, with `agent: "maestro.verifier"`; pi-subagents loads `agents/verifier.md` as the agent definition. Register a terminal-response listener on the injected `pi.events` before emitting the request; match the request identity and remove the listener when it ends. Do not listen for progress updates: FleetView provides live status and transcript. The `task` identifies the spec and worktree and requires applicable `AGENTS.md` reads. It must not treat the builder handoff as proof or weaken independent verification.
 
 ## Tests
 
-Add adapter tests for input schema, launch-parameter mapping, one successful foreground result, one propagated workflow error, and one propagated delegation error. Use fake subagents.
+Add adapter tests for input schema, launch-parameter mapping, response matching, listener cleanup, one successful foreground result, one propagated workflow error, and one propagated delegation error. Use a fake Pi event bus and fake subagent responses.
 
 ## Completion criteria
 
