@@ -5,6 +5,11 @@
 
 import { type Static, Type } from 'typebox';
 
+export const AGENTS = {
+  BUILDER: 'maestro/builder',
+  VERIFIER: 'maestro/verifier',
+} as const;
+
 export const THINKING_LEVELS = {
   OFF: 'off',
   MINIMAL: 'minimal',

@@ -185,8 +185,12 @@ const resolveDirectories = async ({
   };
 };
 
-export const loadConfiguration = async (): Promise<MaestroConfig> => {
-  const repositoryRoot = await realpath(process.cwd());
+export const loadConfiguration = async ({
+  cwd = process.cwd(),
+}: {
+  cwd?: string;
+} = {}): Promise<MaestroConfig> => {
+  const repositoryRoot = await realpath(cwd);
   const targetPath = join(repositoryRoot, CONFIG_FILE_PATH);
 
   if (!(await pathExists(targetPath))) {
