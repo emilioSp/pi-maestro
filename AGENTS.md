@@ -27,7 +27,6 @@ The package is source-only. Pi loads TypeScript directly, `src/` is published, a
 - Keep code simple and readable. NO OVER ENGINEERING.
 - Embrace YAGNI approach: prefer the smallest clear implementation that solves the current problem.
 - Do not add future features, abstractions, or dependencies without a need.
-- Avoid comments unless they add necessary clarity.
 - Use descriptive names for variables, modules and functions.
 - Remove every temporary file you create.
 - Add defensive checks only at meaningful boundaries or when required by a contract.
@@ -35,6 +34,13 @@ The package is source-only. Pi loads TypeScript directly, `src/` is published, a
 - No boilerplate, no scaffolding "for later", later can scaffold for itself.
 - Deletion over addition. Boring over clever, clever is what someone needs to decode at 3am.
 - Mark deliberate simplifications that cut a real corner with a known ceiling (e.g. O(n²) scan)
+
+### Derived values and branches
+
+- Do not initialize a let variable and assign to it across if or else branches to build a result. Compute derived values with a small, named function that returns the result. 
+- Call inexpensive operations when needed and use their return values instead of storing mutable state to avoid repeating them.
+- Reserve let for values that genuinely change over time.
+- Use early returns, avoid if-else chain. 
 
 ## Communication
 
@@ -48,7 +54,6 @@ The package is source-only. Pi loads TypeScript directly, `src/` is published, a
 - Prefer `type` over `interface`.
 - Prefer named exports. Use a default export only when a tool requires it or for a single application entrypoint or singleton.
 - Prefer pure functions.
-- Use early returns, avoid if-else chain.
 - Use assertion functions with the TypeScript `asserts value is Type` return type to validate and narrow types; throw an error when validation fails.
 - Name every function that checks a condition and throws on failure `assert...`; return `void` (or `Promise<void>` if async), and use `asserts value is Type` when the check narrows a type.
 - Prefer arrow functions. Use classes only for strategies or objects with internal state. Use function for assertion functions.
@@ -84,3 +89,55 @@ The root `README.md` must include at least
 3. How to use it
 
 Bear in mind: the root `README.md` is not a changelog. Document stable user and operator workflows, not every feature.
+
+## Writing style
+
+### Vertical Whitespace & Logical Paragraphs
+
+When writing code, you MUST use vertical whitespace (blank lines) to group related statements into "logical paragraphs". Do not squash all lines of code together.
+- Isolate Control Flow: leave a blank line before and after multi-line `if`, `for`, or `while` blocks.
+- Separate Setup from Execution: leave a blank line after an initial block of variable declarations.
+- Isolate Returns: leave a blank line before the final `return` statement of a function.
+- Group Cohesive Actions: keep consecutive variable declarations or tightly related short statements together without blank lines.
+
+```javascript
+// BAD EXAMPLE -- Too squished
+
+const issues = [...reconciliation.issues];
+if (isRunningPhase(state.phase) && reconciliation.worktreePath !== null) {
+  const handoffPath = getRunningHandoffPath({ ... });
+  if (await pathExists(handoffPath)) {
+    issues.push('Error message');
+  }
+}
+issues.push(...(await getAncestryIssues({ ... })));
+return issues;
+
+// GOOD EXAMPLE -- Proper logical paragraphs
+
+const issues = [...reconciliation.issues];
+
+if (isRunningPhase(state.phase) && reconciliation.worktreePath !== null) {
+  const handoffPath = getRunningHandoffPath({ ... });
+  
+  if (await pathExists(handoffPath)) {
+    issues.push('Error message');
+  }
+}
+
+issues.push(...(await getAncestryIssues({ ... })));
+
+return issues;
+
+// GOOD EXAMPLE -- Grouping related statements is allowed
+
+if (state.phase === WORKFLOW_PHASES.FINAL_REVIEW) {
+  return { ... };
+}
+
+// These two variables are tightly coupled, keep them together
+const reconciliation = await reconcileWorkflow({ paths, state });
+const issues = await detectIssues({ paths, state, reconciliation });
+
+return { ... };
+```

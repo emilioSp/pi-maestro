@@ -15,6 +15,7 @@ export type DiscoveredWorkflow = {
   state: WorkflowState;
 };
 
+// TO FIX: this function works only during the spec creation, because it inspects the workflow.json inside the base branch
 export const discoverActiveWorkflow = async ({
   paths,
 }: {

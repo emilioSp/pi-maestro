@@ -7,10 +7,12 @@ import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandof
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import { findWorktree } from '#git/worktrees/findWorktree.ts';
-import { listWorktrees } from '#git/worktrees/listWorktrees.ts';
-import type { GetMaestroPaths } from '#paths.ts';
-import { WORKFLOW_ROLES, type WorkflowRoles } from '#paths.ts';
+import { listWorktrees, type Worktree } from '#git/worktrees/listWorktrees.ts';
+import type { GetMaestroPaths, WorkflowRoles } from '#paths.ts';
+import { WORKFLOW_ROLES } from '#paths.ts';
+import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
+import { getAgentRole } from '#workflow/utils/getAgentRole.ts';
 
 export type WorkflowReconciliation = {
   state: WorkflowState;
@@ -18,40 +20,221 @@ export type WorkflowReconciliation = {
   branch: string | null;
   worktreePath: string | null;
   head: string | null;
-  terminalHandoff: WorkflowRoles | null;
   interrupted: boolean;
-  dirty: boolean;
+  dirty: boolean | null;
   issues: readonly string[];
 };
-
-const builderResourcePhases = new Set<WorkflowState['phase']>([
-  WORKFLOW_PHASES.BUILDER_RUNNING,
-  WORKFLOW_PHASES.ESCALATION_DECISION,
-  WORKFLOW_PHASES.BUILDER_FAILED,
-  WORKFLOW_PHASES.READY_FOR_VERIFIER,
-]);
-
-const verifierResourcePhases = new Set<WorkflowState['phase']>([
-  WORKFLOW_PHASES.VERIFIER_RUNNING,
-  WORKFLOW_PHASES.FINDINGS_DECISION,
-  WORKFLOW_PHASES.CANDIDATE_READY,
-]);
-
-const builderHandoffPhases = new Set<WorkflowState['phase']>([
-  WORKFLOW_PHASES.BUILDER_FAILED,
-  WORKFLOW_PHASES.READY_FOR_VERIFIER,
-]);
-
-const verifierHandoffPhases = new Set<WorkflowState['phase']>([
-  WORKFLOW_PHASES.FINDINGS_DECISION,
-  WORKFLOW_PHASES.CANDIDATE_READY,
-]);
 
 const isRunning = (phase: WorkflowState['phase']): boolean =>
   phase === WORKFLOW_PHASES.BUILDER_RUNNING ||
   phase === WORKFLOW_PHASES.VERIFIER_RUNNING;
 
-// reconcile workflow state with actual state of the fs
+type WorkflowFileSystemResult = {
+  worktree: Worktree | null;
+  issues: string[];
+};
+
+const getBuilderFileSystemIssues = async ({
+  paths,
+  specId,
+}: {
+  paths: GetMaestroPaths;
+  specId: string;
+}): Promise<WorkflowFileSystemResult> => {
+  const expectedPath = paths.getBuilderWorktreePath(specId);
+  const expectedBranch = paths.getBuilderBranch(specId);
+  const worktree = await findWorktree({
+    repositoryRoot: paths.repositoryRoot,
+    path: expectedPath,
+  });
+
+  if (worktree === undefined) {
+    return {
+      worktree: null,
+      issues: [`Expected builder worktree is missing: ${expectedPath}.`],
+    };
+  }
+
+  if (worktree.branch !== expectedBranch) {
+    return {
+      worktree: null,
+      issues: [`Expected builder branch is missing: ${expectedBranch}.`],
+    };
+  }
+
+  return { worktree, issues: [] };
+};
+
+const matchesVerifierState = async ({
+  paths,
+  state,
+  worktree,
+}: {
+  paths: GetMaestroPaths;
+  state: WorkflowState;
+  worktree: Worktree;
+}): Promise<boolean> => {
+  try {
+    const candidateState = await readWorkflowState({
+      path: paths.getWorkflowPathInWorktree({
+        specId: state.specId,
+        worktreePath: worktree.path,
+      }),
+    });
+
+    return (
+      candidateState.specId === state.specId &&
+      candidateState.revision === state.revision &&
+      candidateState.phase === state.phase
+    );
+  } catch {
+    return false;
+  }
+};
+
+const getVerifierFileSystemIssues = async ({
+  paths,
+  state,
+}: {
+  paths: GetMaestroPaths;
+  state: WorkflowState;
+}): Promise<WorkflowFileSystemResult> => {
+  const prefix = `${WORKFLOW_ROLES.VERIFIER}/${state.specId}/`;
+  const worktrees = await listWorktrees({
+    repositoryRoot: paths.repositoryRoot,
+  });
+  const verifierWorktrees = worktrees.filter(
+    (worktree) => worktree.branch?.startsWith(prefix) === true,
+  );
+  const matches = await Promise.all(
+    verifierWorktrees.map(async (worktree) => ({
+      worktree,
+      matchesState: await matchesVerifierState({ paths, state, worktree }),
+    })),
+  );
+  const currentWorktrees = matches
+    .filter(({ matchesState }) => matchesState)
+    .map(({ worktree }) => worktree);
+
+  if (currentWorktrees.length !== 1) {
+    return {
+      worktree: null,
+      issues: [
+        'Expected exactly one verifier worktree matching the current workflow state.',
+      ],
+    };
+  }
+
+  return { worktree: currentWorktrees[0], issues: [] };
+};
+
+const getWorkflowFileSystemIssues = async ({
+  paths,
+  state,
+  role,
+}: {
+  paths: GetMaestroPaths;
+  state: WorkflowState;
+  role: WorkflowRoles | null;
+}): Promise<WorkflowFileSystemResult> => {
+  if (role === WORKFLOW_ROLES.BUILDER) {
+    return getBuilderFileSystemIssues({ paths, specId: state.specId });
+  }
+
+  if (role === WORKFLOW_ROLES.VERIFIER) {
+    return getVerifierFileSystemIssues({ paths, state });
+  }
+
+  return { worktree: null, issues: [] };
+};
+
+type WorktreeStatusAndIssues = {
+  dirty: boolean | null;
+  issues: string[];
+};
+
+const getWorktreeStatusAndIssues = async ({
+  worktree,
+  role,
+}: {
+  worktree: Worktree | null;
+  role: WorkflowRoles | null;
+}): Promise<WorktreeStatusAndIssues> => {
+  if (worktree === null) {
+    return { dirty: null, issues: [] };
+  }
+
+  const status = await getRepositoryStatus({ repositoryRoot: worktree.path });
+  const dirty = !status.clean;
+
+  return {
+    dirty,
+    issues: dirty ? [`Expected ${role} worktree is dirty.`] : [],
+  };
+};
+
+const getHandoffIssues = async ({
+  paths,
+  state,
+  worktree,
+}: {
+  paths: GetMaestroPaths;
+  state: WorkflowState;
+  worktree: Worktree | null;
+}): Promise<string[]> => {
+  const hasHandoff = (
+    [
+      WORKFLOW_PHASES.BUILDER_FAILED,
+      WORKFLOW_PHASES.READY_FOR_VERIFIER,
+      WORKFLOW_PHASES.FINDINGS_DECISION,
+      WORKFLOW_PHASES.CANDIDATE_READY,
+    ] as WorkflowState['phase'][]
+  ).includes(state.phase);
+
+  if (!hasHandoff) return [];
+
+  const role = getAgentRole(state.phase);
+  if (!role) return [];
+
+  const errorMessage =
+    role === WORKFLOW_ROLES.BUILDER
+      ? 'Builder handoff is missing or invalid.'
+      : 'Verifier handoff is missing or invalid.';
+
+  if (worktree === null) return [errorMessage];
+
+  try {
+    const handoffPath =
+      role === WORKFLOW_ROLES.BUILDER
+        ? paths.getBuilderHandoffPathInWorktree({
+            specId: state.specId,
+            worktreePath: worktree.path,
+          })
+        : paths.getVerifierHandoffPathInWorktree({
+            specId: state.specId,
+            worktreePath: worktree.path,
+          });
+
+    if (role === WORKFLOW_ROLES.BUILDER) {
+      await readBuilderHandoff({
+        path: handoffPath,
+        specId: state.specId,
+        revision: state.revision,
+      });
+    } else {
+      await readVerifierHandoff({
+        path: handoffPath,
+        specId: state.specId,
+        revision: state.revision,
+      });
+    }
+
+    return [];
+  } catch {
+    return [errorMessage];
+  }
+};
+
 export const reconcileWorkflow = async ({
   paths,
   state,
@@ -59,93 +242,34 @@ export const reconcileWorkflow = async ({
   paths: GetMaestroPaths;
   state: WorkflowState;
 }): Promise<WorkflowReconciliation> => {
-  const issues: string[] = [];
-  let role: WorkflowReconciliation['role'] = null;
-  let branch: string | null = null;
-  let worktreePath: string | null = null;
-  let head: string | null = null;
-  let dirty = false;
+  const role = getAgentRole(state.phase);
 
-  if (builderResourcePhases.has(state.phase)) {
-    role = WORKFLOW_ROLES.BUILDER;
-    const expectedPath = paths.getBuilderWorktreePath(state.specId);
-    const expectedBranch = paths.getBuilderBranch(state.specId);
-    const worktree = await findWorktree({
-      repositoryRoot: paths.repositoryRoot,
-      path: expectedPath,
-    });
-    if (worktree === undefined) {
-      issues.push(`Expected builder worktree is missing: ${expectedPath}.`);
-    } else if (worktree.branch !== expectedBranch) {
-      issues.push(`Expected builder branch is missing: ${expectedBranch}.`);
-    } else {
-      branch = worktree.branch;
-      worktreePath = worktree.path;
-      head = worktree.head;
-    }
-  }
+  const resource = await getWorkflowFileSystemIssues({ paths, state, role });
+  const worktreeStatus = await getWorktreeStatusAndIssues({
+    worktree: resource.worktree,
+    role,
+  });
 
-  if (verifierResourcePhases.has(state.phase)) {
-    role = WORKFLOW_ROLES.VERIFIER;
-    const prefix = `${WORKFLOW_ROLES.VERIFIER}/${state.specId}/`;
-    const worktrees = await listWorktrees({
-      repositoryRoot: paths.repositoryRoot,
-    });
-    const worktree = worktrees.find(
-      (candidate) => candidate.branch?.startsWith(prefix) === true,
-    );
-    if (worktree === undefined) {
-      issues.push('Expected verifier worktree is missing.');
-    } else {
-      branch = worktree.branch;
-      worktreePath = worktree.path;
-      head = worktree.head;
-    }
-  }
+  const handoffIssues = await getHandoffIssues({
+    paths,
+    state,
+    worktree: resource.worktree,
+  });
 
-  if (worktreePath !== null) {
-    const status = await getRepositoryStatus({ repositoryRoot: worktreePath });
-    dirty = !status.clean;
-    if (dirty) {
-      issues.push(`Expected ${role} worktree is dirty.`);
-    }
-  }
-
-  let terminalHandoff: WorkflowReconciliation['terminalHandoff'] = null;
-  if (builderHandoffPhases.has(state.phase)) {
-    terminalHandoff = WORKFLOW_ROLES.BUILDER;
-    try {
-      await readBuilderHandoff({
-        path: paths.getBuilderHandoffPath(state.specId),
-        specId: state.specId,
-        revision: state.revision,
-      });
-    } catch {
-      issues.push('Builder terminal handoff is missing or invalid.');
-    }
-  }
-  if (verifierHandoffPhases.has(state.phase)) {
-    terminalHandoff = WORKFLOW_ROLES.VERIFIER;
-    try {
-      await readVerifierHandoff({
-        path: paths.getVerifierHandoffPath(state.specId),
-        specId: state.specId,
-        revision: state.revision,
-      });
-    } catch {
-      issues.push('Verifier terminal handoff is missing or invalid.');
-    }
-  }
+  const issues = [
+    ...resource.issues,
+    ...worktreeStatus.issues,
+    ...handoffIssues,
+  ];
 
   return {
     state,
     role,
-    branch,
-    worktreePath,
-    head,
-    terminalHandoff,
+    branch: resource.worktree?.branch ?? null,
+    worktreePath: resource.worktree?.path ?? null,
+    head: resource.worktree?.head ?? null,
     interrupted: isRunning(state.phase),
-    dirty,
+    dirty: worktreeStatus.dirty,
     issues,
   };
 };

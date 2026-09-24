@@ -9,6 +9,7 @@ import {
   getMaestroPaths,
   WORKFLOW_ROLES,
 } from '#paths.ts';
+import { commitAll } from '#test/support/builder-workflow.ts';
 import { createTemporaryRepository } from '#test/support/temp-repository.ts';
 import { discoverActiveWorkflow } from '#workflow/state/discover.ts';
 import { reconcileWorkflow } from '#workflow/state/reconcile.ts';
@@ -108,7 +109,7 @@ describe('workflow discovery and reconciliation', () => {
     await expect(discoverActiveWorkflow({ paths })).resolves.toBeNull();
   });
 
-  it('reports a missing builder terminal handoff', async () => {
+  it('reports a missing builder handoff', async () => {
     const { repository, paths } = await createRepository();
     const workflowState = state(WORKFLOW_PHASES.READY_FOR_VERIFIER);
     await writeState({ paths, workflowState });
@@ -117,8 +118,8 @@ describe('workflow discovery and reconciliation', () => {
     await expect(
       reconcileWorkflow({ paths, state: workflowState }),
     ).resolves.toMatchObject({
-      terminalHandoff: WORKFLOW_ROLES.BUILDER,
-      issues: ['Builder terminal handoff is missing or invalid.'],
+      role: WORKFLOW_ROLES.BUILDER,
+      issues: ['Builder handoff is missing or invalid.'],
     });
   });
 
@@ -139,6 +140,67 @@ describe('workflow discovery and reconciliation', () => {
       issues: [
         `Expected builder branch is missing: ${paths.getBuilderBranch(specId)}.`,
       ],
+    });
+  });
+
+  it('selects the verifier worktree whose workflow revision is current', async () => {
+    const { repository, paths } = await createRepository();
+    const firstState = state(WORKFLOW_PHASES.VERIFIER_RUNNING);
+    await writeState({ paths, workflowState: firstState });
+    await repository.commit({ message: 'Persist verifier workflow state' });
+
+    const firstBranch = paths.getVerifierBranch({ specId, pass: 1 });
+    const firstWorktreePath = paths.getVerifierWorktreePath({
+      specId,
+      pass: 1,
+    });
+    await createBranch({
+      repositoryRoot: repository.path,
+      branch: firstBranch,
+      startPoint: 'main',
+    });
+    await createWorktree({
+      repositoryRoot: repository.path,
+      path: firstWorktreePath,
+      branch: firstBranch,
+    });
+
+    const secondBranch = paths.getVerifierBranch({ specId, pass: 2 });
+    const secondWorktreePath = paths.getVerifierWorktreePath({
+      specId,
+      pass: 2,
+    });
+    await createBranch({
+      repositoryRoot: repository.path,
+      branch: secondBranch,
+      startPoint: 'main',
+    });
+    await createWorktree({
+      repositoryRoot: repository.path,
+      path: secondWorktreePath,
+      branch: secondBranch,
+    });
+    const currentState = { ...firstState, revision: firstState.revision + 1 };
+    await writeFile(
+      paths.getWorkflowPathInWorktree({
+        specId,
+        worktreePath: secondWorktreePath,
+      }),
+      `${JSON.stringify(currentState)}\n`,
+      'utf8',
+    );
+    await commitAll({
+      path: secondWorktreePath,
+      message: 'Start verifier pass 2',
+    });
+
+    await expect(
+      reconcileWorkflow({ paths, state: currentState }),
+    ).resolves.toMatchObject({
+      branch: secondBranch,
+      worktreePath: secondWorktreePath,
+      head: expect.any(String),
+      issues: [],
     });
   });
 
