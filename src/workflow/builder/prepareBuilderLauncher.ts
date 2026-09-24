@@ -47,11 +47,13 @@ const assertBuilderLaunchBase = async ({
   const state = await readWorkflowState({
     path: paths.getWorkflowPath(specId),
   });
+
   if (state.specId !== specId) {
     throw new Error(
       `Workflow spec ID mismatch: expected "${specId}", found "${state.specId}".`,
     );
   }
+
   if (state.phase !== WORKFLOW_PHASES.READY_FOR_BUILDER) {
     throw new Error(
       `Builder launch requires ready-for-builder state, found "${state.phase}".`,
@@ -71,7 +73,6 @@ const assertBuilderLaunchBase = async ({
   const status = await getRepositoryStatus({
     repositoryRoot: paths.repositoryRoot,
   });
-
   const hasUnexpectedChanges =
     status.staged.length > 0 ||
     status.unstaged.length > 0 ||
@@ -98,6 +99,7 @@ const assertBuilderWorktreeClean = async (
   worktreePath: string,
 ): Promise<void> => {
   const status = await getRepositoryStatus({ repositoryRoot: worktreePath });
+
   if (!status.clean) {
     throw new Error(`Expected builder worktree is dirty: ${worktreePath}.`);
   }
@@ -196,6 +198,7 @@ export const prepareBuilderLaunch = async ({
   const existingPath = await pathExists(worktreePath);
   const hasExistingResources =
     existingBranch || existingWorktree !== undefined || existingPath;
+
   if (retry && !hasExistingResources) {
     throw new Error('Builder retry requires existing builder resources.');
   }
@@ -239,6 +242,7 @@ export const prepareBuilderLaunch = async ({
   });
 
   const currentState = await readWorkflowState({ path: workflowPath });
+
   if (currentState.specId !== specId) {
     throw new Error(
       `Workflow spec ID mismatch: expected "${specId}", found "${currentState.specId}".`,
@@ -267,9 +271,11 @@ export const prepareBuilderLaunch = async ({
   });
 
   const expectedPaths = [workflowPath];
+
   if (handoffExists) {
     expectedPaths.push(handoffPath);
   }
+
   const checkpointCommit = await createCommit({
     repositoryRoot: worktreePath,
     expectedPaths,
