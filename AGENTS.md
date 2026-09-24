@@ -61,7 +61,7 @@ The package is source-only. Pi loads TypeScript directly, `src/` is published, a
 - Keep functions small. Split a function when it becomes hard to read.
 - Use `async` and `await`. Do not introduce callback APIs. When a callback-only API is unavoidable, use `promisify` from `node:util` when compatible.
 - Use `Temporal`. Do not use `Date`.
-- Use named parameters for functions with multiple inputs. Define the input type close to the function.
+- For any function with multiple inputs, accept one object parameter and destructure its fields in the parameter list. Declare the object's shape as a named `type` immediately above the function. Do not use positional parameters or an inline object type in the function signature.
 - Use explicit methods. Do not use property accessors.
 - Do not use `--experimental-strip-types`. We run on node version that support TypeScript stripping by default.
 - Use `imports` field in `package.json`. Do not use relative paths.
