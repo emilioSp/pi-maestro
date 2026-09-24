@@ -24,11 +24,11 @@ Let the verifier record its evidence and findings through a child-only tool.
 4. Compare product files with the recorded candidate commit.
 5. If product files changed, return the exact structured `PRODUCT_FILES_MODIFIED` error.
 6. Only after all checks pass, write the verifier handoff and move the workflow to `findings-decision` or `candidate-ready`.
-7. Tell the verifier to commit the handoff and workflow state together.
+7. Tell the verifier to use Bash and Git to commit the handoff and workflow state together.
 
 ## Implementation
 
-The product-change error must contain only `PRODUCT_FILES_MODIFIED` and a clear message. Do not show file names, diff summaries, or suggested commands. Do not restore, delete, move, stage, or commit product files.
+The product-change error must contain only `PRODUCT_FILES_MODIFIED` and a clear message. Do not show file names, diff summaries, or suggested commands. Do not restore, delete, move, stage, or commit product files. After the product-file check passes, the verifier uses Bash and Git to commit only the handoff and workflow state. The tool does not commit.
 
 ## Tests
 

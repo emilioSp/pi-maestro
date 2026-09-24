@@ -22,11 +22,11 @@ Let the builder record its final result as done or failed through a child-only t
 3. Check protected protocol files against the checkpoint recorded when the builder started.
 4. Validate the final handoff.
 5. In one domain operation, write the current builder handoff and the next workflow state.
-6. Tell the child to commit both files together.
+6. Tell the builder to use Bash and Git to commit the implementation, handoff, and workflow state together.
 
 ## Implementation
 
-A done handoff moves the workflow to `ready-for-verifier`. A failed handoff moves it to `builder-failed`. The tool must not commit. Reject a second final handoff for the same pass.
+A done handoff moves the workflow to `ready-for-verifier`. A failed handoff moves it to `builder-failed`. The tool writes the handoff and workflow state but does not commit. The builder uses Bash and Git to commit them with its implementation. Reject a second final handoff for the same pass.
 
 Keep the schema, one exported Pi tool registration, domain call, and result conversion in `src/tools/child/record-builder-handoff.ts`. Do not export other operations from this file.
 

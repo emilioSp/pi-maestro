@@ -71,6 +71,10 @@ Maestro works with default settings. Add `.pi/maestro.json` when the project nee
 
 See [Configuration](docs/configuration.md).
 
+## TODO
+
+- Add a child-only Maestro tool to manage builder and verifier commits. They currently run Git commits through Bash.
+
 ## Documentation
 
 - [Workflow](docs/workflow.md)

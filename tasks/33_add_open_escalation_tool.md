@@ -24,11 +24,11 @@ Let the builder end its pass by asking the owner to make an escalation decision.
 4. Check protected files against the checkpoint recorded when the builder started.
 5. Create the escalation with `resolution: null`.
 6. In the same domain operation, move the workflow to `escalation-decision`.
-7. Tell the builder to commit the escalation and workflow state together, then stop.
+7. Tell the builder to use Bash and Git to commit the escalation and workflow state with its current work, then stop.
 
 ## Implementation
 
-Do not write a builder handoff or wait for the owner. Reject calls outside `builder-running`. Reject a second final outcome for the same pass.
+Do not write a builder handoff or wait for the owner. The tool does not commit; the builder uses Bash and Git to commit the escalation and workflow state with its current work. Reject calls outside `builder-running`. Reject a second final outcome for the same pass.
 
 ## Tests
 
