@@ -16,8 +16,6 @@ const resolveConfiguration = (input: PartialMaestroConfig): MaestroConfig => {
   const resolved: MaestroConfig = {
     version: DEFAULT_CONFIG.version,
     specDirectory: input.specDirectory ?? DEFAULT_CONFIG.specDirectory,
-    worktreeDirectory:
-      input.worktreeDirectory ?? DEFAULT_CONFIG.worktreeDirectory,
     builder: {
       model: input.builder?.model ?? DEFAULT_CONFIG.builder.model,
       thinking: input.builder?.thinking ?? DEFAULT_CONFIG.builder.thinking,
@@ -150,37 +148,9 @@ const resolveDirectories = async ({
     directory: config.specDirectory,
     name: 'specDirectory',
   });
-  const worktreeDirectory = await resolveSafeDirectory({
-    repositoryRoot,
-    directory: config.worktreeDirectory,
-    name: 'worktreeDirectory',
-  });
-
-  if (specDirectory === worktreeDirectory) {
-    throw new Error(
-      'specDirectory and worktreeDirectory must not be the same directory.',
-    );
-  }
-
-  if (
-    isPathStrictlyWithin({
-      parent: specDirectory,
-      candidate: worktreeDirectory,
-    }) ||
-    isPathStrictlyWithin({
-      parent: worktreeDirectory,
-      candidate: specDirectory,
-    })
-  ) {
-    throw new Error(
-      'specDirectory and worktreeDirectory must not contain one another.',
-    );
-  }
-
   return {
     ...config,
     specDirectory,
-    worktreeDirectory,
   };
 };
 
