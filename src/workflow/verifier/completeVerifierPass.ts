@@ -20,7 +20,6 @@ import {
 } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-import { assertWorktree } from '#workflow/utils/assertWorktree.ts';
 
 export const VERIFIER_PASS_ERRORS = {
   PRODUCT_FILES_MODIFIED: 'PRODUCT_FILES_MODIFIED',
@@ -34,7 +33,7 @@ const VERIFIER_PASS_MESSAGES = {
 export type CompletedVerifierPass = {
   handoff: VerifierHandoff;
   state: WorkflowState;
-  worktreePath: string;
+  repositoryRoot: string;
 };
 
 export type VerifierPassRejection = {
@@ -43,25 +42,20 @@ export type VerifierPassRejection = {
 };
 
 const hasProductChanges = async ({
-  worktreePath,
+  repositoryRoot,
   candidateCommit,
   workflowPath,
   handoffPath,
 }: {
-  worktreePath: string;
+  repositoryRoot: string;
   candidateCommit: string;
   workflowPath: string;
   handoffPath: string;
 }): Promise<boolean> => {
   /*
-   * Compare both versions of each tracked file with the candidate:
-   * git diff --no-renames --name-only -z <candidateCommit> -- checks files on disk.
-   * git diff --cached --no-renames --name-only -z <candidateCommit> -- checks staged files.
-   *
-   * Example: product.txt contains "A" in the candidate. The verifier changes it
-   * to "B" and runs `git add product.txt`. Then it restores only the disk file
-   * to "A" with `git restore --source=<candidateCommit> --worktree -- product.txt`.
-   * The first diff sees "A" and finds no change. The second sees staged "B".
+   * Compare both the checkout and index with the candidate. The second diff
+   * catches a product file that the verifier staged and then restored only on
+   * disk.
    */
   const [diff, stagedDiff, status] = await Promise.all([
     runGitCommand({
@@ -73,7 +67,7 @@ const hasProductChanges = async ({
         candidateCommit,
         '--',
       ],
-      cwd: worktreePath,
+      cwd: repositoryRoot,
     }),
     runGitCommand({
       arguments: [
@@ -85,16 +79,15 @@ const hasProductChanges = async ({
         candidateCommit,
         '--',
       ],
-      cwd: worktreePath,
+      cwd: repositoryRoot,
     }),
-    getRepositoryStatus({ repositoryRoot: worktreePath }),
+    getRepositoryStatus({ repositoryRoot }),
   ]);
 
   const allowedPaths = new Set([
-    relative(worktreePath, workflowPath),
-    relative(worktreePath, handoffPath),
+    relative(repositoryRoot, workflowPath),
+    relative(repositoryRoot, handoffPath),
   ]);
-
   const changedTrackedPaths = [diff.stdout, stagedDiff.stdout]
     .flatMap((output) => output.split('\0'))
     .filter((path) => path.length > 0);
@@ -108,31 +101,24 @@ const hasProductChanges = async ({
 export const completeVerifierPass = async ({
   paths,
   specId,
-  pass,
   candidateCommit,
   handoff,
 }: {
   paths: MaestroPaths;
   specId: string;
-  pass: number;
   candidateCommit: string;
   handoff: unknown;
 }): Promise<CompletedVerifierPass | VerifierPassRejection> => {
-  const verifierWorktreePath = paths.getVerifierWorktreePath({ specId, pass });
-  await assertWorktree({
-    repositoryRoot: paths.getRepositoryRoot(),
-    branch: paths.getVerifierBranch({ specId, pass }),
-    worktreePath: verifierWorktreePath,
-  });
-  const workflowPath = paths.getWorkflowPathInWorktree({
-    specId,
-    worktreePath: verifierWorktreePath,
-  });
-  const handoffPath = paths.getVerifierHandoffPathInWorktree({
-    specId,
-    worktreePath: verifierWorktreePath,
-  });
+  const repositoryRoot = paths.getRepositoryRoot();
+  const workflowPath = paths.getWorkflowPath(specId);
+  const handoffPath = paths.getVerifierHandoffPath(specId);
   const currentState = await readWorkflowState({ path: workflowPath });
+
+  if (currentState.specId !== specId) {
+    throw new Error(
+      `Workflow spec ID mismatch: expected "${specId}", found "${currentState.specId}".`,
+    );
+  }
 
   if (currentState.phase !== WORKFLOW_PHASES.VERIFIER_RUNNING) {
     throw new Error(
@@ -146,13 +132,12 @@ export const completeVerifierPass = async ({
 
   if (
     await hasProductChanges({
-      worktreePath: verifierWorktreePath,
+      repositoryRoot,
       candidateCommit,
       workflowPath,
       handoffPath,
     })
   ) {
-    // Return a structured result so the verifier can restore the candidate and retry this pass.
     return {
       error: VERIFIER_PASS_ERRORS.PRODUCT_FILES_MODIFIED,
       message: VERIFIER_PASS_MESSAGES.PRODUCT_FILES_MODIFIED,
@@ -167,6 +152,7 @@ export const completeVerifierPass = async ({
         ? WORKFLOW_EVENTS.VERIFIER_FOUND_FINDINGS
         : WORKFLOW_EVENTS.VERIFIER_APPROVED,
   });
+
   await mkdir(dirname(handoffPath), { recursive: true });
   await writeVerifierHandoff({
     path: handoffPath,
@@ -183,6 +169,6 @@ export const completeVerifierPass = async ({
   return {
     handoff,
     state: nextState,
-    worktreePath: verifierWorktreePath,
+    repositoryRoot,
   };
 };
