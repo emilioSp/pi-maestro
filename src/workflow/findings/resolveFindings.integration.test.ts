@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
+import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
 import {
   cleanupBuilderWorkflows,
   commitAll,
@@ -82,5 +83,8 @@ describe('finding resolution', () => {
     expect(resolved.repositoryRoot).toBe(repository.path);
     expect(resolved.state.phase).toBe(WORKFLOW_PHASES.READY_FOR_BUILDER);
     expect(resolved.findings[0].rejection).toBeNull();
+    await expect(
+      getCurrentBranch({ repositoryRoot: repository.path }),
+    ).resolves.toBe('main');
   });
 });
