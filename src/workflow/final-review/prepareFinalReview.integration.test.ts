@@ -1,59 +1,35 @@
-import { writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  VERIFIER_HANDOFF_VERSION,
-  type VerifierHandoff,
-} from '#artifacts/verifier-handoff/schema.ts';
+import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
 import {
   cleanupBuilderWorkflows,
   commitAll,
   createApprovedWorkflow,
-  doneHandoff,
-  getBuilderWorktreePaths,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
 import { prepareFinalReview } from '#workflow/final-review/prepareFinalReview.ts';
+import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
 import { prepareVerifierLaunch } from '#workflow/verifier/prepareVerifierLaunch.ts';
 
 afterEach(cleanupBuilderWorkflows);
 
-const approvedVerifierHandoff = (revision: number): VerifierHandoff => ({
-  version: VERIFIER_HANDOFF_VERSION,
-  specId: SPEC_ID,
-  revision,
-  summary: 'All candidate checks passed.',
-  acceptanceCriteria: [],
-  findings: [],
-  notes: [],
-});
-
-describe('final review preparation', () => {
-  it('allows the managed worktree directory to remain untracked in the base repository', async () => {
-    const { paths, builderWorktreePath } = await createApprovedWorkflow();
-    const builderLaunch = await prepareBuilderLaunch({
+describe('final review', () => {
+  it('commits final-review state on the current branch without staging or squash', async () => {
+    const { paths, repository } = await createApprovedWorkflow();
+    await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+    await completeBuilderPass({
       paths,
       specId: SPEC_ID,
+      handoff: {
+        status: 'done',
+        summary: 'Implemented the approved change.',
+        acceptanceCriteria: [],
+        notes: [],
+      },
     });
-
-    await writeFile(join(builderWorktreePath, 'product.txt'), 'candidate\n');
-
-    const builderPaths = await getBuilderWorktreePaths({
-      worktreePath: builderWorktreePath,
-    });
-    await completeBuilderPass({
-      paths: builderPaths,
-      specId: SPEC_ID,
-      handoff: doneHandoff(builderLaunch.revision + 1),
-    });
-    await commitAll({
-      path: builderWorktreePath,
-      message: 'Builder candidate',
-    });
-
+    await commitAll({ path: repository.path, message: 'Builder completed' });
     const verifierLaunch = await prepareVerifierLaunch({
       paths,
       specId: SPEC_ID,
@@ -61,31 +37,26 @@ describe('final review preparation', () => {
     await completeVerifierPass({
       paths,
       specId: SPEC_ID,
-      pass: verifierLaunch.pass,
       candidateCommit: verifierLaunch.candidateCommit,
-      handoff: approvedVerifierHandoff(verifierLaunch.revision + 1),
+      handoff: {
+        version: VERIFIER_HANDOFF_VERSION,
+        specId: SPEC_ID,
+        revision: verifierLaunch.revision + 1,
+        summary: 'The candidate is approved.',
+        acceptanceCriteria: [],
+        findings: [],
+        notes: [],
+      },
     });
-    await commitAll({
-      path: verifierLaunch.worktreePath,
-      message: 'Verifier approved',
-    });
+    await commitAll({ path: repository.path, message: 'Verifier completed' });
 
-    const result = await prepareFinalReview({
-      paths,
-      specId: SPEC_ID,
-      pass: verifierLaunch.pass,
-    });
+    const result = await prepareFinalReview({ paths, specId: SPEC_ID });
 
-    expect(result.stagedPaths).toContain('product.txt');
-    expect(result.cleanup.failures).toEqual([]);
-    expect(result.cleanup.removed).toEqual(
-      expect.arrayContaining([
-        paths.getBuilderBranch(SPEC_ID),
-        paths.getVerifierBranch({
-          specId: SPEC_ID,
-          pass: verifierLaunch.pass,
-        }),
-      ]),
-    );
+    expect(result).toMatchObject({
+      currentBranch: 'main',
+      phase: WORKFLOW_PHASES.FINAL_REVIEW,
+    });
+    expect(result.candidateCommit).not.toBe(result.finalReviewCommit);
+    expect(result.pullRequestGuidance).toContain('Pull Request');
   });
 });

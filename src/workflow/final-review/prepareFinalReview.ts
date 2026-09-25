@@ -1,13 +1,11 @@
 /**
- * Objective: Prepare and conclude a verified candidate for owner review.
+ * Objective: Conclude a verified workflow on the current branch for Pull Request delivery.
  * Used: When the owner requests final review preparation.
  */
 
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
-import { runGitCommand } from '#git/command.ts';
-import { getStagedPaths } from '#git/commits/getStagedPaths.ts';
-import { cleanupWorkflowResources } from '#git/final-review/cleanupWorkflowResources.ts';
-import { squashCandidate } from '#git/final-review/squashCandidate.ts';
+import { createCommit } from '#git/commits/createCommit.ts';
+import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
@@ -15,64 +13,43 @@ import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-import { assertWorktree } from '#workflow/utils/assertWorktree.ts';
 
 export type FinalReviewResult = {
+  currentBranch: string;
   candidateCommit: string;
-  candidateBranch: string;
-  baseBranch: string;
-  stagedPaths: readonly string[];
-  cleanup: { removed: string[]; failures: string[] };
+  finalReviewCommit: string;
+  phase: typeof WORKFLOW_PHASES.FINAL_REVIEW;
+  pullRequestGuidance: string;
 };
 
-// git rev-parse --verify HEAD^{commit}
-// git add <workflow-state-path>
-// git diff --cached --name-only -z
 export const prepareFinalReview = async ({
   paths,
   specId,
-  pass,
 }: {
   paths: MaestroPaths;
   specId: string;
-  pass: number;
 }): Promise<FinalReviewResult> => {
-  const verifierBranch = paths.getVerifierBranch({ specId, pass });
-  const verifierWorktreePath = paths.getVerifierWorktreePath({ specId, pass });
-  const builderBranch = paths.getBuilderBranch(specId);
-  const builderWorktreePath = paths.getBuilderWorktreePath(specId);
+  const repositoryRoot = paths.getRepositoryRoot();
+  const workflowPath = paths.getWorkflowPath(specId);
+  const handoffPath = paths.getVerifierHandoffPath(specId);
+  const currentState = await readWorkflowState({ path: workflowPath });
 
-  await assertWorktree({
-    repositoryRoot: paths.getRepositoryRoot(),
-    branch: verifierBranch,
-    worktreePath: verifierWorktreePath,
-  });
-  await assertWorktree({
-    repositoryRoot: paths.getRepositoryRoot(),
-    branch: builderBranch,
-    worktreePath: builderWorktreePath,
-  });
-
-  const statePath = paths.getWorkflowPath(specId);
-  const verifierStatePath = paths.getWorkflowPathInWorktree({
-    specId,
-    worktreePath: verifierWorktreePath,
-  });
-  const verifierState = await readWorkflowState({ path: verifierStatePath });
-
-  if (verifierState.phase !== WORKFLOW_PHASES.CANDIDATE_READY) {
+  if (currentState.specId !== specId) {
     throw new Error(
-      `Final review requires candidate-ready state, found "${verifierState.phase}".`,
+      `Workflow spec ID mismatch: expected "${specId}", found "${currentState.specId}".`,
+    );
+  }
+
+  if (currentState.phase !== WORKFLOW_PHASES.CANDIDATE_READY) {
+    throw new Error(
+      `Final review requires candidate-ready state, found "${currentState.phase}".`,
     );
   }
 
   const handoff = await readVerifierHandoff({
-    path: paths.getVerifierHandoffPathInWorktree({
-      specId,
-      worktreePath: verifierWorktreePath,
-    }),
+    path: handoffPath,
     specId,
-    revision: verifierState.revision,
+    revision: currentState.revision,
   });
 
   if (handoff.findings.some(({ rejection }) => rejection === null)) {
@@ -81,68 +58,37 @@ export const prepareFinalReview = async ({
     );
   }
 
-  const candidateCommit = await getHeadCommit({
-    repositoryRoot: verifierWorktreePath,
-  });
+  const status = await getRepositoryStatus({ repositoryRoot });
 
-  const worktreeDirectory = paths.getWorktreeDirectory();
-
-  await squashCandidate({
-    repositoryRoot: paths.getRepositoryRoot(),
-    baseBranch: verifierState.baseBranch,
-    candidateBranch: verifierBranch,
-    worktreeDirectory,
-  });
-
-  const stagedCandidatePaths = await getStagedPaths({
-    repositoryRoot: paths.getRepositoryRoot(),
-  });
-  const status = await getRepositoryStatus({
-    repositoryRoot: paths.getRepositoryRoot(),
-    worktreeDirectory,
-  });
-
-  if (
-    stagedCandidatePaths.length === 0 ||
-    status.unstaged.length > 0 ||
-    status.untracked.length > 0
-  ) {
-    throw new Error(
-      'Candidate squash produced an empty or unexpected staging state.',
-    );
+  if (!status.clean) {
+    throw new Error('Final review requires a clean current checkout.');
   }
 
+  const currentBranch = await getCurrentBranch({ repositoryRoot });
+  const candidateCommit = await getHeadCommit({ repositoryRoot });
   const nextState = transitionWorkflow({
-    state: verifierState,
+    state: currentState,
     event: WORKFLOW_EVENTS.PREPARE_FINAL_REVIEW,
   });
+
   await writeWorkflowState({
-    path: statePath,
+    path: workflowPath,
     state: nextState,
-    currentRevision: verifierState.revision,
-  });
-  await runGitCommand({
-    arguments: ['add', '--', statePath],
-    cwd: paths.getRepositoryRoot(),
-  });
-  const stagedPaths = await getStagedPaths({
-    repositoryRoot: paths.getRepositoryRoot(),
+    currentRevision: currentState.revision,
   });
 
-  const cleanup = await cleanupWorkflowResources({
-    repositoryRoot: paths.getRepositoryRoot(),
-    worktreeDirectory: paths.getWorktreeDirectory(),
-    resources: [
-      { branch: verifierBranch, worktreePath: verifierWorktreePath },
-      { branch: builderBranch, worktreePath: builderWorktreePath },
-    ],
+  const finalReviewCommit = await createCommit({
+    repositoryRoot,
+    expectedPaths: [workflowPath],
+    message: WORKFLOW_PHASES.FINAL_REVIEW,
   });
 
   return {
+    currentBranch,
     candidateCommit,
-    candidateBranch: verifierBranch,
-    baseBranch: verifierState.baseBranch,
-    stagedPaths,
-    cleanup,
+    finalReviewCommit,
+    phase: WORKFLOW_PHASES.FINAL_REVIEW,
+    pullRequestGuidance:
+      'Open a Pull Request from the current branch. Maestro does not push, merge, or choose the merge method.',
   };
 };
