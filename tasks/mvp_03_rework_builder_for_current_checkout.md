@@ -19,7 +19,7 @@ Run every builder operation on the current checkout and current branch without c
 
 1. Rewrite `prepareBuilderLaunch` to validate the current checkout and workflow phase without branch or worktree resources.
 2. Require an owner-committed `ready-for-builder` state before the first builder launch and after every spec revision.
-3. Keep retry explicit from `builder-running` or `builder-failed` where the state machine allows it.
+3. Keep retry explicit from `builder-failed`. Do not relaunch a builder from `builder-running`.
 4. Create the `builder-running` checkpoint on the current branch before delegation.
 5. Calculate the live `spec.md` SHA-256 from the current checkout immediately before delegation.
 6. Recalculate and replace the live baseline for an explicit retry or after an approved spec revision.
