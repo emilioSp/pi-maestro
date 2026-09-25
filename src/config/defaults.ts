@@ -11,7 +11,6 @@ import {
 
 export const DEFAULT_CONFIG_VERSION = SUPPORTED_CONFIG_VERSION;
 export const DEFAULT_SPEC_DIRECTORY = '.specs';
-export const DEFAULT_WORKTREE_DIRECTORY = '.worktree';
 export const DEFAULT_BUILDER_MODEL = 'openai-codex/gpt-6-luna';
 export const DEFAULT_BUILDER_THINKING = THINKING_LEVELS.HIGH;
 export const DEFAULT_VERIFIER_MODEL = 'openai-codex/gpt-6-sol';
@@ -25,7 +24,6 @@ export const CONFIG_FILE_PATH = `${CONFIG_DIRECTORY_NAME}/${CONFIG_FILE_NAME}`;
 export const DEFAULT_CONFIG: MaestroConfig = {
   version: DEFAULT_CONFIG_VERSION,
   specDirectory: DEFAULT_SPEC_DIRECTORY,
-  worktreeDirectory: DEFAULT_WORKTREE_DIRECTORY,
   builder: {
     model: DEFAULT_BUILDER_MODEL,
     thinking: DEFAULT_BUILDER_THINKING,
