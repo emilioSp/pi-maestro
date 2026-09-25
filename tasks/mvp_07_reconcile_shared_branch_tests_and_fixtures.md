@@ -1,14 +1,16 @@
-STATUS: TODO
+STATUS: DONE
 
-# Task mvp_07: Reconcile shared-branch tests and fixtures
+# Task mvp_07: Add the shared-branch findings flow
 
 ## Dependency
 
-This task depends on all previous `mvp_*` tasks.
+This task depends on `mvp_03_rework_builder_for_current_checkout.md` and `mvp_04_rework_verifier_for_current_checkout.md`.
 
 ## Objective
 
-Remove obsolete worktree assumptions from shared test support and verify the complete current-branch domain flow before Task 35.
+Verify the builder, verifier, and owner code-fix cycle on one current checkout and branch.
+
+Spec revision, verifier protocol commits, final review, prompts, and Pi adapters are covered by their own tasks.
 
 ## Plan references
 
@@ -17,29 +19,33 @@ Remove obsolete worktree assumptions from shared test support and verify the com
 
 ## Work
 
-1. Audit all source, test, fixture, task, and agent references to worktrees, operational branches, `baseBranch`, verifier pass numbers, local squash, staging, and cleanup.
-2. Update `test/support` repositories and fake subagents to use one current branch and one checkout.
-3. Remove obsolete worktree and branch resource assertions from integration tests.
-4. Add one domain integration flow for builder completion, verifier findings, owner code fixes, and a second verifier run on the same branch.
-5. Add one domain integration flow for a blocked spec revision that keeps the same `specId`, branch, and artifacts.
-6. Add one integration flow proving the verifier tool commits only protocol files.
-7. Add one final-review flow that commits `final-review` and returns Pull Request facts without staging or squash.
-8. Run the package checks and remove temporary files created by the tests.
+1. Verify that `test/support` uses one current checkout and branch. Remove only actual obsolete worktree or operational-branch assumptions; do not audit descriptive documentation handled by other tasks.
+2. Add one domain integration flow:
+   - builder completes;
+   - verifier records a finding;
+   - owner requests `fix-code`;
+   - builder runs again and completes;
+   - verifier runs again on the same checkout and branch.
+3. Assert that the flow keeps the same `specId`, current repository root, branch, and valid workflow revisions and handoffs.
+4. Keep the existing fake subagent support generic. Do not add workflow-specific resource fixtures.
+5. Run the package checks and inspect the package file list.
+
+Do not duplicate the spec revision, verifier protocol commit, final review, prompt, or Pi adapter tests owned by other tasks.
 
 ## Tests
 
-Run:
+Cover:
 
-```text
-npm run check
-npm pack --dry-run
-```
-
-Inspect the package file list and confirm that no worktree directory, obsolete branch fixture, or temporary repository is included.
+- the complete findings-to-code-fix cycle on the current checkout;
+- a second builder and verifier checkpoint on the same branch;
+- current `specId` and artifact paths across both verifier runs;
+- no branch or worktree resource creation;
+- `npm run check`;
+- `npm pack --dry-run`.
 
 ## Completion criteria
 
-- Shared test support uses one current branch and checkout.
-- The core builder, verifier, revision, findings, and final-review flows pass together.
-- No obsolete worktree or branch model remains in the code or tests covered by this task.
-- The package checks pass before Task 35 starts.
+- Shared test support has no active worktree or operational-branch dependency.
+- The builder, verifier, findings, and code-fix flow passes on one checkout and branch.
+- The second verifier run uses the new builder result and preserves the workflow identity.
+- Package checks pass before Task 35 starts.
