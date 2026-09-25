@@ -96,10 +96,8 @@ flowchart TD
     escalationOutcome -->|Yes| reviseSpec[Owner revises and approves spec.md]
     reviseSpec --> approval
 
-    buildOutcome -->|Failed| builderFailed[Workflow is blocked]
-    builderFailed --> retryBuilder{Retry the builder?}
-    retryBuilder -->|Yes| build
-    retryBuilder -->|No| abandoned[Owner abandons the workflow manually]
+    buildOutcome -->|Failed| builderFailed[Maestro reports the error and stops]
+    builderFailed --> abandoned[Owner handles the failed workflow manually]
 
     buildOutcome -->|Done| verify[Verifier regenerates every proof]
     verify --> findings{Findings?}
@@ -154,9 +152,10 @@ The commit is the approved contract for the builder.
 
 A contract revision is allowed only from these blocked phases:
 
-- `builder-failed`
 - `escalation-decision`
 - `findings-decision`
+
+`builder-failed` is a sink state. Maestro reports the technical error and stops the workflow; it does not retry the builder or revise the spec from that state.
 
 The owner edits and approves `spec.md`, then calls `maestro_mark_spec_ready` directly from the blocked phase. The tool changes the phase to `ready-for-builder`. There is no separate revision phase and no new `specId`.
 
@@ -164,7 +163,7 @@ The previous escalation or finding becomes inactive. Its artifact remains in the
 
 The workflow does not store a separate spec version. The active contract is the current `spec.md`; Git preserves earlier versions and approvals.
 
-Immediately before each builder launch, Maestro calculates the SHA-256 of the current `spec.md` and stores it only in live session state. Builder handoff and escalation tools compare the current file with that baseline. An explicit retry recalculates the baseline. A spec revision receives its new baseline only after the owner approves it. Restart, `/resume`, and deactivation discard the live baseline.
+Immediately before each builder launch, Maestro calculates the SHA-256 of the current `spec.md` and stores it only in live session state. Builder handoff and escalation tools compare the current file with that baseline. A spec revision receives its new baseline only after the owner approves it. Restart, `/resume`, and deactivation discard the live baseline.
 
 ## Acceptance criterion simplicity principle
 
