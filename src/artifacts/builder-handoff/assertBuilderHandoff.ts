@@ -29,9 +29,11 @@ const hasOnlyCompletedChecks = (
       criterion.breakageStatus === BREAKAGE_STATUSES.CONFIRMED,
   );
 
-const hasPartialCheck = (
+const hasValidFailedChecks = (
   acceptanceCriteria: BuilderAcceptanceCriterion[],
-): boolean => !hasOnlyCompletedChecks(acceptanceCriteria);
+): boolean =>
+  acceptanceCriteria.length === 0 ||
+  !hasOnlyCompletedChecks(acceptanceCriteria);
 
 function assertBuilderHandoffSchema(
   input: unknown,
@@ -73,10 +75,10 @@ export function assertBuilderHandoff(
 
   if (
     handoff.status === BUILDER_HANDOFF_STATUSES.FAILED &&
-    !hasPartialCheck(handoff.acceptanceCriteria)
+    !hasValidFailedChecks(handoff.acceptanceCriteria)
   ) {
     throw new Error(
-      'Failed builder handoff requires at least one failed, unconfirmed, or not-run check.',
+      'Failed builder handoff cannot mark every acceptance check as completed.',
     );
   }
 
