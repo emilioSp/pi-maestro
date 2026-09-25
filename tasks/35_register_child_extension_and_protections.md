@@ -13,6 +13,7 @@ This task depends on the completed MVP foundation tasks:
 - `mvp_05_rework_child_context_and_verifier_commit.md`
 - `mvp_06_rework_final_review_for_pull_request.md`
 - `mvp_07_reconcile_shared_branch_tests_and_fixtures.md`
+- `mvp_08_review_workflow_prompts.md`
 - Task 34: Add the verifier handoff tool
 
 ## Objective
