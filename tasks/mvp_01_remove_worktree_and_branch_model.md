@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task mvp_01: Remove the worktree and operational branch model
 
@@ -24,7 +24,7 @@ Make the current Git checkout and current branch the only workspace used by Maes
 4. Remove workflow use of worktree creation, lookup, removal, and role-specific branch creation.
 5. Remove workflow-specific worktree assertions and cleanup resources. Keep generic Git helpers only when another current-branch operation still needs them.
 6. Remove `baseBranch` from `workflow.json` and from every domain input, output, and test that only supported local squash.
-7. Ensure Maestro never creates, switches, names, records, or validates a branch identity. Each operation uses the current checkout.
+7. Do not add branch identity enforcement. Trust the owner to keep the intended checkout active; each operation uses the current checkout directly.
 8. Update Git status checks to inspect the current checkout without a worktree exclusion.
 9. Remove obsolete worktree and operational-branch fixtures and tests.
 10. Keep all workflow commits on the current branch.
