@@ -20,8 +20,8 @@ Builder delegation, timeout, interruption, and Pi response handling belong to Ta
 ## Work
 
 1. Verify that `prepareBuilderLaunch` uses only the current checkout and workflow state. It must not create, locate, validate, or clean branches or worktrees.
-2. Keep normal launches limited to `ready-for-builder` and explicit retries limited to `builder-failed`. Do not relaunch from `builder-running`.
-3. Create the `builder-running` checkpoint on the current branch and calculate the live `spec.md` SHA immediately before each launch. A launch after a spec revision is a normal launch, not a retry.
+2. Keep launches limited to `ready-for-builder`. Do not relaunch from `builder-running` or `builder-failed`; `builder-failed` is a sink.
+3. Create the `builder-running` checkpoint on the current branch and calculate the live `spec.md` SHA immediately before each launch. A launch after an approved revision is a normal launch.
 4. Keep `completeBuilderPass` and `openBuilderEscalation` bound to the explicit `specId`, current workflow phase, current checkout, and live spec baseline.
 5. Keep builder implementation and protocol commits on the current branch. The child tools write protocol files; the builder commits them with its implementation through Bash.
 
@@ -32,9 +32,9 @@ Do not implement Pi delegation or child lifecycle result handling here. Task 38 
 Cover:
 
 - first launch and checkpoint on the current branch;
-- successful explicit retry after `builder-failed`;
+- builder failure persists `builder-failed` and prevents another launch;
 - successful normal launch after an approved spec revision;
-- replacement of the live SHA baseline for both cases;
+- replacement of the live SHA baseline for normal launches;
 - rejection of staged, unstaged, and untracked checkout changes before launch;
 - builder completion and escalation with the explicit spec identity;
 - no branch or worktree creation;
@@ -43,7 +43,7 @@ Cover:
 ## Completion criteria
 
 - Builder domain operations have no branch or worktree dependency.
-- Normal launches and retries use the correct workflow phases.
+- Builder launches use only the `ready-for-builder` phase.
 - Every builder launch creates a current-branch checkpoint and a current live spec baseline.
 - Builder completion and escalation validate the current workflow and explicit spec identity.
 - Delegation lifecycle behavior remains scoped to Task 38.
