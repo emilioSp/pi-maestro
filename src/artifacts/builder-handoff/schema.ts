@@ -87,17 +87,27 @@ export const BuilderHandoffSchema = Type.Union([
   BuilderFailedHandoffSchema,
 ]);
 
-export const BuilderHandoffSubmissionSchema = Type.Object(
+const BuilderDoneHandoffSubmissionSchema = Type.Object(
   {
-    status: StringEnum(Object.values(BUILDER_HANDOFF_STATUSES), {
-      description:
-        'Whether the builder completed the work or could not complete it.',
-    }),
+    status: Type.Literal(BUILDER_HANDOFF_STATUSES.DONE),
     ...BuilderHandoffContentFields,
-    failure: Type.Optional(BuilderHandoffFailureSchema),
   },
   { additionalProperties: false },
 );
+
+const BuilderFailedHandoffSubmissionSchema = Type.Object(
+  {
+    status: Type.Literal(BUILDER_HANDOFF_STATUSES.FAILED),
+    ...BuilderHandoffContentFields,
+    failure: BuilderHandoffFailureSchema,
+  },
+  { additionalProperties: false },
+);
+
+export const BuilderHandoffSubmissionSchema = Type.Union([
+  BuilderDoneHandoffSubmissionSchema,
+  BuilderFailedHandoffSubmissionSchema,
+]);
 
 export type BuilderAcceptanceCriterion = Static<
   typeof BuilderAcceptanceCriterionSchema

@@ -45,9 +45,9 @@ const buildBuilderHandoff = ({
   status: draftHandoff.status,
   summary: draftHandoff.summary,
   acceptanceCriteria: draftHandoff.acceptanceCriteria,
-  ...(draftHandoff.failure === undefined
-    ? {}
-    : { failure: draftHandoff.failure }),
+  ...(draftHandoff.status === BUILDER_HANDOFF_STATUSES.FAILED
+    ? { failure: draftHandoff.failure }
+    : {}),
   notes: draftHandoff.notes,
 });
 

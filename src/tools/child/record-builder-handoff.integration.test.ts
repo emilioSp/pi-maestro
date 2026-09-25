@@ -78,11 +78,20 @@ const createToolContext = ({ cwd }: { cwd: string }): ExtensionContext =>
   ({ cwd }) as ExtensionContext;
 
 describe('record builder handoff tool', () => {
-  it('accepts closed done and failed input shapes but rejects protocol identity fields', () => {
+  it('accepts only the matching failure shape for each status', () => {
     const tool = getRegisteredTool();
+    const failedWithoutFailure = { ...FAILED_INPUT };
+    Reflect.deleteProperty(failedWithoutFailure, 'failure');
 
     expect(Value.Check(tool.parameters, DONE_INPUT)).toBe(true);
     expect(Value.Check(tool.parameters, FAILED_INPUT)).toBe(true);
+    expect(
+      Value.Check(tool.parameters, {
+        ...DONE_INPUT,
+        failure: FAILED_INPUT.failure,
+      }),
+    ).toBe(false);
+    expect(Value.Check(tool.parameters, failedWithoutFailure)).toBe(false);
     expect(
       Value.Check(tool.parameters, {
         ...DONE_INPUT,
