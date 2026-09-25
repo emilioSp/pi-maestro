@@ -1,4 +1,4 @@
-import { writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { runGitCommand } from '#git/command.ts';
@@ -42,6 +42,7 @@ describe('squashCandidate', () => {
       repositoryRoot: repository.path,
       baseBranch: 'main',
       candidateBranch: 'verifier/spec/1',
+      worktreeDirectory: join(repository.path, '.worktree'),
     });
 
     const status = await getRepositoryStatus({
@@ -60,6 +61,31 @@ describe('squashCandidate', () => {
     expect(headAfter.stdout).toBe(headBefore.stdout);
   });
 
+  it('ignores untracked files below the managed worktree directory', async () => {
+    const repository = await createRepository();
+    const worktreeDirectory = join(repository.path, '.worktree');
+
+    await mkdir(join(worktreeDirectory, 'builder', 'spec'), {
+      recursive: true,
+    });
+    await writeFile(
+      join(worktreeDirectory, 'builder', 'spec', 'generated.txt'),
+      'generated\n',
+      'utf8',
+    );
+
+    await squashCandidate({
+      repositoryRoot: repository.path,
+      baseBranch: 'main',
+      candidateBranch: 'verifier/spec/1',
+      worktreeDirectory,
+    });
+
+    await expect(
+      getRepositoryStatus({ repositoryRoot: repository.path }),
+    ).resolves.toMatchObject({ staged: ['product.txt'] });
+  });
+
   it('rejects a dirty base branch before squashing', async () => {
     const repository = await createRepository();
     await writeFile(join(repository.path, 'owner.txt'), 'owner\n', 'utf8');
@@ -69,6 +95,7 @@ describe('squashCandidate', () => {
         repositoryRoot: repository.path,
         baseBranch: 'main',
         candidateBranch: 'verifier/spec/1',
+        worktreeDirectory: join(repository.path, '.worktree'),
       }),
     ).rejects.toThrow('dirty base branch');
   });

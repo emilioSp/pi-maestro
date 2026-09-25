@@ -3,7 +3,9 @@
  * Used: When Maestro checks whether a worktree is clean.
  */
 
+import { resolve } from 'node:path';
 import { type GitCommandResult, runGitCommand } from '#git/command.ts';
+import { isPathWithinOrEqual } from '#utils/path-within-or-equal.ts';
 
 export type RepositoryStatus = {
   clean: boolean;
@@ -60,15 +62,61 @@ const parseRepositoryStatus = (result: GitCommandResult): RepositoryStatus => {
   };
 };
 
+type GetRepositoryStatusInput = {
+  repositoryRoot: string;
+  worktreeDirectory?: string;
+};
+
+type ExcludeWorktreePathFromUntrackedFilesInput = {
+  repositoryRoot: string;
+  untrackedPaths: readonly string[];
+  worktreeDirectory?: string;
+};
+
+const excludeWorktreePathFromUntrackedFiles = ({
+  repositoryRoot,
+  untrackedPaths,
+  worktreeDirectory,
+}: ExcludeWorktreePathFromUntrackedFilesInput): readonly string[] => {
+  if (worktreeDirectory === undefined) {
+    return untrackedPaths;
+  }
+
+  const resolvedWorktreeDirectory = resolve(repositoryRoot, worktreeDirectory);
+
+  return untrackedPaths.filter(
+    (path) =>
+      !isPathWithinOrEqual({
+        parent: resolvedWorktreeDirectory,
+        candidate: resolve(repositoryRoot, path),
+      }),
+  );
+};
+
 // git status --porcelain=v1 --untracked-files=all -z
 export const getRepositoryStatus = async ({
   repositoryRoot,
-}: {
-  repositoryRoot: string;
-}): Promise<RepositoryStatus> => {
+  worktreeDirectory,
+}: GetRepositoryStatusInput): Promise<RepositoryStatus> => {
   const result = await runGitCommand({
     arguments: ['status', '--porcelain=v1', '--untracked-files=all', '-z'],
     cwd: repositoryRoot,
   });
-  return parseRepositoryStatus(result);
+  const status = parseRepositoryStatus(result);
+
+  // Exclude Maestro-managed worktree files from the base repository status.
+  const untracked = excludeWorktreePathFromUntrackedFiles({
+    repositoryRoot,
+    untrackedPaths: status.untracked,
+    worktreeDirectory,
+  });
+
+  return {
+    ...status,
+    clean:
+      status.staged.length === 0 &&
+      status.unstaged.length === 0 &&
+      untracked.length === 0,
+    untracked,
+  };
 };

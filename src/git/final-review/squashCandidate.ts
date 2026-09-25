@@ -8,16 +8,23 @@ import { isAncestor } from '#git/history/isAncestor.ts';
 import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 
+type SquashCandidateInput = {
+  repositoryRoot: string;
+  baseBranch: string;
+  candidateBranch: string;
+  worktreeDirectory: string;
+};
+
 export const squashCandidate = async ({
   repositoryRoot,
   baseBranch,
   candidateBranch,
-}: {
-  repositoryRoot: string;
-  baseBranch: string;
-  candidateBranch: string;
-}): Promise<void> => {
-  const status = await getRepositoryStatus({ repositoryRoot });
+  worktreeDirectory,
+}: SquashCandidateInput): Promise<void> => {
+  const status = await getRepositoryStatus({
+    repositoryRoot,
+    worktreeDirectory,
+  });
 
   if (!status.clean) {
     throw new Error('Refusing final review on a dirty base branch.');

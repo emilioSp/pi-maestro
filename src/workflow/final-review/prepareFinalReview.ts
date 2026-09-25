@@ -85,10 +85,13 @@ export const prepareFinalReview = async ({
     repositoryRoot: verifierWorktreePath,
   });
 
+  const worktreeDirectory = paths.getWorktreeDirectory();
+
   await squashCandidate({
     repositoryRoot: paths.getRepositoryRoot(),
     baseBranch: verifierState.baseBranch,
     candidateBranch: verifierBranch,
+    worktreeDirectory,
   });
 
   const stagedCandidatePaths = await getStagedPaths({
@@ -96,6 +99,7 @@ export const prepareFinalReview = async ({
   });
   const status = await getRepositoryStatus({
     repositoryRoot: paths.getRepositoryRoot(),
+    worktreeDirectory,
   });
 
   if (

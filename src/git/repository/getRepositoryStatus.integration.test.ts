@@ -1,4 +1,4 @@
-import { writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { runGitCommand } from '#git/command.ts';
@@ -23,6 +23,32 @@ const runGit = async ({
 };
 
 describe('repository status inspection', () => {
+  it('ignores only untracked paths below the worktree directory', async () => {
+    const repository = await createTemporaryRepository();
+    cleanupFunctions.push(repository.cleanup);
+    const worktreeDirectory = join(repository.path, '.worktree');
+
+    await mkdir(join(worktreeDirectory, 'builder'), { recursive: true });
+    await writeFile(
+      join(worktreeDirectory, 'builder', 'generated.txt'),
+      'generated\n',
+      'utf8',
+    );
+    await writeFile(join(repository.path, 'owner.txt'), 'owner\n', 'utf8');
+
+    await expect(
+      getRepositoryStatus({
+        repositoryRoot: repository.path,
+        worktreeDirectory,
+      }),
+    ).resolves.toMatchObject({
+      clean: false,
+      staged: [],
+      unstaged: [],
+      untracked: ['owner.txt'],
+    });
+  });
+
   it('distinguishes staged, unstaged, and untracked state without changing it', async () => {
     const repository = await createTemporaryRepository();
     cleanupFunctions.push(repository.cleanup);
