@@ -1,11 +1,16 @@
 /**
- * Objective: Register the escalation tool for child Pi sessions.
+ * Objective: Register the builder escalation tool for the current checkout.
  * Used: When the builder needs an owner decision to continue.
  */
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
-import { NewEscalationSchema } from '#artifacts/escalation/schema.ts';
-import { getBuilderWorktreeContext } from '#tools/child/utils/getBuilderWorktreeContext.ts';
+import { Type } from 'typebox';
+import {
+  EscalationOptionSchema,
+  EscalationRecommendationSchema,
+} from '#artifacts/escalation/schema.ts';
+import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
+import { getBuilderContext } from '#tools/child/utils/getBuilderContext.ts';
 import { openBuilderEscalation } from '#workflow/escalation/openBuilderEscalation.ts';
 
 export const BUILDER_ESCALATION_TOOL = {
@@ -14,6 +19,18 @@ export const BUILDER_ESCALATION_TOOL = {
   DESCRIPTION:
     'Ask the owner to choose between options. After success, commit the escalation, workflow state, and current work together with Bash and Git, then stop. Do not wait for the owner.',
 } as const;
+
+const BuilderEscalationToolParameters = Type.Object(
+  {
+    specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
+    question: Type.String({ minLength: 1 }),
+    context: Type.String({ minLength: 1 }),
+    options: Type.Array(EscalationOptionSchema, { minItems: 1 }),
+    recommendation: Type.Union([EscalationRecommendationSchema, Type.Null()]),
+    notes: Type.Array(Type.String()),
+  },
+  { additionalProperties: false },
+);
 
 type RegisterOpenEscalationToolInput = {
   pi: ExtensionAPI;
@@ -26,15 +43,17 @@ export const registerOpenEscalationTool = ({
     name: BUILDER_ESCALATION_TOOL.NAME,
     label: BUILDER_ESCALATION_TOOL.LABEL,
     description: BUILDER_ESCALATION_TOOL.DESCRIPTION,
-    parameters: NewEscalationSchema,
+    parameters: BuilderEscalationToolParameters,
     async execute(_toolCallId, params, _signal, _onUpdate, context) {
-      const { paths, specId } = await getBuilderWorktreeContext({
+      const { specId, ...escalation } = params;
+      const { paths } = await getBuilderContext({
         cwd: context.cwd,
+        specId,
       });
       const opened = await openBuilderEscalation({
         paths,
         specId,
-        escalation: params,
+        escalation,
       });
 
       return {
