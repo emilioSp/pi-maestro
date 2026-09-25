@@ -791,17 +791,17 @@ I tool delegano la logica condivisa ai moduli sotto `src/` invece di duplicare o
 
 `src/specs/` gestisce il caricamento del template e la creazione della spec. Il contenuto Markdown resta opaco all’estensione. ID, percorsi e stato restano responsabilità dei rispettivi moduli.
 
-`src/workflow/` coordina i domini senza dipendere dai tool Pi. `state/`, `builder/`, `verifier/`, `escalation/`, `findings/` e `final-review/` separano le rispettive responsabilità. Non esiste un modulo `recovery/`: il recupero dopo restart o disattivazione è fuori dall’MVP. Ogni operazione pubblica ha il proprio modulo, con test accanto e import diretti senza barrel.
+`src/workflow/` coordina i domini senza dipendere dai tool Pi. `state/`, `builder/`, `verifier/`, `escalation/`, `findings/` e `final-review/` separano le rispettive responsabilità. `roles.ts` contiene i ruoli condivisi del workflow. Non esiste un modulo `recovery/`: il recupero dopo restart o disattivazione è fuori dall’MVP. Ogni operazione pubblica ha il proprio modulo, con test accanto e import diretti senza barrel.
 
-`spec/markSpecReady.ts` contiene l’operazione di approvazione del workflow spec, con test accanto e import diretto. La creazione della spec appartiene a `src/specs/create.ts` e non usa un wrapper workflow. `transitions.ts` resta nella root di `src/workflow/`. `utils/` contiene `getRelativePathFromRoot.ts` per i percorsi dei file Git e `assertWorktree.ts`, con import diretti. I placeholder `findings.ts` e `final-review.ts` vengono rimossi quando si implementa il rispettivo workflow. Non si creano implementazioni parallele.
+`src/workflow/spec/markSpecReady.ts` contiene l’operazione di approvazione del workflow spec, con test accanto e import diretto. La creazione della spec appartiene a `src/specs/create.ts` e non usa un wrapper workflow. `src/workflow/transitions.ts` resta nella root di `src/workflow/`. `src/workflow/utils/assertWorktree.ts` contiene il controllo condiviso dei worktree, con import diretti. I placeholder `findings.ts` e `final-review.ts` vengono rimossi quando si implementa il rispettivo workflow. Non si creano implementazioni parallele.
 
-Non esiste una directory globale `src/schemas/`. Ogni schema resta vicino al dominio che lo usa e viene esportato dal relativo `index.ts`.
+Non esiste una directory globale `src/schemas/`. Ogni schema resta vicino al dominio che lo usa. Gli import sono diretti e non esistono barrel `index.ts`.
 
 I controlli degli agent e dei modelli usano l’API pubblica `pi-subagents/preflight` nei moduli di `src/maestro/checks/`. I tool `src/tools/main/launch-builder.ts` e `launch-verifier.ts` usano direttamente `pi-subagents/delegation` e `pi.events`, ricevuto durante la registrazione. La richiesta seleziona `maestro.builder` o `maestro.verifier`, la cui definizione in `agents/` fornisce il system prompt; il `task` identifica la spec e il worktree. Non esiste una directory `src/subagents/` né un wrapper di delega.
 
 Ogni tool attende la risposta terminale foreground, la abbina alla richiesta e rimuove il listener. Usa il timeout dell’API, conserva la revisione del workflow e valida l’handoff committato al ritorno. Non ascolta gli aggiornamenti di progress né usa RPC `spawn`, che supporta solo l’async. Non duplica il tracking dell’esecuzione o della cancellazione gestito da `pi-subagents` e non importa i suoi moduli interni.
 
-`package.json` include `pi-subagents` 0.71.0 in `dependencies` e `bundleDependencies` per rendere disponibili questi import pubblici nel tarball. Il manifest Pi non carica l’estensione annidata. L’owner deve avere anche `pi-subagents >=0.68.0` installato e attivo come pacchetto Pi; Maestro ne verifica la presenza tramite l’API pubblica durante l’attivazione.
+L’owner deve avere `pi-subagents` installato e attivo in Pi; Maestro ne verifica la presenza tramite l’API pubblica durante l’attivazione.
 
 `src/maestro/` implementa la modalità principale. Le directory `checks/`, `activation/`, `session/`, `instructions/` e `status/` separano i rispettivi ambiti. Ogni funzione pubblica ha un modulo. Tipi, costanti, errori e helper privati restano con la funzione che servono.
 
@@ -811,7 +811,7 @@ Gli import usano percorsi diretti, senza `index.ts` o altri barrel. I placeholde
 
 Ogni operazione pubblica ha un modulo. Tipi, costanti, errori e helper privati restano con l'operazione che servono. Gli import usano il percorso diretto del modulo, senza barrel. `utils.ts` contiene il singolo helper condiviso per gli errori Git. Il futuro codice per la final review userà `final-review/` e rimuoverà il placeholder `final-review.ts`.
 
-`src/config/` contiene default, schema e caricamento di `.pi/maestro.json`. `schema.ts` definisce i contratti. `assertConfiguration.ts` e `loadConfiguration.ts` gestiscono una funzione pubblica ciascuno. `resolveConfiguration` e `resolveDirectories` sono helper privati di `loadConfiguration.ts`. `utils/deepFreeze.ts` contiene l'helper condiviso per i valori immutabili. Gli import usano percorsi diretti, senza barrel.
+`src/config/` contiene default, schema e caricamento di `.pi/maestro.json`. `schema.ts` definisce i contratti. `assertConfiguration.ts` e `loadConfiguration.ts` gestiscono una funzione pubblica ciascuno. `resolveConfiguration` e `resolveDirectories` sono helper privati di `loadConfiguration.ts`. Gli import usano percorsi diretti, senza barrel.
 
 La configurazione applica gli override e valida le directory configurate, inclusi root Git, percorsi relativi, symlink e collisioni. Non verifica la disponibilità dei modelli e non dipende dall’interfaccia Pi.
 
@@ -825,90 +825,7 @@ I test restano accanto al modulo sotto `src/`. Il suffisso `.unit.test.ts` ident
 
 <a id="plan-section-5-1"></a>
 
-## 5.1 `package.json` approvato
-
-```json
-{
-  "name": "@emiliosp/pi-maestro",
-  "version": "0.1.0",
-  "description": "A spec-driven builder and verifier workflow for Pi.",
-  "license": "MIT",
-  "type": "module",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/emiliosp/pi-maestro.git"
-  },
-  "homepage": "https://github.com/emiliosp/pi-maestro#readme",
-  "bugs": {
-    "url": "https://github.com/emiliosp/pi-maestro/issues"
-  },
-  "keywords": [
-    "pi-package",
-    "pi",
-    "pi-coding-agent",
-    "workflow",
-    "subagents",
-    "orchestration"
-  ],
-  "os": [
-    "darwin"
-  ],
-  "engines": {
-    "node": ">=26.0.0"
-  },
-  "files": [
-    "extensions/",
-    "agents/",
-    "templates/",
-    "src/",
-    "!src/**/*.test.ts",
-    "docs/",
-    "README.md",
-    "LICENSE"
-  ],
-  "scripts": {
-    "typecheck": "tsc --noEmit",
-    "test": "npm run test:unit && npm run test:integration",
-    "test:unit": "vitest run --exclude \"**/*.integration.test.ts\"",
-    "test:integration": "vitest run --exclude \"**/*.unit.test.ts\"",
-    "check": "npm run typecheck && npm test",
-    "prepublishOnly": "npm run check"
-  },
-  "dependencies": {
-    "pi-subagents": "0.71.0"
-  },
-  "bundleDependencies": [
-    "pi-subagents"
-  ],
-  "peerDependencies": {
-    "@earendil-works/pi-ai": "*",
-    "@earendil-works/pi-coding-agent": ">=0.85.1",
-    "typebox": "*"
-  },
-  "devDependencies": {
-    "@types/node": "26.6.1",
-    "typescript": "7.0.2",
-    "vitest": "5.0.1"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "pi": {
-    "extensions": [
-      "./extensions/maestro.ts"
-    ],
-    "subagents": {
-      "agents": [
-        "./agents"
-      ]
-    }
-  }
-}
-```
-
-<a id="plan-section-5-2"></a>
-
-## 5.2 `tsconfig.json` approvato
+## 5.1 `tsconfig.json` approvato
 
 ```json
 {
@@ -1391,7 +1308,7 @@ Quando `maestro_prepare_final_review` termina con successo, il workflow è già 
 54. Il setter dello SHA sostituisce il valore precedente quando viene chiamato. Non esiste un reset separato per il retry; il reset della sessione avviene tramite `deactivate()`.
 55. `clearActiveSpecId()` azzera sia lo spec ID attivo sia lo SHA-256 atteso. `deactivate()` usa lo stesso comportamento.
 56. `setActiveSpecId()` rifiuta uno spec ID diverso quando esiste già uno spec attivo. L’impostazione dello stesso ID è idempotente.
-57. `getExpectedSpecSha256()` restituisce `string | null`. Se la baseline è `null`, il controllo builder fallisce con un errore esplicito e non calcola uno SHA sostitutivo.
+57. `getSpecSha256()` restituisce `string | null`. Se la baseline è `null`, il controllo builder fallisce con un errore esplicito e non calcola uno SHA sostitutivo.
 58. `prepareBuilderLaunch` calcola lo SHA usando `paths.getSpecFilePath(specId)` sulla base approvata. Non usa il percorso di `spec.md` nel builder worktree.
 
 <a id="plan-section-6-15"></a>
@@ -1701,27 +1618,26 @@ Decisioni prese:
 
 Copertura minima approvata per la prima versione:
 
-1. Unit test della configurazione e dei default.
-2. Unit test della validazione dei percorsi e dei symlink.
-3. Unit test degli ID e degli slug.
-4. Test del template della spec e degli schemi JSON nei file unit o integration corrispondenti.
-5. Unit test minimi delle transizioni di `workflow.json`: un percorso normale, un retry, incremento monotono e immutabilità dell’input. L’autorizzazione dei ruoli resta negli allowlist dei tool e negli adapter.
-6. Integration test con repository Git temporanei.
-7. Integration test per branch, worktree, squash e pulizia.
-8. Test del ciclo builder, verifier, escalation e finding nei moduli di dominio con un fake di `pi-subagents`. I test dei tool adapter coprono schema input, derivazione dei campi, wiring di un successo e propagazione di un errore senza ripetere l’intera matrice del dominio.
-9. Test che disattivazione e `/resume` perdano lo spec ID e lo SHA atteso live senza modificare workflow persistenti.
-10. Test delle risorse previste durante le operazioni della sessione live.
-11. Test che nessuna operazione esca dalla root Git.
-12. Test degli handoff builder `done` e `failed`, inclusi identità, revisione, acceptance criteria e stati terminali.
-13. Test che il verifier ripristini ogni modifica staged, unstaged o untracked prima dell’handoff e che il rifiuto restituisca `PRODUCT_FILES_MODIFIED` con un messaggio, senza modifiche a handoff e workflow.
-14. Test che escalation e finding non possano riportare una spec approvata a `drafting-spec`.
-15. Test rappresentativi di `maestro_resolve_findings`: tutti respinti e almeno un `fix-code`.
-16. Test del blocco di `write` ed `edit` su `spec.md` tramite percorsi relativi, assoluti, normalizzati e symlink e del confronto SHA-256 contro modifiche effettuate tramite `bash`, incluse modifiche commesse con il messaggio del checkpoint.
-17. Test che `maestro_prepare_final_review` verifichi lo staging, scriva e metta in staging `final-review`, tenti il cleanup best-effort, restituisca i dati strutturati necessari al riepilogo finale e mantenga la fase precedente quando squash o verifica falliscono.
-18. La suite end-to-end contiene un happy path completo e un percorso di disattivazione che dimostra l’assenza di recovery. Gli altri edge case restano nei test dei moduli proprietari.
-19. I test della sessione live coprono set/get, reset con `deactivate()` e `clearActiveSpecId()`, sostituzione dello SHA, retry con ricalcolo della baseline, uso della baseline da parte di handoff ed escalation e rifiuto di modifiche a `spec.md`, incluse modifiche commesse con il messaggio `maestro checkpoint`.
+1. Unit test della validazione dei percorsi e dei symlink.
+2. Unit test degli ID e degli slug.
+3. Test del template della spec e degli schemi JSON nei file unit o integration corrispondenti.
+4. Unit test minimi delle transizioni di `workflow.json`: un percorso normale, un retry, incremento monotono e immutabilità dell’input. L’autorizzazione dei ruoli resta negli allowlist dei tool e negli adapter.
+5. Integration test con repository Git temporanei.
+6. Integration test per branch, worktree, squash e pulizia.
+7. Test del ciclo builder, verifier, escalation e finding nei moduli di dominio con un fake di `pi-subagents`. I test dei tool adapter coprono schema input, derivazione dei campi, wiring di un successo e propagazione di un errore senza ripetere l’intera matrice del dominio.
+8. Test che disattivazione e `/resume` perdano lo spec ID e lo SHA atteso live senza modificare workflow persistenti.
+9. Test delle risorse previste durante le operazioni della sessione live.
+10. Test che nessuna operazione esca dalla root Git.
+11. Test degli handoff builder `done` e `failed`, inclusi identità, revisione, acceptance criteria e stati terminali.
+12. Test che il verifier ripristini ogni modifica staged, unstaged o untracked prima dell’handoff e che il rifiuto restituisca `PRODUCT_FILES_MODIFIED` con un messaggio, senza modifiche a handoff e workflow.
+13. Test che escalation e finding non possano riportare una spec approvata a `drafting-spec`.
+14. Test rappresentativi di `maestro_resolve_findings`: tutti respinti e almeno un `fix-code`.
+15. Test del blocco di `write` ed `edit` su `spec.md` tramite percorsi relativi, assoluti, normalizzati e symlink e del confronto SHA-256 contro modifiche effettuate tramite `bash`, incluse modifiche commesse con il messaggio del checkpoint.
+16. Test che `maestro_prepare_final_review` verifichi lo staging, scriva e metta in staging `final-review`, tenti il cleanup best-effort, restituisca i dati strutturati necessari al riepilogo finale e mantenga la fase precedente quando squash o verifica falliscono.
+17. La suite end-to-end contiene un happy path completo e un percorso di disattivazione che dimostra l’assenza di recovery. Gli altri edge case restano nei test dei moduli proprietari.
+18. I test della sessione live coprono set/get, reset con `deactivate()` e `clearActiveSpecId()`, sostituzione dello SHA, retry con ricalcolo della baseline, uso della baseline da parte di handoff ed escalation e rifiuto di modifiche a `spec.md`, incluse modifiche commesse con il messaggio `maestro checkpoint`.
 
-I test usano Vitest su Node.js 26. I comandi approvati sono definiti nel `package.json` della sezione 5.1.
+I test usano Vitest su Node.js 26. I comandi di verifica sono quelli definiti dal repository.
 
 <a id="plan-section-6-26"></a>
 

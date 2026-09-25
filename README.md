@@ -46,6 +46,8 @@ The same command disables Maestro. Disabling Maestro leaves workflow files, bran
 
 During activation, Maestro checks the repository, configuration including configured directories, models, and agents. A failed check leaves Maestro disabled and reports the problem.
 
+Note: disabling Maestro, restarting Pi, or using `/resume` clears live session state. Maestro does not resume an incomplete persisted workflow; the owner must clean it up manually and start a new spec explicitly.
+
 ## Basic use
 
 1. Run `/maestro`.
