@@ -89,6 +89,6 @@ export const prepareFinalReview = async ({
     finalReviewCommit,
     phase: WORKFLOW_PHASES.FINAL_REVIEW,
     pullRequestGuidance:
-      'Open a Pull Request from the current branch. Maestro does not push, merge, or choose the merge method.',
+      'Open a Pull Request from the current branch. Maestro does not push, merge, or choose the merge method. Use squash merge to remove intermediate commits',
   };
 };
