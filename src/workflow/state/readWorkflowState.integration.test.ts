@@ -34,7 +34,6 @@ describe('readWorkflowState', () => {
       specId: '20260321-143052-add-weather-alerts',
       revision: 1,
       phase: WORKFLOW_PHASES.DRAFTING_SPEC,
-      baseBranch: 'main',
     };
     await writeFile(path, JSON.stringify(state), 'utf8');
 
@@ -57,7 +56,6 @@ describe('readWorkflowState', () => {
         specId: '20260321-143052-add-weather-alerts',
         revision: 1,
         phase: WORKFLOW_PHASES.DRAFTING_SPEC,
-        baseBranch: 'main',
         extra: true,
       }),
       'utf8',
