@@ -560,7 +560,8 @@ L’estensione non interpreta né valida la struttura della spec. Maestro, build
 6. Scrive esattamente un handoff terminale.
 7. Commette il proprio lavoro e l’handoff.
 8. Può terminare con `done`, `failed` o escalation.
-9. Non approva il proprio lavoro.
+9. Un handoff `failed` porta a `builder-failed`, uno stato pozzo: Maestro riporta l’errore e non avvia un altro builder nello stesso workflow.
+10. Non approva il proprio lavoro.
 
 <a id="plan-section-3-4"></a>
 
@@ -702,10 +703,8 @@ flowchart TD
     escalationOutcome -->|Yes| reviseSpec[Owner revises and re-approves the spec]
     reviseSpec --> approval
 
-    buildOutcome -->|Failed| builderFailed[Workflow stops for owner triage]
-    builderFailed --> retryBuilder{Retry the builder?}
-    retryBuilder -->|Yes| build
-    retryBuilder -->|No| manualAbandon
+    buildOutcome -->|Failed| builderFailed[Workflow stops; Maestro reports the error]
+    builderFailed --> manualAbandon[Owner handles the failed workflow]
 
     buildOutcome -->|Done| verify[Independent verifier regenerates every proof]
     verify --> findings{Findings?}
@@ -729,7 +728,7 @@ flowchart TD
     adjust --> humanReview
     humanReview -->|Satisfied| finalCommit[Owner opens the Pull Request and merges it]
 
-    linkStyle 0,1,2,3,14,15,16,22,23,25,26,27,30 stroke:#2e7d32,stroke-width:3px
+    linkStyle 0,1,2,3,13,14,15,21,22,23,24,25,28 stroke:#2e7d32,stroke-width:3px
 ```
 
 `docs/workflow.md` deve includere anche questo principio umano di semplicità:
@@ -1269,11 +1268,11 @@ final-review
 | Owner richiede correzioni | `ready-for-builder` | Maestro |
 | Maestro verifica il candidate e prepara la Pull Request, concludendo il workflow | `final-review` | Maestro |
 
-Una spec approvata non viene modificata direttamente durante un retry. Se un’escalation, un finding o un fallimento richiede un cambio del contratto, l’owner avvia una revisione esplicita nello stesso workflow. La revisione mantiene lo stesso `specId` e branch, richiede una nuova approvazione e porta a un nuovo builder pass.
+Una spec approvata non viene modificata durante un passaggio del builder. Se un’escalation o un finding richiede un cambio del contratto, l’owner avvia una revisione esplicita nello stesso workflow. La revisione mantiene lo stesso `specId` e branch, richiede una nuova approvazione e porta a un nuovo builder pass.
 
-La revisione è consentita solo dalle fasi bloccanti `builder-failed`, `escalation-decision` e `findings-decision`. Non è consentita da `ready-for-builder`, `candidate-ready`, da una fase con un agent attivo o da `final-review`.
+La revisione è consentita solo dalle fasi bloccanti `escalation-decision` e `findings-decision`. `builder-failed` è uno stato pozzo: Maestro riporta l’errore e il workflow si ferma. La revisione non è consentita da `ready-for-builder`, `candidate-ready`, da una fase con un agent attivo o da `final-review`.
 
-La revisione non introduce una transizione aggiuntiva a `drafting-spec`. Mentre il workflow è in una fase bloccante, l’owner può modificare `spec.md`, la approva e chiama `maestro_mark_spec_ready`; il tool accetta quella fase e porta il workflow a `ready-for-builder`. Il tool non controlla se il contenuto è cambiato: l’owner distingue una revisione del contratto da un retry tecnico. La revisione sostituisce il blocco corrente: escalation e finding precedenti restano nella storia del branch, ma non sono più attivi. La revisione mantiene lo stesso `specId` e branch.
+La revisione non introduce una transizione aggiuntiva a `drafting-spec`. Mentre il workflow è in una fase bloccante autorizzata, l’owner può modificare `spec.md`, la approva e chiama `maestro_mark_spec_ready`; il tool accetta quella fase e porta il workflow a `ready-for-builder`. Il tool non controlla se il contenuto è cambiato. La revisione sostituisce il blocco corrente: escalation e finding precedenti restano nella storia del branch, ma non sono più attivi. La revisione mantiene lo stesso `specId` e branch.
 
 Se i finding richiedono solo correzioni del codice, la spec non cambia e il workflow usa il normale ritorno a `ready-for-builder`. Se tutti i finding vengono respinti con una ragione, passa a `candidate-ready`.
 
@@ -1308,9 +1307,9 @@ Quando `maestro_prepare_final_review` termina con successo, il workflow è già 
 49. L’owner apre la Pull Request e gestisce review, eventuali modifiche e merge sotto la propria responsabilità.
 50. Dopo la conclusione non esiste una conferma del commit e Maestro non verifica le modifiche successive dell’owner.
 51. `MaestroSessionState` espone operazioni per impostare e leggere lo SHA-256 atteso della spec attiva. Il getter restituisce `null` quando non esiste una baseline live.
-52. `prepareBuilderLaunch` inizializza la baseline nel punto immediatamente precedente al lancio del builder, dopo aver completato la preparazione dello stato e del checkpoint sul branch corrente. Durante un retry esplicito ricalcola lo SHA corrente di `spec.md` e sostituisce la baseline precedente. Dopo una revisione della spec, il ricalcolo avviene solo dopo la nuova approvazione dell’owner.
+52. `prepareBuilderLaunch` inizializza la baseline nel punto immediatamente precedente a ogni lancio del builder, dopo aver completato la preparazione dello stato e del checkpoint sul branch corrente. Dopo una revisione della spec, il ricalcolo avviene solo dopo la nuova approvazione dell’owner.
 53. `deactivate()` azzera lo SHA-256 atteso insieme allo spec ID attivo. Dopo disattivazione o restart non esiste recovery della baseline.
-54. Il setter dello SHA sostituisce il valore precedente quando viene chiamato. Non esiste un reset separato per il retry; il reset della sessione avviene tramite `deactivate()`.
+54. Il setter dello SHA sostituisce il valore precedente quando viene chiamato. Il reset della sessione avviene tramite `deactivate()`.
 55. `clearActiveSpecId()` azzera sia lo spec ID attivo sia lo SHA-256 atteso. `deactivate()` usa lo stesso comportamento.
 56. `setActiveSpecId()` rifiuta uno spec ID diverso quando esiste già uno spec attivo. L’impostazione dello stesso ID è idempotente.
 57. `getSpecSha256()` restituisce `string | null`. Se la baseline è `null`, il controllo builder fallisce con un errore esplicito e non calcola uno SHA sostitutivo.
@@ -1486,8 +1485,8 @@ Decisioni prese:
 7. Maestro non elimina, ripristina o committa automaticamente le modifiche inattese.
 8. Il workflow resta bloccato finché l’owner non decide come gestire il lavoro incompleto.
 9. Maestro restituisce gli errori senza tentare riparazioni automatiche.
-10. Il retry esplicito resta possibile solo mentre la stessa sessione live conserva lo spec ID e il tool di dominio autorizza la transizione.
-11. Dopo restart o disattivazione non esiste un retry basato sullo stato persistente.
+10. Un `builder-failed` è terminale per il workflow corrente. Maestro riporta l’errore e non rilancia il builder.
+11. Dopo restart o disattivazione non esiste il recupero automatico di un workflow incompleto.
 12. La pulizia di un workflow perso resta manuale.
 
 <a id="plan-section-6-18"></a>
@@ -1620,7 +1619,7 @@ Copertura minima approvata per la prima versione:
 15. Test del blocco di `write` ed `edit` su `spec.md` tramite percorsi relativi, assoluti, normalizzati e symlink e del confronto SHA-256 contro modifiche effettuate tramite `bash`, incluse modifiche commesse con il messaggio del checkpoint.
 16. Test che `maestro_prepare_final_review` verifichi il candidate sul branch corrente, scriva `final-review`, restituisca i dati necessari alla Pull Request e mantenga la fase precedente quando la verifica fallisce.
 17. La suite end-to-end contiene un happy path completo e un percorso di disattivazione che dimostra l’assenza di recovery. Gli altri edge case restano nei test dei moduli proprietari.
-18. I test della sessione live coprono set/get, reset con `deactivate()` e `clearActiveSpecId()`, sostituzione dello SHA, retry con ricalcolo della baseline, uso della baseline da parte di handoff ed escalation e rifiuto di modifiche a `spec.md`, incluse modifiche commesse con il messaggio `maestro checkpoint`.
+18. I test della sessione live coprono set/get, reset con `deactivate()` e `clearActiveSpecId()`, sostituzione dello SHA dopo una revisione autorizzata, uso della baseline da parte di handoff ed escalation e rifiuto di modifiche a `spec.md`, incluse modifiche commesse con il messaggio `maestro checkpoint`.
 
 I test usano Vitest su Node.js 26. I comandi di verifica sono quelli definiti dal repository.
 
