@@ -4,14 +4,14 @@
  */
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
-import { type Static, Type } from 'typebox';
+import { Type } from 'typebox';
 import {
   BUILDER_HANDOFF_STATUSES,
   BuilderAcceptanceCriterionSchema,
   BuilderHandoffFailureSchema,
 } from '#artifacts/builder-handoff/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
-import { getBuilderContext } from '#tools/child/utils/getBuilderContext.ts';
+import { getChildContext } from '#tools/child/utils/getChildContext.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 
 export const BUILDER_HANDOFF_TOOL = {
@@ -47,8 +47,6 @@ const BuilderHandoffToolParameters = Type.Union([
   ),
 ]);
 
-type BuilderHandoffToolParameters = Static<typeof BuilderHandoffToolParameters>;
-
 type RegisterRecordBuilderHandoffToolInput = {
   pi: ExtensionAPI;
 };
@@ -62,8 +60,8 @@ export const registerRecordBuilderHandoffTool = ({
     description: BUILDER_HANDOFF_TOOL.DESCRIPTION,
     parameters: BuilderHandoffToolParameters,
     async execute(_toolCallId, params, _signal, _onUpdate, context) {
-      const { specId, ...handoff } = params as BuilderHandoffToolParameters;
-      const { paths } = await getBuilderContext({
+      const { specId, ...handoff } = params;
+      const { paths } = await getChildContext({
         cwd: context.cwd,
         specId,
       });

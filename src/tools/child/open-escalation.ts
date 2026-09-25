@@ -10,7 +10,7 @@ import {
   EscalationRecommendationSchema,
 } from '#artifacts/escalation/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
-import { getBuilderContext } from '#tools/child/utils/getBuilderContext.ts';
+import { getChildContext } from '#tools/child/utils/getChildContext.ts';
 import { openBuilderEscalation } from '#workflow/escalation/openBuilderEscalation.ts';
 
 export const BUILDER_ESCALATION_TOOL = {
@@ -46,7 +46,7 @@ export const registerOpenEscalationTool = ({
     parameters: BuilderEscalationToolParameters,
     async execute(_toolCallId, params, _signal, _onUpdate, context) {
       const { specId, ...escalation } = params;
-      const { paths } = await getBuilderContext({
+      const { paths } = await getChildContext({
         cwd: context.cwd,
         specId,
       });

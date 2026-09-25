@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task mvp_05: Share the current-checkout child context
 
