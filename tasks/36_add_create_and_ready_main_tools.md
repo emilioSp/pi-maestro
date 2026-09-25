@@ -22,10 +22,10 @@ Give the owner tools to create a spec and approve the initial spec or an authori
 3. Create `workflow.json` with only `version`, `specId`, `revision`, and `phase`.
 4. Return the created paths and drafting state as structured data.
 5. Add `maestro_mark_spec_ready` with a `specId` input.
-6. Allow `maestro_mark_spec_ready` from initial `drafting-spec`, `builder-failed`, `escalation-decision`, and `findings-decision`.
+6. Allow `maestro_mark_spec_ready` from initial `drafting-spec`, `escalation-decision`, and `findings-decision`. Reject `builder-failed`, which is a sink.
 7. Move every allowed state to `ready-for-builder` after the owner approves the current `spec.md`.
 8. Do not compare the current `spec.md` content with an earlier version.
-9. When called from a blocked phase, make the old blocker historical and do not require a separate escalation or finding resolution.
+9. When called from an authorized blocked phase, make the old blocker historical and do not require a separate escalation or finding resolution.
 10. Do not create an owner commit. The owner must commit the approved `spec.md` and `workflow.json` on the current branch.
 11. Keep both tools inactive when Maestro mode is off.
 

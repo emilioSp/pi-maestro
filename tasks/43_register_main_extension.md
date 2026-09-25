@@ -33,7 +33,7 @@ Keep `extensions/maestro.ts` as wiring only. Import operations directly from `sr
 
 ## Tests
 
-Add Vitest integration tests with a fake Pi context. Test startup, activation, failed activation, deactivation, expected SHA clearing, retry after failure, spec revision approval, tool changes, preserved foreign tools, instructions, status, error notifications, inactive resume, current-branch behavior, and one-time registration.
+Add Vitest integration tests with a fake Pi context. Test startup, activation, failed activation, deactivation, expected SHA clearing, builder failure reporting, spec revision approval, tool changes, preserved foreign tools, instructions, status, error notifications, inactive resume, current-branch behavior, and one-time registration.
 
 ## Completion criteria
 

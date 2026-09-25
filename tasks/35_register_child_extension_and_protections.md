@@ -31,7 +31,7 @@ Register the child tools and protect the owner-approved `spec.md` in the current
 1. Import and register the three child-only tools directly from `src/tools/child/`. Register each once. Do not add a barrel.
 2. Use the shared live `MaestroSessionState` instance in the foreground runtime.
 3. Do not capture or persist a separate digest in the child extension.
-4. Let `prepareBuilderLaunch` set the expected SHA immediately before the builder launch. On an explicit retry or after an approved spec revision, it replaces the baseline with the current checkout's `spec.md` SHA.
+4. Let `prepareBuilderLaunch` set the expected SHA immediately before each normal builder launch. After an approved spec revision, it replaces the baseline with the current checkout's `spec.md` SHA.
 5. Add child hooks that reject direct `write` and `edit` calls for `spec.md`.
 6. Allow an optional leading `@` before checking the path.
 7. Resolve relative and absolute paths from the current repository checkout root.
@@ -52,7 +52,7 @@ Keep each tool's input schema, Pi registration, domain call, and result conversi
 
 ## Tests
 
-Add Vitest integration tests for relative, absolute, `@`-prefixed, normalized, parent-segment, nested, and symlink paths that resolve to `spec.md`. Test the shared session baseline, a retry baseline replacement, a revision baseline replacement, a missing baseline, a changed `spec.md`, and a changed `spec.md` committed with the checkpoint message. Test explicit spec identity, phase authorization, verifier protocol-only commits, and role tool allowlists.
+Add Vitest integration tests for relative, absolute, `@`-prefixed, normalized, parent-segment, nested, and symlink paths that resolve to `spec.md`. Test the shared session baseline, a revision baseline replacement, a missing baseline, a changed `spec.md`, and a changed `spec.md` committed with the checkpoint message. Test explicit spec identity, phase authorization, verifier protocol-only commits, and role tool allowlists.
 
 ## Completion criteria
 
