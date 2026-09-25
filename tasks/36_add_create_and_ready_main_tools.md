@@ -4,7 +4,7 @@ STATUS: TODO
 
 ## Dependency
 
-This task depends on Task 35: Register the child extension and protect workflow files.
+This task depends on Task 35: Register the child extension and protect the builder spec.
 
 ## Objective
 

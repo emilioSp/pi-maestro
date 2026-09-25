@@ -19,7 +19,7 @@ Show that all parts work together and the package is ready for review.
 ## Work
 
 1. Add one happy-path integration test. Start with activation and spec creation. End with staged final review.
-2. Add one deactivation test proving that an incomplete workflow is not recovered by a later Maestro session.
+2. Add one deactivation test proving that an incomplete workflow is not recovered by a later Maestro session and that the live expected SHA is cleared.
 3. Use temporary Git repositories and a fake Pi event bus. Use foreground subagent responses.
 4. Keep other edge cases in tests next to the modules they cover.
 5. Remove a duplicate test only if the same behavior is clearly tested in its owning test file.

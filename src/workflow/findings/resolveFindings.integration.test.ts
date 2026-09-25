@@ -33,8 +33,11 @@ afterEach(cleanupBuilderWorkflows);
 const prepareFindings = async (count = 2) => {
   const { paths, builderWorktreePath } = await createApprovedWorkflow();
   const builderLaunch = await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+  const builderPaths = await getBuilderWorktreePaths({
+    worktreePath: builderWorktreePath,
+  });
   await completeBuilderPass({
-    paths: await getBuilderWorktreePaths({ worktreePath: builderWorktreePath }),
+    paths: builderPaths,
     specId: SPEC_ID,
     handoff: doneHandoff(builderLaunch.revision + 1),
   });

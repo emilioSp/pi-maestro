@@ -1,5 +1,5 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, join, relative } from 'node:path';
+import { writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   BREAKAGE_STATUSES,
@@ -8,7 +8,7 @@ import {
   PROBE_STATUSES,
 } from '#artifacts/builder-handoff/schema.ts';
 import { runGitCommand } from '#git/command.ts';
-import type { GetMaestroPaths } from '#paths.ts';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import {
   builderHandoffPath,
   builderWorkflowPath,
@@ -54,39 +54,6 @@ const FAILED_SUBMISSION: BuilderHandoffSubmission = {
   notes: [],
 };
 
-type ProtectedPathInput = {
-  paths: GetMaestroPaths;
-};
-
-type ProtectedPath = {
-  label: string;
-  getPath: (input: ProtectedPathInput) => string;
-};
-
-const PROTECTED_PATHS: ProtectedPath[] = [
-  {
-    label: 'spec',
-    getPath: ({ paths }) => paths.getSpecFilePath(SPEC_ID),
-  },
-  {
-    label: 'workflow state',
-    getPath: ({ paths }) => paths.getWorkflowPath(SPEC_ID),
-  },
-  {
-    label: 'prototype',
-    getPath: ({ paths }) =>
-      paths.getPrototypePath({
-        specId: SPEC_ID,
-        relativePath: 'direct-edit.txt',
-      }),
-  },
-  {
-    label: 'handoff',
-    getPath: ({ paths }) =>
-      join(paths.getHandoffsPath(SPEC_ID), 'direct-edit.json'),
-  },
-];
-
 const createBuilderPass = async () => {
   const { paths, builderWorktreePath } = await createApprovedWorkflow();
   const launch = await prepareBuilderLaunch({ paths, specId: SPEC_ID });
@@ -94,10 +61,27 @@ const createBuilderPass = async () => {
     worktreePath: builderWorktreePath,
   });
 
-  return { paths: builderPaths, builderWorktreePath, launch };
+  return {
+    paths: builderPaths,
+    builderWorktreePath,
+    launch,
+  };
 };
 
 describe('builder pass completion', () => {
+  it('rejects a handoff when the session has no spec baseline', async () => {
+    const { paths } = await createBuilderPass();
+    maestroSessionState.clearActiveSpecId();
+
+    await expect(
+      completeBuilderPass({
+        paths,
+        specId: SPEC_ID,
+        handoff: DONE_SUBMISSION,
+      }),
+    ).rejects.toThrow('Builder spec SHA-256 baseline is not initialized');
+  });
+
   it('records a done handoff using identity and revision from workflow state', async () => {
     const { paths, builderWorktreePath, launch } = await createBuilderPass();
     await writeFile(join(builderWorktreePath, 'product.txt'), 'implemented\n');
@@ -107,7 +91,6 @@ describe('builder pass completion', () => {
       specId: SPEC_ID,
       handoff: DONE_SUBMISSION,
     });
-
     expect(completed.handoff).toMatchObject({
       specId: SPEC_ID,
       revision: launch.revision + 1,
@@ -147,7 +130,6 @@ describe('builder pass completion', () => {
       specId: SPEC_ID,
       handoff: FAILED_SUBMISSION,
     });
-
     expect(completed.handoff).toMatchObject({
       specId: SPEC_ID,
       revision: launch.revision + 1,
@@ -212,43 +194,19 @@ describe('builder pass completion', () => {
     ).resolves.toBe(false);
   });
 
-  it.each(PROTECTED_PATHS)(
-    'rejects a direct change to the protected $label path',
-    async ({ getPath }) => {
-      const { paths, builderWorktreePath } = await createBuilderPass();
-      const targetPath = getPath({ paths });
-      await mkdir(dirname(targetPath), { recursive: true });
-      await writeFile(targetPath, 'direct change\n');
-
-      await expect(
-        completeBuilderPass({
-          paths,
-          specId: SPEC_ID,
-          handoff: DONE_SUBMISSION,
-        }),
-      ).rejects.toThrow(
-        'Builder changed a protected workflow file after launch',
-      );
-
-      await expect(
-        pathExists(
-          builderHandoffPath({ paths, worktreePath: builderWorktreePath }),
-        ),
-      ).resolves.toBe(false);
-    },
-  );
-
-  it('detects a staged protocol change even when the working file is restored', async () => {
+  it('rejects a changed spec even when the commit uses the checkpoint message', async () => {
     const { paths, builderWorktreePath } = await createBuilderPass();
     const specPath = paths.getSpecFilePath(SPEC_ID);
-    const originalSpec = await readFile(specPath, 'utf8');
 
-    await writeFile(specPath, `${originalSpec}\nchanged\n`);
+    await writeFile(specPath, '# Changed by the builder\n');
     await runGitCommand({
-      arguments: ['add', '--', relative(builderWorktreePath, specPath)],
+      arguments: ['add', '--', specPath],
       cwd: builderWorktreePath,
     });
-    await writeFile(specPath, originalSpec);
+    await runGitCommand({
+      arguments: ['commit', '--message', 'maestro checkpoint'],
+      cwd: builderWorktreePath,
+    });
 
     await expect(
       completeBuilderPass({
@@ -256,6 +214,12 @@ describe('builder pass completion', () => {
         specId: SPEC_ID,
         handoff: DONE_SUBMISSION,
       }),
-    ).rejects.toThrow('Builder changed a protected workflow file after launch');
+    ).rejects.toThrow('Builder changed spec.md after launch');
+
+    await expect(
+      pathExists(
+        builderHandoffPath({ paths, worktreePath: builderWorktreePath }),
+      ),
+    ).resolves.toBe(false);
   });
 });

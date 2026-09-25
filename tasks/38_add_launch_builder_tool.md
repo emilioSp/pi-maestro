@@ -18,7 +18,7 @@ Launch a builder in the foreground only from an approved workflow state.
 ## Work
 
 1. Define input with `specId` and, when needed, an explicit retry choice.
-2. Call the builder workflow to check the state and create a launch checkpoint.
+2. Call the builder workflow to check the state, create a launch checkpoint, and set the expected `spec.md` SHA in live session state immediately before delegation.
 3. Launch `maestro.builder` in the foreground. Pass its configured model, thinking level, timeout, fresh context, and worktree path.
 4. When the child returns, inspect and validate its final result.
 5. Return distinct results for done, failed, escalation, timeout, interruption, and protocol error.
@@ -38,6 +38,7 @@ Add adapter tests for the input schema, launch parameters, response matching, li
 
 ## Completion criteria
 
-- Every launch has a committed `builder-running` checkpoint.
+- Every launch has a committed `builder-running` checkpoint and an expected live `spec.md` SHA.
+- An explicit retry recalculates and replaces the expected SHA before delegation.
 - Only a valid committed final artifact advances the workflow.
 - Failures leave the current session state available for an explicit follow-up.

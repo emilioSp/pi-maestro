@@ -24,6 +24,7 @@ Wire the main Pi extension without moving domain logic into the composition root
    - Run all checks again each time `/maestro` turns Maestro on.
 3. Leave Maestro off after `/resume`. Do not run Maestro checks or show Maestro notifications at startup.
 4. Register only the session, resume, instruction, status, and tool-activation events that this behavior needs.
+5. Use the shared `MaestroSessionState` instance that the child extension reads in the foreground runtime.
 
 ## Implementation
 
@@ -31,7 +32,7 @@ Keep `extensions/maestro.ts` as wiring only. Import operations directly from `sr
 
 ## Tests
 
-Add Vitest integration tests with a fake Pi context. Test startup, activation, failed activation, deactivation, retry after failure, tool changes, preserved foreign tools, instructions, status, error notifications, inactive resume, and one-time registration.
+Add Vitest integration tests with a fake Pi context. Test startup, activation, failed activation, deactivation, expected SHA clearing, retry after failure, tool changes, preserved foreign tools, instructions, status, error notifications, inactive resume, and one-time registration.
 
 ## Completion criteria
 

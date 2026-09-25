@@ -137,6 +137,8 @@ Maestro reviews the spec with the owner but treats its Markdown as opaque workfl
 
 The base branch must be clean before Maestro starts the first builder pass.
 
+Immediately before a builder launch, Maestro calculates the SHA-256 of the approved `spec.md` on the base branch and stores it only in the live session state. Builder handoff and escalation tools compare the current `spec.md` with that value. An explicit retry recalculates the value before the new launch. Deactivation and restart discard the value; the workflow does not recover it from the repository. `workflow.json`, `handoffs/`, and `prototypes/` are not part of this hash check.
+
 ## Acceptance criterion simplicity principle
 
 Each acceptance criterion must prove exactly one thing.

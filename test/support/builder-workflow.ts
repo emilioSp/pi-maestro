@@ -10,6 +10,7 @@ import {
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { runGitCommand } from '#git/command.ts';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { type GetMaestroPaths, getMaestroPaths } from '#paths.ts';
 import { createSpec } from '#specs/create.ts';
 import { createTemporaryRepository } from '#test/support/temp-repository.ts';
@@ -68,6 +69,8 @@ export const createApprovedWorkflow = async ({
     specId: SPEC_ID,
     activeWorkflowSpecId: SPEC_ID,
   });
+  maestroSessionState.activate();
+  maestroSessionState.setActiveSpecId(SPEC_ID);
 
   if (commitApproval) {
     await repository.commit({ message: 'Approve builder spec' });
@@ -93,6 +96,7 @@ export const getBuilderWorktreePaths = async ({
 
 export const cleanupBuilderWorkflows = async (): Promise<void> => {
   await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
+  maestroSessionState.deactivate();
 };
 
 type BuilderWorkflowPathInput = {

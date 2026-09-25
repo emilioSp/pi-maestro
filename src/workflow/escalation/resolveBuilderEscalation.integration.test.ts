@@ -42,10 +42,11 @@ const escalationInput = {
 const openEscalation = async () => {
   const workflow = await createApprovedWorkflow();
   await prepareBuilderLaunch({ paths: workflow.paths, specId: SPEC_ID });
+  const builderPaths = await getBuilderWorktreePaths({
+    worktreePath: workflow.builderWorktreePath,
+  });
   const opened = await openBuilderEscalation({
-    paths: await getBuilderWorktreePaths({
-      worktreePath: workflow.builderWorktreePath,
-    }),
+    paths: builderPaths,
     specId: SPEC_ID,
     escalation: escalationInput,
   });

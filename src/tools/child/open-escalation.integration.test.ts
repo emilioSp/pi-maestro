@@ -158,7 +158,9 @@ describe('open escalation tool', () => {
         undefined,
         createToolContext({ cwd: builderWorktreePath }),
       ),
-    ).rejects.toThrow('Builder changed a protected workflow file after launch');
+    ).rejects.toThrow(
+      'Builder escalation requires builder-running state, found "escalation-decision".',
+    );
     await expect(
       pathExists(
         paths.getEscalationPathInWorktree({

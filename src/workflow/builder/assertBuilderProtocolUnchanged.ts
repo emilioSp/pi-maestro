@@ -1,105 +1,31 @@
 /**
- * Objective: Reject changes to builder protocol artifacts after launch.
+ * Objective: Reject changes to spec.md after a builder session starts.
  * Used: Before a builder tool writes a terminal workflow artifact.
  */
 
-import { relative } from 'node:path';
-import { runGitCommand } from '#git/command.ts';
-import { CHECKPOINT_COMMIT_MESSAGE } from '#git/commits/createCommit.ts';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import type { GetMaestroPaths } from '#paths.ts';
+import { getFileSha256 } from '#utils/getFileSha256.ts';
 
-// git log --format=%H%x00%s --fixed-strings --grep=<checkpoint-message> HEAD
-const getBuilderCheckpoint = async ({
-  worktreePath,
-}: {
-  worktreePath: string;
-}): Promise<string> => {
-  const result = await runGitCommand({
-    arguments: [
-      'log',
-      '--format=%H%x00%s',
-      '--fixed-strings',
-      `--grep=${CHECKPOINT_COMMIT_MESSAGE}`,
-      'HEAD',
-    ],
-    cwd: worktreePath,
-  });
-
-  for (const line of result.stdout.split(/\r?\n/)) {
-    const [commit, subject] = line.split('\0');
-
-    if (subject === CHECKPOINT_COMMIT_MESSAGE) {
-      return commit;
-    }
-  }
-
-  throw new Error('Builder launch checkpoint was not found in Git history.');
+type AssertBuilderProtocolUnchangedInput = {
+  paths: GetMaestroPaths;
+  specId: string;
 };
 
-// git diff --no-renames --name-only -z <checkpoint> -- <spec-path>
-// git diff --cached --no-renames --name-only -z <checkpoint> -- <spec-path>
-// git ls-files --others --exclude-standard -z -- <spec-path>
 export const assertBuilderProtocolUnchanged = async ({
   paths,
   specId,
-}: {
-  paths: GetMaestroPaths;
-  specId: string;
-}): Promise<void> => {
-  const worktreePath = paths.repositoryRoot;
-  const checkpoint = await getBuilderCheckpoint({ worktreePath });
-  const specPath = relative(worktreePath, paths.getSpecPath(specId));
+}: AssertBuilderProtocolUnchangedInput): Promise<void> => {
+  const expectedSpecSha256 = maestroSessionState.getSpecSha256();
 
-  const [workingDiff, stagedDiff, untrackedFiles] = await Promise.all([
-    runGitCommand({
-      arguments: [
-        'diff',
-        '--no-renames',
-        '--name-only',
-        '-z',
-        checkpoint,
-        '--',
-        specPath,
-      ],
-      cwd: worktreePath,
-    }),
-    runGitCommand({
-      arguments: [
-        'diff',
-        '--cached',
-        '--no-renames',
-        '--name-only',
-        '-z',
-        checkpoint,
-        '--',
-        specPath,
-      ],
-      cwd: worktreePath,
-    }),
-    runGitCommand({
-      arguments: [
-        'ls-files',
-        '--others',
-        '--exclude-standard',
-        '-z',
-        '--',
-        specPath,
-      ],
-      cwd: worktreePath,
-    }),
-  ]);
+  if (expectedSpecSha256 === null) {
+    throw new Error('Builder spec SHA-256 baseline is not initialized.');
+  }
 
-  const changedPath = [
-    workingDiff.stdout,
-    stagedDiff.stdout,
-    untrackedFiles.stdout,
-  ]
-    .flatMap((output) => output.split('\0'))
-    .find((path) => path.length > 0);
+  const specPath = paths.getSpecFilePath(specId);
+  const actualSpecSha256 = await getFileSha256({ path: specPath });
 
-  if (changedPath !== undefined) {
-    throw new Error(
-      `Builder changed a protected workflow file after launch: "${changedPath}".`,
-    );
+  if (actualSpecSha256 !== expectedSpecSha256) {
+    throw new Error(`Builder changed spec.md after launch: "${specPath}".`);
   }
 };

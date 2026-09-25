@@ -7,6 +7,7 @@ import { findCommitByMessage } from '#git/commits/findCommitByMessage.ts';
 import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import {
   builderHandoffPath,
   builderWorkflowPath,
@@ -42,6 +43,7 @@ describe('builder launch preparation', () => {
       branch: builderBranch,
       worktreePath: builderWorktreePath,
     });
+    expect(maestroSessionState.getSpecSha256()).not.toBeNull();
     expect(
       await getCurrentBranch({ repositoryRoot: builderWorktreePath }),
     ).toBe(builderBranch);
@@ -106,6 +108,7 @@ describe('builder launch preparation', () => {
     const firstHead = await getHeadCommit({
       repositoryRoot: builderWorktreePath,
     });
+    const firstSpecSha256 = maestroSessionState.getSpecSha256();
 
     await expect(
       prepareBuilderLaunch({ paths, specId: SPEC_ID }),
@@ -113,6 +116,14 @@ describe('builder launch preparation', () => {
     await expect(
       getHeadCommit({ repositoryRoot: builderWorktreePath }),
     ).resolves.toBe(firstHead);
+    await writeFile(
+      paths.getSpecFilePath(SPEC_ID),
+      '# Revised by the owner before retry\n',
+    );
+    await commitAll({
+      path: paths.repositoryRoot,
+      message: 'Owner revised spec',
+    });
 
     const retry = await prepareBuilderLaunch({
       paths,
@@ -122,6 +133,7 @@ describe('builder launch preparation', () => {
 
     expect(retry.revision).toBe(firstLaunch.revision + 1);
     expect(retry.worktreePath).toBe(builderWorktreePath);
+    expect(maestroSessionState.getSpecSha256()).not.toBe(firstSpecSha256);
     await expect(
       getRepositoryStatus({ repositoryRoot: builderWorktreePath }),
     ).resolves.toMatchObject({ clean: true });
@@ -130,10 +142,11 @@ describe('builder launch preparation', () => {
   it('retries an explicit failed pass and removes the old terminal handoff', async () => {
     const { paths, builderWorktreePath } = await createApprovedWorkflow();
     const launch = await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+    const builderPaths = await getBuilderWorktreePaths({
+      worktreePath: builderWorktreePath,
+    });
     await completeBuilderPass({
-      paths: await getBuilderWorktreePaths({
-        worktreePath: builderWorktreePath,
-      }),
+      paths: builderPaths,
       specId: SPEC_ID,
       handoff: failedHandoff(launch.revision + 1),
     });

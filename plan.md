@@ -1211,9 +1211,10 @@ Decisioni prese:
 6. I tool child-only validano percorso e formato degli artefatti prima della scrittura.
 7. L’estensione principale e quella child-only condividono i moduli interni comuni.
 8. Builder e verifier non caricano l’intera estensione Maestro.
-9. Gli hook child-only rifiutano `write` ed `edit` diretti su `spec.md`, `workflow.json`, `prototypes/` e `handoffs/`. Prima del confronto rimuovono un eventuale prefisso `@`, risolvono il percorso rispetto alla root del worktree, normalizzano `.` e `..` e risolvono gli antenati e i symlink esistenti. Percorsi relativi, assoluti o alias dello stesso file ricevono quindi la stessa protezione. Solo il relativo tool Maestro può creare o aggiornare l’artefatto previsto.
-10. Poiché `bash` non è una sandbox, i tool terminali verificano che `spec.md`, `workflow.json`, `prototypes/` e `handoffs/` non siano stati modificati rispetto al checkpoint di lancio prima di scrivere la propria modifica autorizzata.
-11. Una modifica precedente poi ripristinata byte per byte non produce uno stato diverso e non blocca il terminal handoff.
+9. Gli hook child-only rifiutano `write` ed `edit` diretti su `spec.md`. Prima del confronto rimuovono un eventuale prefisso `@`, risolvono il percorso rispetto alla root del worktree, normalizzano `.` e `..` e risolvono gli antenati e i symlink esistenti. Percorsi relativi, assoluti o alias dello stesso file ricevono quindi la stessa protezione.
+10. `prepareBuilderLaunch` calcola lo SHA-256 di `spec.md` nel punto immediatamente precedente al lancio del builder e lo salva nello stato live della sessione. I tool terminali confrontano il digest corrente con questo valore prima di scrivere l’handoff o l’escalation.
+11. `workflow.json`, `prototypes/` e `handoffs/` restano file interni del protocollo e non partecipano a questo controllo di immutabilità.
+12. L’estensione principale e l’estensione child usano la stessa istanza live di `MaestroSessionState` nel runtime foreground. Non esiste un meccanismo di trasferimento o persistenza dello SHA per child detached.
 
 Il builder continua a usare i normali tool di modifica per il codice del prodotto e conclude il passaggio con `maestro_record_builder_handoff` oppure `maestro_open_escalation`. Il verifier usa `edit` e `write` solo per applicare e ripristinare i breakage previsti dal protocollo.
 
@@ -1235,7 +1236,7 @@ maestro_record_builder_handoff
 maestro_open_escalation
 ```
 
-`write` permette al builder di creare i file necessari a soddisfare la spec. I percorsi di protocollo restano protetti dall’estensione child-only.
+`write` permette al builder di creare i file necessari a soddisfare la spec. `spec.md` resta protetto dall’estensione child-only.
 
 Decisione presa per il verifier:
 
@@ -1250,7 +1251,7 @@ write
 maestro_record_verifier_handoff
 ```
 
-`edit` e `write` servono al verifier solo per applicare e ripristinare i breakage. Il verifier non può correggere il prodotto o aprire escalation. I percorsi di protocollo restano protetti dall’estensione child-only.
+`edit` e `write` servono al verifier solo per applicare e ripristinare i breakage. Il verifier non può correggere il prodotto o aprire escalation. `spec.md` resta protetto dall’estensione child-only.
 
 Decisione presa per il maestro:
 
@@ -1384,6 +1385,14 @@ Quando `maestro_prepare_final_review` termina con successo, il workflow è già 
 48. Branch o worktree Maestro associati a un workflow in `final-review` costituiscono uno stato incoerente e non riaprono il workflow.
 49. L’owner può modificare o rimuovere lo staging e crea il commit finale sotto la propria responsabilità.
 50. Dopo la conclusione non esiste una conferma del commit e Maestro non verifica le modifiche successive dell’owner.
+51. `MaestroSessionState` espone operazioni per impostare e leggere lo SHA-256 atteso della spec attiva. Il getter restituisce `null` quando non esiste una baseline live.
+52. `prepareBuilderLaunch` inizializza la baseline nel punto immediatamente precedente al lancio del builder, dopo aver completato la preparazione di branch, worktree, stato e checkpoint. Durante un retry esplicito ricalcola lo SHA corrente di `spec.md` e sostituisce la baseline precedente.
+53. `deactivate()` azzera lo SHA-256 atteso insieme allo spec ID attivo. Dopo disattivazione o restart non esiste recovery della baseline.
+54. Il setter dello SHA sostituisce il valore precedente quando viene chiamato. Non esiste un reset separato per il retry; il reset della sessione avviene tramite `deactivate()`.
+55. `clearActiveSpecId()` azzera sia lo spec ID attivo sia lo SHA-256 atteso. `deactivate()` usa lo stesso comportamento.
+56. `setActiveSpecId()` rifiuta uno spec ID diverso quando esiste già uno spec attivo. L’impostazione dello stesso ID è idempotente.
+57. `getExpectedSpecSha256()` restituisce `string | null`. Se la baseline è `null`, il controllo builder fallisce con un errore esplicito e non calcola uno SHA sostitutivo.
+58. `prepareBuilderLaunch` calcola lo SHA usando `paths.getSpecFilePath(specId)` sulla base approvata. Non usa il percorso di `spec.md` nel builder worktree.
 
 <a id="plan-section-6-15"></a>
 
@@ -1595,7 +1604,7 @@ Decisioni prese:
 
 Decisioni prese:
 
-1. Nella prima versione builder e verifier lavorano in foreground.
+1. Nella prima versione builder e verifier lavorano in foreground nello stesso runtime Pi. L’MVP non supporta child detached o processi separati per questo workflow.
 2. Maestro attende la conclusione del subagent prima di continuare.
 3. L’owner non può continuare a conversare con Maestro mentre il passaggio è in esecuzione.
 4. Non esistono transizioni concorrenti durante un passaggio.
@@ -1700,16 +1709,17 @@ Copertura minima approvata per la prima versione:
 6. Integration test con repository Git temporanei.
 7. Integration test per branch, worktree, squash e pulizia.
 8. Test del ciclo builder, verifier, escalation e finding nei moduli di dominio con un fake di `pi-subagents`. I test dei tool adapter coprono schema input, derivazione dei campi, wiring di un successo e propagazione di un errore senza ripetere l’intera matrice del dominio.
-9. Test che disattivazione e `/resume` perdano lo spec ID live senza modificare workflow persistenti.
+9. Test che disattivazione e `/resume` perdano lo spec ID e lo SHA atteso live senza modificare workflow persistenti.
 10. Test delle risorse previste durante le operazioni della sessione live.
 11. Test che nessuna operazione esca dalla root Git.
 12. Test degli handoff builder `done` e `failed`, inclusi identità, revisione, acceptance criteria e stati terminali.
 13. Test che il verifier ripristini ogni modifica staged, unstaged o untracked prima dell’handoff e che il rifiuto restituisca `PRODUCT_FILES_MODIFIED` con un messaggio, senza modifiche a handoff e workflow.
 14. Test che escalation e finding non possano riportare una spec approvata a `drafting-spec`.
 15. Test rappresentativi di `maestro_resolve_findings`: tutti respinti e almeno un `fix-code`.
-16. Test del blocco di `write` ed `edit` sui percorsi protetti tramite percorsi relativi, assoluti, normalizzati e symlink e del controllo terminale contro modifiche effettuate tramite `bash`.
+16. Test del blocco di `write` ed `edit` su `spec.md` tramite percorsi relativi, assoluti, normalizzati e symlink e del confronto SHA-256 contro modifiche effettuate tramite `bash`, incluse modifiche commesse con il messaggio del checkpoint.
 17. Test che `maestro_prepare_final_review` verifichi lo staging, scriva e metta in staging `final-review`, tenti il cleanup best-effort, restituisca i dati strutturati necessari al riepilogo finale e mantenga la fase precedente quando squash o verifica falliscono.
 18. La suite end-to-end contiene un happy path completo e un percorso di disattivazione che dimostra l’assenza di recovery. Gli altri edge case restano nei test dei moduli proprietari.
+19. I test della sessione live coprono set/get, reset con `deactivate()` e `clearActiveSpecId()`, sostituzione dello SHA, retry con ricalcolo della baseline, uso della baseline da parte di handoff ed escalation e rifiuto di modifiche a `spec.md`, incluse modifiche commesse con il messaggio `maestro checkpoint`.
 
 I test usano Vitest su Node.js 26. I comandi approvati sono definiti nel `package.json` della sezione 5.1.
 

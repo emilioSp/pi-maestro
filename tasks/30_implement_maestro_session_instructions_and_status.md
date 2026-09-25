@@ -17,7 +17,7 @@ Keep Maestro mode visible without making session state authoritative.
 
 ## Work
 
-1. Keep the current Maestro activation state and active spec ID in the live session only.
+1. Keep the current Maestro activation state, active spec ID, and expected `spec.md` SHA-256 in the live session only.
 2. Leave Maestro inactive after `/resume` and expose session-state operations for later activation.
 3. Do not implement or register the `/maestro` toggle here. Task 43 wires the command to Task 29 checks and session state.
 4. Build Maestro instructions for authority, owner dialogue, semantic spec review, tool use, and no normal product edits.
@@ -34,11 +34,11 @@ Put session state, instructions, and status in their matching directories under 
 
 ## Tests
 
-Add Vitest tests for inactive state, active state without a live spec, each phase label, inactive state after resume, completed final review, and no repository mutation.
+Add Vitest tests for inactive state, active state without a live spec, SHA set/get, SHA replacement, reset through `deactivate()` and `clearActiveSpecId()`, each phase label, inactive state after resume, completed final review, and no repository mutation.
 
 ## Completion criteria
 
-- Session state supports inactive and active modes with an optional live spec ID; callers activate it only after checks pass.
-- Deactivation and `/resume` clear the live spec ID without reading or changing persisted workflow files.
+- Session state supports inactive and active modes with an optional live spec ID and nullable expected spec SHA; callers activate it only after checks pass.
+- Deactivation and `/resume` clear the live spec ID and expected SHA without reading or changing persisted workflow files.
 - Resume always starts inactive. Task 43 wires reactivation through the normal `/maestro` checks.
 - The instruction text agrees with the owner, builder, and verifier authority model.

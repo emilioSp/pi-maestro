@@ -57,7 +57,9 @@ The package is source-only. Pi loads TypeScript directly, `src/` is published, a
 - Prefer pure functions.
 - Use assertion functions with the TypeScript `asserts value is Type` return type to validate and narrow types; throw an error when validation fails.
 - Name every function that checks a condition and throws on failure `assert...`; return `void` (or `Promise<void>` if async), and use `asserts value is Type` when the check narrows a type.
-- Prefer arrow functions. Use classes only for strategies or objects with internal state. Use function for assertion functions.
+- Prefer arrow functions, but use function for assertion functions for the sake of human readability.
+- Use classes for singleton default exporting a single instantiated object.
+- Use classes for modules that carry internal mutable state. 
 - Keep functions small. Split a function when it becomes hard to read.
 - Use `async` and `await`. Do not introduce callback APIs. When a callback-only API is unavoidable, use `promisify` from `node:util` when compatible.
 - Use `Temporal`. Do not use `Date`.

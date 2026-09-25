@@ -13,6 +13,7 @@ import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import { createWorktree } from '#git/worktrees/createWorktree.ts';
 import { findWorktree } from '#git/worktrees/findWorktree.ts';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import type { GetMaestroPaths } from '#paths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { isPathWithinOrEqual } from '#utils/path-within-or-equal.ts';
@@ -183,6 +184,14 @@ export const prepareBuilderLaunch = async ({
   specId: string;
   retry?: boolean;
 }): Promise<BuilderLaunch> => {
+  const activeSpecId = maestroSessionState.getActiveSpecId();
+
+  if (activeSpecId !== specId) {
+    throw new Error(
+      `Builder launch requires active Maestro spec "${specId}", found "${activeSpecId ?? 'none'}".`,
+    );
+  }
+
   const builderBranch = paths.getBuilderBranch(specId);
   const worktreePath = paths.getBuilderWorktreePath(specId);
   const existingBranch = await branchExists({
@@ -279,6 +288,10 @@ export const prepareBuilderLaunch = async ({
   const checkpointCommit = await createCommit({
     repositoryRoot: worktreePath,
     expectedPaths,
+  });
+
+  await maestroSessionState.setSpecSha256({
+    specPath: paths.getSpecFilePath(specId),
   });
 
   return {
