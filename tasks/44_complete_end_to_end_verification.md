@@ -8,7 +8,7 @@ This task depends on Task 43: Register the main Maestro extension.
 
 ## Objective
 
-Show that all parts work together and the package is ready for review.
+Show that the current-branch workflow works end to end and the package is ready for review.
 
 ## Plan references
 
@@ -18,11 +18,14 @@ Show that all parts work together and the package is ready for review.
 
 ## Work
 
-1. Add one happy-path integration test. Start with activation and spec creation. End with staged final review.
-2. Add one deactivation test proving that an incomplete workflow is not recovered by a later Maestro session and that the live expected SHA is cleared.
-3. Use temporary Git repositories and a fake Pi event bus. Use foreground subagent responses.
-4. Keep other edge cases in tests next to the modules they cover.
-5. Remove a duplicate test only if the same behavior is clearly tested in its owning test file.
+1. Add one happy-path integration test. Start on an arbitrary current branch, activate Maestro, create and approve a spec, run builder and verifier, prepare `final-review`, and return Pull Request facts.
+2. Add one builder-failure recovery test with an explicit retry on the same branch.
+3. Add one spec-revision test from a blocked phase using the same `specId`, current branch, and artifact paths.
+4. Add one verifier-finding test covering both `fix-code` and all-findings-rejected outcomes.
+5. Add one deactivation test proving that an incomplete workflow is not recovered by a later Maestro session and that the live expected SHA is cleared.
+6. Use temporary Git repositories and a fake Pi event bus. Use foreground subagent responses.
+7. Keep other edge cases in tests next to the modules they cover.
+8. Remove a duplicate test only if the same behavior is clearly tested in its owning test file.
 
 ## Implementation
 
@@ -44,6 +47,9 @@ Check the package file list. It must include both extensions, agents, the templa
 ## Completion criteria
 
 - Every minimum-coverage item in Section 6.25 has a test owned by the right module.
+- The full workflow uses one current branch and one checkout.
+- The verifier commits only protocol files through its child tool.
+- Spec revision, findings, retry, and final Pull Request delivery work as documented.
 - All release checks pass on macOS with Node.js 26.
 - No temporary files or repositories remain.
 - The package contains only approved files.
