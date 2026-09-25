@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
-import { getMaestroPaths } from '#paths.ts';
+import { MaestroPaths } from '#MaestroPaths.ts';
 import { createSpec } from '#specs/create.ts';
 import { createTemporaryRepository } from '#test/support/temp-repository.ts';
 import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
@@ -21,7 +21,7 @@ const createRepository = async () => {
   await writeFile(join(repository.path, 'README.md'), '# Test\n', 'utf8');
   await repository.commit({ message: 'Initial commit' });
 
-  const paths = getMaestroPaths({
+  const paths = new MaestroPaths({
     repositoryRoot: repository.path,
     config: {
       ...DEFAULT_CONFIG,

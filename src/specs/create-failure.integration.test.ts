@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
-import { getMaestroPaths } from '#paths.ts';
+import { MaestroPaths } from '#MaestroPaths.ts';
 
 vi.mock('#workflow/state/writeWorkflowState.ts', () => ({
   writeWorkflowState: async () => {
@@ -29,7 +29,7 @@ describe('partial spec creation failure', () => {
       join(tmpdir(), 'pi-maestro-spec-failure-'),
     );
     temporaryDirectories.push(repositoryRoot);
-    const paths = getMaestroPaths({
+    const paths = new MaestroPaths({
       repositoryRoot,
       config: {
         ...DEFAULT_CONFIG,

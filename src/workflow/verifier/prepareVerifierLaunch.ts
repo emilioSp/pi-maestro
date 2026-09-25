@@ -10,7 +10,7 @@ import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import { createWorktree } from '#git/worktrees/createWorktree.ts';
 import { findWorktree } from '#git/worktrees/findWorktree.ts';
-import type { GetMaestroPaths } from '#paths.ts';
+import type { MaestroPaths } from '#MaestroPaths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
@@ -32,7 +32,7 @@ const getNextPass = async ({
   paths,
   specId,
 }: {
-  paths: GetMaestroPaths;
+  paths: MaestroPaths;
   specId: string;
 }): Promise<number> => {
   let pass = 1;
@@ -41,9 +41,9 @@ const getNextPass = async ({
     const branch = paths.getVerifierBranch({ specId, pass });
     const worktreePath = paths.getVerifierWorktreePath({ specId, pass });
     const [hasBranch, worktree, hasPath] = await Promise.all([
-      branchExists({ repositoryRoot: paths.repositoryRoot, branch }),
+      branchExists({ repositoryRoot: paths.getRepositoryRoot(), branch }),
       findWorktree({
-        repositoryRoot: paths.repositoryRoot,
+        repositoryRoot: paths.getRepositoryRoot(),
         path: worktreePath,
       }),
       pathExists(worktreePath),
@@ -68,12 +68,12 @@ export const prepareVerifierLaunch = async ({
   paths,
   specId,
 }: {
-  paths: GetMaestroPaths;
+  paths: MaestroPaths;
   specId: string;
 }): Promise<VerifierLaunch> => {
   const builderWorktreePath = paths.getBuilderWorktreePath(specId);
   await assertWorktree({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
     branch: paths.getBuilderBranch(specId),
     worktreePath: builderWorktreePath,
   });
@@ -107,12 +107,12 @@ export const prepareVerifierLaunch = async ({
   const worktreePath = paths.getVerifierWorktreePath({ specId, pass });
 
   await createBranch({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
     branch: verifierBranch,
     startPoint: candidateCommit,
   });
   await createWorktree({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
     path: worktreePath,
     branch: verifierBranch,
   });

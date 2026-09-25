@@ -10,7 +10,7 @@ import type {
   EscalationResolution,
 } from '#artifacts/escalation/schema.ts';
 import { createCommit } from '#git/commits/createCommit.ts';
-import type { GetMaestroPaths } from '#paths.ts';
+import type { MaestroPaths } from '#MaestroPaths.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
   WORKFLOW_EVENTS,
@@ -53,14 +53,14 @@ export const resolveBuilderEscalation = async ({
   escalationId,
   resolution,
 }: {
-  paths: GetMaestroPaths;
+  paths: MaestroPaths;
   specId: string;
   escalationId: string;
   resolution: EscalationResolution;
 }): Promise<ResolvedBuilderEscalation> => {
   const builderWorktreePath = paths.getBuilderWorktreePath(specId);
   await assertWorktree({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
     branch: paths.getBuilderBranch(specId),
     worktreePath: builderWorktreePath,
   });

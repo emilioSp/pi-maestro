@@ -10,7 +10,7 @@ import { cleanupWorkflowResources } from '#git/final-review/cleanupWorkflowResou
 import { squashCandidate } from '#git/final-review/squashCandidate.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
-import type { GetMaestroPaths } from '#paths.ts';
+import type { MaestroPaths } from '#MaestroPaths.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
@@ -33,7 +33,7 @@ export const prepareFinalReview = async ({
   specId,
   pass,
 }: {
-  paths: GetMaestroPaths;
+  paths: MaestroPaths;
   specId: string;
   pass: number;
 }): Promise<FinalReviewResult> => {
@@ -43,12 +43,12 @@ export const prepareFinalReview = async ({
   const builderWorktreePath = paths.getBuilderWorktreePath(specId);
 
   await assertWorktree({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
     branch: verifierBranch,
     worktreePath: verifierWorktreePath,
   });
   await assertWorktree({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
     branch: builderBranch,
     worktreePath: builderWorktreePath,
   });
@@ -86,16 +86,16 @@ export const prepareFinalReview = async ({
   });
 
   await squashCandidate({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
     baseBranch: verifierState.baseBranch,
     candidateBranch: verifierBranch,
   });
 
   const stagedCandidatePaths = await getStagedPaths({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
   });
   const status = await getRepositoryStatus({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
   });
 
   if (
@@ -119,15 +119,15 @@ export const prepareFinalReview = async ({
   });
   await runGitCommand({
     arguments: ['add', '--', statePath],
-    cwd: paths.repositoryRoot,
+    cwd: paths.getRepositoryRoot(),
   });
   const stagedPaths = await getStagedPaths({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
   });
 
   const cleanup = await cleanupWorkflowResources({
-    repositoryRoot: paths.repositoryRoot,
-    worktreeDirectory: paths.worktreeDirectory,
+    repositoryRoot: paths.getRepositoryRoot(),
+    worktreeDirectory: paths.getWorktreeDirectory(),
     resources: [
       { branch: verifierBranch, worktreePath: verifierWorktreePath },
       { branch: builderBranch, worktreePath: builderWorktreePath },

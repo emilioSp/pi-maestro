@@ -9,7 +9,7 @@ import type {
   Escalation,
   NewEscalation,
 } from '#artifacts/escalation/schema.ts';
-import type { GetMaestroPaths } from '#paths.ts';
+import type { MaestroPaths } from '#MaestroPaths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { assertBuilderProtocolUnchanged } from '#workflow/builder/assertBuilderProtocolUnchanged.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -31,7 +31,7 @@ export type OpenedBuilderEscalation = {
 };
 
 type OpenBuilderEscalationInput = {
-  paths: GetMaestroPaths;
+  paths: MaestroPaths;
   specId: string;
   escalation: NewEscalation;
 };
@@ -41,12 +41,12 @@ export const openBuilderEscalation = async ({
   specId,
   escalation,
 }: OpenBuilderEscalationInput): Promise<OpenedBuilderEscalation> => {
-  const worktreePath = paths.repositoryRoot;
+  const worktreePath = paths.getRepositoryRoot();
 
   await assertWorktree({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
     branch: paths.getBuilderBranch(specId),
-    worktreePath: paths.repositoryRoot,
+    worktreePath: paths.getRepositoryRoot(),
   });
 
   await assertBuilderProtocolUnchanged({ paths, specId });

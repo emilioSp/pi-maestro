@@ -3,13 +3,13 @@
  * Used: When workflow logic maps persisted phases to builder or verifier roles.
  */
 
-import type { WorkflowRoles } from '#paths.ts';
-import { WORKFLOW_ROLES } from '#paths.ts';
+import type { WorkflowRole } from '#workflow/roles.ts';
+import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
 
 export const getAgentRole = (
   phase: WorkflowState['phase'],
-): WorkflowRoles | null => {
+): WorkflowRole | null => {
   if (
     (
       [

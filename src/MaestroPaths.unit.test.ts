@@ -2,7 +2,7 @@ import { rm } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
-import { getMaestroPaths } from '#paths.ts';
+import { MaestroPaths } from '#MaestroPaths.ts';
 import { createTemporaryRepository } from '#test/support/temp-repository.ts';
 
 const SPEC_ID = '20260321-143052-add-weather-alerts';
@@ -26,7 +26,7 @@ describe('Maestro paths', () => {
     const repository = await createTemporaryRepository();
     temporaryPaths.push(repository.path);
 
-    const paths = getMaestroPaths({
+    const paths = new MaestroPaths({
       repositoryRoot: repository.path,
       config: {
         ...DEFAULT_CONFIG,
@@ -35,9 +35,9 @@ describe('Maestro paths', () => {
       },
     });
 
-    const root = paths.repositoryRoot;
-    expect(paths.specDirectory).toBe(join(root, 'custom/specs'));
-    expect(paths.worktreeDirectory).toBe(join(root, 'custom/worktrees'));
+    const root = paths.getRepositoryRoot();
+    expect(paths.getSpecDirectory()).toBe(join(root, 'custom/specs'));
+    expect(paths.getWorktreeDirectory()).toBe(join(root, 'custom/worktrees'));
     expect(paths.getSpecPath(SPEC_ID)).toBe(
       join(root, 'custom/specs', SPEC_ID),
     );
@@ -76,7 +76,7 @@ describe('Maestro paths', () => {
   it('keeps generated artifact paths inside the repository', async () => {
     const repository = await createTemporaryRepository();
     temporaryPaths.push(repository.path);
-    const paths = getMaestroPaths({
+    const paths = new MaestroPaths({
       repositoryRoot: repository.path,
       config: {
         ...DEFAULT_CONFIG,
@@ -104,7 +104,7 @@ describe('Maestro paths', () => {
     ];
 
     for (const path of generatedPaths) {
-      expectInside({ root: paths.repositoryRoot, path });
+      expectInside({ root: paths.getRepositoryRoot(), path });
     }
 
     expect(() =>
@@ -119,7 +119,7 @@ describe('Maestro paths', () => {
   it('maps protocol paths into a worktree with custom directories', async () => {
     const repository = await createTemporaryRepository();
     temporaryPaths.push(repository.path);
-    const paths = getMaestroPaths({
+    const paths = new MaestroPaths({
       repositoryRoot: repository.path,
       config: {
         ...DEFAULT_CONFIG,
@@ -164,7 +164,7 @@ describe('Maestro paths', () => {
 
   it('uses the default spec directory at the same location in each root', () => {
     const repositoryRoot = '/repo';
-    const paths = getMaestroPaths({
+    const paths = new MaestroPaths({
       repositoryRoot,
       config: {
         ...DEFAULT_CONFIG,
@@ -190,17 +190,19 @@ describe('Maestro paths', () => {
       worktreeDirectory: join(repositoryRoot, '.worktree'),
     };
 
-    expect(() =>
-      getMaestroPaths({
-        repositoryRoot,
-        config: { ...config, specDirectory: '/outside' },
-      }),
+    expect(
+      () =>
+        new MaestroPaths({
+          repositoryRoot,
+          config: { ...config, specDirectory: '/outside' },
+        }),
     ).toThrow('Generated Maestro path leaves the Git root.');
-    expect(() =>
-      getMaestroPaths({
-        repositoryRoot,
-        config: { ...config, worktreeDirectory: '/outside' },
-      }),
+    expect(
+      () =>
+        new MaestroPaths({
+          repositoryRoot,
+          config: { ...config, worktreeDirectory: '/outside' },
+        }),
     ).toThrow('Generated Maestro path leaves the Git root.');
   });
 });

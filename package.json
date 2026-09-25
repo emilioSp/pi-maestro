@@ -45,7 +45,7 @@
     "#maestro/*": "./src/maestro/*",
     "#tools/*": "./src/tools/*",
     "#utils/*": "./src/utils/*",
-    "#paths.ts": "./src/paths.ts",
+    "#MaestroPaths.ts": "./src/MaestroPaths.ts",
     "#ids/*": "./src/ids/*",
     "#*": "./*"
   },

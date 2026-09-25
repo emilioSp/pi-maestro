@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { WORKFLOW_ROLES } from '#paths.ts';
 import { createFakeSubagents } from '#test/support/fake-subagents.ts';
+import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 
 type Request = {
   role: string;

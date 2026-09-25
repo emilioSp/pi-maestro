@@ -3,12 +3,12 @@
  * Used: Before a builder tool writes a terminal workflow artifact.
  */
 
+import type { MaestroPaths } from '#MaestroPaths.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
-import type { GetMaestroPaths } from '#paths.ts';
 import { getFileSha256 } from '#utils/getFileSha256.ts';
 
 type AssertBuilderProtocolUnchangedInput = {
-  paths: GetMaestroPaths;
+  paths: MaestroPaths;
   specId: string;
 };
 

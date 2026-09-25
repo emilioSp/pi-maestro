@@ -7,7 +7,8 @@ import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { findRepositoryRoot } from '#git/repository/findRepositoryRoot.ts';
 import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
 import { isValidSpecId } from '#ids/isValidSpecId.ts';
-import { getMaestroPaths, WORKFLOW_ROLES } from '#paths.ts';
+import { MaestroPaths } from '#MaestroPaths.ts';
+import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 
 export const getBuilderWorktreeContext = async ({ cwd }: { cwd: string }) => {
   const worktreePath = await findRepositoryRoot({ cwd });
@@ -27,7 +28,7 @@ export const getBuilderWorktreeContext = async ({ cwd }: { cwd: string }) => {
   }
 
   const config = await loadConfiguration({ cwd: worktreePath });
-  const paths = getMaestroPaths({ repositoryRoot: worktreePath, config });
+  const paths = new MaestroPaths({ repositoryRoot: worktreePath, config });
 
   return { paths, specId, worktreePath };
 };

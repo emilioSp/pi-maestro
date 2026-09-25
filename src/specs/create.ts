@@ -5,7 +5,7 @@
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import { createSpecId } from '#ids/createSpecId.ts';
-import type { GetMaestroPaths } from '#paths.ts';
+import type { MaestroPaths } from '#MaestroPaths.ts';
 import { loadSpecTemplate, renderSpecTemplate } from '#specs/template.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import {
@@ -33,7 +33,7 @@ export const createSpec = async ({
   activeWorkflowSpecId,
   instant,
 }: {
-  paths: GetMaestroPaths;
+  paths: MaestroPaths;
   title: string;
   baseBranch: string;
   activeWorkflowSpecId: string | null;
@@ -70,7 +70,7 @@ export const createSpec = async ({
   assertWorkflowState(state);
   let created = false;
   try {
-    await mkdir(paths.specDirectory, { recursive: true });
+    await mkdir(paths.getSpecDirectory(), { recursive: true });
     await mkdir(specPath);
     created = true;
     await mkdir(escalationsPath, { recursive: true });

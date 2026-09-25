@@ -10,8 +10,8 @@ import {
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { runGitCommand } from '#git/command.ts';
+import { MaestroPaths } from '#MaestroPaths.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
-import { type GetMaestroPaths, getMaestroPaths } from '#paths.ts';
 import { createSpec } from '#specs/create.ts';
 import { createTemporaryRepository } from '#test/support/temp-repository.ts';
 import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
@@ -53,7 +53,7 @@ export const createApprovedWorkflow = async ({
   await repository.commit({ message: 'Initial commit' });
 
   const config = await loadConfiguration({ cwd: repository.path });
-  const paths = getMaestroPaths({
+  const paths = new MaestroPaths({
     repositoryRoot: repository.path,
     config,
   });
@@ -91,7 +91,7 @@ export const getBuilderWorktreePaths = async ({
 }) => {
   const config = await loadConfiguration({ cwd: worktreePath });
 
-  return getMaestroPaths({ repositoryRoot: worktreePath, config });
+  return new MaestroPaths({ repositoryRoot: worktreePath, config });
 };
 
 export const cleanupBuilderWorkflows = async (): Promise<void> => {
@@ -100,7 +100,7 @@ export const cleanupBuilderWorkflows = async (): Promise<void> => {
 };
 
 type BuilderWorkflowPathInput = {
-  paths: GetMaestroPaths;
+  paths: MaestroPaths;
   worktreePath: string;
 };
 

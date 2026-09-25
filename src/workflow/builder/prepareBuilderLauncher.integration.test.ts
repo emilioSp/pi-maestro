@@ -75,7 +75,7 @@ describe('builder launch preparation', () => {
     ).rejects.toThrow('clean base branch');
     await expect(
       branchExists({
-        repositoryRoot: paths.repositoryRoot,
+        repositoryRoot: paths.getRepositoryRoot(),
         branch: builderBranch,
       }),
     ).resolves.toBe(false);
@@ -92,7 +92,7 @@ describe('builder launch preparation', () => {
     ).rejects.toThrow('clean base branch');
     await expect(
       branchExists({
-        repositoryRoot: paths.repositoryRoot,
+        repositoryRoot: paths.getRepositoryRoot(),
         branch: builderBranch,
       }),
     ).resolves.toBe(false);
@@ -121,7 +121,7 @@ describe('builder launch preparation', () => {
       '# Revised by the owner before retry\n',
     );
     await commitAll({
-      path: paths.repositoryRoot,
+      path: paths.getRepositoryRoot(),
       message: 'Owner revised spec',
     });
 

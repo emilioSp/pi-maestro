@@ -815,9 +815,9 @@ Ogni operazione pubblica ha un modulo. Tipi, costanti, errori e helper privati r
 
 La configurazione applica gli override e valida le directory configurate, inclusi root Git, percorsi relativi, symlink e collisioni. Non verifica la disponibilità dei modelli e non dipende dall’interfaccia Pi.
 
-`src/paths.ts` resta un singolo modulo. Calcola una volta la posizione della directory delle spec dentro il repository. Un helper privato costruisce i percorsi dalla root del repository o di un worktree, senza convertire ogni percorso assoluto tra le due root. Costruisce anche i nomi di branch e i percorsi dei worktree Maestro. Usa una configurazione già validata. Non crea file o directory.
+`src/MaestroPaths.ts` resta un singolo modulo. Calcola una volta la posizione della directory delle spec dentro il repository. Un helper privato costruisce i percorsi dalla root del repository o di un worktree, senza convertire ogni percorso assoluto tra le due root. Costruisce anche i nomi di branch e i percorsi dei worktree Maestro. Usa una configurazione già validata. Non crea file o directory.
 
-`src/utils/path-within-or-equal.ts` e `src/utils/path-strictly-within.ts` contengono i controlli lessicali di contenimento tra percorsi. Ogni modulo esporta una funzione. `src/config/` e `src/paths.ts` importano direttamente il controllo necessario.
+`src/utils/path-within-or-equal.ts` e `src/utils/path-strictly-within.ts` contengono i controlli lessicali di contenimento tra percorsi. Ogni modulo esporta una funzione. `src/config/` e `src/MaestroPaths.ts` importano direttamente il controllo necessario.
 
 `src/ids/createSpecId.ts` compone l'ID da timestamp UTC e slug. `src/ids/isValidSpecId.ts` valida l'ID ed esporta il pattern condiviso dagli schemi. I dettagli di formattazione e validazione restano privati. Gli import usano percorsi diretti, senza barrel.
 

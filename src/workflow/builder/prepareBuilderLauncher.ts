@@ -13,8 +13,8 @@ import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import { createWorktree } from '#git/worktrees/createWorktree.ts';
 import { findWorktree } from '#git/worktrees/findWorktree.ts';
+import type { MaestroPaths } from '#MaestroPaths.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
-import type { GetMaestroPaths } from '#paths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { isPathWithinOrEqual } from '#utils/path-within-or-equal.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -41,7 +41,7 @@ const assertBuilderLaunchBase = async ({
   specId,
   allowedWorktreePath,
 }: {
-  paths: GetMaestroPaths;
+  paths: MaestroPaths;
   specId: string;
   allowedWorktreePath?: string;
 }): Promise<void> => {
@@ -62,7 +62,7 @@ const assertBuilderLaunchBase = async ({
   }
 
   const currentBranch = await getCurrentBranch({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
   });
 
   if (currentBranch !== state.baseBranch) {
@@ -72,7 +72,7 @@ const assertBuilderLaunchBase = async ({
   }
 
   const status = await getRepositoryStatus({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
   });
   const hasUnexpectedChanges =
     status.staged.length > 0 ||
@@ -83,7 +83,7 @@ const assertBuilderLaunchBase = async ({
       }
       return !isPathWithinOrEqual({
         parent: allowedWorktreePath,
-        candidate: resolve(paths.repositoryRoot, path),
+        candidate: resolve(paths.getRepositoryRoot(), path),
       });
     });
 
@@ -110,17 +110,17 @@ const assertBuilderResourcesAbsent = async ({
   paths,
   specId,
 }: {
-  paths: GetMaestroPaths;
+  paths: MaestroPaths;
   specId: string;
 }): Promise<void> => {
   const branch = paths.getBuilderBranch(specId);
   const worktreePath = paths.getBuilderWorktreePath(specId);
   const branchFound = await branchExists({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
     branch,
   });
   const worktree = await findWorktree({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
     path: worktreePath,
   });
   const pathFound = await pathExists(worktreePath);
@@ -180,7 +180,7 @@ export const prepareBuilderLaunch = async ({
   specId,
   retry = false,
 }: {
-  paths: GetMaestroPaths;
+  paths: MaestroPaths;
   specId: string;
   retry?: boolean;
 }): Promise<BuilderLaunch> => {
@@ -195,12 +195,12 @@ export const prepareBuilderLaunch = async ({
   const builderBranch = paths.getBuilderBranch(specId);
   const worktreePath = paths.getBuilderWorktreePath(specId);
   const existingBranch = await branchExists({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
     branch: builderBranch,
   });
 
   const existingWorktree = await findWorktree({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
     path: worktreePath,
   });
 
@@ -220,7 +220,7 @@ export const prepareBuilderLaunch = async ({
 
   if (hasExistingResources) {
     await assertWorktree({
-      repositoryRoot: paths.repositoryRoot,
+      repositoryRoot: paths.getRepositoryRoot(),
       branch: builderBranch,
       worktreePath,
     });
@@ -228,14 +228,14 @@ export const prepareBuilderLaunch = async ({
   } else {
     await assertBuilderResourcesAbsent({ paths, specId }); // no worktree, no worktree path, no branch
     await createBranch({
-      repositoryRoot: paths.repositoryRoot,
+      repositoryRoot: paths.getRepositoryRoot(),
       branch: builderBranch,
       startPoint: await getHeadCommit({
-        repositoryRoot: paths.repositoryRoot,
+        repositoryRoot: paths.getRepositoryRoot(),
       }),
     });
     await createWorktree({
-      repositoryRoot: paths.repositoryRoot,
+      repositoryRoot: paths.getRepositoryRoot(),
       path: worktreePath,
       branch: builderBranch,
     });

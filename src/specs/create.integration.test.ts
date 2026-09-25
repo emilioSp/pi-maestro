@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
-import { getMaestroPaths } from '#paths.ts';
+import { MaestroPaths } from '#MaestroPaths.ts';
 import { createSpec } from '#specs/create.ts';
 import { loadSpecTemplate } from '#specs/template.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -26,7 +26,7 @@ const createWorkspace = async ({
 } = {}) => {
   const repositoryRoot = await mkdtemp(join(tmpdir(), 'pi-maestro-spec-'));
   temporaryDirectories.push(repositoryRoot);
-  const paths = getMaestroPaths({
+  const paths = new MaestroPaths({
     repositoryRoot,
     config: {
       ...DEFAULT_CONFIG,
@@ -66,7 +66,7 @@ describe('spec template and creation', () => {
     });
 
     expect(created.specId).toBe(SPEC_ID);
-    expect(created.specPath).toBe(join(paths.specDirectory, SPEC_ID));
+    expect(created.specPath).toBe(join(paths.getSpecDirectory(), SPEC_ID));
     await expect(readFile(created.specFilePath, 'utf8')).resolves.toContain(
       `# ${SPEC_ID}: Add Weather Alerts`,
     );
@@ -124,7 +124,7 @@ describe('spec template and creation', () => {
     ).rejects.toThrow(
       'Workflow 20260320-120000-current-workflow is already active.',
     );
-    await expect(access(paths.specDirectory)).rejects.toMatchObject({
+    await expect(access(paths.getSpecDirectory())).rejects.toMatchObject({
       code: 'ENOENT',
     });
   });

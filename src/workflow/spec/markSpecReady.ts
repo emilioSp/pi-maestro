@@ -3,7 +3,7 @@
  * Used: When the owner approves the spec content.
  */
 
-import type { GetMaestroPaths } from '#paths.ts';
+import type { MaestroPaths } from '#MaestroPaths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_EVENTS, type WorkflowState } from '#workflow/state/schema.ts';
@@ -11,7 +11,7 @@ import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 
 type MarkSpecReadyInput = {
-  paths: GetMaestroPaths;
+  paths: MaestroPaths;
   specId: string;
   activeWorkflowSpecId: string | null;
 };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { WORKFLOW_ROLES } from '#paths.ts';
+import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { getAgentRole } from '#workflow/utils/getAgentRole.ts';
 

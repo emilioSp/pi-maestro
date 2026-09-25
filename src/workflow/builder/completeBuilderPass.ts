@@ -13,7 +13,7 @@ import {
   type BuilderHandoffSubmissionInput,
 } from '#artifacts/builder-handoff/schema.ts';
 import { writeBuilderHandoff } from '#artifacts/builder-handoff/writeBuilderHandoff.ts';
-import type { GetMaestroPaths } from '#paths.ts';
+import type { MaestroPaths } from '#MaestroPaths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { assertBuilderProtocolUnchanged } from '#workflow/builder/assertBuilderProtocolUnchanged.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -56,13 +56,13 @@ export const completeBuilderPass = async ({
   specId,
   handoff: draftHandoff,
 }: {
-  paths: GetMaestroPaths;
+  paths: MaestroPaths;
   specId: string;
   handoff: BuilderHandoffSubmissionInput;
 }): Promise<CompletedBuilderPass> => {
-  const builderWorktreePath = paths.repositoryRoot;
+  const builderWorktreePath = paths.getRepositoryRoot();
   await assertWorktree({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
     branch: paths.getBuilderBranch(specId),
     worktreePath: builderWorktreePath,
   });

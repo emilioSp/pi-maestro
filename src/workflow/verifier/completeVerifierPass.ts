@@ -10,7 +10,7 @@ import type { VerifierHandoff } from '#artifacts/verifier-handoff/schema.ts';
 import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
 import { runGitCommand } from '#git/command.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
-import type { GetMaestroPaths } from '#paths.ts';
+import type { MaestroPaths } from '#MaestroPaths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
@@ -112,7 +112,7 @@ export const completeVerifierPass = async ({
   candidateCommit,
   handoff,
 }: {
-  paths: GetMaestroPaths;
+  paths: MaestroPaths;
   specId: string;
   pass: number;
   candidateCommit: string;
@@ -120,7 +120,7 @@ export const completeVerifierPass = async ({
 }): Promise<CompletedVerifierPass | VerifierPassRejection> => {
   const verifierWorktreePath = paths.getVerifierWorktreePath({ specId, pass });
   await assertWorktree({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
     branch: paths.getVerifierBranch({ specId, pass }),
     worktreePath: verifierWorktreePath,
   });

@@ -8,7 +8,7 @@ import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHan
 import type { VerifierFinding } from '#artifacts/verifier-handoff/schema.ts';
 import { runGitCommand } from '#git/command.ts';
 import { createCommit } from '#git/commits/createCommit.ts';
-import type { GetMaestroPaths } from '#paths.ts';
+import type { MaestroPaths } from '#MaestroPaths.ts';
 import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
@@ -91,7 +91,7 @@ export const resolveFindings = async ({
   pass,
   decisions,
 }: {
-  paths: GetMaestroPaths;
+  paths: MaestroPaths;
   specId: string;
   pass: number;
   decisions: FindingDecision[];
@@ -102,12 +102,12 @@ export const resolveFindings = async ({
   const builderBranch = paths.getBuilderBranch(specId);
 
   await assertWorktree({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
     branch: verifierBranch,
     worktreePath: verifierWorktreePath,
   });
   await assertWorktree({
-    repositoryRoot: paths.repositoryRoot,
+    repositoryRoot: paths.getRepositoryRoot(),
     branch: builderBranch,
     worktreePath: builderWorktreePath,
   });
@@ -148,7 +148,7 @@ export const resolveFindings = async ({
   // it verifies if builder-branch is fully merged into verifier branch
   await runGitCommand({
     arguments: ['merge-base', '--is-ancestor', builderBranch, verifierBranch],
-    cwd: paths.repositoryRoot,
+    cwd: paths.getRepositoryRoot(),
   });
 
   const decisionsById = new Map(
