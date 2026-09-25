@@ -24,12 +24,11 @@ import {
 } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-import { assertWorktree } from '#workflow/utils/assertWorktree.ts';
 
 export type CompletedBuilderPass = {
   handoff: BuilderHandoff;
   state: WorkflowState;
-  worktreePath: string;
+  repositoryRoot: string;
 };
 
 const buildBuilderHandoff = ({
@@ -60,13 +59,6 @@ export const completeBuilderPass = async ({
   specId: string;
   handoff: BuilderHandoffSubmissionInput;
 }): Promise<CompletedBuilderPass> => {
-  const builderWorktreePath = paths.getRepositoryRoot();
-  await assertWorktree({
-    repositoryRoot: paths.getRepositoryRoot(),
-    branch: paths.getBuilderBranch(specId),
-    worktreePath: builderWorktreePath,
-  });
-
   await assertBuilderProtocolUnchanged({ paths, specId });
 
   const workflowPath = paths.getWorkflowPath(specId);
@@ -118,6 +110,6 @@ export const completeBuilderPass = async ({
   return {
     handoff,
     state: nextState,
-    worktreePath: builderWorktreePath,
+    repositoryRoot: paths.getRepositoryRoot(),
   };
 };
