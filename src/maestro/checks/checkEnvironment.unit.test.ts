@@ -37,6 +37,11 @@ const CONFIG = {
   verifier: { model: 'provider/verifier', thinking: 'medium' },
 };
 
+const EXPECTED_AGENTS = {
+  BUILDER: 'maestro.builder',
+  VERIFIER: 'maestro.verifier',
+} as const;
+
 const createContext = (trusted = true) =>
   ({
     cwd: '/repo',
@@ -150,6 +155,16 @@ describe('checkEnvironment', () => {
       checkEnvironment({ context: createContext() }),
     ).resolves.toBeUndefined();
 
+    expect(mocks.resolveSubagentLaunchContract).toHaveBeenNthCalledWith(1, {
+      agent: EXPECTED_AGENTS.BUILDER,
+      cwd: '/repo',
+      context: 'fresh',
+    });
+    expect(mocks.resolveSubagentLaunchContract).toHaveBeenNthCalledWith(2, {
+      agent: EXPECTED_AGENTS.VERIFIER,
+      cwd: '/repo',
+      context: 'fresh',
+    });
     expect(mocks.loadConfiguration).toHaveBeenCalledWith({ cwd: '/repo' });
     expect(mocks.getMaestroPaths).toHaveBeenCalledWith({
       repositoryRoot: '/repo',
