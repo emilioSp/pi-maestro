@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task mvp_06: Verify final review on the current checkout
 
