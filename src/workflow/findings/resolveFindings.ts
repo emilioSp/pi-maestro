@@ -1,12 +1,11 @@
 /**
- * Objective: Record owner decisions for every current verifier finding.
+ * Objective: Record owner decisions for current verifier findings on the current branch.
  * Used: When the owner resolves a findings-decision handoff.
  */
 
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import type { VerifierFinding } from '#artifacts/verifier-handoff/schema.ts';
-import { runGitCommand } from '#git/command.ts';
 import { createCommit } from '#git/commits/createCommit.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
@@ -18,7 +17,6 @@ import {
 } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-import { assertWorktree } from '#workflow/utils/assertWorktree.ts';
 
 export const FINDING_DECISIONS = {
   REJECT: 'reject',
@@ -41,7 +39,7 @@ export type FindingDecision = FindingDecisionApproved | FindingDecisionRejected;
 export type ResolvedFindings = {
   findings: VerifierFinding[];
   state: WorkflowState;
-  worktreePath: string;
+  repositoryRoot: string;
   checkpointCommit: string;
 };
 
@@ -88,46 +86,29 @@ const assertDecisions = ({
 export const resolveFindings = async ({
   paths,
   specId,
-  pass,
   decisions,
 }: {
   paths: MaestroPaths;
   specId: string;
-  pass: number;
   decisions: FindingDecision[];
 }): Promise<ResolvedFindings> => {
-  const verifierWorktreePath = paths.getVerifierWorktreePath({ specId, pass });
-  const verifierBranch = paths.getVerifierBranch({ specId, pass });
-  const builderWorktreePath = paths.getBuilderWorktreePath(specId);
-  const builderBranch = paths.getBuilderBranch(specId);
-
-  await assertWorktree({
-    repositoryRoot: paths.getRepositoryRoot(),
-    branch: verifierBranch,
-    worktreePath: verifierWorktreePath,
-  });
-  await assertWorktree({
-    repositoryRoot: paths.getRepositoryRoot(),
-    branch: builderBranch,
-    worktreePath: builderWorktreePath,
-  });
-
-  const workflowPath = paths.getWorkflowPathInWorktree({
-    specId,
-    worktreePath: verifierWorktreePath,
-  });
-  const handoffPath = paths.getVerifierHandoffPathInWorktree({
-    specId,
-    worktreePath: verifierWorktreePath,
-  });
-
+  const repositoryRoot = paths.getRepositoryRoot();
+  const workflowPath = paths.getWorkflowPath(specId);
+  const handoffPath = paths.getVerifierHandoffPath(specId);
   const currentState = await readWorkflowState({ path: workflowPath });
+
+  if (currentState.specId !== specId) {
+    throw new Error(
+      `Workflow spec ID mismatch: expected "${specId}", found "${currentState.specId}".`,
+    );
+  }
 
   if (currentState.phase !== WORKFLOW_PHASES.FINDINGS_DECISION) {
     throw new Error(
       `Finding resolution requires findings-decision state, found "${currentState.phase}".`,
     );
   }
+
   const handoff = await readVerifierHandoff({
     path: handoffPath,
     specId,
@@ -139,39 +120,35 @@ export const resolveFindings = async ({
       'Finding resolution requires at least one current finding.',
     );
   }
+
   if (handoff.findings.some(({ rejection }) => rejection !== null)) {
     throw new Error('Current verifier findings already contain a rejection.');
   }
-  assertDecisions({ decisions, findings: handoff.findings });
 
-  // git merge-base --is-ancestor <builder-branch> <verifier-branch>
-  // it verifies if builder-branch is fully merged into verifier branch
-  await runGitCommand({
-    arguments: ['merge-base', '--is-ancestor', builderBranch, verifierBranch],
-    cwd: paths.getRepositoryRoot(),
-  });
+  assertDecisions({ decisions, findings: handoff.findings });
 
   const decisionsById = new Map(
     decisions.map((decision) => [decision.findingId, decision]),
   );
   const findings = handoff.findings.map((finding) => {
     const decision = decisionsById.get(finding.id);
-    if (decision?.decision !== FINDING_DECISIONS.REJECT) return finding;
+
+    if (decision?.decision !== FINDING_DECISIONS.REJECT) {
+      return finding;
+    }
+
     return { ...finding, rejection: { reason: decision.reason.trim() } };
   });
 
   const isFixCodeRequested = decisions.some(
-    ({ decision }) => decision === FINDING_DECISIONS.FIX_CODE,
+    (decision) => decision.decision === FINDING_DECISIONS.FIX_CODE,
   );
-
   const event = isFixCodeRequested
     ? WORKFLOW_EVENTS.REQUEST_FIXES
     : WORKFLOW_EVENTS.REJECT_FINDINGS;
-
-  // If we have at least 1 REQUEST_FIXES we return to READY_FOR_BUILDER
   const nextState = transitionWorkflow({ state: currentState, event });
-
   const nextHandoff = { ...handoff, revision: nextState.revision, findings };
+
   assertVerifierHandoff(nextHandoff, specId, nextState.revision);
   await writeJsonAtomically({ path: handoffPath, data: nextHandoff });
   await writeWorkflowState({
@@ -181,21 +158,15 @@ export const resolveFindings = async ({
   });
 
   const checkpointCommit = await createCommit({
-    repositoryRoot: verifierWorktreePath,
+    repositoryRoot,
     expectedPaths: [handoffPath, workflowPath],
     message: nextState.phase,
-  });
-
-  // move verifier commit to the builder branch
-  await runGitCommand({
-    arguments: ['merge', '--ff-only', verifierBranch],
-    cwd: builderWorktreePath,
   });
 
   return {
     findings,
     state: nextState,
-    worktreePath: builderWorktreePath,
+    repositoryRoot,
     checkpointCommit,
   };
 };

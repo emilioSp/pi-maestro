@@ -15,7 +15,6 @@ export const getAgentRole = (
       [
         WORKFLOW_PHASES.BUILDER_RUNNING,
         WORKFLOW_PHASES.ESCALATION_DECISION,
-        WORKFLOW_PHASES.BUILDER_FAILED,
         WORKFLOW_PHASES.READY_FOR_VERIFIER,
       ] as WorkflowState['phase'][]
     ).includes(phase)

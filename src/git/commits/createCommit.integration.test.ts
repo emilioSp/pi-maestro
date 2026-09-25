@@ -14,20 +14,6 @@ afterEach(async () => {
   await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
 });
 
-const runGit = async ({
-  repositoryRoot,
-  arguments: gitArguments,
-}: {
-  repositoryRoot: string;
-  arguments: string[];
-}): Promise<string> => {
-  const result = await runGitCommand({
-    arguments: gitArguments,
-    cwd: repositoryRoot,
-  });
-  return result.stdout.trim();
-};
-
 const createRepositoryWithCommit = async () => {
   const repository = await createTemporaryRepository();
   cleanupFunctions.push(repository.cleanup);
@@ -37,28 +23,24 @@ const createRepositoryWithCommit = async () => {
 };
 
 describe('checkpoint creation', () => {
-  it('creates and finds a checkpoint that stages only expected paths', async () => {
+  it('creates a checkpoint on the current branch with only expected paths', async () => {
     const repository = await createRepositoryWithCommit();
-    await runGit({
-      repositoryRoot: repository.path,
-      arguments: [
-        'checkout',
-        '-b',
-        'builder/20260321-143052-add-weather-alerts',
-      ],
-    });
     await writeFile(join(repository.path, 'workflow.json'), '{}\n', 'utf8');
+    const parent = await runGitCommand({
+      arguments: ['rev-parse', 'HEAD'],
+      cwd: repository.path,
+    }).then(({ stdout }) => stdout.trim());
 
     const commit = await createCommit({
       repositoryRoot: repository.path,
       expectedPaths: [join(repository.path, 'workflow.json')],
-      message: 'maestro checkpoint B1',
+      message: 'maestro checkpoint current',
     });
 
     await expect(
       findCommitByMessage({
         repositoryRoot: repository.path,
-        message: 'maestro checkpoint B1',
+        message: 'maestro checkpoint current',
       }),
     ).resolves.toBe(commit);
     await expect(
@@ -66,66 +48,36 @@ describe('checkpoint creation', () => {
     ).resolves.toEqual([]);
     await expect(
       getParentCommit({ repositoryRoot: repository.path, commit }),
-    ).resolves.toBe(
-      await runGit({
-        repositoryRoot: repository.path,
-        arguments: ['rev-parse', 'main'],
-      }),
-    );
+    ).resolves.toBe(parent);
   });
 
-  it('rejects relative and out-of-worktree checkpoint paths before staging', async () => {
+  it('rejects relative and outside checkpoint paths before staging', async () => {
     const repository = await createRepositoryWithCommit();
-    await runGit({
-      repositoryRoot: repository.path,
-      arguments: [
-        'checkout',
-        '-b',
-        'builder/20260321-143052-add-weather-alerts',
-      ],
-    });
-    await writeFile(join(repository.path, 'workflow.json'), '{}\n', 'utf8');
 
     await expect(
       createCommit({
         repositoryRoot: repository.path,
         expectedPaths: ['workflow.json'],
       }),
-    ).rejects.toThrow('Checkpoint path must be inside the worktree');
+    ).rejects.toThrow('Checkpoint path must be inside the repository');
     await expect(
       createCommit({
         repositoryRoot: repository.path,
         expectedPaths: [join(repository.path, '..', 'outside.txt')],
       }),
-    ).rejects.toThrow('Checkpoint path must be inside the worktree');
+    ).rejects.toThrow('Checkpoint path must be inside the repository');
     await expect(
       getStagedPaths({ repositoryRoot: repository.path }),
     ).resolves.toEqual([]);
   });
 
-  it('refuses a checkpoint on the base branch and staged paths outside its expected set', async () => {
+  it('rejects already staged paths outside the expected set on any branch', async () => {
     const repository = await createRepositoryWithCommit();
-    await writeFile(join(repository.path, 'workflow.json'), '{}\n', 'utf8');
-
-    await expect(
-      createCommit({
-        repositoryRoot: repository.path,
-        expectedPaths: [join(repository.path, 'workflow.json')],
-      }),
-    ).rejects.toThrow('non-workflow branch: main');
-
-    await runGit({
-      repositoryRoot: repository.path,
-      arguments: [
-        'checkout',
-        '-b',
-        'builder/20260321-143052-add-weather-alerts',
-      ],
-    });
     await writeFile(join(repository.path, 'outside.txt'), 'outside\n', 'utf8');
-    await runGit({
-      repositoryRoot: repository.path,
+    await writeFile(join(repository.path, 'workflow.json'), '{}\n', 'utf8');
+    await runGitCommand({
       arguments: ['add', 'outside.txt'],
+      cwd: repository.path,
     });
 
     await expect(

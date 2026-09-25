@@ -1,67 +1,26 @@
 /**
- * Objective: Create a clean verifier worktree and commit its running checkpoint.
- * Used: When Maestro starts an independent verifier pass.
+ * Objective: Prepare a committed verifier launch checkpoint in the current checkout.
+ * Used: When Maestro starts a verifier pass.
  */
 
-import { branchExists } from '#git/branches/branchExists.ts';
-import { createBranch } from '#git/branches/createBranch.ts';
+import { rm } from 'node:fs/promises';
 import { createCommit } from '#git/commits/createCommit.ts';
+import { getParentCommit } from '#git/history/getParentCommit.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
-import { createWorktree } from '#git/worktrees/createWorktree.ts';
-import { findWorktree } from '#git/worktrees/findWorktree.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-import { assertWorktree } from '#workflow/utils/assertWorktree.ts';
 
 export type VerifierLaunch = {
   specId: string;
-  pass: number;
-  branch: string;
-  worktreePath: string;
+  repositoryRoot: string;
   candidateCommit: string;
   checkpointCommit: string;
   revision: number;
-};
-
-const getNextPass = async ({
-  paths,
-  specId,
-}: {
-  paths: MaestroPaths;
-  specId: string;
-}): Promise<number> => {
-  let pass = 1;
-
-  while (true) {
-    const branch = paths.getVerifierBranch({ specId, pass });
-    const worktreePath = paths.getVerifierWorktreePath({ specId, pass });
-    const [hasBranch, worktree, hasPath] = await Promise.all([
-      branchExists({ repositoryRoot: paths.getRepositoryRoot(), branch }),
-      findWorktree({
-        repositoryRoot: paths.getRepositoryRoot(),
-        path: worktreePath,
-      }),
-      pathExists(worktreePath),
-    ]);
-
-    if (!hasBranch && worktree === undefined && !hasPath) {
-      return pass;
-    }
-
-    if (!hasBranch || worktree === undefined || !hasPath) {
-      throw new Error('Verifier resources are incomplete or already in use.');
-    }
-    pass += 1;
-
-    if (!Number.isSafeInteger(pass)) {
-      throw new Error('Verifier pass number exceeded the safe integer range.');
-    }
-  }
 };
 
 export const prepareVerifierLaunch = async ({
@@ -71,82 +30,74 @@ export const prepareVerifierLaunch = async ({
   paths: MaestroPaths;
   specId: string;
 }): Promise<VerifierLaunch> => {
-  const builderWorktreePath = paths.getBuilderWorktreePath(specId);
-  await assertWorktree({
-    repositoryRoot: paths.getRepositoryRoot(),
-    branch: paths.getBuilderBranch(specId),
-    worktreePath: builderWorktreePath,
-  });
-
-  const builderWorkflowPath = paths.getWorkflowPathInWorktree({
-    specId,
-    worktreePath: builderWorktreePath,
-  });
-
-  const builderState = await readWorkflowState({ path: builderWorkflowPath });
-
-  if (builderState.phase !== WORKFLOW_PHASES.READY_FOR_VERIFIER) {
-    throw new Error(
-      `Verifier launch requires ready-for-verifier state, found "${builderState.phase}".`,
-    );
-  }
-  const builderStatus = await getRepositoryStatus({
-    repositoryRoot: builderWorktreePath,
-  });
-
-  if (!builderStatus.clean) {
-    throw new Error(
-      'Verifier launch requires a committed ready-for-verifier candidate.',
-    );
-  }
-  const candidateCommit = await getHeadCommit({
-    repositoryRoot: builderWorktreePath,
-  });
-  const pass = await getNextPass({ paths, specId });
-  const verifierBranch = paths.getVerifierBranch({ specId, pass });
-  const worktreePath = paths.getVerifierWorktreePath({ specId, pass });
-
-  await createBranch({
-    repositoryRoot: paths.getRepositoryRoot(),
-    branch: verifierBranch,
-    startPoint: candidateCommit,
-  });
-  await createWorktree({
-    repositoryRoot: paths.getRepositoryRoot(),
-    path: worktreePath,
-    branch: verifierBranch,
-  });
-
-  const workflowPath = paths.getWorkflowPathInWorktree({
-    specId,
-    worktreePath,
-  });
+  const repositoryRoot = paths.getRepositoryRoot();
+  const workflowPath = paths.getWorkflowPath(specId);
+  const handoffPath = paths.getVerifierHandoffPath(specId);
   const currentState = await readWorkflowState({ path: workflowPath });
+
+  if (currentState.specId !== specId) {
+    throw new Error(
+      `Workflow spec ID mismatch: expected "${specId}", found "${currentState.specId}".`,
+    );
+  }
 
   if (currentState.phase !== WORKFLOW_PHASES.READY_FOR_VERIFIER) {
     throw new Error(
       `Verifier launch requires ready-for-verifier state, found "${currentState.phase}".`,
     );
   }
+
+  const status = await getRepositoryStatus({ repositoryRoot });
+
+  if (!status.clean) {
+    throw new Error(
+      'Verifier launch requires a committed ready-for-verifier candidate.',
+    );
+  }
+
   const nextState = transitionWorkflow({
     state: currentState,
     event: WORKFLOW_EVENTS.LAUNCH_VERIFIER,
   });
+  const handoffExists = await pathExists(handoffPath);
+
+  if (handoffExists) {
+    await rm(handoffPath);
+  }
+
   await writeWorkflowState({
     path: workflowPath,
     state: nextState,
     currentRevision: currentState.revision,
   });
+
+  const expectedPaths = [workflowPath];
+
+  if (handoffExists) {
+    expectedPaths.push(handoffPath);
+  }
+
+  const previousHead = await getHeadCommit({ repositoryRoot });
+
   const checkpointCommit = await createCommit({
-    repositoryRoot: worktreePath,
-    expectedPaths: [workflowPath],
+    repositoryRoot,
+    expectedPaths,
   });
+
+  const candidateCommit = await getParentCommit({
+    repositoryRoot,
+    commit: checkpointCommit,
+  });
+
+  if (candidateCommit !== previousHead) {
+    throw new Error(
+      'Verifier candidate changed while creating its checkpoint.',
+    );
+  }
 
   return {
     specId,
-    pass,
-    branch: verifierBranch,
-    worktreePath,
+    repositoryRoot,
     candidateCommit,
     checkpointCommit,
     revision: nextState.revision,

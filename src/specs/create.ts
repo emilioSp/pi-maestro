@@ -29,22 +29,16 @@ export type CreatedSpec = {
 export const createSpec = async ({
   paths,
   title,
-  baseBranch,
   activeWorkflowSpecId,
   instant,
 }: {
   paths: MaestroPaths;
   title: string;
-  baseBranch: string;
   activeWorkflowSpecId: string | null;
   instant?: Temporal.Instant;
 }): Promise<CreatedSpec> => {
   if (activeWorkflowSpecId !== null) {
     throw new Error(`Workflow ${activeWorkflowSpecId} is already active.`);
-  }
-
-  if (baseBranch.trim().length === 0) {
-    throw new Error('Base branch must be non-empty.');
   }
 
   const specId = createSpecId({ title, instant });
@@ -65,7 +59,6 @@ export const createSpec = async ({
     specId,
     revision: 1,
     phase: WORKFLOW_PHASES.DRAFTING_SPEC,
-    baseBranch,
   } as const;
   assertWorkflowState(state);
   let created = false;

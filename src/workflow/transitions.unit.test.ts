@@ -17,7 +17,6 @@ const state = (phase: WorkflowPhase, revision = 1): WorkflowState => ({
   specId: '20260321-143052-add-weather-alerts',
   revision,
   phase,
-  baseBranch: 'main',
 });
 
 describe('workflow transitions', () => {
@@ -56,13 +55,15 @@ describe('workflow transitions', () => {
     });
   });
 
-  it('retries a running builder without changing its phase', () => {
-    expect(
-      transitionWorkflow({
-        state: state(WORKFLOW_PHASES.BUILDER_RUNNING, 3),
-        event: WORKFLOW_EVENTS.RETRY_BUILDER,
-      }),
-    ).toMatchObject({ revision: 4, phase: WORKFLOW_PHASES.BUILDER_RUNNING });
+  it('treats builder-failed as a sink', () => {
+    for (const event of Object.values(WORKFLOW_EVENTS) as WorkflowEvent[]) {
+      expect(() =>
+        transitionWorkflow({
+          state: state(WORKFLOW_PHASES.BUILDER_FAILED, 3),
+          event,
+        }),
+      ).toThrow('is not allowed from phase');
+    }
   });
 
   it('rejects an event from an invalid phase', () => {

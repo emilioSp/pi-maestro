@@ -37,7 +37,6 @@ const createWorkflow = ({ phase }: { phase: WorkflowPhase }) => {
     specId: SPEC_ID,
     revision: 1,
     phase,
-    baseBranch: 'main',
   };
 
   return { state };

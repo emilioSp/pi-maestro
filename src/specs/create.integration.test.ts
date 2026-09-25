@@ -31,9 +31,9 @@ const createWorkspace = async ({
     config: {
       ...DEFAULT_CONFIG,
       specDirectory: join(repositoryRoot, specDirectory),
-      worktreeDirectory: join(repositoryRoot, '.worktree'),
     },
   });
+
   return { repositoryRoot, paths };
 };
 
@@ -56,11 +56,9 @@ describe('spec template and creation', () => {
 
   it('creates a drafting spec in the configured directory', async () => {
     const { paths } = await createWorkspace();
-
     const created = await createSpec({
       paths,
       title: 'Add Weather Alerts',
-      baseBranch: 'main',
       activeWorkflowSpecId: null,
       instant: INSTANT,
     });
@@ -77,7 +75,6 @@ describe('spec template and creation', () => {
       specId: SPEC_ID,
       revision: 1,
       phase: WORKFLOW_PHASES.DRAFTING_SPEC,
-      baseBranch: 'main',
     });
     expect((await stat(paths.getEscalationsPath(SPEC_ID))).isDirectory()).toBe(
       true,
@@ -92,7 +89,6 @@ describe('spec template and creation', () => {
     const first = await createSpec({
       paths,
       title: 'Add Weather Alerts',
-      baseBranch: 'main',
       activeWorkflowSpecId: null,
       instant: INSTANT,
     });
@@ -102,7 +98,6 @@ describe('spec template and creation', () => {
       createSpec({
         paths,
         title: 'Add Weather Alerts',
-        baseBranch: 'main',
         activeWorkflowSpecId: null,
         instant: INSTANT,
       }),
@@ -117,7 +112,6 @@ describe('spec template and creation', () => {
       createSpec({
         paths,
         title: 'Add Weather Alerts',
-        baseBranch: 'main',
         activeWorkflowSpecId: '20260320-120000-current-workflow',
         instant: INSTANT,
       }),

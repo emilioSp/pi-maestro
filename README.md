@@ -1,10 +1,10 @@
 # pi-maestro
 
-Pi extension to manage a spec driven multiagent development workflow.
+Pi extension for a spec-driven multiagent development workflow.
 
 ![Maestro workflow](docs/maestro.png)
 
-Maestro helps an owner define one change, send it to a builder, verify the result, and prepare the accepted work for final review.
+Maestro helps an owner define one change, send it to a builder, verify the result, and prepare the current branch for a Pull Request.
 
 ## Prerequisites
 
@@ -27,9 +27,11 @@ pi install npm:@emiliosp/pi-maestro
 
 Pi packages run with full system access. Review package source code before installation.
 
-## Activation
+## Basic use
 
-Start Pi from the Git repository:
+Maestro uses the branch that is current when you work with it. It does not create or switch branches, and it does not create worktrees. Create and check out a feature branch before starting if you do not want to work on the current branch.
+
+Start Pi from the repository:
 
 ```bash
 cd /path/to/project
@@ -42,41 +44,34 @@ Activate Maestro:
 /maestro
 ```
 
-The same command disables Maestro. Disabling Maestro leaves workflow files, branches, worktrees, and artifacts unchanged.
+The same command disables Maestro. Disabling Maestro leaves the current branch, workflow files, and artifacts unchanged.
 
-During activation, Maestro checks the repository, configuration including configured directories, models, and agents. A failed check leaves Maestro disabled and reports the problem.
+During activation, Maestro checks the repository, configuration, models, and agents. A failed check leaves Maestro disabled and reports the problem.
 
-Note: disabling Maestro, restarting Pi, or using `/resume` clears live session state. Maestro does not resume an incomplete persisted workflow; the owner must clean it up manually and start a new spec explicitly.
+Typical workflow:
 
-## Basic use
-
-1. Run `/maestro`.
-2. Describe the change to Maestro.
+1. Activate Maestro with `/maestro`.
+2. Describe the change.
 3. Review the spec with Maestro.
-4. Approve the spec when its goals, requirements, design, edge cases, and acceptance criteria are complete.
-5. Commit the approved spec and workflow state on the base branch.
+4. Approve the spec.
+5. Commit the approved `spec.md` and `workflow.json` on the current branch.
 6. Ask Maestro to launch the builder.
-7. Answer any builder escalation.
-8. Review any verifier finding and choose an action for each one.
+7. Answer builder escalations.
+8. Review verifier findings and choose an action for each one.
 9. Ask Maestro to prepare the final review when the candidate is ready.
-10. Review the staged changes and create the final commit.
+10. Open a Pull Request from the current branch and choose the merge method, including squash merge.
 
-Builder and verifier passes run in the foreground. Pi waits for each pass to finish before the owner can continue the conversation. Maestro shows the current phase in Pi's status; use pi-subagents FleetView or `/subagents-fleet` to inspect live activity and the transcript.
+Builder and verifier runs are foreground operations. Pi waits for each run before the owner continues the conversation. Maestro shows the current phase in Pi's status. Use pi-subagents FleetView or `/subagents-fleet` to inspect live activity and the transcript.
 
-If an approved spec must change after the builder starts, abandon the workflow manually and create a new spec.
+The owner must not change product code while the workflow is running. A spec can be revised on the same branch from `escalation-decision` or `findings-decision`. Edit and approve `spec.md`, then call `maestro_mark_spec_ready`; the workflow returns to `ready-for-builder`. A technical builder failure stops the workflow and requires owner follow-up.
 
-For failures, escalations, and findings, see [Workflow](docs/workflow.md).
+Restarting Pi, disabling Maestro, or using `/resume` clears live session state. Maestro does not recover an incomplete workflow from `workflow.json`.
 
 ## Configuration
 
-Maestro works with default settings. Add `.pi/maestro.json` when the project needs different directories, models, thinking levels, or timeouts. JSON files use semantic schema version `1.0.0`.
+Maestro works with default settings. Add `.pi/maestro.json` when the project needs different spec paths, models, thinking levels, or timeouts.
 
 See [Configuration](docs/configuration.md).
-
-## TODO
-
-- Add a child-only Maestro tool to manage builder and verifier commits. They currently run Git commits through Bash.
-- Super simplification: do not use worktree and work only in the base branch
 
 ## Documentation
 

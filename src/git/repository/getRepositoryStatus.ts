@@ -1,11 +1,9 @@
 /**
- * Objective: Read staged, unstaged, and untracked repository changes.
- * Used: When Maestro checks whether a worktree is clean.
+ * Objective: Read all staged, unstaged, and untracked changes in the current checkout.
+ * Used: When Maestro checks whether the current checkout is clean.
  */
 
-import { resolve } from 'node:path';
 import { type GitCommandResult, runGitCommand } from '#git/command.ts';
-import { isPathWithinOrEqual } from '#utils/path-within-or-equal.ts';
 
 export type RepositoryStatus = {
   clean: boolean;
@@ -26,6 +24,7 @@ const parseRepositoryStatus = (result: GitCommandResult): RepositoryStatus => {
     if (record.length === 0) {
       continue;
     }
+
     const indexStatus = record[0];
     const worktreeStatus = record[1];
     const path = record.slice(3);
@@ -62,61 +61,16 @@ const parseRepositoryStatus = (result: GitCommandResult): RepositoryStatus => {
   };
 };
 
-type GetRepositoryStatusInput = {
-  repositoryRoot: string;
-  worktreeDirectory?: string;
-};
-
-type ExcludeWorktreePathFromUntrackedFilesInput = {
-  repositoryRoot: string;
-  untrackedPaths: readonly string[];
-  worktreeDirectory?: string;
-};
-
-const excludeWorktreePathFromUntrackedFiles = ({
-  repositoryRoot,
-  untrackedPaths,
-  worktreeDirectory,
-}: ExcludeWorktreePathFromUntrackedFilesInput): readonly string[] => {
-  if (worktreeDirectory === undefined) {
-    return untrackedPaths;
-  }
-
-  const resolvedWorktreeDirectory = resolve(repositoryRoot, worktreeDirectory);
-
-  return untrackedPaths.filter(
-    (path) =>
-      !isPathWithinOrEqual({
-        parent: resolvedWorktreeDirectory,
-        candidate: resolve(repositoryRoot, path),
-      }),
-  );
-};
-
 // git status --porcelain=v1 --untracked-files=all -z
 export const getRepositoryStatus = async ({
   repositoryRoot,
-  worktreeDirectory,
-}: GetRepositoryStatusInput): Promise<RepositoryStatus> => {
+}: {
+  repositoryRoot: string;
+}): Promise<RepositoryStatus> => {
   const result = await runGitCommand({
     arguments: ['status', '--porcelain=v1', '--untracked-files=all', '-z'],
     cwd: repositoryRoot,
   });
-  const status = parseRepositoryStatus(result);
 
-  // Exclude Maestro-managed worktree files from the base repository status.
-  const untracked = excludeWorktreePathFromUntrackedFiles({
-    repositoryRoot,
-    untrackedPaths: status.untracked,
-    worktreeDirectory,
-  });
-
-  return {
-    ...status,
-    clean:
-      status.staged.length === 0 &&
-      status.unstaged.length === 0 &&
-      untracked.length === 0,
-    untracked,
-  };
+  return parseRepositoryStatus(result);
 };

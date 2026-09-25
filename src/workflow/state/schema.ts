@@ -25,7 +25,6 @@ export const WORKFLOW_PHASES = {
 export const WORKFLOW_EVENTS = {
   MARK_SPEC_READY: 'mark-spec-ready',
   LAUNCH_BUILDER: 'launch-builder',
-  RETRY_BUILDER: 'retry-builder',
   OPEN_ESCALATION: 'open-escalation',
   RESOLVE_ESCALATION: 'resolve-escalation',
   BUILDER_FAILED: 'builder-failed',
@@ -58,7 +57,6 @@ export const WorkflowStateSchema = Type.Object(
     specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
     revision: Type.Integer({ minimum: 1 }),
     phase: WorkflowPhaseSchema,
-    baseBranch: Type.String({ minLength: 1 }),
   },
   { additionalProperties: false },
 );

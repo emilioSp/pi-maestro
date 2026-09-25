@@ -57,7 +57,6 @@ export const MaestroConfigInputSchema = Type.Object(
   {
     version: Type.String(),
     specDirectory: Type.Optional(Type.String({ minLength: 1 })),
-    worktreeDirectory: Type.Optional(Type.String({ minLength: 1 })),
     builder: Type.Optional(PartialAgentConfigSchema),
     verifier: Type.Optional(PartialAgentConfigSchema),
   },
@@ -80,7 +79,6 @@ export const ResolvedMaestroConfigSchema = Type.Object(
   {
     version: Type.Literal(SUPPORTED_CONFIG_VERSION),
     specDirectory: Type.String({ minLength: 1 }),
-    worktreeDirectory: Type.String({ minLength: 1 }),
     builder: ResolvedAgentConfigSchema,
     verifier: ResolvedAgentConfigSchema,
   },

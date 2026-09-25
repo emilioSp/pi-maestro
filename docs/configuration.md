@@ -14,7 +14,6 @@ The file is optional. Maestro uses all default values when the file is absent.
 {
   "version": "1.0.0",
   "specDirectory": ".specs",
-  "worktreeDirectory": ".worktree",
   "builder": {
     "model": "openai-codex/gpt-6-luna",
     "thinking": "high",
@@ -28,21 +27,22 @@ The file is optional. Maestro uses all default values when the file is absent.
 }
 ```
 
+Maestro does not configure a branch, a target branch, or a worktree directory. It uses the current Git checkout and branch.
+
 ## Fields
 
 | Field | Required | Default | Rules |
 |---|---:|---|---|
 | `version` | Yes, when the file exists | `1.0.0` | Semantic version of the configuration schema. Must be supported by the installed Maestro release. |
 | `specDirectory` | No | `.specs` | Relative path inside the Git repository. |
-| `worktreeDirectory` | No | `.worktree` | Relative path inside the Git repository. |
-| `builder` | No | Builder defaults | May contain any supported builder override. |
+| `builder` | No | Builder defaults | May contain supported builder overrides. |
 | `builder.model` | No | `openai-codex/gpt-6-luna` | Full `provider/model` identifier. |
 | `builder.thinking` | No | `high` | One supported thinking level. |
-| `builder.timeoutMinutes` | No | `60` | Integer from `1` to `1440`. Applies to each builder pass. |
-| `verifier` | No | Verifier defaults | May contain any supported verifier override. |
+| `builder.timeoutMinutes` | No | `60` | Integer from `1` to `1440`. Applies to each builder run. |
+| `verifier` | No | Verifier defaults | May contain supported verifier overrides. |
 | `verifier.model` | No | `openai-codex/gpt-6-sol` | Full `provider/model` identifier. |
 | `verifier.thinking` | No | `medium` | One supported thinking level. |
-| `verifier.timeoutMinutes` | No | `60` | Integer from `1` to `1440`. Applies to each verifier pass. |
+| `verifier.timeoutMinutes` | No | `60` | Integer from `1` to `1440`. Applies to each verifier run. |
 
 Supported thinking levels:
 
@@ -58,7 +58,7 @@ max
 
 Each object accepts only the documented fields. Unknown fields stop activation and produce an error.
 
-When a pass reaches its timeout, Maestro reports it and does not treat the pass as complete.
+When a run reaches its timeout, Maestro reports it and does not treat the run as complete.
 
 ## Partial configuration
 
@@ -83,15 +83,13 @@ The current schema version is `1.0.0`. An unsupported major version stops Maestr
 
 ## Path rules
 
-`specDirectory` and `worktreeDirectory` must meet these rules:
+`specDirectory` must meet these rules:
 
-- Each path is relative to the Git repository root.
-- Each path points below the repository root.
-- Each resolved path stays inside the repository, including through symlinks.
-- The paths are different.
-- Neither path contains the other.
+- The path is relative to the Git repository root.
+- The path points below the repository root.
+- The resolved path stays inside the repository, including through symlinks.
 
-An invalid path stops Maestro activation. Maestro validates these paths while it loads configuration, but does not create the directories then. Workflow actions create a spec directory, an artifact directory, or a worktree only when they need it.
+An invalid path stops Maestro activation. Maestro validates the path while it loads configuration, but does not create the directory then. Workflow actions create a spec directory and its artifacts only when they need them.
 
 ## Model access
 
@@ -108,9 +106,4 @@ maestro.builder
 maestro.verifier
 ```
 
-Branch patterns:
-
-```text
-builder/<spec-id>
-verifier/<spec-id>/<pass-number>
-```
+Maestro does not require a branch naming pattern. The owner selects the current branch before using the workflow.

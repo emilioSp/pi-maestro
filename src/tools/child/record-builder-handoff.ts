@@ -1,11 +1,17 @@
 /**
- * Objective: Register the builder handoff tool for child Pi sessions.
+ * Objective: Register the builder handoff tool for the current checkout.
  * Used: When the builder reports a done or failed result.
  */
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
-import { BuilderHandoffSubmissionSchema } from '#artifacts/builder-handoff/schema.ts';
-import { getBuilderWorktreeContext } from '#tools/child/utils/getBuilderWorktreeContext.ts';
+import { Type } from 'typebox';
+import {
+  BUILDER_HANDOFF_STATUSES,
+  BuilderAcceptanceCriterionSchema,
+  BuilderHandoffFailureSchema,
+} from '#artifacts/builder-handoff/schema.ts';
+import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
+import { getChildContext } from '#tools/child/utils/getChildContext.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 
 export const BUILDER_HANDOFF_TOOL = {
@@ -14,6 +20,32 @@ export const BUILDER_HANDOFF_TOOL = {
   DESCRIPTION:
     'Record the builder pass as done or failed. After success, commit the implementation, handoff, and workflow state together with Bash and Git.',
 } as const;
+
+const BuilderHandoffContentFields = {
+  summary: Type.String({ minLength: 1 }),
+  acceptanceCriteria: Type.Array(BuilderAcceptanceCriterionSchema),
+  notes: Type.Array(Type.String()),
+};
+
+const BuilderHandoffToolParameters = Type.Union([
+  Type.Object(
+    {
+      specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
+      status: Type.Literal(BUILDER_HANDOFF_STATUSES.DONE),
+      ...BuilderHandoffContentFields,
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
+      status: Type.Literal(BUILDER_HANDOFF_STATUSES.FAILED),
+      ...BuilderHandoffContentFields,
+      failure: BuilderHandoffFailureSchema,
+    },
+    { additionalProperties: false },
+  ),
+]);
 
 type RegisterRecordBuilderHandoffToolInput = {
   pi: ExtensionAPI;
@@ -26,15 +58,17 @@ export const registerRecordBuilderHandoffTool = ({
     name: BUILDER_HANDOFF_TOOL.NAME,
     label: BUILDER_HANDOFF_TOOL.LABEL,
     description: BUILDER_HANDOFF_TOOL.DESCRIPTION,
-    parameters: BuilderHandoffSubmissionSchema,
+    parameters: BuilderHandoffToolParameters,
     async execute(_toolCallId, params, _signal, _onUpdate, context) {
-      const { paths, specId } = await getBuilderWorktreeContext({
+      const { specId, ...handoff } = params;
+      const { paths } = await getChildContext({
         cwd: context.cwd,
+        specId,
       });
       const completed = await completeBuilderPass({
         paths,
         specId,
-        handoff: params,
+        handoff,
       });
 
       return {

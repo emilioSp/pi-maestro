@@ -4,7 +4,7 @@ STATUS: TODO
 
 ## Dependency
 
-This task depends on Tasks 29, 30, and 42.
+This task depends on Task 42. All `mvp_*` foundation tasks must also be complete. Activation checks are implemented in `src/maestro/checks/checkEnvironment.ts`.
 
 ## Objective
 
@@ -17,14 +17,15 @@ Wire the main Pi extension without moving domain logic into the composition root
 
 ## Work
 
-1. Register the eight main tools once. Import each directly from `src/tools/main/`. Give the launch tools access to `pi.events`.
+1. Register the seven main tools once. Import each directly from `src/tools/main/`. Give the launch tools access to `pi.events`.
 2. Implement and register `/maestro`:
-   - If Maestro is off, run all Task 29 checks. If they pass, turn Maestro on and enable its tools, instructions, and status. If a check fails, leave Maestro off and show the error with `ctx.ui.notify(..., "error")`.
-   - If Maestro is on, turn it off and hide its tools, instructions, and status. Do not change workflow files, branches, worktrees, or artifacts.
+   - If Maestro is off, run `checkEnvironment`. If it passes, turn Maestro on and enable its tools, instructions, and status. If a check fails, leave Maestro off and show the error with `ctx.ui.notify(..., "error")`.
+   - If Maestro is on, turn it off and hide its tools, instructions, and status. Do not change the current branch, workflow files, or artifacts.
    - Run all checks again each time `/maestro` turns Maestro on.
 3. Leave Maestro off after `/resume`. Do not run Maestro checks or show Maestro notifications at startup.
 4. Register only the session, resume, instruction, status, and tool-activation events that this behavior needs.
 5. Use the shared `MaestroSessionState` instance that the child extension reads in the foreground runtime.
+6. Do not add branch or worktree management to the extension.
 
 ## Implementation
 
@@ -32,11 +33,12 @@ Keep `extensions/maestro.ts` as wiring only. Import operations directly from `sr
 
 ## Tests
 
-Add Vitest integration tests with a fake Pi context. Test startup, activation, failed activation, deactivation, expected SHA clearing, retry after failure, tool changes, preserved foreign tools, instructions, status, error notifications, inactive resume, and one-time registration.
+Add Vitest integration tests with a fake Pi context. Test startup, activation, failed activation, deactivation, expected SHA clearing, builder failure reporting, spec revision approval, tool changes, preserved foreign tools, instructions, status, error notifications, inactive resume, current-branch behavior, and one-time registration.
 
 ## Completion criteria
 
-- Maestro turns on only after all Task 29 checks pass.
+- Maestro turns on only after `checkEnvironment` passes.
 - Main tools are usable only while Maestro is on.
 - Child tools never appear in the owner session.
 - `extensions/maestro.ts` contains no workflow logic.
+- The extension does not create or manage branches or worktrees.
