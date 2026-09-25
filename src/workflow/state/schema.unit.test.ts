@@ -11,7 +11,6 @@ const validState = {
   specId: '20260321-143052-add-weather-alerts',
   revision: 1,
   phase: WORKFLOW_PHASES.DRAFTING_SPEC,
-  baseBranch: 'main',
 };
 
 describe('workflow state schema', () => {
@@ -33,7 +32,6 @@ describe('workflow state schema', () => {
     { ...validState, revision: 0 },
     { ...validState, revision: 1.5 },
     { ...validState, specId: 'not-a-spec-id' },
-    { ...validState, baseBranch: '' },
     { ...validState, phase: 'unknown' },
   ])('rejects an invalid state %#', (state) => {
     expect(() => assertWorkflowState(state)).toThrow('Invalid workflow state');
