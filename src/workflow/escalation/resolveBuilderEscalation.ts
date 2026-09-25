@@ -19,12 +19,11 @@ import {
 } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-import { assertWorktree } from '#workflow/utils/assertWorktree.ts';
 
 export type ResolvedBuilderEscalation = {
   escalation: Escalation;
   state: WorkflowState;
-  worktreePath: string;
+  repositoryRoot: string;
   checkpointCommit: string;
 };
 
@@ -58,23 +57,8 @@ export const resolveBuilderEscalation = async ({
   escalationId: string;
   resolution: EscalationResolution;
 }): Promise<ResolvedBuilderEscalation> => {
-  const builderWorktreePath = paths.getBuilderWorktreePath(specId);
-  await assertWorktree({
-    repositoryRoot: paths.getRepositoryRoot(),
-    branch: paths.getBuilderBranch(specId),
-    worktreePath: builderWorktreePath,
-  });
-
-  const workflowPath = paths.getWorkflowPathInWorktree({
-    specId,
-    worktreePath: builderWorktreePath,
-  });
-
-  const escalationsPath = paths.getEscalationsPathInWorktree({
-    specId,
-    worktreePath: builderWorktreePath,
-  });
-
+  const workflowPath = paths.getWorkflowPath(specId);
+  const escalationsPath = paths.getEscalationsPath(specId);
   const currentState = await readWorkflowState({ path: workflowPath });
 
   if (currentState.phase !== WORKFLOW_PHASES.ESCALATION_DECISION) {
@@ -96,13 +80,10 @@ export const resolveBuilderEscalation = async ({
     state: currentState,
     event: WORKFLOW_EVENTS.RESOLVE_ESCALATION,
   });
-
-  const escalationPath = paths.getEscalationPathInWorktree({
+  const escalationPath = paths.getEscalationPath({
     specId,
     escalationNumber: Number(currentEscalation.id.slice(1)),
-    worktreePath: builderWorktreePath,
   });
-
   const resolvedEscalation = await resolveEscalation({
     path: escalationPath,
     specId,
@@ -117,14 +98,14 @@ export const resolveBuilderEscalation = async ({
   });
 
   const checkpointCommit = await createCommit({
-    repositoryRoot: builderWorktreePath,
+    repositoryRoot: paths.getRepositoryRoot(),
     expectedPaths: [workflowPath, escalationPath],
   });
 
   return {
     escalation: resolvedEscalation,
     state: nextState,
-    worktreePath: builderWorktreePath,
+    repositoryRoot: paths.getRepositoryRoot(),
     checkpointCommit,
   };
 };
