@@ -1,21 +1,14 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { branchExists } from '#git/branches/branchExists.ts';
-import { CHECKPOINT_COMMIT_MESSAGE } from '#git/commits/createCommit.ts';
-import { findCommitByMessage } from '#git/commits/findCommitByMessage.ts';
+import { runGitCommand } from '#git/command.ts';
 import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
-import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import {
-  builderHandoffPath,
-  builderWorkflowPath,
   cleanupBuilderWorkflows,
   commitAll,
   createApprovedWorkflow,
-  failedHandoff,
-  getBuilderWorktreePaths,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import { pathExists } from '#utils/path-exists.ts';
@@ -23,216 +16,124 @@ import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
-import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 
 afterEach(cleanupBuilderWorkflows);
 
 describe('builder launch preparation', () => {
-  it('creates a builder branch, worktree, and committed running checkpoint', async () => {
-    const { paths, builderBranch, builderWorktreePath } =
-      await createApprovedWorkflow();
+  it('commits a running checkpoint on the current branch without workflow resources', async () => {
+    const { paths, repository } = await createApprovedWorkflow();
 
-    const launch = await prepareBuilderLaunch({
-      paths,
-      specId: SPEC_ID,
-    });
+    const launch = await prepareBuilderLaunch({ paths, specId: SPEC_ID });
 
     expect(launch).toMatchObject({
       specId: SPEC_ID,
       revision: 3,
-      branch: builderBranch,
-      worktreePath: builderWorktreePath,
+      repositoryRoot: repository.path,
     });
-    expect(maestroSessionState.getSpecSha256()).not.toBeNull();
-    expect(
-      await getCurrentBranch({ repositoryRoot: builderWorktreePath }),
-    ).toBe(builderBranch);
-    expect(await getHeadCommit({ repositoryRoot: builderWorktreePath })).toBe(
-      launch.checkpointCommit,
-    );
     await expect(
-      findCommitByMessage({
-        repositoryRoot: builderWorktreePath,
-        message: CHECKPOINT_COMMIT_MESSAGE,
-      }),
+      getCurrentBranch({ repositoryRoot: repository.path }),
+    ).resolves.toBe('main');
+    await expect(
+      getHeadCommit({ repositoryRoot: repository.path }),
     ).resolves.toBe(launch.checkpointCommit);
     await expect(
-      readWorkflowState({
-        path: builderWorkflowPath({ paths, worktreePath: builderWorktreePath }),
-      }),
+      readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
     ).resolves.toMatchObject({
       revision: 3,
       phase: WORKFLOW_PHASES.BUILDER_RUNNING,
     });
-  });
-
-  it('blocks an uncommitted approval before creating builder resources', async () => {
-    const { paths, builderBranch, builderWorktreePath } =
-      await createApprovedWorkflow({ commitApproval: false });
-
-    await expect(
-      prepareBuilderLaunch({ paths, specId: SPEC_ID }),
-    ).rejects.toThrow('clean base branch');
-    await expect(
-      branchExists({
-        repositoryRoot: paths.getRepositoryRoot(),
-        branch: builderBranch,
-      }),
-    ).resolves.toBe(false);
-    await expect(pathExists(builderWorktreePath)).resolves.toBe(false);
-  });
-
-  it('blocks a dirty base without changing builder resources', async () => {
-    const { paths, repository, builderBranch, builderWorktreePath } =
-      await createApprovedWorkflow();
-    await writeFile(join(repository.path, 'owner-change.txt'), 'dirty\n');
-
-    await expect(
-      prepareBuilderLaunch({ paths, specId: SPEC_ID }),
-    ).rejects.toThrow('clean base branch');
-    await expect(
-      branchExists({
-        repositoryRoot: paths.getRepositoryRoot(),
-        branch: builderBranch,
-      }),
-    ).resolves.toBe(false);
-    await expect(pathExists(builderWorktreePath)).resolves.toBe(false);
-  });
-
-  it('requires an explicit retry and reuses recovered resources', async () => {
-    const { paths, builderWorktreePath } = await createApprovedWorkflow();
-    const firstLaunch = await prepareBuilderLaunch({
-      paths,
-      specId: SPEC_ID,
-    });
-    const firstHead = await getHeadCommit({
-      repositoryRoot: builderWorktreePath,
-    });
-    const firstSpecSha256 = maestroSessionState.getSpecSha256();
-
-    await expect(
-      prepareBuilderLaunch({ paths, specId: SPEC_ID }),
-    ).rejects.toThrow('retry must be explicit');
-    await expect(
-      getHeadCommit({ repositoryRoot: builderWorktreePath }),
-    ).resolves.toBe(firstHead);
-    await writeFile(
-      paths.getSpecFilePath(SPEC_ID),
-      '# Revised by the owner before retry\n',
+    await expect(pathExists(join(repository.path, '.worktree'))).resolves.toBe(
+      false,
     );
-    await commitAll({
-      path: paths.getRepositoryRoot(),
-      message: 'Owner revised spec',
-    });
-
-    const retry = await prepareBuilderLaunch({
-      paths,
-      specId: SPEC_ID,
-      retry: true,
-    });
-
-    expect(retry.revision).toBe(firstLaunch.revision + 1);
-    expect(retry.worktreePath).toBe(builderWorktreePath);
-    expect(maestroSessionState.getSpecSha256()).not.toBe(firstSpecSha256);
-    await expect(
-      getRepositoryStatus({ repositoryRoot: builderWorktreePath }),
-    ).resolves.toMatchObject({ clean: true });
+    expect(maestroSessionState.getSpecSha256()).not.toBeNull();
   });
 
-  it('retries an explicit failed pass and removes the old terminal handoff', async () => {
-    const { paths, builderWorktreePath } = await createApprovedWorkflow();
-    const launch = await prepareBuilderLaunch({ paths, specId: SPEC_ID });
-    const builderPaths = await getBuilderWorktreePaths({
-      worktreePath: builderWorktreePath,
-    });
+  it('does not relaunch a builder while it is running', async () => {
+    const { paths } = await createApprovedWorkflow();
+    await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+
+    await expect(
+      prepareBuilderLaunch({ paths, specId: SPEC_ID }),
+    ).rejects.toThrow(
+      'Builder launch is not valid from phase "builder-running".',
+    );
+  });
+
+  it('stops after a builder failure and does not launch again', async () => {
+    const { paths, repository } = await createApprovedWorkflow();
+    await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+
     await completeBuilderPass({
-      paths: builderPaths,
-      specId: SPEC_ID,
-      handoff: failedHandoff(launch.revision + 1),
-    });
-    await commitAll({
-      path: builderWorktreePath,
-      message: 'Builder failed',
-    });
-
-    const retry = await prepareBuilderLaunch({
       paths,
       specId: SPEC_ID,
-      retry: true,
+      handoff: {
+        status: 'failed',
+        summary: 'The builder was blocked.',
+        acceptanceCriteria: [
+          {
+            id: 'AC1',
+            probe: 'npm test',
+            probeStatus: 'not-run',
+            breakageStatus: 'not-run',
+          },
+        ],
+        failure: { reason: 'The implementation was blocked.' },
+        notes: [],
+      },
     });
+    await commitAll({ path: repository.path, message: 'Builder failed' });
 
-    expect(retry.revision).toBe(launch.revision + 2);
     await expect(
-      pathExists(
-        builderHandoffPath({ paths, worktreePath: builderWorktreePath }),
-      ),
-    ).resolves.toBe(false);
+      prepareBuilderLaunch({ paths, specId: SPEC_ID }),
+    ).rejects.toThrow(
+      'Builder launch is not valid from phase "builder-failed".',
+    );
     await expect(
-      readWorkflowState({
-        path: builderWorkflowPath({ paths, worktreePath: builderWorktreePath }),
-      }),
-    ).resolves.toMatchObject({
-      revision: retry.revision,
-      phase: WORKFLOW_PHASES.BUILDER_RUNNING,
-    });
+      readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
+    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_FAILED });
+    await expect(
+      pathExists(paths.getBuilderHandoffPath(SPEC_ID)),
+    ).resolves.toBe(true);
+    expect(maestroSessionState.getSpecSha256()).not.toBeNull();
   });
 
-  it('blocks a retry when the builder worktree is dirty', async () => {
-    const { paths, builderWorktreePath } = await createApprovedWorkflow();
-    await prepareBuilderLaunch({ paths, specId: SPEC_ID });
-    const workflowPath = builderWorkflowPath({
-      paths,
-      worktreePath: builderWorktreePath,
+  it('rejects an uncommitted current checkout before creating a checkpoint', async () => {
+    const { paths, repository } = await createApprovedWorkflow({
+      commitApproval: false,
     });
+
+    await expect(
+      prepareBuilderLaunch({ paths, specId: SPEC_ID }),
+    ).rejects.toThrow('clean current checkout');
+    await expect(
+      getCurrentBranch({ repositoryRoot: repository.path }),
+    ).resolves.toBe('main');
+  });
+
+  it('rejects dirty product changes in the current checkout', async () => {
+    const { paths, repository } = await createApprovedWorkflow();
     await writeFile(
-      join(builderWorktreePath, 'unfinished.txt'),
-      'unfinished\n',
+      join(repository.path, 'owner-change.txt'),
+      'dirty\n',
+      'utf8',
     );
 
     await expect(
-      prepareBuilderLaunch({ paths, specId: SPEC_ID, retry: true }),
-    ).rejects.toThrow('builder worktree is dirty');
-    await expect(
-      readWorkflowState({ path: workflowPath }),
-    ).resolves.toMatchObject({
-      revision: 3,
-      phase: WORKFLOW_PHASES.BUILDER_RUNNING,
-    });
+      prepareBuilderLaunch({ paths, specId: SPEC_ID }),
+    ).rejects.toThrow('clean current checkout');
   });
 
-  it('starts a correction pass on the existing builder resources', async () => {
-    const { paths, builderBranch, builderWorktreePath } =
-      await createApprovedWorkflow();
-    await prepareBuilderLaunch({ paths, specId: SPEC_ID });
-    const workflowPath = builderWorkflowPath({
-      paths,
-      worktreePath: builderWorktreePath,
-    });
-    const runningState = await readWorkflowState({ path: workflowPath });
-    const correctionState = {
-      ...runningState,
-      revision: runningState.revision + 1,
-      phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
-    };
-    await writeWorkflowState({
-      path: workflowPath,
-      state: correctionState,
-      currentRevision: runningState.revision,
-    });
-    await commitAll({
-      path: builderWorktreePath,
-      message: 'Request builder corrections',
+  it('rejects staged product changes', async () => {
+    const { paths, repository } = await createApprovedWorkflow();
+    const stagedPath = join(repository.path, 'staged-change.txt');
+    await writeFile(stagedPath, 'staged\n', 'utf8');
+    await runGitCommand({
+      arguments: ['add', '--', stagedPath],
+      cwd: repository.path,
     });
 
-    const correction = await prepareBuilderLaunch({
-      paths,
-      specId: SPEC_ID,
-    });
-
-    expect(correction).toMatchObject({
-      revision: correctionState.revision + 1,
-      branch: builderBranch,
-      worktreePath: builderWorktreePath,
-    });
+    await expect(
+      prepareBuilderLaunch({ paths, specId: SPEC_ID }),
+    ).rejects.toThrow('clean current checkout');
   });
 });

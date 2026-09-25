@@ -56,6 +56,16 @@ describe('builder handoff validation', () => {
     ).not.toThrow();
   });
 
+  it('accepts a failed handoff without acceptance criteria', () => {
+    expect(() =>
+      assertBuilderHandoff(
+        { ...failedHandoff(), acceptanceCriteria: [] },
+        specId,
+        4,
+      ),
+    ).not.toThrow();
+  });
+
   it.each([
     {
       handoff: {
@@ -93,7 +103,8 @@ describe('builder handoff validation', () => {
         ...failedHandoff(),
         acceptanceCriteria: doneHandoff().acceptanceCriteria,
       },
-      message: 'Failed builder handoff requires at least one',
+      message:
+        'Failed builder handoff cannot mark every acceptance check as completed',
     },
     {
       handoff: {

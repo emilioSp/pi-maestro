@@ -26,7 +26,6 @@ const state = (revision: number): WorkflowState => ({
     revision === 1
       ? WORKFLOW_PHASES.DRAFTING_SPEC
       : WORKFLOW_PHASES.READY_FOR_BUILDER,
-  baseBranch: 'main',
 });
 
 afterEach(async () => {

@@ -20,12 +20,11 @@ import {
 } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-import { assertWorktree } from '#workflow/utils/assertWorktree.ts';
 
 export type OpenedBuilderEscalation = {
   escalation: Escalation;
   state: WorkflowState;
-  worktreePath: string;
+  repositoryRoot: string;
   workflowPath: string;
   escalationPath: string;
 };
@@ -41,14 +40,6 @@ export const openBuilderEscalation = async ({
   specId,
   escalation,
 }: OpenBuilderEscalationInput): Promise<OpenedBuilderEscalation> => {
-  const worktreePath = paths.getRepositoryRoot();
-
-  await assertWorktree({
-    repositoryRoot: paths.getRepositoryRoot(),
-    branch: paths.getBuilderBranch(specId),
-    worktreePath: paths.getRepositoryRoot(),
-  });
-
   await assertBuilderProtocolUnchanged({ paths, specId });
 
   const workflowPath = paths.getWorkflowPath(specId);
@@ -95,7 +86,7 @@ export const openBuilderEscalation = async ({
   return {
     escalation: created.escalation,
     state: nextState,
-    worktreePath,
+    repositoryRoot: paths.getRepositoryRoot(),
     workflowPath,
     escalationPath: created.path,
   };

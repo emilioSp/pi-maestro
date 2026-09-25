@@ -1,14 +1,12 @@
-import { writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
+import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import {
-  builderWorkflowPath,
   cleanupBuilderWorkflows,
   commitAll,
   createApprovedWorkflow,
   doneHandoff,
-  getBuilderWorktreePaths,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
@@ -19,71 +17,45 @@ import { prepareVerifierLaunch } from '#workflow/verifier/prepareVerifierLaunch.
 
 afterEach(cleanupBuilderWorkflows);
 
-const prepareCandidate = async () => {
-  const { paths, builderWorktreePath } = await createApprovedWorkflow();
-  const builderLaunch = await prepareBuilderLaunch({ paths, specId: SPEC_ID });
-  await writeFile(join(builderWorktreePath, 'product.txt'), 'candidate\n');
-  const builderPaths = await getBuilderWorktreePaths({
-    worktreePath: builderWorktreePath,
-  });
-  await completeBuilderPass({
-    paths: builderPaths,
-    specId: SPEC_ID,
-    handoff: doneHandoff(builderLaunch.revision + 1),
-  });
-  await commitAll({ path: builderWorktreePath, message: 'Builder candidate' });
-  return { paths, builderWorktreePath };
-};
-
 describe('verifier launch preparation', () => {
-  it('creates a fresh verifier worktree from the candidate and commits running state', async () => {
-    const { paths, builderWorktreePath } = await prepareCandidate();
-    const candidateCommit = await getHeadCommit({
-      repositoryRoot: builderWorktreePath,
+  it('uses the current HEAD as the candidate and commits the running checkpoint', async () => {
+    const { paths, repository } = await createApprovedWorkflow();
+    const builderLaunch = await prepareBuilderLaunch({
+      paths,
+      specId: SPEC_ID,
+    });
+    await completeBuilderPass({
+      paths,
+      specId: SPEC_ID,
+      handoff: {
+        status: 'done',
+        summary: 'Implemented the approved change.',
+        acceptanceCriteria: [],
+        notes: [],
+      },
+    });
+    const builderHandoff = doneHandoff(builderLaunch.revision + 1);
+    expect(builderHandoff.status).toBe('done');
+    await commitAll({ path: repository.path, message: 'Builder completed' });
+    const candidateBefore = await getHeadCommit({
+      repositoryRoot: repository.path,
     });
 
     const launch = await prepareVerifierLaunch({ paths, specId: SPEC_ID });
 
-    expect(launch).toMatchObject({
-      specId: SPEC_ID,
-      pass: 1,
-      candidateCommit,
-      branch: paths.getVerifierBranch({ specId: SPEC_ID, pass: 1 }),
-      worktreePath: paths.getVerifierWorktreePath({ specId: SPEC_ID, pass: 1 }),
-      revision: 5,
-    });
-    expect(launch.worktreePath).not.toBe(builderWorktreePath);
+    expect(launch.candidateCommit).toBe(candidateBefore);
+    expect(launch.repositoryRoot).toBe(repository.path);
+    expect(launch.checkpointCommit).not.toBe(candidateBefore);
     await expect(
-      getHeadCommit({ repositoryRoot: launch.worktreePath }),
-    ).resolves.toBe(launch.checkpointCommit);
+      getCurrentBranch({ repositoryRoot: repository.path }),
+    ).resolves.toBe('main');
     await expect(
-      readWorkflowState({
-        path: paths.getWorkflowPathInWorktree({
-          specId: SPEC_ID,
-          worktreePath: launch.worktreePath,
-        }),
-      }),
+      getRepositoryStatus({ repositoryRoot: repository.path }),
+    ).resolves.toMatchObject({ clean: true });
+    await expect(
+      readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
     ).resolves.toMatchObject({
-      revision: launch.revision,
       phase: WORKFLOW_PHASES.VERIFIER_RUNNING,
     });
-    await expect(
-      readWorkflowState({
-        path: builderWorkflowPath({ paths, worktreePath: builderWorktreePath }),
-      }),
-    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.READY_FOR_VERIFIER });
-  });
-
-  it('uses the next verifier pass number', async () => {
-    const { paths } = await prepareCandidate();
-    const first = await prepareVerifierLaunch({ paths, specId: SPEC_ID });
-
-    const second = await prepareVerifierLaunch({ paths, specId: SPEC_ID });
-
-    expect(first.pass).toBe(1);
-    expect(second.pass).toBe(2);
-    expect(second.branch).toBe(
-      paths.getVerifierBranch({ specId: SPEC_ID, pass: 2 }),
-    );
   });
 });

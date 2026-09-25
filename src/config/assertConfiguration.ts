@@ -45,7 +45,7 @@ const formatError = (error: SchemaValidationError): string => {
     return `Invalid ${path} configuration: expected an object.`;
   }
 
-  if (path === 'specDirectory' || path === 'worktreeDirectory') {
+  if (path === 'specDirectory') {
     return `Invalid ${path}: expected a non-empty string.`;
   }
 

@@ -34,7 +34,6 @@ describe('partial spec creation failure', () => {
       config: {
         ...DEFAULT_CONFIG,
         specDirectory: join(repositoryRoot, '.specs'),
-        worktreeDirectory: join(repositoryRoot, '.worktree'),
       },
     });
     const specId = '20260321-143052-add-weather-alerts';
@@ -42,7 +41,6 @@ describe('partial spec creation failure', () => {
     const input = {
       paths,
       title: 'Add Weather Alerts',
-      baseBranch: 'main',
       activeWorkflowSpecId: null,
       instant: Temporal.Instant.from('2026-03-21T14:30:52Z'),
     };
