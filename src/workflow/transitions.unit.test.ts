@@ -55,13 +55,15 @@ describe('workflow transitions', () => {
     });
   });
 
-  it('rejects retrying a running builder', () => {
-    expect(() =>
-      transitionWorkflow({
-        state: state(WORKFLOW_PHASES.BUILDER_RUNNING, 3),
-        event: WORKFLOW_EVENTS.RETRY_BUILDER,
-      }),
-    ).toThrow('is not allowed from phase');
+  it('treats builder-failed as a sink', () => {
+    for (const event of Object.values(WORKFLOW_EVENTS) as WorkflowEvent[]) {
+      expect(() =>
+        transitionWorkflow({
+          state: state(WORKFLOW_PHASES.BUILDER_FAILED, 3),
+          event,
+        }),
+      ).toThrow('is not allowed from phase');
+    }
   });
 
   it('rejects an event from an invalid phase', () => {
