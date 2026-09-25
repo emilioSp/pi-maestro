@@ -58,7 +58,6 @@ export const WorkflowStateSchema = Type.Object(
     specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
     revision: Type.Integer({ minimum: 1 }),
     phase: WorkflowPhaseSchema,
-    baseBranch: Type.String({ minLength: 1 }),
   },
   { additionalProperties: false },
 );
