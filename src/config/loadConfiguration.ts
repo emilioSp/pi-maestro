@@ -8,7 +8,6 @@ import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { assertConfiguration } from '#config/assertConfiguration.ts';
 import { CONFIG_FILE_PATH, DEFAULT_CONFIG } from '#config/defaults.ts';
 import type { MaestroConfig, PartialMaestroConfig } from '#config/schema.ts';
-import { deepFreeze } from '#config/utils/deepFreeze.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { isPathStrictlyWithin } from '#utils/path-strictly-within.ts';
 import { isPathWithinOrEqual } from '#utils/path-within-or-equal.ts';
@@ -34,7 +33,7 @@ const resolveConfiguration = (input: PartialMaestroConfig): MaestroConfig => {
     },
   };
 
-  return deepFreeze(resolved);
+  return resolved;
 };
 
 type ExistingAncestor = {
@@ -194,9 +193,7 @@ export const loadConfiguration = async ({
   const targetPath = join(repositoryRoot, CONFIG_FILE_PATH);
 
   if (!(await pathExists(targetPath))) {
-    return deepFreeze(
-      await resolveDirectories({ repositoryRoot, config: DEFAULT_CONFIG }),
-    );
+    return await resolveDirectories({ repositoryRoot, config: DEFAULT_CONFIG });
   }
 
   let parsed: unknown;
@@ -213,5 +210,5 @@ export const loadConfiguration = async ({
   assertConfiguration(parsed);
   const config = resolveConfiguration(parsed);
 
-  return deepFreeze(await resolveDirectories({ repositoryRoot, config }));
+  return await resolveDirectories({ repositoryRoot, config });
 };

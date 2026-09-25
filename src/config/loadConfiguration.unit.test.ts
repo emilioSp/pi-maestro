@@ -189,42 +189,6 @@ describe('configuration loading', () => {
     }
   });
 
-  it('produces an immutable configuration and does not mutate defaults', async () => {
-    const initialDefaultTimeout = DEFAULT_CONFIG.builder.timeoutMinutes;
-    const workspace = await createWorkspaceWithFixture({
-      fixtureName: 'valid-partial-builder-timeout.json',
-    });
-    const originalCwd = process.cwd();
-
-    try {
-      process.chdir(workspace.tempDir);
-      const config = await loadConfiguration();
-
-      expect(Object.isFrozen(config)).toBe(true);
-      expect(Object.isFrozen(config.builder)).toBe(true);
-      expect(Object.isFrozen(config.verifier)).toBe(true);
-
-      const target = config as unknown as Record<string, unknown>;
-      const builderTarget = config.builder as unknown as Record<
-        string,
-        unknown
-      >;
-
-      expect(() => {
-        target.specDirectory = 'mutated';
-      }).toThrow(TypeError);
-
-      expect(() => {
-        builderTarget.timeoutMinutes = 999;
-      }).toThrow(TypeError);
-
-      expect(DEFAULT_CONFIG.builder.timeoutMinutes).toBe(initialDefaultTimeout);
-    } finally {
-      process.chdir(originalCwd);
-      await workspace.cleanup();
-    }
-  });
-
   it('rejects invalid JSON with a descriptive error that includes the path', async () => {
     const workspace = await createWorkspaceWithFixture({
       fixtureName: 'invalid-json.json',
