@@ -1,7 +1,6 @@
 {
   "version": "1.0.0",
   "specDirectory": "custom-specs",
-  "worktreeDirectory": "custom-worktrees",
   "builder": {
     "model": "anthropic/claude-3-7-sonnet",
     "thinking": "max",
