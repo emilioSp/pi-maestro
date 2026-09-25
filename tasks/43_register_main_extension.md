@@ -4,7 +4,7 @@ STATUS: TODO
 
 ## Dependency
 
-This task depends on Tasks 29, 30, and 42. All `mvp_*` foundation tasks must also be complete.
+This task depends on Task 42. All `mvp_*` foundation tasks must also be complete. Activation checks are implemented in `src/maestro/checks/checkEnvironment.ts`.
 
 ## Objective
 
@@ -19,7 +19,7 @@ Wire the main Pi extension without moving domain logic into the composition root
 
 1. Register the seven main tools once. Import each directly from `src/tools/main/`. Give the launch tools access to `pi.events`.
 2. Implement and register `/maestro`:
-   - If Maestro is off, run all Task 29 checks. If they pass, turn Maestro on and enable its tools, instructions, and status. If a check fails, leave Maestro off and show the error with `ctx.ui.notify(..., "error")`.
+   - If Maestro is off, run `checkEnvironment`. If it passes, turn Maestro on and enable its tools, instructions, and status. If a check fails, leave Maestro off and show the error with `ctx.ui.notify(..., "error")`.
    - If Maestro is on, turn it off and hide its tools, instructions, and status. Do not change the current branch, workflow files, or artifacts.
    - Run all checks again each time `/maestro` turns Maestro on.
 3. Leave Maestro off after `/resume`. Do not run Maestro checks or show Maestro notifications at startup.
@@ -37,7 +37,7 @@ Add Vitest integration tests with a fake Pi context. Test startup, activation, f
 
 ## Completion criteria
 
-- Maestro turns on only after all Task 29 checks pass.
+- Maestro turns on only after `checkEnvironment` passes.
 - Main tools are usable only while Maestro is on.
 - Child tools never appear in the owner session.
 - `extensions/maestro.ts` contains no workflow logic.

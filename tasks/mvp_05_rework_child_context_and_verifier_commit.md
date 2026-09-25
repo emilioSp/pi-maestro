@@ -21,7 +21,7 @@ The verifier handoff implementation and protocol commit belong to Task 34. Child
 
 ## Work
 
-1. Generalize `getBuilderContext` into one shared `getChildContext({ cwd, specId })` operation.
+1. Use one shared `getChildContext({ cwd, specId })` operation for all child adapters.
 2. Use the shared context in builder handoff, builder escalation, and the verifier handoff tool.
 3. Keep `specId` explicit in every child tool schema. Do not infer identity or role from a branch name and do not perform global workflow discovery.
 4. Keep workflow phase and `specId` validation in the domain operations before any artifact write.

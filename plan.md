@@ -762,7 +762,7 @@ La directory review è conclusa. L' albero finale è congelato per l’MVP e lo 
 
 Il pacchetto usa una strategia source-only: Pi carica direttamente i file TypeScript, `src/` viene pubblicata e non esiste `dist/`. `tsconfig.json` serve per il typecheck e `package-lock.json` viene committato. I test TypeScript vengono eseguiti con Vitest su Node.js 26.
 
-Gli schemi dei tool, della configurazione e degli artefatti usano TypeBox. `typebox` resta una peer dependency fornita da Pi. Gli enum stringa esposti negli input dei tool usano `StringEnum` da `@earendil-works/pi-ai` per la compatibilità tra provider. Anche `@earendil-works/pi-ai` è una peer dependency fornita da Pi. Zod non viene aggiunto.
+Gli schemi dei tool, della configurazione e degli artefatti usano TypeBox. `typebox` è una dipendenza runtime del pacchetto. Gli enum stringa esposti negli input dei tool usano `StringEnum` da `@earendil-works/pi-ai` per la compatibilità tra provider. `@earendil-works/pi-ai` è una peer dependency fornita da Pi. Zod non viene aggiunto.
 
 `.github/workflows/ci.yml` usa macOS e Node.js 26. Esegue installazione riproducibile, typecheck, test e `npm pack --dry-run`. Non pubblica automaticamente il pacchetto.
 
@@ -951,27 +951,25 @@ Decisioni prese:
 
 1. I nomi degli agent non sono configurabili nella prima versione.
 2. `maestro.json` configura il modello, il livello di thinking e il timeout degli agent predefiniti.
-3. I prefissi dei branch non sono configurabili nella prima versione.
-4. Maestro usa prefissi fissi per rendere prevedibili validazione e pulizia.
-5. `timeoutMinutes` è configurabile separatamente per builder e verifier.
-6. Il valore predefinito è 60 minuti per entrambi.
-7. Il timeout si applica a ogni singolo passaggio. Ogni nuovo passaggio riceve il timeout completo.
-8. Maestro converte internamente i minuti nel valore richiesto da `pi-subagents`.
-9. Alla scadenza, Maestro segnala il timeout e non considera completato il passaggio.
+3. `timeoutMinutes` è configurabile separatamente per builder e verifier.
+4. Il valore predefinito è 60 minuti per entrambi.
+5. Il timeout si applica a ogni singolo passaggio. Ogni nuovo passaggio riceve il timeout completo.
+6. Maestro converte internamente i minuti nel valore richiesto da `pi-subagents`.
+7. Alla scadenza, Maestro segnala il timeout e non considera completato il passaggio.
 
-10. I campi sconosciuti non sono accettati.
-11. Un campo sconosciuto blocca l’attivazione di Maestro e produce un errore preciso.
-12. Quando `.pi/maestro.json` esiste, il campo `version` è obbligatorio.
-13. `version` usa una stringa Semantic Versioning e identifica lo schema del file, separatamente dalla versione npm del pacchetto.
-14. La prima versione supportata dello schema è `1.0.0`. Una major non supportata blocca l’attivazione. Una versione assente, non valida o non supportata produce un errore preciso.
-15. Quando `.pi/maestro.json` esiste, solo `version` è obbligatorio.
-16. Tutti gli altri campi sono opzionali e sovrascrivono solo i rispettivi valori predefiniti.
-17. Gli oggetti `builder` e `verifier` possono contenere anche un solo override.
-18. `builder.model` e `verifier.model` accettano solo identificatori completi nel formato `provider/model`.
-19. I nomi modello senza provider non sono validi.
-20. `builder.thinking` e `verifier.thinking` accettano solo `off`, `minimal`, `low`, `medium`, `high`, `xhigh` o `max`.
-21. `builder.timeoutMinutes` e `verifier.timeoutMinutes` accettano solo numeri interi da 1 a 1440.
-22. Questo schema è definitivo per la prima versione.
+8. I campi sconosciuti non sono accettati.
+9. Un campo sconosciuto blocca l’attivazione di Maestro e produce un errore preciso.
+10. Quando `.pi/maestro.json` esiste, il campo `version` è obbligatorio.
+11. `version` usa una stringa Semantic Versioning e identifica lo schema del file, separatamente dalla versione npm del pacchetto.
+12. La prima versione supportata dello schema è `1.0.0`. Una major non supportata blocca l’attivazione. Una versione assente, non valida o non supportata produce un errore preciso.
+13. Quando `.pi/maestro.json` esiste, solo `version` è obbligatorio.
+14. Tutti gli altri campi sono opzionali e sovrascrivono solo i rispettivi valori predefiniti.
+15. Gli oggetti `builder` e `verifier` possono contenere anche un solo override.
+16. `builder.model` e `verifier.model` accettano solo identificatori completi nel formato `provider/model`.
+17. I nomi modello senza provider non sono validi.
+18. `builder.thinking` e `verifier.thinking` accettano solo `off`, `minimal`, `low`, `medium`, `high`, `xhigh` o `max`.
+19. `builder.timeoutMinutes` e `verifier.timeoutMinutes` accettano solo numeri interi da 1 a 1440.
+20. Questo schema è definitivo per la prima versione.
 
 <a id="plan-section-6-7"></a>
 
