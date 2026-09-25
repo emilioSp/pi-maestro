@@ -10,7 +10,7 @@ This task depends on `mvp_01_remove_worktree_and_branch_model.md` and `mvp_03_re
 
 Keep verifier domain operations on the owner-selected checkout and branch.
 
-The verifier handoff protocol commit belongs to `mvp_05_rework_child_context_and_verifier_commit.md`. Verifier delegation and Pi response handling belong to Task 40.
+The verifier handoff protocol commit belongs to Task 34. Verifier delegation and Pi response handling belong to Task 40.
 
 ## Plan references
 
@@ -26,7 +26,7 @@ The verifier handoff protocol commit belongs to `mvp_05_rework_child_context_and
 5. Allow only `workflow.json` and `handoffs/verifier.json` as protocol changes during the handoff check. Return `PRODUCT_FILES_MODIFIED` without writing protocol files when product changes remain.
 6. Keep verifier completion and findings resolution bound to the explicit `specId`, current workflow phase, and current checkout. Findings resolution must not merge or fast-forward branches.
 
-Do not implement the verifier protocol commit here. The child handoff tool in `mvp_05` owns that commit.
+Do not implement the verifier protocol commit here. Task 34 owns that commit.
 
 ## Tests
 

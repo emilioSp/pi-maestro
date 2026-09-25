@@ -1,52 +1,48 @@
 STATUS: TODO
 
-# Task mvp_05: Rework child context and the verifier commit tool
+# Task mvp_05: Share the current-checkout child context
 
 ## Dependency
 
 This task depends on `mvp_02_add_current_branch_spec_revision_flow.md`, `mvp_03_rework_builder_for_current_checkout.md`, and `mvp_04_rework_verifier_for_current_checkout.md`.
 
+Task 34 depends on this task for the shared child context.
+
 ## Objective
 
-Make child tools identify the active spec explicitly and make the verifier handoff tool own its protocol commit.
+Make every child adapter use the current checkout and explicit workflow identity without branch-name discovery.
+
+The verifier handoff implementation and protocol commit belong to Task 34. Child extension registration, role allowlists, and `spec.md` path protection belong to Task 35.
 
 ## Plan references
 
 - Sections [5](../plan.md#plan-section-5), [6.8](../plan.md#plan-section-6-8), [6.11](../plan.md#plan-section-6-11), and [6.12](../plan.md#plan-section-6-12)
-- Section [6.14](../plan.md#plan-section-6-14), child artifact writes and commits
+- Section [6.14](../plan.md#plan-section-6-14), child artifact context
 
 ## Work
 
-1. Remove child context logic that derives `specId` or role from a branch name.
-2. Resolve the repository root from the current checkout.
-3. Add explicit `specId` input to every child-only tool that operates on workflow artifacts.
-4. Validate `specId` against the current `workflow.json` and validate the allowed workflow phase before any write.
-5. Do not perform global workflow discovery.
-6. Keep role authorization in the agent tool allowlists and phase checks.
-7. Implement `maestro_record_verifier_handoff` so it validates the candidate comparison, writes `verifier.json` and `workflow.json`, and commits only those paths.
-8. Return a structured `PRODUCT_FILES_MODIFIED` result without writing or committing when product files differ.
-9. Keep `maestro_record_builder_handoff` as a protocol writer. The builder remains responsible for committing product changes and generated protocol files with Bash.
-10. Update builder instructions to use the current checkout and explicit `specId`.
-11. Update verifier instructions to use the current checkout, never run `git commit`, restore every breakage, and call the handoff tool for the protocol commit.
-12. Keep direct `write` and `edit` protection for `spec.md` rooted at the current checkout.
+1. Generalize `getBuilderContext` into one shared `getChildContext({ cwd, specId })` operation.
+2. Use the shared context in builder handoff, builder escalation, and the verifier handoff tool.
+3. Keep `specId` explicit in every child tool schema. Do not infer identity or role from a branch name and do not perform global workflow discovery.
+4. Keep workflow phase and `specId` validation in the domain operations before any artifact write.
+5. Use the TypeBox-inferred tool parameters. Do not add duplicate schema checks or unsafe parameter casts.
+
+Do not implement child extension registration, role allowlists, direct `spec.md` path protection, verifier protocol commits, or Pi delegation here.
 
 ## Tests
 
-Add or update tests for:
+Cover:
 
-- explicit `specId` validation in every child tool;
-- rejection of a mismatched spec ID and invalid phase;
-- no branch-name parsing and no global discovery;
-- verifier protocol commit paths;
-- verifier rejection without file writes or commits;
-- builder protocol behavior and explicit current-checkout context;
-- builder and verifier tool allowlists;
-- current-checkout `spec.md` protection.
+- current repository resolution from a child working directory;
+- explicit spec identity passed to builder and verifier adapters;
+- invalid spec IDs rejected before context creation;
+- no branch-name parsing or global workflow discovery;
+- builder handoff and escalation continue to use the shared context.
 
 ## Completion criteria
 
+- All child adapters use one current-checkout context operation.
 - Child tools never infer workflow identity from a branch name.
-- Every child artifact operation validates explicit `specId` and workflow phase.
-- The verifier handoff tool owns the verifier protocol commit.
-- The verifier agent instructions do not ask the verifier to run Git commits.
-- The builder agent instructions still require a committed implementation and builder handoff.
+- Every child artifact operation receives an explicit `specId`.
+- Domain operations remain responsible for phase and identity validation.
+- Verifier handoff commit and child extension protections remain scoped to Tasks 34 and 35.
