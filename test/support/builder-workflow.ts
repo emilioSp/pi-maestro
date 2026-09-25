@@ -24,13 +24,11 @@ const cleanupFunctions: Array<() => Promise<void>> = [];
 type CreateApprovedWorkflowInput = {
   commitApproval?: boolean;
   specDirectory?: string;
-  worktreeDirectory?: string;
 };
 
 export const createApprovedWorkflow = async ({
   commitApproval = true,
   specDirectory = '.specs',
-  worktreeDirectory = '.worktree',
 }: CreateApprovedWorkflowInput = {}) => {
   const repository = await createTemporaryRepository();
   cleanupFunctions.push(repository.cleanup);
@@ -39,28 +37,16 @@ export const createApprovedWorkflow = async ({
   await mkdir(configDirectory, { recursive: true });
   await writeFile(
     join(configDirectory, 'maestro.json'),
-    JSON.stringify(
-      {
-        version: DEFAULT_CONFIG.version,
-        specDirectory,
-        worktreeDirectory,
-      },
-      null,
-      2,
-    ),
+    JSON.stringify({ version: DEFAULT_CONFIG.version, specDirectory }, null, 2),
     'utf8',
   );
   await repository.commit({ message: 'Initial commit' });
 
   const config = await loadConfiguration({ cwd: repository.path });
-  const paths = new MaestroPaths({
-    repositoryRoot: repository.path,
-    config,
-  });
+  const paths = new MaestroPaths({ repositoryRoot: repository.path, config });
   await createSpec({
     paths,
     title: 'Add Weather Alerts',
-    baseBranch: 'main',
     activeWorkflowSpecId: null,
     instant: INSTANT,
   });
@@ -76,45 +62,13 @@ export const createApprovedWorkflow = async ({
     await repository.commit({ message: 'Approve builder spec' });
   }
 
-  return {
-    paths,
-    repository,
-    builderBranch: paths.getBuilderBranch(SPEC_ID),
-    builderWorktreePath: paths.getBuilderWorktreePath(SPEC_ID),
-  };
-};
-
-export const getBuilderWorktreePaths = async ({
-  worktreePath,
-}: {
-  worktreePath: string;
-}) => {
-  const config = await loadConfiguration({ cwd: worktreePath });
-
-  return new MaestroPaths({ repositoryRoot: worktreePath, config });
+  return { paths, repository };
 };
 
 export const cleanupBuilderWorkflows = async (): Promise<void> => {
   await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
   maestroSessionState.deactivate();
 };
-
-type BuilderWorkflowPathInput = {
-  paths: MaestroPaths;
-  worktreePath: string;
-};
-
-export const builderWorkflowPath = ({
-  paths,
-  worktreePath,
-}: BuilderWorkflowPathInput): string =>
-  paths.getWorkflowPathInWorktree({ specId: SPEC_ID, worktreePath });
-
-export const builderHandoffPath = ({
-  paths,
-  worktreePath,
-}: BuilderWorkflowPathInput): string =>
-  paths.getBuilderHandoffPathInWorktree({ specId: SPEC_ID, worktreePath });
 
 export const commitAll = async ({
   path,
@@ -158,7 +112,7 @@ export const failedHandoff = (revision: number): BuilderHandoff => ({
       id: 'AC1',
       probe: 'npm test',
       probeStatus: PROBE_STATUSES.NOT_RUN,
-      breakageStatus: PROBE_STATUSES.NOT_RUN,
+      breakageStatus: BREAKAGE_STATUSES.NOT_RUN,
     },
   ],
   failure: { reason: 'The implementation was blocked.' },
