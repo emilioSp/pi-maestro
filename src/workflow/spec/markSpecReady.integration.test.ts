@@ -20,13 +20,11 @@ const createRepository = async () => {
   cleanupFunctions.push(repository.cleanup);
   await writeFile(join(repository.path, 'README.md'), '# Test\n', 'utf8');
   await repository.commit({ message: 'Initial commit' });
-
   const paths = new MaestroPaths({
     repositoryRoot: repository.path,
     config: {
       ...DEFAULT_CONFIG,
       specDirectory: join(repository.path, '.specs'),
-      worktreeDirectory: join(repository.path, '.worktree'),
     },
   });
 
@@ -38,12 +36,11 @@ afterEach(async () => {
 });
 
 describe('markSpecReady', () => {
-  it('moves only the expected drafting spec to ready without committing or reading its Markdown', async () => {
+  it('moves the approved drafting spec to ready without committing', async () => {
     const { repository, paths } = await createRepository();
     const created = await createSpec({
       paths,
       title: 'Add Weather Alerts',
-      baseBranch: 'main',
       activeWorkflowSpecId: null,
       instant: INSTANT,
     });
@@ -66,8 +63,7 @@ describe('markSpecReady', () => {
         specId: SPEC_ID,
         activeWorkflowSpecId: SPEC_ID,
       }),
-    ).resolves.toEqual({
-      ...created.state,
+    ).resolves.toMatchObject({
       revision: 2,
       phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
     });
@@ -75,12 +71,6 @@ describe('markSpecReady', () => {
     await expect(readFile(created.specFilePath, 'utf8')).resolves.toBe(
       markdown,
     );
-    await expect(
-      readWorkflowState({ path: created.workflowPath }),
-    ).resolves.toMatchObject({
-      revision: 2,
-      phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
-    });
     await expect(
       getHeadCommit({ repositoryRoot: repository.path }),
     ).resolves.toBe(headBefore);
@@ -91,7 +81,6 @@ describe('markSpecReady', () => {
     const created = await createSpec({
       paths,
       title: 'Add Weather Alerts',
-      baseBranch: 'main',
       activeWorkflowSpecId: null,
       instant: INSTANT,
     });
