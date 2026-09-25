@@ -1104,7 +1104,7 @@ Responsabilità:
 1. `maestro_create_spec` crea ID, template e stato iniziale.
 2. `maestro_mark_spec_ready` verifica lo stato e l’esistenza di `spec.md`, quindi imposta `ready-for-builder` dopo l’approvazione dell’owner, sia per la spec iniziale sia per una revisione autorizzata.
 3. `maestro_launch_builder` e `maestro_launch_verifier` preparano Git, aggiornano lo stato e avviano il subagent.
-4. `maestro_resolve_escalation` e `maestro_resolve_findings` registrano solo decisioni esplicite dell’owner che mantengono valida la spec approvata. Un cambio del contratto richiede abbandono manuale e una nuova spec.
+4. `maestro_resolve_escalation` e `maestro_resolve_findings` registrano solo decisioni esplicite dell’owner quando la spec approvata resta valida. Se il contratto cambia, l’owner usa `maestro_mark_spec_ready` dalla fase bloccante autorizzata; il workflow mantiene lo stesso `specId` e branch e rende storico il blocco precedente.
 5. `maestro_prepare_final_review` verifica il candidate sul branch corrente, scrive `final-review` e restituisce i dati necessari per la Pull Request dell’owner. Non esegue squash locale, non prepara staging su un altro branch e non tenta cleanup di branch o worktree. Un errore precedente a `final-review` lascia la fase invariata.
 6. I tool child-only scrivono e validano gli artefatti terminali. `maestro_record_verifier_handoff` restituisce una diagnostica strutturata e non scrive nulla quando rileva modifiche di prodotto residue.
 7. La prima versione non offre un tool per abbandonare un workflow. L’owner gestisce manualmente risorse e artefatti quando decide di abbandonarlo.
