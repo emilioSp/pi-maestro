@@ -6,11 +6,14 @@ import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import {
   cleanupBuilderWorkflows,
+  commitAll,
   createApprovedWorkflow,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import { pathExists } from '#utils/path-exists.ts';
+import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
+import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 
@@ -54,6 +57,40 @@ describe('builder launch preparation', () => {
     ).rejects.toThrow(
       'Builder launch is not valid from phase "builder-running".',
     );
+  });
+
+  it('requires the owner to commit an approved spec revision before launch', async () => {
+    const { paths, repository } = await createApprovedWorkflow();
+    await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+    await completeBuilderPass({
+      paths,
+      specId: SPEC_ID,
+      handoff: {
+        status: 'failed',
+        summary: 'The builder was blocked.',
+        acceptanceCriteria: [
+          {
+            id: 'AC1',
+            probe: 'npm test',
+            probeStatus: 'not-run',
+            breakageStatus: 'not-run',
+          },
+        ],
+        failure: { reason: 'The implementation was blocked.' },
+        notes: [],
+      },
+    });
+    await commitAll({ path: repository.path, message: 'Builder failed' });
+
+    await markSpecReady({
+      paths,
+      specId: SPEC_ID,
+      activeWorkflowSpecId: SPEC_ID,
+    });
+
+    await expect(
+      prepareBuilderLaunch({ paths, specId: SPEC_ID }),
+    ).rejects.toThrow('clean current checkout');
   });
 
   it('rejects an uncommitted current checkout before creating a checkpoint', async () => {

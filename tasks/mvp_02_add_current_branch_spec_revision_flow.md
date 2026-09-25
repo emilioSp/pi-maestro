@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task mvp_02: Add the current-branch spec revision flow
 
