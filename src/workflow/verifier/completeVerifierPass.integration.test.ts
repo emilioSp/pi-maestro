@@ -1,7 +1,9 @@
 import { writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
+import { runGitCommand } from '#git/command.ts';
+import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import {
   cleanupBuilderWorkflows,
   commitAll,
@@ -82,6 +84,15 @@ describe('verifier completion', () => {
 
     expect(completed.repositoryRoot).toBe(repository.path);
     expect(completed.state.phase).toBe(WORKFLOW_PHASES.CANDIDATE_READY);
+    await expect(
+      getRepositoryStatus({ repositoryRoot: repository.path }),
+    ).resolves.toMatchObject({
+      staged: [],
+      unstaged: [relative(repository.path, paths.getWorkflowPath(SPEC_ID))],
+      untracked: [
+        relative(repository.path, paths.getVerifierHandoffPath(SPEC_ID)),
+      ],
+    });
     await commitAll({ path: repository.path, message: 'Verifier completed' });
     await expect(
       readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
@@ -115,5 +126,49 @@ describe('verifier completion', () => {
     await expect(
       import('node:fs/promises').then(({ access }) => access(handoffPath)),
     ).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  it('rejects unstaged tracked product changes', async () => {
+    const { paths, repository, verifierLaunch } =
+      await prepareRunningVerifier();
+    await writeFile(join(repository.path, 'README.md'), '# Changed\n', 'utf8');
+
+    await expect(
+      completeVerifierPass({
+        paths,
+        specId: SPEC_ID,
+        candidateCommit: verifierLaunch.candidateCommit,
+        handoff: {
+          ...approvedHandoff,
+          revision: verifierLaunch.revision + 1,
+        },
+      }),
+    ).resolves.toMatchObject({
+      error: VERIFIER_PASS_ERRORS.PRODUCT_FILES_MODIFIED,
+    });
+  });
+
+  it('rejects staged tracked product changes', async () => {
+    const { paths, repository, verifierLaunch } =
+      await prepareRunningVerifier();
+    await writeFile(join(repository.path, 'README.md'), '# Changed\n', 'utf8');
+    await runGitCommand({
+      arguments: ['add', '--', 'README.md'],
+      cwd: repository.path,
+    });
+
+    await expect(
+      completeVerifierPass({
+        paths,
+        specId: SPEC_ID,
+        candidateCommit: verifierLaunch.candidateCommit,
+        handoff: {
+          ...approvedHandoff,
+          revision: verifierLaunch.revision + 1,
+        },
+      }),
+    ).resolves.toMatchObject({
+      error: VERIFIER_PASS_ERRORS.PRODUCT_FILES_MODIFIED,
+    });
   });
 });
