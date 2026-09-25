@@ -42,9 +42,9 @@ Activate Maestro:
 /maestro
 ```
 
-The same command disables Maestro. Disabling Maestro keeps the current workflow, branches, worktrees, and artifacts.
+The same command disables Maestro. Disabling Maestro leaves workflow files, branches, worktrees, and artifacts unchanged.
 
-During activation, Maestro checks the repository, configuration including configured directories, models, agents, and stored workflow state. A failed check leaves Maestro disabled and reports the problem.
+During activation, Maestro checks the repository, configuration including configured directories, models, and agents. A failed check leaves Maestro disabled and reports the problem.
 
 ## Basic use
 
@@ -63,7 +63,7 @@ Builder and verifier passes run in the foreground. Pi waits for each pass to fin
 
 If an approved spec must change after the builder starts, abandon the workflow manually and create a new spec.
 
-For failures, escalations, findings, and recovery, see [Workflow](docs/workflow.md) and [Recovery](docs/recovery.md).
+For failures, escalations, and findings, see [Workflow](docs/workflow.md).
 
 ## Configuration
 
@@ -74,9 +74,9 @@ See [Configuration](docs/configuration.md).
 ## TODO
 
 - Add a child-only Maestro tool to manage builder and verifier commits. They currently run Git commits through Bash.
+- Super simplification: do not use worktree and work only in the base branch
 
 ## Documentation
 
 - [Workflow](docs/workflow.md)
 - [Configuration](docs/configuration.md)
-- [Recovery](docs/recovery.md)

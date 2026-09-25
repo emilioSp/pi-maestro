@@ -18,7 +18,7 @@ Validate the environment before Maestro activation.
 
 ## Work
 
-1. Check Git repository, trust, pi-subagents, agents, configuration, models, safe directories, and readable workflow state.
+1. Check Git repository, trust, pi-subagents, agents, configuration, models, and safe directories.
 2. Stop at the first failed check and return one clear activation error.
 3. Re-run checks on every activation; `/resume` leaves Maestro inactive.
 4. Keep startup silent and free of Maestro checks.
@@ -36,5 +36,6 @@ Add Vitest tests for every check, first-error behavior, dirty base, absent direc
 ## Completion criteria
 
 - Environment checks are all-or-nothing and read-only.
+- Activation never discovers or reconciles a persisted workflow.
 - No success notification is required.
 - Errors contain the exact failed resource or model.

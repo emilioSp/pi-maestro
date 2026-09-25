@@ -1,6 +1,6 @@
 # Workflow
 
-Maestro manages one spec driven development workflow in a Git repository.
+Maestro manages one spec driven development workflow in the current session.
 
 The owner works with Maestro. Builder and verifier communicate with Maestro through repository handoffs. Maestro prepares the spec, manages Git resources, starts the builder and verifier, and records owner decisions.
 
@@ -125,9 +125,9 @@ Maestro stores the current phase in `.specs/<spec-id>/workflow.json` by default.
 | `candidate-ready` | The candidate passed verification or all findings were rejected with reasons. |
 | `final-review` | Maestro delivered staged changes and completed the workflow. |
 
-A repository can have one active Maestro workflow. Completed workflows can remain under the spec directory.
+A session can have one active Maestro workflow. Completed or abandoned workflows can remain under the spec directory.
 
-A `builder-failed` workflow remains blocked. The owner can retry with a clean worktree or abandon it manually. See [Recovery](recovery.md).
+A `builder-failed` workflow remains blocked. During the current session, the owner can explicitly retry with a clean worktree or abandon it manually.
 
 ## Spec approval
 

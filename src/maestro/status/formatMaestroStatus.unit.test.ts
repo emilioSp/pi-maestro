@@ -31,15 +31,7 @@ const PHASE_LABEL_CASES: Array<{ phase: WorkflowPhase; label: string }> = [
   { phase: WORKFLOW_PHASES.FINAL_REVIEW, label: 'Completed' },
 ];
 
-const createWorkflow = ({
-  phase,
-  issues = [],
-  interrupted = false,
-}: {
-  phase: WorkflowPhase;
-  issues?: readonly string[];
-  interrupted?: boolean;
-}) => {
+const createWorkflow = ({ phase }: { phase: WorkflowPhase }) => {
   const state: WorkflowState = {
     version: WORKFLOW_STATE_VERSION,
     specId: SPEC_ID,
@@ -48,7 +40,7 @@ const createWorkflow = ({
     baseBranch: 'main',
   };
 
-  return { state, issues, interrupted };
+  return { state };
 };
 
 describe('Maestro status', () => {
@@ -75,21 +67,6 @@ describe('Maestro status', () => {
       expect(status).toBe(`Maestro active · ${SPEC_ID} · ${label}`);
     },
   );
-
-  it('shows every reconciliation issue and an interrupted pass as blocking state', () => {
-    const status = formatMaestroStatus({
-      active: true,
-      workflow: createWorkflow({
-        phase: WORKFLOW_PHASES.BUILDER_RUNNING,
-        issues: ['Builder worktree is missing.', 'Branch does not match.'],
-        interrupted: true,
-      }),
-    });
-
-    expect(status).toBe(
-      `Maestro active · ${SPEC_ID} · Builder running · Interrupted · Blocked: Builder worktree is missing.; Branch does not match.`,
-    );
-  });
 
   it('does not show a completed final-review workflow as active work', () => {
     const status = formatMaestroStatus({

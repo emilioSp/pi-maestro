@@ -4,7 +4,7 @@ STATUS: DONE
 
 ## Dependency
 
-This task depends on Task 25: Implement workflow recovery.
+This task depends on the findings workflow and does not depend on workflow recovery.
 
 ## Objective
 
@@ -37,7 +37,7 @@ Put the Git operations in `src/git/final-review/`, with one public operation per
 
 ## Tests
 
-Add Vitest integration tests for each candidate type, squash contents, staged final state, no final commit, candidate data, successful cleanup, cleanup failure reporting, dirty base rejection, unexpected staging, unchanged phase before final-review, and completed-workflow discovery.
+Add Vitest integration tests for each candidate type, squash contents, staged final state, no final commit, candidate data, successful cleanup, cleanup failure reporting, dirty base rejection, unexpected staging, unchanged phase before final-review, and no recovery of a persisted completed workflow.
 
 ## Completion criteria
 

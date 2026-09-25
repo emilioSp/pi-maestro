@@ -8,13 +8,17 @@ describe('Maestro session state', () => {
     expect(state.isActive()).toBe(false);
   });
 
-  it('changes activation only in the live state object', () => {
+  it('keeps the active spec only in the live state object', () => {
     const state = createMaestroSessionState();
 
     state.activate();
+    state.setActiveSpecId('20260321-143052-add-weather-alerts');
+
     expect(state.isActive()).toBe(true);
+    expect(state.getActiveSpecId()).toBe('20260321-143052-add-weather-alerts');
 
     state.deactivate();
     expect(state.isActive()).toBe(false);
+    expect(state.getActiveSpecId()).toBeNull();
   });
 });

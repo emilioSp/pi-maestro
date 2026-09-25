@@ -63,7 +63,11 @@ export const createApprovedWorkflow = async ({
     activeWorkflowSpecId: null,
     instant: INSTANT,
   });
-  await markSpecReady({ paths, specId: SPEC_ID });
+  await markSpecReady({
+    paths,
+    specId: SPEC_ID,
+    activeWorkflowSpecId: SPEC_ID,
+  });
 
   if (commitApproval) {
     await repository.commit({ message: 'Approve builder spec' });

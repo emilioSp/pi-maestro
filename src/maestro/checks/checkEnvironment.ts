@@ -9,9 +9,6 @@ import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { AGENTS } from '#config/schema.ts';
 import { assertRepositoryTrusted } from '#git/repository/assertRepositoryTrusted.ts';
 import { findRepositoryRoot } from '#git/repository/findRepositoryRoot.ts';
-import { type GetMaestroPaths, getMaestroPaths } from '#paths.ts';
-import { discoverActiveWorkflow } from '#workflow/state/discover.ts';
-import { reconcileWorkflow } from '#workflow/state/reconcile.ts';
 
 type CheckEnvironmentInput = {
   context: ExtensionContext;
@@ -90,16 +87,6 @@ const assertAgentsAvailable = async ({
   }
 };
 
-const getWorkflow = async (paths: GetMaestroPaths) => {
-  try {
-    const workflow = await discoverActiveWorkflow({ paths });
-    return workflow;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Maestro workflow state check failed: ${message}`);
-  }
-};
-
 export const checkEnvironment = async ({
   context,
 }: CheckEnvironmentInput): Promise<void> => {
@@ -116,20 +103,4 @@ export const checkEnvironment = async ({
   const config = await getActivationConfiguration({ repositoryRoot });
 
   assertModelsAvailable({ context, config });
-
-  const paths = getMaestroPaths({ repositoryRoot, config });
-
-  const workflow = await getWorkflow(paths);
-  if (workflow !== null) {
-    const reconciliation = await reconcileWorkflow({
-      paths,
-      state: workflow.state,
-    });
-
-    if (reconciliation.issues.length > 0) {
-      throw new Error(
-        `Maestro workflow state check failed: ${reconciliation.issues.join('\n\n')}`,
-      );
-    }
-  }
 };

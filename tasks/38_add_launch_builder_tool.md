@@ -4,7 +4,7 @@ STATUS: TODO
 
 ## Dependency
 
-This task depends on Task 37: Add the inspect-workflow tool.
+This task depends on Task 36: Add the create-spec and mark-ready tools.
 
 ## Objective
 
@@ -40,4 +40,4 @@ Add adapter tests for the input schema, launch parameters, response matching, li
 
 - Every launch has a committed `builder-running` checkpoint.
 - Only a valid committed final artifact advances the workflow.
-- Failures leave enough state for recovery.
+- Failures leave the current session state available for an explicit follow-up.

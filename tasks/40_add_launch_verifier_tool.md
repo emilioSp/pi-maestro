@@ -41,4 +41,4 @@ Add adapter tests for the input schema, launch parameters, response matching, li
 
 - Every verifier uses a separate clean worktree and fresh context.
 - Only a valid committed final handoff advances the workflow.
-- Product-change errors leave the workflow ready for recovery by the verifier.
+- Product-change errors leave the live workflow ready for an explicit verifier follow-up.

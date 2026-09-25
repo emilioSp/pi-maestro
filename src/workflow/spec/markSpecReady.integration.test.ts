@@ -4,8 +4,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getMaestroPaths } from '#paths.ts';
+import { createSpec } from '#specs/create.ts';
 import { createTemporaryRepository } from '#test/support/temp-repository.ts';
-import { createWorkflowSpec } from '#workflow/spec/createWorkflowSpec.ts';
 import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
@@ -40,10 +40,11 @@ afterEach(async () => {
 describe('markSpecReady', () => {
   it('moves only the expected drafting spec to ready without committing or reading its Markdown', async () => {
     const { repository, paths } = await createRepository();
-    const created = await createWorkflowSpec({
+    const created = await createSpec({
       paths,
       title: 'Add Weather Alerts',
       baseBranch: 'main',
+      activeWorkflowSpecId: null,
       instant: INSTANT,
     });
     const markdown = '# Owner-approved content\n';
@@ -51,11 +52,21 @@ describe('markSpecReady', () => {
     const headBefore = await getHeadCommit({ repositoryRoot: repository.path });
 
     await expect(
-      markSpecReady({ paths, specId: OTHER_SPEC_ID }),
+      markSpecReady({
+        paths,
+        specId: OTHER_SPEC_ID,
+        activeWorkflowSpecId: SPEC_ID,
+      }),
     ).rejects.toThrow(
       `Active workflow spec ID mismatch: expected "${OTHER_SPEC_ID}", found "${SPEC_ID}".`,
     );
-    await expect(markSpecReady({ paths, specId: SPEC_ID })).resolves.toEqual({
+    await expect(
+      markSpecReady({
+        paths,
+        specId: SPEC_ID,
+        activeWorkflowSpecId: SPEC_ID,
+      }),
+    ).resolves.toEqual({
       ...created.state,
       revision: 2,
       phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
@@ -77,17 +88,22 @@ describe('markSpecReady', () => {
 
   it('rejects readiness when spec.md is missing', async () => {
     const { paths } = await createRepository();
-    const created = await createWorkflowSpec({
+    const created = await createSpec({
       paths,
       title: 'Add Weather Alerts',
       baseBranch: 'main',
+      activeWorkflowSpecId: null,
       instant: INSTANT,
     });
     await rm(created.specFilePath);
 
-    await expect(markSpecReady({ paths, specId: SPEC_ID })).rejects.toThrow(
-      `Spec file is missing: ${created.specFilePath}.`,
-    );
+    await expect(
+      markSpecReady({
+        paths,
+        specId: SPEC_ID,
+        activeWorkflowSpecId: SPEC_ID,
+      }),
+    ).rejects.toThrow(`Spec file is missing: ${created.specFilePath}.`);
     await expect(
       readWorkflowState({ path: created.workflowPath }),
     ).resolves.toEqual(created.state);

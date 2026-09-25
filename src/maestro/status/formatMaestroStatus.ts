@@ -20,8 +20,6 @@ const WORKFLOW_PHASE_LABELS = {
 
 type MaestroStatusWorkflow = {
   state: WorkflowState;
-  issues: readonly string[];
-  interrupted: boolean;
 };
 
 type FormatMaestroStatusInput = {
@@ -42,11 +40,6 @@ export const formatMaestroStatus = ({
   }
 
   const phase = WORKFLOW_PHASE_LABELS[workflow.state.phase];
-  const interrupted = workflow.interrupted ? ' · Interrupted' : '';
-  const blocked =
-    workflow.issues.length > 0
-      ? ` · Blocked: ${workflow.issues.join('; ')}`
-      : '';
 
-  return `Maestro active · ${workflow.state.specId} · ${phase}${interrupted}${blocked}`;
+  return `Maestro active · ${workflow.state.specId} · ${phase}`;
 };

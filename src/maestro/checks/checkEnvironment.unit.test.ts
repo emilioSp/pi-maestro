@@ -4,9 +4,6 @@ const mocks = vi.hoisted(() => ({
   findRepositoryRoot: vi.fn(),
   assertRepositoryTrusted: vi.fn(),
   loadConfiguration: vi.fn(),
-  getMaestroPaths: vi.fn(),
-  discoverActiveWorkflow: vi.fn(),
-  reconcileWorkflow: vi.fn(),
   resolveSubagentLaunchContract: vi.fn(),
 }));
 
@@ -18,13 +15,6 @@ vi.mock('#git/repository/assertRepositoryTrusted.ts', () => ({
 }));
 vi.mock('#config/loadConfiguration.ts', () => ({
   loadConfiguration: mocks.loadConfiguration,
-}));
-vi.mock('#paths.ts', () => ({ getMaestroPaths: mocks.getMaestroPaths }));
-vi.mock('#workflow/state/discover.ts', () => ({
-  discoverActiveWorkflow: mocks.discoverActiveWorkflow,
-}));
-vi.mock('#workflow/state/reconcile.ts', () => ({
-  reconcileWorkflow: mocks.reconcileWorkflow,
 }));
 vi.mock('pi-subagents/preflight', () => ({
   resolveSubagentLaunchContract: mocks.resolveSubagentLaunchContract,
@@ -59,8 +49,6 @@ const setSuccessfulChecks = (): void => {
   mocks.assertRepositoryTrusted.mockResolvedValue(undefined);
   mocks.loadConfiguration.mockResolvedValue(CONFIG);
   mocks.resolveSubagentLaunchContract.mockResolvedValue({ ok: true });
-  mocks.getMaestroPaths.mockReturnValue({});
-  mocks.discoverActiveWorkflow.mockResolvedValue(null);
 };
 
 describe('checkEnvironment', () => {
@@ -120,34 +108,6 @@ describe('checkEnvironment', () => {
     expect(mocks.resolveSubagentLaunchContract).toHaveBeenCalledTimes(2);
   });
 
-  it('rejects unreadable workflow state and stops at the first issue', async () => {
-    mocks.discoverActiveWorkflow.mockRejectedValue(
-      new Error('invalid workflow JSON'),
-    );
-
-    await expect(
-      checkEnvironment({ context: createContext() }),
-    ).rejects.toThrow(
-      'Maestro workflow state check failed: invalid workflow JSON',
-    );
-    expect(mocks.reconcileWorkflow).not.toHaveBeenCalled();
-  });
-
-  it('reports all issues for an inconsistent active workflow', async () => {
-    mocks.discoverActiveWorkflow.mockResolvedValue({
-      state: { specId: 'spec' },
-    });
-    mocks.reconcileWorkflow.mockResolvedValue({
-      issues: ['branch mismatch', 'other issue'],
-    });
-
-    await expect(
-      checkEnvironment({ context: createContext() }),
-    ).rejects.toThrow(
-      'Maestro workflow state check failed: branch mismatch\n\nother issue',
-    );
-  });
-
   it('allows a dirty base and absent configured directories without changing paths', async () => {
     const before = JSON.stringify({ root: '/repo', files: ['tracked-change'] });
 
@@ -166,11 +126,6 @@ describe('checkEnvironment', () => {
       context: 'fresh',
     });
     expect(mocks.loadConfiguration).toHaveBeenCalledWith({ cwd: '/repo' });
-    expect(mocks.getMaestroPaths).toHaveBeenCalledWith({
-      repositoryRoot: '/repo',
-      config: CONFIG,
-    });
-    expect(mocks.discoverActiveWorkflow).toHaveBeenCalledOnce();
     expect(JSON.stringify({ root: '/repo', files: ['tracked-change'] })).toBe(
       before,
     );

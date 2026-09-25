@@ -5,28 +5,29 @@
 
 import type { GetMaestroPaths } from '#paths.ts';
 import { pathExists } from '#utils/path-exists.ts';
-import { discoverActiveWorkflow } from '#workflow/state/discover.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_EVENTS, type WorkflowState } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 
+type MarkSpecReadyInput = {
+  paths: GetMaestroPaths;
+  specId: string;
+  activeWorkflowSpecId: string | null;
+};
+
 export const markSpecReady = async ({
   paths,
   specId,
-}: {
-  paths: GetMaestroPaths;
-  specId: string;
-}): Promise<WorkflowState> => {
-  const activeWorkflow = await discoverActiveWorkflow({ paths });
-
-  if (activeWorkflow === null) {
+  activeWorkflowSpecId,
+}: MarkSpecReadyInput): Promise<WorkflowState> => {
+  if (activeWorkflowSpecId === null) {
     throw new Error('No active Maestro workflow exists.');
   }
 
-  if (activeWorkflow.specId !== specId) {
+  if (activeWorkflowSpecId !== specId) {
     throw new Error(
-      `Active workflow spec ID mismatch: expected "${specId}", found "${activeWorkflow.specId}".`,
+      `Active workflow spec ID mismatch: expected "${specId}", found "${activeWorkflowSpecId}".`,
     );
   }
 
