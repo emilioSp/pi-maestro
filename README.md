@@ -63,7 +63,7 @@ Typical workflow:
 
 Builder and verifier runs are foreground operations. Pi waits for each run before the owner continues the conversation. Maestro shows the current phase in Pi's status. Use pi-subagents FleetView or `/subagents-fleet` to inspect live activity and the transcript.
 
-The owner must not change product code while the workflow is running. A spec can be revised on the same branch from `builder-failed`, `escalation-decision`, or `findings-decision`. Edit and approve `spec.md`, then call `maestro_mark_spec_ready`; the workflow returns to `ready-for-builder`. Maestro does not compare the new content with the previous content.
+The owner must not change product code while the workflow is running. A spec can be revised on the same branch from `escalation-decision` or `findings-decision`. Edit and approve `spec.md`, then call `maestro_mark_spec_ready`; the workflow returns to `ready-for-builder`. A technical builder failure stops the workflow and requires owner follow-up.
 
 Restarting Pi, disabling Maestro, or using `/resume` clears live session state. Maestro does not recover an incomplete workflow from `workflow.json`.
 
