@@ -21,8 +21,6 @@ Three principles hold the workflow together:
 - **Builder** — The agent that implements one spec. It never verifies its own work.
 - **Verifier** — The agent that verifies if the spec is technically compliant to the spec.
 
-The owner talks to the maestro. The maestro talks to the builders and the verifiers.
-
 ## Prerequisites
 
 - macOS
