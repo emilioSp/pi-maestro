@@ -4,7 +4,24 @@ Pi extension for a spec-driven multiagent development workflow.
 
 ![Maestro workflow](docs/maestro.png)
 
-Maestro helps an owner define one change, send it to a builder, verify the result, and prepare the current branch for a Pull Request.
+## The idea
+
+One spec describes one small reversible change. An agent builds it. A second, independent agent regenerates each acceptance criteria from scratch. The owner makes the final review alongside the commit on the base branch.
+
+Three principles hold the workflow together:
+
+- No agent approves its own work.
+- A check that passes must be able to fail. Each acceptance criterion states the breakage that must break it.
+- An agent never decides for the owner, and never guesses.
+
+## The roles
+
+- **Owner** — You. You bring the problem, decide every escalation and every finding, review the final code, and make every commit on the base branch. You never talk to a builder or a verifier.
+- **Maestro** — The agent you talk to. It writes the spec with you, spawns and supervises the other agents, records your decisions.
+- **Builder** — The agent that implements one spec. It never verifies its own work.
+- **Verifier** — The agent that verifies if the spec is technically compliant to the spec.
+
+The owner talks to the maestro. The maestro talks to the builders and the verifiers.
 
 ## Prerequisites
 
