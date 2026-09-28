@@ -20,7 +20,7 @@ Three principles hold the workflow together:
 - **Owner** — You. You bring the problem, decide every escalation and every finding, review the final code, and make every commit on the base branch. You never talk to a builder or a verifier.
 - **Maestro** — The agent you talk to. It writes the spec with you, spawns and supervises the other agents, records your decisions.
 - **Builder** — The agent that implements one spec. It never verifies its own work.
-- **Verifier** — The agent that verifies if the spec is technically compliant to the spec.
+- **Verifier** — The agent that verifies if the builder implementation is technically compliant to the spec.
 
 ## Prerequisites
 
