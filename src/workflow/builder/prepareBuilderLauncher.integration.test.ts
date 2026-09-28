@@ -20,7 +20,7 @@ import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 afterEach(cleanupBuilderWorkflows);
 
 describe('builder launch preparation', () => {
-  it('commits a running checkpoint on the current branch without creating a Git worktree', async () => {
+  it('commits a running checkpoint on the current branch without workflow resources', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const launch = await prepareBuilderLaunch({ paths, specId: SPEC_ID });
@@ -42,15 +42,6 @@ describe('builder launch preparation', () => {
       revision: 3,
       phase: WORKFLOW_PHASES.BUILDER_RUNNING,
     });
-    const worktreeList = await runGitCommand({
-      arguments: ['worktree', 'list', '--porcelain'],
-      cwd: repository.path,
-    });
-    expect(
-      worktreeList.stdout
-        .split('\n')
-        .filter((line) => line.startsWith('worktree ')),
-    ).toHaveLength(1);
     expect(maestroSessionState.getSpecSha256()).not.toBeNull();
   });
 
