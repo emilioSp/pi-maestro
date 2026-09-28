@@ -2,6 +2,8 @@
 
 Maestro manages one spec-driven development workflow in the current session.
 
+The approved `spec.md` is the contract between the owner, Maestro, the builder, and the verifier. It defines the intended behavior, constraints, technical decisions, and acceptance criteria. Implementation details that the contract leaves open are decided during the work. Changes to the contract's behavior, scope, or approved decisions require an owner-approved revision.
+
 The owner works with Maestro. Builder and verifier communicate with Maestro through repository handoffs. Maestro prepares the spec, updates workflow state, starts the builder and verifier, and records owner decisions.
 
 Maestro uses the current Git checkout and branch. It does not create, switch, name, or validate a branch. It does not create worktrees. If the owner starts on `main`, `master`, or another branch, all workflow commits use that branch.
@@ -148,7 +150,7 @@ For the initial spec:
 3. `maestro_mark_spec_ready` changes the phase to `ready-for-builder`.
 4. The owner commits `spec.md` and `workflow.json` on the current branch.
 
-The commit is the approved contract for the builder.
+The committed `spec.md` and `workflow.json` are the approved contract for the builder and verifier. The contract is immutable during a builder or verifier pass. When a discovery shows that the contract must change, the owner makes an explicit revision and approval before the next pass.
 
 A contract revision is allowed only from these blocked phases:
 
@@ -186,14 +188,18 @@ Builder and verifier both run the probe, apply the specified safe breakage, run 
 
 ## Escalations
 
-The builder opens an escalation when progress needs an owner decision. The escalation contains a question, context, options, consequences, next steps, and an optional recommendation.
+An escalation is the way Maestro brings a significant implementation discovery to the owner's attention and asks for a decision. It is not necessarily a technical failure, an error, or a blocker.
 
-The owner chooses one path:
+An escalation is relevant when the work presents meaningful alternatives with different consequences. Examples include a conflict between the approved contract and the repository, behavior that the contract does not define, a material architectural alternative, a possible scope change, or a decision that affects verification or reversibility.
 
-- Continue with the current spec. Maestro records the answer and prepares another builder run.
-- Change the approved contract. The owner revises `spec.md` from `escalation-decision`, calls `maestro_mark_spec_ready`, and prepares another builder run on the same branch and `specId`.
+Each escalation presents a question, context and evidence, available options, consequences, next steps, and an optional recommendation. While an escalation is unresolved, the workflow is paused in `escalation-decision` and the owner must decide how to proceed.
 
-Each escalation remains in the workflow history. Older escalation artifacts are context only.
+The owner can choose one of two paths:
+
+- Continue with the current contract. Maestro records the decision and returns the workflow to `ready-for-builder` for another builder run.
+- Change the approved contract. The owner revises and approves `spec.md`, then calls `maestro_mark_spec_ready`. The workflow returns to `ready-for-builder` on the same branch and with the same `specId`.
+
+Each escalation remains in the workflow history as references.
 
 ## Findings
 
@@ -242,4 +248,7 @@ The default spec directory contains:
 └── prototypes/
 ```
 
-`builder.json` and `verifier.json` represent the current handoffs and can be overwritten by later runs. Escalations remain in the history directory. Earlier versions of all artifacts remain in Git commits.
+- `builder.json` and `verifier.json` represent the current handoffs and can be overwritten by later runs. 
+- Builder handoff `notes` contain curated significant discoveries that did not require an owner decision; Maestro surfaces the applicable notes in the final workflow summary. 
+- Escalations remain in the history directory. 
+- Earlier versions of all artifacts remain in Git commits.
