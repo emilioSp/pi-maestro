@@ -1,5 +1,7 @@
 # <id>: <short, outcome-oriented title>
 
+> After owner approval, this specification is the contract for the builder and verifier.
+
 ## 1. Context, goals, and scope
 
 <Describe the current situation, who or what is affected, and the problem or opportunity without describing the implementation.>

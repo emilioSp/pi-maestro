@@ -10,6 +10,7 @@ One spec describes one small reversible change. An agent builds it. A second, in
 
 Three principles hold the workflow together:
 
+- The approved spec is the contract for the builder and verifier.
 - No agent approves its own work.
 - A check that passes must be able to fail. Each acceptance criterion states the breakage that must break it.
 - An agent never decides for the owner, and never guesses.
@@ -71,7 +72,7 @@ Typical workflow:
 4. Approve the spec.
 5. Commit the approved `spec.md` and `workflow.json` on the current branch.
 6. Ask Maestro to launch the builder.
-7. Answer builder escalations.
+7. Review and answer builder escalations. An escalation can report a significant discovery or a technical failure.
 8. Review verifier findings and choose an action for each one.
 9. Ask Maestro to prepare the final review when the candidate is ready.
 10. Open a Pull Request from the current branch and choose the merge method, including squash merge.
