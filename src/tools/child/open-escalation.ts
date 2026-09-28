@@ -1,6 +1,6 @@
 /**
  * Objective: Register the builder escalation tool for the current checkout.
- * Used: When the builder needs an owner decision to continue.
+ * Used: When the builder finds a significant discovery that requires an owner decision.
  */
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
@@ -17,7 +17,7 @@ export const BUILDER_ESCALATION_TOOL = {
   NAME: 'maestro_open_escalation',
   LABEL: 'Open Builder Escalation',
   DESCRIPTION:
-    'Ask the owner to choose between options. After success, commit the escalation, workflow state, and current work together with Bash and Git, then stop. Do not wait for the owner.',
+    'Ask the owner to choose between options for a significant discovery or unresolved decision. An escalation is not limited to a technical failure or blocker. After success, commit the escalation, workflow state, and current work together with Bash and Git, then stop. Do not wait for the owner.',
 } as const;
 
 const BuilderEscalationToolParameters = Type.Object(
