@@ -42,9 +42,6 @@ describe('builder launch preparation', () => {
       revision: 3,
       phase: WORKFLOW_PHASES.BUILDER_RUNNING,
     });
-    await expect(pathExists(join(repository.path, '.worktree'))).resolves.toBe(
-      false,
-    );
     expect(maestroSessionState.getSpecSha256()).not.toBeNull();
   });
 

@@ -16,7 +16,7 @@ import {
 const INSTANT = Temporal.Instant.from('2026-03-21T14:30:52Z');
 const SPEC_ID = '20260321-143052-add-weather-alerts';
 const TEMPLATE_SHA256 =
-  '7472828560ab89268c93e01f9f6361756a0018b268c2b2d1459194960f128682';
+  'a68c4477eb46e3782c5680090380bf61303f9c0c0d7c9ae103f31ce48fbb53e1';
 const temporaryDirectories: string[] = [];
 
 const createWorkspace = async ({

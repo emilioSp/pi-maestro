@@ -300,6 +300,8 @@ Template approvato:
 ````md
 # <id>: <short, outcome-oriented title>
 
+> After owner approval, this specification is the contract for the builder and verifier.
+
 ## 1. Context, goals, and scope
 
 <Describe the current situation, who or what is affected, and the problem or opportunity without describing the implementation.>
@@ -533,6 +535,8 @@ Regole degli acceptance criteria:
 18. Il verifier rigenera il ciclo senza usare il builder handoff come prova.
 19. Builder e verifier non cambiano unilateralmente probe, expected result o breakage.
 
+La `spec.md` approvata è il contratto tra owner, Maestro, builder e verifier. Definisce comportamento, vincoli, decisioni tecniche e acceptance criteria. Il builder può scegliere i dettagli di implementazione lasciati aperti dal contratto, ma non può modificarlo o reinterpretarlo silenziosamente. Una discovery significativa che richiede una scelta dell’owner usa un’escalation; se la scelta cambia il contratto, l’owner deve revisionare e riapprovare la spec prima del passaggio successivo.
+
 `maestro_mark_spec_ready` tratta `spec.md` come Markdown opaco. Verifica solo che il workflow sia nella fase iniziale `drafting-spec` oppure in una fase bloccante autorizzata alla revisione, e che il file esista. Non confronta il contenuto con una versione precedente. Quando approva una revisione da una fase bloccante, rende obsoleti il blocco e gli artefatti decisionali correnti senza richiedere una risoluzione separata. Non analizza sezioni, acceptance criteria o riferimenti ai prototype.
 
 Validazione semantica del Maestro LLM prima di chiamare il tool:
@@ -556,12 +560,13 @@ L’estensione non interpreta né valida la struttura della spec. Maestro, build
 2. Legge la spec e gli `AGENTS.md`.
 3. Può modificare qualsiasi file interno alla root Git necessario per rispettare la spec. Non introduce modifiche estranee al problema, ai vincoli, all’approccio approvato o agli acceptance criteria.
 4. Registra nel builder handoff l’evidenza del passaggio `done` o `failed`.
-5. Esegue probe e breakage.
-6. Scrive esattamente un handoff terminale.
-7. Commette il proprio lavoro e l’handoff.
-8. Può terminare con `done`, `failed` o escalation.
-9. Un handoff `failed` porta a `builder-failed`, uno stato pozzo: Maestro riporta l’errore e non avvia un altro builder nello stesso workflow.
-10. Non approva il proprio lavoro.
+5. Registra nelle `notes` solo le discovery significative che meritano di essere conservate ma non richiedono una decisione dell’owner.
+6. Esegue probe e breakage.
+7. Scrive esattamente un handoff terminale.
+8. Commette il proprio lavoro e l’handoff.
+9. Può terminare con `done`, `failed` o escalation.
+10. Un handoff `failed` porta a `builder-failed`, uno stato pozzo: Maestro riporta l’errore e non avvia un altro builder nello stesso workflow.
+11. Non approva il proprio lavoro.
 
 <a id="plan-section-3-4"></a>
 
@@ -590,15 +595,17 @@ L’estensione non interpreta né valida la struttura della spec. Maestro, build
 ## 3.5 Escalation
 
 1. Solo il builder apre un’escalation.
-2. L’escalation rappresenta una decisione dell’owner.
-3. Il builder scrive l’escalation, la commette e termina.
-4. Non aspetta in processo.
-5. Il maestro registra la risposta dell’owner con `maestro_resolve_escalation` quando la spec approvata resta valida.
-6. Il tool riceve `specId`, `escalationId` e la resolution.
-7. La resolution persistita contiene solo `selectedOptionId`, `decision` e `reason`.
-8. Una resolution valida porta a `ready-for-builder` senza lanciare automaticamente il builder.
-9. Se l’owner vuole cambiare il contratto approvato, usa il percorso esplicito di revisione della spec nello stesso workflow. La revisione mantiene lo stesso `specId` e branch, richiede una nuova approvazione e porta a un nuovo builder pass.
-10. Le escalation non vengono riutilizzate o eliminate; dopo la creazione cambiano solo `revision` e `resolution`.
+2. Un’escalation è una richiesta strutturata di attenzione e decisione dell’owner. Non rappresenta necessariamente un errore tecnico o un blocco implementativo.
+3. Il builder apre un’escalation quando una discovery significativa richiede una scelta dell’owner tra opzioni con conseguenze diverse. Esempi sono un conflitto tra spec e repository, un comportamento non definito, una scelta architetturale rilevante, una conseguenza sullo scope oppure una decisione che modifica la verifica o la reversibilità.
+4. Il builder non apre un’escalation per dettagli ordinari già coperti dal contratto. Se non esistono opzioni o decisioni per l’owner, continua il lavoro. Una discovery significativa che merita di essere conservata ma non richiede una decisione viene registrata nelle `notes` del builder handoff; le note sono un registro curato e non un log completo.
+5. L’escalation contiene domanda, contesto ed evidenze, opzioni, conseguenze, prossimo passo e una raccomandazione quando utile.
+6. Il builder scrive l’escalation, la commette con il lavoro corrente e termina. Non aspetta in processo. Il workflow entra in `escalation-decision` finché l’owner non decide.
+7. Il maestro registra la risposta dell’owner con `maestro_resolve_escalation` quando la spec approvata resta valida.
+8. Il tool riceve `specId`, `escalationId` e la resolution.
+9. La resolution persistita contiene solo `selectedOptionId`, `decision` e `reason`.
+10. Una resolution valida porta a `ready-for-builder` senza lanciare automaticamente il builder.
+11. Se l’owner vuole cambiare il contratto approvato, usa il percorso esplicito di revisione della spec nello stesso workflow. La revisione mantiene lo stesso `specId` e branch, richiede una nuova approvazione e porta a un nuovo builder pass.
+12. Le escalation non vengono riutilizzate o eliminate; dopo la creazione cambiano solo `revision` e `resolution`.
 
 <a id="plan-section-3-6"></a>
 
@@ -1054,6 +1061,7 @@ Il modello gestisce:
 3. Preparazione della spec.
 4. Presentazione di escalation e finding.
 5. Applicazione delle decisioni esplicite dell’owner.
+6. Presentazione all’owner delle `notes` significative raccolte negli handoff builder nella sintesi finale del workflow.
 
 L’estensione gestisce:
 
@@ -1355,7 +1363,7 @@ Esempio `done`:
 12. `breakageStatus` accetta `confirmed`, `not-confirmed` o `not-run`.
 13. Con `status: done`, tutti i probe devono essere `passed` e tutti i breakage devono essere `confirmed`.
 14. Con `status: failed`, è obbligatorio `"failure": { "reason": "<non-empty>" }`. I risultati non eseguiti restano esplicitamente `not-run`.
-15. `notes` è sempre presente come lista di stringhe e può essere vuota. Le note non modificano la spec e non sostituiscono un’escalation.
+15. `notes` è sempre presente come lista di stringhe e può essere vuota. Le note contengono solo discovery significative che non richiedono una decisione dell’owner; non modificano la spec e non sostituiscono un’escalation quando una decisione è necessaria.
 16. Il builder handoff conserva comandi e stati sintetici, non log completi o dati sensibili.
 17. Il verifier handoff non è un array JSON diretto. Registra anche i controlli rigenerati:
 
