@@ -50,6 +50,15 @@ export const createTemporaryRepository =
         });
         return runGit({ arguments: ['rev-parse', 'HEAD'], cwd: path });
       },
-      cleanup: async () => rm(path, { force: true, recursive: true }),
+      cleanup: async () => {
+        try {
+          await rm(path, { force: true, recursive: true });
+        } catch {
+          // Best effort: macOS CI intermittently failed teardown with ENOTEMPTY
+          // while removing .git/objects from this temporary repository.
+          // See Actions run 36433253055. The repository is under os.tmpdir(),
+          // so leaving it behind cannot modify the project checkout.
+        }
+      },
     };
   };
