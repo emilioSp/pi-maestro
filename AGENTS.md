@@ -54,7 +54,10 @@ The package is source-only. Pi loads TypeScript directly, `src/` is published, a
 - Use ESM only. Do not use CommonJS.
 - Prefer `type` over `interface`.
 - Prefer named exports. Use a default export only when a tool requires it or for a single application entrypoint or singleton.
-- Prefer pure functions.
+- Keep domain logic pure, but keep infrastructure pragmatically coupled.
+    - Do not use dependency injection for modules, singletons, DB clients, or internal library imports. Import them directly at the file top level.
+    - Write pure functions for business logic, data transformations, and calculations (inputs --> outputs, no side effects).
+    - Orchestration functions (handlers, services) are allowed to perform side effects and use global/singleton state (DB connections, loggers) directly.
 - Use assertion functions with the TypeScript `asserts value is Type` return type to validate and narrow types; throw an error when validation fails.
 - Name every function that checks a condition and throws on failure `assert...`; return `void` (or `Promise<void>` if async), and use `asserts value is Type` when the check narrows a type.
 - Prefer arrow functions, but use function for assertion functions for the sake of human readability.
