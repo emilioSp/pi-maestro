@@ -77,6 +77,8 @@ Builder and verifier runs are foreground operations. Pi waits for each run befor
 
 ## Main flow
 
+Happy path is highlighted in green.
+
 ```mermaid
 flowchart TD
     spec[Owner and Maestro write one spec]
@@ -116,6 +118,8 @@ flowchart TD
     finalReview --> pullRequest[Owner opens a Pull Request]
     pullRequest --> ownerReview[Owner reviews the Pull Request]
     ownerReview --> merge[Owner merges the Pull Request]
+
+    linkStyle 0,1,2,3,13,14,15,21,22,23,24 stroke:#2e7d32,stroke-width:3px
 ```
 
 ## Workflow phases
