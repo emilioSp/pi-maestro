@@ -1,3 +1,4 @@
+import { ObjectOptions } from 'typebox/type';
 import { describe, expect, it } from 'vitest';
 import {
   assertWorkflowState,
@@ -16,10 +17,7 @@ const validState = {
 describe('workflow state schema', () => {
   it('is closed and accepts every workflow phase', () => {
     expect(WorkflowStateSchema.type).toBe('object');
-    expect(
-      (WorkflowStateSchema as unknown as Record<string, unknown>)
-        .additionalProperties,
-    ).toBe(false);
+    expect(ObjectOptions(WorkflowStateSchema).additionalProperties).toBe(false);
 
     for (const phase of Object.values(WORKFLOW_PHASES)) {
       expect(() => assertWorkflowState({ ...validState, phase })).not.toThrow();

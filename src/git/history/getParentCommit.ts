@@ -18,5 +18,6 @@ export const getParentCommit = async ({
     arguments: ['rev-parse', '--verify', `${commit}^`],
     cwd: repositoryRoot,
   });
+
   return result.stdout.trim();
 };

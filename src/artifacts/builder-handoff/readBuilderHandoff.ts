@@ -18,5 +18,6 @@ export const readBuilderHandoff = async ({
 }): Promise<BuilderHandoff> => {
   const handoff = await readJsonFile({ path, description: 'Builder handoff' });
   assertBuilderHandoff(handoff, specId, revision);
+
   return handoff;
 };

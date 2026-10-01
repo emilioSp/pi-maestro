@@ -10,15 +10,23 @@ import {
 } from '#config/schema.ts';
 
 export const DEFAULT_CONFIG_VERSION = SUPPORTED_CONFIG_VERSION;
+
 export const DEFAULT_SPEC_DIRECTORY = '.specs';
+
 export const DEFAULT_BUILDER_MODEL = 'openai-codex/gpt-6-luna';
+
 export const DEFAULT_BUILDER_THINKING = THINKING_LEVELS.HIGH;
+
 export const DEFAULT_VERIFIER_MODEL = 'openai-codex/gpt-6-sol';
+
 export const DEFAULT_VERIFIER_THINKING = THINKING_LEVELS.MEDIUM;
+
 export const DEFAULT_TIMEOUT_MINUTES = 60;
 
 export const CONFIG_DIRECTORY_NAME = '.pi';
+
 export const CONFIG_FILE_NAME = 'maestro.json';
+
 export const CONFIG_FILE_PATH = `${CONFIG_DIRECTORY_NAME}/${CONFIG_FILE_NAME}`;
 
 export const DEFAULT_CONFIG: MaestroConfig = {

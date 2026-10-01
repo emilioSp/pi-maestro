@@ -19,6 +19,7 @@ const createRepositoryWithCommit = async () => {
   cleanupFunctions.push(repository.cleanup);
   await writeFile(join(repository.path, 'README.md'), '# Test\n', 'utf8');
   await repository.commit({ message: 'Initial commit' });
+
   return repository;
 };
 
@@ -26,6 +27,7 @@ describe('checkpoint creation', () => {
   it('creates a checkpoint on the current branch with only expected paths', async () => {
     const repository = await createRepositoryWithCommit();
     await writeFile(join(repository.path, 'workflow.json'), '{}\n', 'utf8');
+
     const parent = await runGitCommand({
       arguments: ['rev-parse', 'HEAD'],
       cwd: repository.path,

@@ -59,6 +59,7 @@ export const prepareVerifierLaunch = async ({
     state: currentState,
     event: WORKFLOW_EVENTS.LAUNCH_VERIFIER,
   });
+
   const handoffExists = await pathExists(handoffPath);
 
   if (handoffExists) {

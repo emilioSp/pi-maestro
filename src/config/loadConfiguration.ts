@@ -8,6 +8,7 @@ import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { assertConfiguration } from '#config/assertConfiguration.ts';
 import { CONFIG_FILE_PATH, DEFAULT_CONFIG } from '#config/defaults.ts';
 import type { MaestroConfig, PartialMaestroConfig } from '#config/schema.ts';
+import { isErrnoException } from '#utils/is-errno-exception.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { isPathStrictlyWithin } from '#utils/path-strictly-within.ts';
 import { isPathWithinOrEqual } from '#utils/path-within-or-equal.ts';
@@ -49,9 +50,7 @@ const findExistingAncestor = async (
       // lstat instead of access, because access follows symlinks
       await lstat(anchestor);
     } catch (error) {
-      const code = (error as NodeJS.ErrnoException).code;
-
-      if (code !== 'ENOENT') {
+      if (!isErrnoException(error) || error.code !== 'ENOENT') {
         throw error;
       }
 
@@ -60,6 +59,7 @@ const findExistingAncestor = async (
       if (parent === anchestor) {
         throw new Error(`Cannot resolve an existing ancestor for "${path}".`);
       }
+
       anchestor = parent;
       continue;
     }
@@ -143,11 +143,13 @@ const resolveDirectories = async ({
   config: MaestroConfig;
 }): Promise<MaestroConfig> => {
   const repositoryRoot = await realpath(configuredRepositoryRoot);
+
   const specDirectory = await resolveSafeDirectory({
     repositoryRoot,
     directory: config.specDirectory,
     name: 'specDirectory',
   });
+
   return {
     ...config,
     specDirectory,
@@ -167,6 +169,7 @@ export const loadConfiguration = async ({
   }
 
   let parsed: unknown;
+
   try {
     const content = await readFile(targetPath, 'utf8');
     parsed = JSON.parse(content);

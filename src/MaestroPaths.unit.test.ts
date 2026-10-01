@@ -6,6 +6,7 @@ import { MaestroPaths } from '#MaestroPaths.ts';
 import { createTemporaryRepository } from '#test/support/temp-repository.ts';
 
 const SPEC_ID = '20260321-143052-add-weather-alerts';
+
 const temporaryPaths: string[] = [];
 
 afterEach(async () => {
@@ -25,6 +26,7 @@ describe('Maestro paths', () => {
   it('builds every workflow path from the current repository checkout', async () => {
     const repository = await createTemporaryRepository();
     temporaryPaths.push(repository.path);
+
     const paths = new MaestroPaths({
       repositoryRoot: repository.path,
       config: {
@@ -70,6 +72,7 @@ describe('Maestro paths', () => {
   it('keeps generated artifact paths inside the repository', async () => {
     const repository = await createTemporaryRepository();
     temporaryPaths.push(repository.path);
+
     const paths = new MaestroPaths({
       repositoryRoot: repository.path,
       config: {
@@ -77,6 +80,7 @@ describe('Maestro paths', () => {
         specDirectory: join(repository.path, '.specs'),
       },
     });
+
     const generatedPaths = [
       paths.getSpecPath(SPEC_ID),
       paths.getSpecFilePath(SPEC_ID),

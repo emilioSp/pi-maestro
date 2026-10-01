@@ -18,5 +18,6 @@ export const readVerifierHandoff = async ({
 }): Promise<VerifierHandoff> => {
   const handoff = await readJsonFile({ path, description: 'Verifier handoff' });
   assertVerifierHandoff(handoff, specId, revision);
+
   return handoff;
 };

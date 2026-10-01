@@ -10,12 +10,15 @@ const mocks = vi.hoisted(() => ({
 vi.mock('#git/repository/findRepositoryRoot.ts', () => ({
   findRepositoryRoot: mocks.findRepositoryRoot,
 }));
+
 vi.mock('#git/repository/assertRepositoryTrusted.ts', () => ({
   assertRepositoryTrusted: mocks.assertRepositoryTrusted,
 }));
+
 vi.mock('#config/loadConfiguration.ts', () => ({
   loadConfiguration: mocks.loadConfiguration,
 }));
+
 vi.mock('pi-subagents/preflight', () => ({
   resolveSubagentLaunchContract: mocks.resolveSubagentLaunchContract,
 }));
@@ -33,6 +36,7 @@ const EXPECTED_AGENTS = {
 } as const;
 
 const createContext = (trusted = true) =>
+  // JUSTIFICATION: The test mock supplies only the ExtensionContext fields read by checkEnvironment.
   ({
     cwd: '/repo',
     isProjectTrusted: () => trusted,

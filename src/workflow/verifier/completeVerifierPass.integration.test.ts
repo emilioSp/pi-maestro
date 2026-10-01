@@ -34,10 +34,12 @@ const approvedHandoff = {
 
 const prepareRunningVerifier = async () => {
   const workflow = await createApprovedWorkflow();
+
   const builderLaunch = await prepareBuilderLaunch({
     paths: workflow.paths,
     specId: SPEC_ID,
   });
+
   await completeBuilderPass({
     paths: workflow.paths,
     specId: SPEC_ID,
@@ -52,6 +54,7 @@ const prepareRunningVerifier = async () => {
     path: workflow.repository.path,
     message: 'Builder completed',
   });
+
   const verifierLaunch = await prepareVerifierLaunch({
     paths: workflow.paths,
     specId: SPEC_ID,
@@ -64,6 +67,7 @@ describe('verifier completion', () => {
   it('writes one verifier handoff on the current checkout', async () => {
     const { paths, repository, verifierLaunch } =
       await prepareRunningVerifier();
+
     const handoff = {
       ...approvedHandoff,
       revision: verifierLaunch.revision + 1,
@@ -102,6 +106,7 @@ describe('verifier completion', () => {
   it('rejects product changes without writing the verifier protocol', async () => {
     const { paths, repository, verifierLaunch } =
       await prepareRunningVerifier();
+
     await writeFile(join(repository.path, 'product-change.txt'), 'changed\n');
     const handoffPath = paths.getVerifierHandoffPath(SPEC_ID);
 
@@ -131,6 +136,7 @@ describe('verifier completion', () => {
   it('rejects unstaged tracked product changes', async () => {
     const { paths, repository, verifierLaunch } =
       await prepareRunningVerifier();
+
     await writeFile(join(repository.path, 'README.md'), '# Changed\n', 'utf8');
 
     await expect(
@@ -151,6 +157,7 @@ describe('verifier completion', () => {
   it('rejects staged tracked product changes', async () => {
     const { paths, repository, verifierLaunch } =
       await prepareRunningVerifier();
+
     await writeFile(join(repository.path, 'README.md'), '# Changed\n', 'utf8');
     await runGitCommand({
       arguments: ['add', '--', 'README.md'],

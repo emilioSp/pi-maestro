@@ -28,6 +28,7 @@ export const readEscalationHistory = async ({
   const orderedFiles = files.sort(
     (left, right) => Number(left.slice(1, -5)) - Number(right.slice(1, -5)),
   );
+
   const escalations: Escalation[] = [];
 
   for (const file of orderedFiles.values()) {
@@ -36,6 +37,7 @@ export const readEscalationHistory = async ({
       specId,
       currentRevision,
     });
+
     escalations.push(escalation);
   }
 

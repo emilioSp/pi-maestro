@@ -67,4 +67,5 @@ export const VerifierHandoffSchema = Type.Object(
 );
 
 export type VerifierFinding = Static<typeof VerifierFindingSchema>;
+
 export type VerifierHandoff = Static<typeof VerifierHandoffSchema>;

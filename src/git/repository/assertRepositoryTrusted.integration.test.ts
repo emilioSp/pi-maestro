@@ -16,6 +16,7 @@ describe('repository trust inspection', () => {
     const repository = await createTemporaryRepository();
     cleanupFunctions.push(repository.cleanup);
     await writeFile(join(repository.path, 'untracked.txt'), 'new\n', 'utf8');
+
     const before = await getRepositoryStatus({
       repositoryRoot: repository.path,
     });

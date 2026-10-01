@@ -15,6 +15,7 @@ const temporaryDirectories: string[] = [];
 const createTemporaryDirectory = async (): Promise<string> => {
   const path = await mkdtemp(join(tmpdir(), 'pi-maestro-workflow-state-'));
   temporaryDirectories.push(path);
+
   return path;
 };
 

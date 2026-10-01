@@ -30,6 +30,7 @@ export const BREAKAGE_STATUSES = {
 } as const;
 
 export type ProbeStatus = (typeof PROBE_STATUSES)[keyof typeof PROBE_STATUSES];
+
 export type BreakageStatus =
   (typeof BREAKAGE_STATUSES)[keyof typeof BREAKAGE_STATUSES];
 
@@ -112,10 +113,13 @@ export const BuilderHandoffSubmissionSchema = Type.Union([
 export type BuilderAcceptanceCriterion = Static<
   typeof BuilderAcceptanceCriterionSchema
 >;
+
 export type BuilderHandoff = Static<typeof BuilderHandoffSchema>;
+
 export type BuilderHandoffSubmissionInput = Static<
   typeof BuilderHandoffSubmissionSchema
 >;
+
 export type BuilderHandoffSubmission =
   | {
       status: typeof BUILDER_HANDOFF_STATUSES.DONE;

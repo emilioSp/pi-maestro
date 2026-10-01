@@ -61,10 +61,12 @@ export const registerRecordBuilderHandoffTool = ({
     parameters: BuilderHandoffToolParameters,
     async execute(_toolCallId, params, _signal, _onUpdate, context) {
       const { specId, ...handoff } = params;
+
       const { paths } = await getChildContext({
         cwd: context.cwd,
         specId,
       });
+
       const completed = await completeBuilderPass({
         paths,
         specId,

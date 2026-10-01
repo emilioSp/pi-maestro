@@ -17,6 +17,7 @@ afterEach(async () => {
 const createTemporaryDirectory = async (): Promise<string> => {
   const path = await mkdtemp(join(tmpdir(), 'pi-maestro-git-command-'));
   temporaryDirectories.push(path);
+
   return path;
 };
 

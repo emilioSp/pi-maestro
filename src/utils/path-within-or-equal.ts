@@ -13,6 +13,7 @@ export const isPathWithinOrEqual = ({
   candidate: string;
 }): boolean => {
   const pathToCandidate = relative(parent, candidate);
+
   return (
     pathToCandidate === '' ||
     (!pathToCandidate.startsWith(`..${sep}`) &&

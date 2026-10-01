@@ -66,6 +66,7 @@ export const prepareFinalReview = async ({
 
   const currentBranch = await getCurrentBranch({ repositoryRoot });
   const candidateCommit = await getHeadCommit({ repositoryRoot });
+
   const nextState = transitionWorkflow({
     state: currentState,
     event: WORKFLOW_EVENTS.PREPARE_FINAL_REVIEW,

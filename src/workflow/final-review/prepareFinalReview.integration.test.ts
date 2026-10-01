@@ -44,6 +44,7 @@ const prepareCandidate = async () => {
     paths: workflow.paths,
     specId: SPEC_ID,
   });
+
   const verifierRevision = verifierLaunch.revision + 1;
   await completeVerifierPass({
     paths: workflow.paths,
@@ -112,6 +113,7 @@ describe('final review', () => {
 
   it('rejects active verifier findings', async () => {
     const { paths, repository, verifierRevision } = await prepareCandidate();
+
     const activeFinding = {
       id: 'F1',
       acceptanceCriterion: null,

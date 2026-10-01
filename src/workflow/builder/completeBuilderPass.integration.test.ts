@@ -17,6 +17,7 @@ describe('builder completion', () => {
   it('writes the builder handoff and state in the current checkout', async () => {
     const { paths, repository } = await createApprovedWorkflow();
     const launch = await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+
     const handoff = {
       status: 'done' as const,
       summary: 'Implemented the approved change.',

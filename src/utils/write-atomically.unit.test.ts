@@ -26,6 +26,7 @@ afterEach(async () => {
 const createTemporaryDirectory = async (): Promise<string> => {
   const path = await mkdtemp(join(tmpdir(), 'pi-maestro-atomic-write-'));
   temporaryDirectories.push(path);
+
   return path;
 };
 

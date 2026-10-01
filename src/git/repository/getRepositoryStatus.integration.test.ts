@@ -28,6 +28,7 @@ describe('getRepositoryStatus', () => {
       'new\n',
       'utf8',
     );
+
     const status = await getRepositoryStatus({
       repositoryRoot: repository.path,
     });

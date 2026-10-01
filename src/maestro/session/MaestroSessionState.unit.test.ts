@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 
 const SPEC_ID = '20260321-143052-add-weather-alerts';
+
 const temporaryDirectories: string[] = [];
 
 const createSpecFile = async (contents: string): Promise<string> => {

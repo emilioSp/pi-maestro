@@ -12,11 +12,13 @@ import {
 } from '#artifacts/builder-handoff/schema.ts';
 
 const temporaryDirectories: string[] = [];
+
 const specId = '20260321-143052-add-weather-alerts';
 
 const createTemporaryDirectory = async (): Promise<string> => {
   const path = await mkdtemp(join(tmpdir(), 'pi-maestro-builder-handoff-'));
   temporaryDirectories.push(path);
+
   return path;
 };
 

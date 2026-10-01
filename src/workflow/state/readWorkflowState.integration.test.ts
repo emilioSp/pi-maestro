@@ -14,6 +14,7 @@ const temporaryDirectories: string[] = [];
 const createTemporaryDirectory = async (): Promise<string> => {
   const path = await mkdtemp(join(tmpdir(), 'pi-maestro-workflow-state-'));
   temporaryDirectories.push(path);
+
   return path;
 };
 
@@ -29,12 +30,14 @@ describe('readWorkflowState', () => {
   it('returns a validated state', async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, 'workflow.json');
+
     const state: WorkflowState = {
       version: WORKFLOW_STATE_VERSION,
       specId: '20260321-143052-add-weather-alerts',
       revision: 1,
       phase: WORKFLOW_PHASES.DRAFTING_SPEC,
     };
+
     await writeFile(path, JSON.stringify(state), 'utf8');
 
     await expect(readWorkflowState({ path })).resolves.toEqual(state);

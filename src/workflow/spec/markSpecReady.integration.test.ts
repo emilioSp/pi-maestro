@@ -12,8 +12,11 @@ import { WORKFLOW_PHASES, type WorkflowPhase } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 
 const INSTANT = Temporal.Instant.from('2026-03-21T14:30:52Z');
+
 const SPEC_ID = '20260321-143052-add-weather-alerts';
+
 const OTHER_SPEC_ID = '20260322-143052-add-weather-alerts';
+
 const cleanupFunctions: Array<() => Promise<void>> = [];
 
 type CreateWorkflowInput = {
@@ -25,6 +28,7 @@ const createRepository = async () => {
   cleanupFunctions.push(repository.cleanup);
   await writeFile(join(repository.path, 'README.md'), '# Test\n', 'utf8');
   await repository.commit({ message: 'Initial commit' });
+
   const paths = new MaestroPaths({
     repositoryRoot: repository.path,
     config: {
@@ -40,6 +44,7 @@ const createWorkflow = async ({
   phase = WORKFLOW_PHASES.DRAFTING_SPEC,
 }: CreateWorkflowInput = {}) => {
   const { repository, paths } = await createRepository();
+
   const created = await createSpec({
     paths,
     title: 'Add Weather Alerts',

@@ -14,6 +14,9 @@ type CheckEnvironmentInput = {
   context: ExtensionContext;
 };
 
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
 const getRepositoryRoot = async ({
   context,
 }: {
@@ -29,7 +32,7 @@ const getRepositoryRoot = async ({
 
     return repositoryRoot;
   } catch (error) {
-    throw new Error(`Git repository check failed: ${(error as Error).message}`);
+    throw new Error(`Git repository check failed: ${getErrorMessage(error)}`);
   }
 };
 
@@ -42,7 +45,7 @@ const getActivationConfiguration = async ({
     return await loadConfiguration({ cwd: repositoryRoot });
   } catch (error) {
     throw new Error(
-      `Maestro configuration check failed: ${(error as Error).message}`,
+      `Maestro configuration check failed: ${getErrorMessage(error)}`,
     );
   }
 };
@@ -96,7 +99,7 @@ export const checkEnvironment = async ({
     await assertAgentsAvailable({ repositoryRoot });
   } catch (error) {
     throw new Error(
-      `Builder or verifier agent check failed: ${(error as Error).message}`,
+      `Builder or verifier agent check failed: ${getErrorMessage(error)}`,
     );
   }
 

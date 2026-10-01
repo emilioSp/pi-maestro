@@ -28,7 +28,9 @@ describe('partial spec creation failure', () => {
     const repositoryRoot = await mkdtemp(
       join(tmpdir(), 'pi-maestro-spec-failure-'),
     );
+
     temporaryDirectories.push(repositoryRoot);
+
     const paths = new MaestroPaths({
       repositoryRoot,
       config: {
@@ -36,8 +38,10 @@ describe('partial spec creation failure', () => {
         specDirectory: join(repositoryRoot, '.specs'),
       },
     });
+
     const specId = '20260321-143052-add-weather-alerts';
     const specPath = paths.getSpecPath(specId);
+
     const input = {
       paths,
       title: 'Add Weather Alerts',

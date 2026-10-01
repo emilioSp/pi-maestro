@@ -32,5 +32,6 @@ export const findCommitByMessage = async ({
       return commit;
     }
   }
+
   return undefined;
 };
