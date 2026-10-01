@@ -130,6 +130,7 @@ export const resolveFindings = async ({
   const decisionsById = new Map(
     decisions.map((decision) => [decision.findingId, decision]),
   );
+
   const findings = handoff.findings.map((finding) => {
     const decision = decisionsById.get(finding.id);
 
@@ -143,9 +144,11 @@ export const resolveFindings = async ({
   const isFixCodeRequested = decisions.some(
     (decision) => decision.decision === FINDING_DECISIONS.FIX_CODE,
   );
+
   const event = isFixCodeRequested
     ? WORKFLOW_EVENTS.REQUEST_FIXES
     : WORKFLOW_EVENTS.REJECT_FINDINGS;
+
   const nextState = transitionWorkflow({ state: currentState, event });
   const nextHandoff = { ...handoff, revision: nextState.revision, findings };
 

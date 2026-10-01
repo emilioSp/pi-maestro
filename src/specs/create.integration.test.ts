@@ -14,9 +14,12 @@ import {
 } from '#workflow/state/schema.ts';
 
 const INSTANT = Temporal.Instant.from('2026-03-21T14:30:52Z');
+
 const SPEC_ID = '20260321-143052-add-weather-alerts';
+
 const TEMPLATE_SHA256 =
   'a68c4477eb46e3782c5680090380bf61303f9c0c0d7c9ae103f31ce48fbb53e1';
+
 const temporaryDirectories: string[] = [];
 
 const createWorkspace = async ({
@@ -26,6 +29,7 @@ const createWorkspace = async ({
 } = {}) => {
   const repositoryRoot = await mkdtemp(join(tmpdir(), 'pi-maestro-spec-'));
   temporaryDirectories.push(repositoryRoot);
+
   const paths = new MaestroPaths({
     repositoryRoot,
     config: {
@@ -56,6 +60,7 @@ describe('spec template and creation', () => {
 
   it('creates a drafting spec in the configured directory', async () => {
     const { paths } = await createWorkspace();
+
     const created = await createSpec({
       paths,
       title: 'Add Weather Alerts',
@@ -86,12 +91,14 @@ describe('spec template and creation', () => {
 
   it('blocks a same-second collision without overwriting the existing spec', async () => {
     const { paths } = await createWorkspace();
+
     const first = await createSpec({
       paths,
       title: 'Add Weather Alerts',
       activeWorkflowSpecId: null,
       instant: INSTANT,
     });
+
     const before = await readFile(first.specFilePath, 'utf8');
 
     await expect(

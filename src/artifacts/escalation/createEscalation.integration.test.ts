@@ -10,11 +10,13 @@ import type {
 } from '#artifacts/escalation/schema.ts';
 
 const temporaryDirectories: string[] = [];
+
 const specId = '20260321-143052-add-weather-alerts';
 
 const createTemporaryDirectory = async (): Promise<string> => {
   const path = await mkdtemp(join(tmpdir(), 'pi-maestro-escalation-'));
   temporaryDirectories.push(path);
+
   return path;
 };
 
@@ -57,6 +59,7 @@ describe('escalation creation', () => {
       revision: 3,
       escalation: newEscalation(),
     });
+
     const second = await createEscalation({
       directory,
       specId,

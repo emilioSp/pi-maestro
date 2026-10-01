@@ -63,8 +63,10 @@ export const WorkflowStateSchema = Type.Object(
 
 export type WorkflowPhase =
   (typeof WORKFLOW_PHASES)[keyof typeof WORKFLOW_PHASES];
+
 export type WorkflowEvent =
   (typeof WORKFLOW_EVENTS)[keyof typeof WORKFLOW_EVENTS];
+
 export type WorkflowState = Static<typeof WorkflowStateSchema>;
 
 function assertWorkflowStateSchema(

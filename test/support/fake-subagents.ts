@@ -24,6 +24,7 @@ export const createFakeSubagents = <Request, Result>({
       const response = remainingResponses.shift() as Result;
       requests.push(request);
       results.push(response);
+
       return response;
     },
   };

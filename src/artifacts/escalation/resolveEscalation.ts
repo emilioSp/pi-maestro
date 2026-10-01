@@ -43,6 +43,7 @@ export const resolveEscalation = async ({
     revision,
     resolution,
   };
+
   assertEscalation(resolvedEscalation);
   await writeJsonAtomically({ path, data: resolvedEscalation });
 

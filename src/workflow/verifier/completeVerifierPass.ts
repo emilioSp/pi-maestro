@@ -88,6 +88,7 @@ const hasProductChanges = async ({
     relative(repositoryRoot, workflowPath),
     relative(repositoryRoot, handoffPath),
   ]);
+
   const changedTrackedPaths = [diff.stdout, stagedDiff.stdout]
     .flatMap((output) => output.split('\0'))
     .filter((path) => path.length > 0);
@@ -145,6 +146,7 @@ export const completeVerifierPass = async ({
   }
 
   assertVerifierHandoff(handoff, specId, currentState.revision + 1);
+
   const nextState = transitionWorkflow({
     state: currentState,
     event:

@@ -54,14 +54,17 @@ export const createSpec = async ({
 
   const template = await loadSpecTemplate();
   const spec = renderSpecTemplate({ template, specId, title });
+
   const state = {
     version: WORKFLOW_STATE_VERSION,
     specId,
     revision: 1,
     phase: WORKFLOW_PHASES.DRAFTING_SPEC,
   } as const;
+
   assertWorkflowState(state);
   let created = false;
+
   try {
     await mkdir(paths.getSpecDirectory(), { recursive: true });
     await mkdir(specPath);
@@ -85,6 +88,7 @@ export const createSpec = async ({
         { cause },
       );
     }
+
     throw cause;
   }
 

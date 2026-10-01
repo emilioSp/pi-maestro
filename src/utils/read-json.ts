@@ -13,6 +13,7 @@ export const readJsonFile = async ({
   description: string;
 }): Promise<unknown> => {
   const content = await readFile(path, 'utf8');
+
   try {
     return JSON.parse(content);
   } catch (cause) {

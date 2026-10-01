@@ -24,10 +24,12 @@ afterEach(cleanupBuilderWorkflows);
 describe('finding resolution', () => {
   it('runs the code-fix cycle on the same checkout and branch', async () => {
     const { paths, repository } = await createApprovedWorkflow();
+
     const firstBuilderLaunch = await prepareBuilderLaunch({
       paths,
       specId: SPEC_ID,
     });
+
     await completeBuilderPass({
       paths,
       specId: SPEC_ID,
@@ -44,6 +46,7 @@ describe('finding resolution', () => {
       paths,
       specId: SPEC_ID,
     });
+
     const finding = {
       id: 'F1',
       acceptanceCriterion: null,
@@ -96,6 +99,7 @@ describe('finding resolution', () => {
       paths,
       specId: SPEC_ID,
     });
+
     await completeBuilderPass({
       paths,
       specId: SPEC_ID,
@@ -114,6 +118,7 @@ describe('finding resolution', () => {
     const secondCandidateCommit = await getHeadCommit({
       repositoryRoot: repository.path,
     });
+
     const secondVerifierLaunch = await prepareVerifierLaunch({
       paths,
       specId: SPEC_ID,
@@ -138,6 +143,7 @@ describe('finding resolution', () => {
         notes: [],
       },
     });
+
     expect('state' in secondVerifier).toBe(true);
 
     if (!('state' in secondVerifier)) {

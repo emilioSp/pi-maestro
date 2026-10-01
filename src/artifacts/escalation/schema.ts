@@ -66,6 +66,9 @@ export const EscalationSchema = Type.Object(
 );
 
 export type EscalationOption = Static<typeof EscalationOptionSchema>;
+
 export type EscalationResolution = Static<typeof EscalationResolutionSchema>;
+
 export type Escalation = Static<typeof EscalationSchema>;
+
 export type NewEscalation = Static<typeof NewEscalationSchema>;

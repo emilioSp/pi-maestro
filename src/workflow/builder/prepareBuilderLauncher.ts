@@ -85,6 +85,7 @@ export const prepareBuilderLaunch = async ({
     state: currentState,
     event: WORKFLOW_EVENTS.LAUNCH_BUILDER,
   });
+
   await writeWorkflowState({
     path: workflowPath,
     state: nextState,

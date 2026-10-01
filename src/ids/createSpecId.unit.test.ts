@@ -43,6 +43,7 @@ describe('createSpecId', () => {
       title: 'Earlier change',
       instant: Temporal.Instant.from('2026-03-21T14:30:51Z'),
     });
+
     const later = createSpecId({
       title: 'Later change',
       instant: Temporal.Instant.from('2026-03-21T14:30:52Z'),

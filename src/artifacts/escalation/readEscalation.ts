@@ -41,5 +41,6 @@ export const readEscalation = async ({
   const escalation = await readJsonFile({ path, description: 'Escalation' });
   assertEscalation(escalation);
   assertWorkflowEscalation({ escalation, specId, currentRevision });
+
   return escalation;
 };

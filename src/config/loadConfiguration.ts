@@ -60,6 +60,7 @@ const findExistingAncestor = async (
       if (parent === anchestor) {
         throw new Error(`Cannot resolve an existing ancestor for "${path}".`);
       }
+
       anchestor = parent;
       continue;
     }
@@ -143,11 +144,13 @@ const resolveDirectories = async ({
   config: MaestroConfig;
 }): Promise<MaestroConfig> => {
   const repositoryRoot = await realpath(configuredRepositoryRoot);
+
   const specDirectory = await resolveSafeDirectory({
     repositoryRoot,
     directory: config.specDirectory,
     name: 'specDirectory',
   });
+
   return {
     ...config,
     specDirectory,
@@ -167,6 +170,7 @@ export const loadConfiguration = async ({
   }
 
   let parsed: unknown;
+
   try {
     const content = await readFile(targetPath, 'utf8');
     parsed = JSON.parse(content);

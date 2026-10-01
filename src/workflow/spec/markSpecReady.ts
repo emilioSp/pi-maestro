@@ -40,10 +40,12 @@ export const markSpecReady = async ({
   const current = await readWorkflowState({
     path: paths.getWorkflowPath(specId),
   });
+
   const state = transitionWorkflow({
     state: current,
     event: WORKFLOW_EVENTS.MARK_SPEC_READY,
   });
+
   await writeWorkflowState({
     path: paths.getWorkflowPath(specId),
     state,

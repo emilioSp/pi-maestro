@@ -27,6 +27,7 @@ const isValidUtcTimestamp = (value: string): boolean => {
       },
       { overflow: 'reject' },
     );
+
     return true;
   } catch {
     return false;
@@ -35,5 +36,6 @@ const isValidUtcTimestamp = (value: string): boolean => {
 
 export const isValidSpecId = (value: string): boolean => {
   const match = SPEC_ID_PATTERN.exec(value);
+
   return match !== null && isValidUtcTimestamp(`${match[1]}-${match[2]}`);
 };

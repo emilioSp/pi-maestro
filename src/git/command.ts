@@ -108,6 +108,7 @@ export const runGitCommand = async ({
       stdout?: string;
       stderr?: string;
     };
+
     const stdout = error.stdout ?? '';
     const stderr = error.stderr ?? '';
 

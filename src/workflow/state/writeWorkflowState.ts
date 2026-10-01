@@ -37,6 +37,7 @@ export const writeWorkflowState = async ({
 
   const lockPath = `${path}.lock`;
   let lock: FileHandle | undefined;
+
   try {
     try {
       lock = await open(lockPath, 'wx', 0o600);
@@ -46,6 +47,7 @@ export const writeWorkflowState = async ({
           cause,
         });
       }
+
       throw cause;
     }
 

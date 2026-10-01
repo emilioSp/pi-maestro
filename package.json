@@ -54,10 +54,11 @@
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "vitest run --exclude \"**/*.integration.test.ts\"",
     "test:integration": "vitest run --exclude \"**/*.unit.test.ts\"",
-    "check": "npm run lint && npm run typecheck && npm test",
+    "check": "npm run lint:fix && npm run typecheck && npm test",
     "prepublishOnly": "npm run check",
     "lint": "biome check .",
-    "lint:fix": "biome check --write ."
+    "lint:anti-slop": "oxlint --fix",
+    "lint:fix": "biome check --write . && npm run lint:anti-slop"
   },
   "dependencies": {
     "pi-subagents": "0.71.0",
@@ -73,6 +74,8 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
     "@types/node": "26.6.1",
+    "oxlint": "1.86.0",
+    "oxlint-anti-slop": "0.2.0",
     "typescript": "7.0.2",
     "vitest": "5.0.1"
   },

@@ -15,6 +15,7 @@ describe('builder escalation resolution', () => {
   it('commits the owner decision on the current branch', async () => {
     const { paths, repository } = await createApprovedWorkflow();
     await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+
     const opened = await openBuilderEscalation({
       paths,
       specId: SPEC_ID,

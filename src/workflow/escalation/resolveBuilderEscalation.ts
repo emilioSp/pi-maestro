@@ -80,10 +80,12 @@ export const resolveBuilderEscalation = async ({
     state: currentState,
     event: WORKFLOW_EVENTS.RESOLVE_ESCALATION,
   });
+
   const escalationPath = paths.getEscalationPath({
     specId,
     escalationNumber: Number(currentEscalation.id.slice(1)),
   });
+
   const resolvedEscalation = await resolveEscalation({
     path: escalationPath,
     specId,

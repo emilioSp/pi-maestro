@@ -20,6 +20,7 @@ const runGit = async ({
   cwd: string;
 }): Promise<string> => {
   const { stdout } = await execFileAsync('git', gitArguments, { cwd });
+
   return stdout.trim();
 };
 
@@ -48,6 +49,7 @@ export const createTemporaryRepository =
           arguments: ['commit', '--message', message],
           cwd: path,
         });
+
         return runGit({ arguments: ['rev-parse', 'HEAD'], cwd: path });
       },
       cleanup: async () => {

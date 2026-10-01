@@ -20,5 +20,6 @@ export const getStagedPaths = async ({
     arguments: ['diff', '--cached', '--name-only', '-z'],
     cwd: repositoryRoot,
   });
+
   return parsePaths(result.stdout);
 };

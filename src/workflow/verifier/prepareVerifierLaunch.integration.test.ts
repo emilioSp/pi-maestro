@@ -20,10 +20,12 @@ afterEach(cleanupBuilderWorkflows);
 describe('verifier launch preparation', () => {
   it('uses the current HEAD as the candidate and commits the running checkpoint', async () => {
     const { paths, repository } = await createApprovedWorkflow();
+
     const builderLaunch = await prepareBuilderLaunch({
       paths,
       specId: SPEC_ID,
     });
+
     await completeBuilderPass({
       paths,
       specId: SPEC_ID,
@@ -37,6 +39,7 @@ describe('verifier launch preparation', () => {
     const builderHandoff = doneHandoff(builderLaunch.revision + 1);
     expect(builderHandoff.status).toBe('done');
     await commitAll({ path: repository.path, message: 'Builder completed' });
+
     const candidateBefore = await getHeadCommit({
       repositoryRoot: repository.path,
     });

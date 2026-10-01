@@ -44,6 +44,7 @@ export const rejectVerifierFinding = async ({
         : currentFinding,
     ),
   };
+
   assertVerifierHandoff(rejectedHandoff, specId, revision);
   await writeJsonAtomically({ path, data: rejectedHandoff });
 

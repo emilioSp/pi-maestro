@@ -29,6 +29,7 @@ export const createEscalation = async ({
     specId,
     currentRevision: revision,
   });
+
   const newEscalation = {
     ...escalation,
     version: ESCALATION_VERSION,
@@ -37,6 +38,7 @@ export const createEscalation = async ({
     id,
     resolution: null,
   };
+
   assertEscalation(newEscalation);
   const path = join(directory, `${id}.json`);
   await writeJsonAtomically({ path, data: newEscalation });

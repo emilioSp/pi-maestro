@@ -26,7 +26,9 @@ export type ThinkingLevel =
 export const MODEL_PATTERN = '^[^/\\s]+/[^/\\s]+$';
 
 export const SUPPORTED_CONFIG_VERSION = '1.0.0';
+
 export const MIN_TIMEOUT_MINUTES = 1;
+
 export const MAX_TIMEOUT_MINUTES = 1440;
 
 export const ThinkingSchema = Type.Union([
@@ -86,4 +88,5 @@ export const ResolvedMaestroConfigSchema = Type.Object(
 );
 
 export type MaestroConfig = Static<typeof ResolvedMaestroConfigSchema>;
+
 export type PartialMaestroConfig = Static<typeof MaestroConfigInputSchema>;
