@@ -14,9 +14,9 @@ const readJson = async (path: string): Promise<unknown> => {
 
   try {
     return JSON.parse(content);
-  } catch (cause) {
+  } catch (error) {
     throw new Error(`Workflow state contains malformed JSON: ${path}.`, {
-      cause,
+      cause: error,
     });
   }
 };

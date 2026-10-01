@@ -73,6 +73,20 @@ type RunGitCommandInput = {
   environment?: NodeJS.ProcessEnv;
 };
 
+type GitExecutionError = {
+  message: string;
+  code?: string | number;
+  killed?: boolean;
+  stdout?: string;
+  stderr?: string;
+};
+
+const isGitExecutionError = (value: unknown): value is GitExecutionError =>
+  value instanceof Error;
+
+const isNumericExitCode = (value: unknown): value is number =>
+  typeof value === 'number';
+
 // git <arguments>
 export const runGitCommand = async ({
   arguments: gitArguments,
@@ -101,18 +115,17 @@ export const runGitCommand = async ({
       stderr,
       exitCode: 0,
     };
-  } catch (cause) {
-    const error = cause as Error & {
-      code?: string | number;
-      killed?: boolean;
-      stdout?: string;
-      stderr?: string;
-    };
+  } catch (error) {
+    const executionError: GitExecutionError = isGitExecutionError(error)
+      ? error
+      : new Error('Git command failed with an unknown error.', {
+          cause: error,
+        });
 
-    const stdout = error.stdout ?? '';
-    const stderr = error.stderr ?? '';
+    const stdout = executionError.stdout ?? '';
+    const stderr = executionError.stderr ?? '';
 
-    if (error.killed) {
+    if (executionError.killed) {
       throw new GitCommandError({
         code: GIT_COMMAND_ERROR_CODES.TIMEOUT,
         message: `Git command timed out after ${timeoutMs} ms.`,
@@ -120,11 +133,11 @@ export const runGitCommand = async ({
         cwd,
         stdout,
         stderr,
-        cause,
+        cause: error,
       });
     }
 
-    if (error.code === 'ENOENT') {
+    if (executionError.code === 'ENOENT') {
       throw new GitCommandError({
         code: GIT_COMMAND_ERROR_CODES.NOT_FOUND,
         message: 'Git executable was not found.',
@@ -132,23 +145,26 @@ export const runGitCommand = async ({
         cwd,
         stdout,
         stderr,
-        cause,
+        cause: error,
       });
     }
 
-    const exitCode = typeof error.code === 'number' ? error.code : null;
+    const exitCode = isNumericExitCode(executionError.code)
+      ? executionError.code
+      : null;
+
     throw new GitCommandError({
       code:
         exitCode === null
           ? GIT_COMMAND_ERROR_CODES.EXECUTION_FAILED
           : GIT_COMMAND_ERROR_CODES.COMMAND_FAILED,
-      message: `Git command failed: ${error.message}`,
+      message: `Git command failed: ${executionError.message}`,
       arguments: gitArguments,
       cwd,
       stdout,
       stderr,
       exitCode,
-      cause,
+      cause: error,
     });
   }
 };

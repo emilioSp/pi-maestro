@@ -37,18 +37,30 @@ const buildBuilderHandoff = ({
 }: {
   draftHandoff: BuilderHandoffSubmissionInput;
   state: WorkflowState;
-}): unknown => ({
-  version: BUILDER_HANDOFF_VERSION,
-  specId: state.specId,
-  revision: state.revision + 1,
-  status: draftHandoff.status,
-  summary: draftHandoff.summary,
-  acceptanceCriteria: draftHandoff.acceptanceCriteria,
-  ...(draftHandoff.status === BUILDER_HANDOFF_STATUSES.FAILED
-    ? { failure: draftHandoff.failure }
-    : {}),
-  notes: draftHandoff.notes,
-});
+}) => {
+  if (draftHandoff.status === BUILDER_HANDOFF_STATUSES.FAILED) {
+    return {
+      version: BUILDER_HANDOFF_VERSION,
+      specId: state.specId,
+      revision: state.revision + 1,
+      status: draftHandoff.status,
+      summary: draftHandoff.summary,
+      acceptanceCriteria: draftHandoff.acceptanceCriteria,
+      failure: draftHandoff.failure,
+      notes: draftHandoff.notes,
+    };
+  }
+
+  return {
+    version: BUILDER_HANDOFF_VERSION,
+    specId: state.specId,
+    revision: state.revision + 1,
+    status: draftHandoff.status,
+    summary: draftHandoff.summary,
+    acceptanceCriteria: draftHandoff.acceptanceCriteria,
+    notes: draftHandoff.notes,
+  };
+};
 
 export const completeBuilderPass = async ({
   paths,
@@ -87,7 +99,7 @@ export const completeBuilderPass = async ({
   const nextState = transitionWorkflow({
     state: currentState,
     event:
-      handoff.status === BUILDER_HANDOFF_STATUSES.DONE
+      draftHandoff.status === BUILDER_HANDOFF_STATUSES.DONE
         ? WORKFLOW_EVENTS.BUILDER_DONE
         : WORKFLOW_EVENTS.BUILDER_FAILED,
   });

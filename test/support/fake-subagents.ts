@@ -21,6 +21,7 @@ export const createFakeSubagents = <Request, Result>({
         throw new Error('No fake subagent response is available.');
       }
 
+      // JUSTIFICATION: The length check immediately above proves shift returns a Result.
       const response = remainingResponses.shift() as Result;
       requests.push(request);
       results.push(response);

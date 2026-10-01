@@ -7,6 +7,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { createSpecId } from '#ids/createSpecId.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { loadSpecTemplate, renderSpecTemplate } from '#specs/template.ts';
+import { isErrnoException } from '#utils/is-errno-exception.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import {
   assertWorkflowState,
@@ -77,19 +78,21 @@ export const createSpec = async ({
       state,
       currentRevision: 0,
     });
-  } catch (cause) {
-    if (!created && (cause as NodeJS.ErrnoException).code === 'EEXIST') {
-      throw new Error(`Spec directory already exists: ${specPath}.`, { cause });
+  } catch (error) {
+    if (!created && isErrnoException(error) && error.code === 'EEXIST') {
+      throw new Error(`Spec directory already exists: ${specPath}.`, {
+        cause: error,
+      });
     }
 
     if (created) {
       throw new Error(
         `Spec creation failed after creating ${specPath}. Remove this directory before retrying.`,
-        { cause },
+        { cause: error },
       );
     }
 
-    throw cause;
+    throw error;
   }
 
   return {

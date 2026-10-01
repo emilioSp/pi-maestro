@@ -16,9 +16,9 @@ export const readJsonFile = async ({
 
   try {
     return JSON.parse(content);
-  } catch (cause) {
+  } catch (error) {
     throw new Error(`${description} contains malformed JSON: ${path}.`, {
-      cause,
+      cause: error,
     });
   }
 };

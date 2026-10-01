@@ -4,6 +4,7 @@
  */
 
 import { type FileHandle, open, rm } from 'node:fs/promises';
+import { isErrnoException } from '#utils/is-errno-exception.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -41,14 +42,14 @@ export const writeWorkflowState = async ({
   try {
     try {
       lock = await open(lockPath, 'wx', 0o600);
-    } catch (cause) {
-      if ((cause as NodeJS.ErrnoException).code === 'EEXIST') {
+    } catch (error) {
+      if (isErrnoException(error) && error.code === 'EEXIST') {
         throw new Error('Another workflow state update is in progress.', {
-          cause,
+          cause: error,
         });
       }
 
-      throw cause;
+      throw error;
     }
 
     const exists = await pathExists(path);

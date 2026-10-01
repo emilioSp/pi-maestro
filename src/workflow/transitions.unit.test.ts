@@ -20,17 +20,18 @@ const state = (phase: WorkflowPhase, revision = 1): WorkflowState => ({
 });
 
 describe('workflow transitions', () => {
-  it.each(
-    Object.entries(WORKFLOW_TRANSITIONS) as [
-      WorkflowEvent,
-      (typeof WORKFLOW_TRANSITIONS)[WorkflowEvent],
-    ][],
-  )('allows every configured source phase for %s', (event, transition) => {
-    for (const phase of transition.from) {
-      expect(transitionWorkflow({ state: state(phase), event })).toMatchObject({
-        revision: 2,
-        phase: transition.to,
-      });
+  it('allows every configured source phase for each event', () => {
+    for (const event of Object.values(WORKFLOW_EVENTS)) {
+      const transition = WORKFLOW_TRANSITIONS[event];
+
+      for (const phase of transition.from) {
+        expect(
+          transitionWorkflow({ state: state(phase), event }),
+        ).toMatchObject({
+          revision: 2,
+          phase: transition.to,
+        });
+      }
     }
   });
 
@@ -56,7 +57,7 @@ describe('workflow transitions', () => {
   });
 
   it('treats builder-failed as a sink', () => {
-    for (const event of Object.values(WORKFLOW_EVENTS) as WorkflowEvent[]) {
+    for (const event of Object.values(WORKFLOW_EVENTS)) {
       expect(() =>
         transitionWorkflow({
           state: state(WORKFLOW_PHASES.BUILDER_FAILED, 3),

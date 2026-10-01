@@ -36,6 +36,7 @@ const EXPECTED_AGENTS = {
 } as const;
 
 const createContext = (trusted = true) =>
+  // JUSTIFICATION: The test mock supplies only the ExtensionContext fields read by checkEnvironment.
   ({
     cwd: '/repo',
     isProjectTrusted: () => trusted,

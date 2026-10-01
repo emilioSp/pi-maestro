@@ -4,6 +4,7 @@
  */
 
 import { access } from 'node:fs/promises';
+import { isErrnoException } from '#utils/is-errno-exception.ts';
 
 export const pathExists = async (path: string): Promise<boolean> => {
   try {
@@ -11,7 +12,7 @@ export const pathExists = async (path: string): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+    if (isErrnoException(error) && error.code === 'ENOENT') {
       return false;
     }
 

@@ -80,14 +80,16 @@ describe('escalation creation', () => {
   it('writes new escalations as unresolved documents', async () => {
     const directory = await createTemporaryDirectory();
 
+    const escalationInput = {
+      ...newEscalation(),
+      resolution: resolution(),
+    };
+
     const { escalation } = await createEscalation({
       directory,
       specId,
       revision: 3,
-      escalation: {
-        ...newEscalation(),
-        resolution: resolution(),
-      } as NewEscalation,
+      escalation: escalationInput,
     });
 
     expect(escalation.resolution).toBeNull();
