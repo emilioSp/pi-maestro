@@ -9,7 +9,7 @@ import type {
   Escalation,
   EscalationResolution,
 } from '#artifacts/escalation/schema.ts';
-import { createCommit } from '#git/commits/createCommit.ts';
+import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
@@ -99,7 +99,7 @@ export const resolveBuilderEscalation = async ({
     currentRevision: currentState.revision,
   });
 
-  const checkpointCommit = await createCommit({
+  const checkpointCommit = await createWorkflowCheckpointCommit({
     repositoryRoot: paths.getRepositoryRoot(),
     expectedPaths: [workflowPath, escalationPath],
   });

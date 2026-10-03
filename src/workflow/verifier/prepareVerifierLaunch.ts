@@ -4,7 +4,7 @@
  */
 
 import { rm } from 'node:fs/promises';
-import { createCommit } from '#git/commits/createCommit.ts';
+import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
 import { getParentCommit } from '#git/history/getParentCommit.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
@@ -80,7 +80,7 @@ export const prepareVerifierLaunch = async ({
 
   const previousHead = await getHeadCommit({ repositoryRoot });
 
-  const checkpointCommit = await createCommit({
+  const checkpointCommit = await createWorkflowCheckpointCommit({
     repositoryRoot,
     expectedPaths,
   });

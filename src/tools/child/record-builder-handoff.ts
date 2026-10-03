@@ -11,7 +11,7 @@ import {
   BuilderHandoffFailureSchema,
 } from '#artifacts/builder-handoff/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
-import { getChildContext } from '#tools/child/utils/getChildContext.ts';
+import { resolveWorkflowContext } from '#tools/child/utils/resolveWorkflowContext.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 
 export const BUILDER_HANDOFF_TOOL = {
@@ -47,13 +47,7 @@ const BuilderHandoffToolParameters = Type.Union([
   ),
 ]);
 
-type RegisterRecordBuilderHandoffToolInput = {
-  pi: ExtensionAPI;
-};
-
-export const registerRecordBuilderHandoffTool = ({
-  pi,
-}: RegisterRecordBuilderHandoffToolInput): void => {
+export const registerRecordBuilderHandoffTool = (pi: ExtensionAPI): void => {
   pi.registerTool({
     name: BUILDER_HANDOFF_TOOL.NAME,
     label: BUILDER_HANDOFF_TOOL.LABEL,
@@ -62,7 +56,7 @@ export const registerRecordBuilderHandoffTool = ({
     async execute(_toolCallId, params, _signal, _onUpdate, context) {
       const { specId, ...handoff } = params;
 
-      const { paths } = await getChildContext({
+      const { paths } = await resolveWorkflowContext({
         cwd: context.cwd,
         specId,
       });
