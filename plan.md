@@ -1625,7 +1625,7 @@ Copertura minima approvata per la prima versione:
 15. Test del blocco di `write` ed `edit` su `spec.md` tramite percorsi relativi, assoluti, normalizzati e symlink e del confronto SHA-256 contro modifiche effettuate tramite `bash`, incluse modifiche commesse con il messaggio del checkpoint.
 16. Test che `maestro_prepare_final_review` verifichi il candidate sul branch corrente, scriva `final-review`, restituisca i dati necessari alla Pull Request e mantenga la fase precedente quando la verifica fallisce.
 17. La suite end-to-end contiene un happy path completo e un percorso di disattivazione che dimostra l’assenza di recovery. Gli altri edge case restano nei test dei moduli proprietari.
-18. I test della sessione live coprono set/get, reset con `deactivate()` e `clearActiveSpecId()`, sostituzione dello SHA dopo una revisione autorizzata, uso della baseline da parte di handoff ed escalation e rifiuto di modifiche a `spec.md`, incluse modifiche commesse con il messaggio `maestro checkpoint`.
+18. I test della sessione live coprono set/get, reset con `deactivate()` e `clearActiveSpecId()`, sostituzione dello SHA dopo una revisione autorizzata, uso della baseline da parte di handoff ed escalation e rifiuto di modifiche a `spec.md`, incluse modifiche commesse con il messaggio `maestro workflow checkpoint`.
 
 I test usano Vitest su Node.js 26. I comandi di verifica sono quelli definiti dal repository.
 

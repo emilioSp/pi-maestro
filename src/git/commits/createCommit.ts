@@ -8,7 +8,7 @@ import { runGitCommand } from '#git/command.ts';
 import { getStagedPaths } from '#git/commits/getStagedPaths.ts';
 import { isPathStrictlyWithin } from '#utils/path-strictly-within.ts';
 
-export const CHECKPOINT_COMMIT_MESSAGE = 'maestro checkpoint';
+export const WORKFLOW_CHECKPOINT_COMMIT_MESSAGE = 'maestro workflow checkpoint';
 
 const hasSamePaths = ({
   actual,
@@ -31,7 +31,7 @@ const hasSamePaths = ({
 export const createCommit = async ({
   repositoryRoot,
   expectedPaths,
-  message = CHECKPOINT_COMMIT_MESSAGE,
+  message = WORKFLOW_CHECKPOINT_COMMIT_MESSAGE,
 }: {
   repositoryRoot: string;
   expectedPaths: readonly string[];

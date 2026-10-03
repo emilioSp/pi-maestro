@@ -4,7 +4,7 @@
  */
 
 import { rm } from 'node:fs/promises';
-import { createCommit } from '#git/commits/createCommit.ts';
+import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
@@ -98,7 +98,7 @@ export const prepareBuilderLaunch = async ({
     expectedPaths.push(handoffPath);
   }
 
-  const checkpointCommit = await createCommit({
+  const checkpointCommit = await createWorkflowCheckpointCommit({
     repositoryRoot: paths.getRepositoryRoot(),
     expectedPaths,
   });

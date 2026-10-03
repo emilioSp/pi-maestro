@@ -6,7 +6,7 @@ Pi extension that implements a multiagent spec driven development workflow.
 
 ## Commands
 
-- `npm run check` | Run lint check, type checking and all tests.
+- Always run `npm run check` when you finish a task
 
 ## Project structure and component scope
 

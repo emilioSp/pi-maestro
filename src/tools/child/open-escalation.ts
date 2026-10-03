@@ -10,7 +10,7 @@ import {
   EscalationRecommendationSchema,
 } from '#artifacts/escalation/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
-import { getChildContext } from '#tools/child/utils/getChildContext.ts';
+import { resolveWorkflowContext } from '#tools/child/utils/resolveWorkflowContext.ts';
 import { openBuilderEscalation } from '#workflow/escalation/openBuilderEscalation.ts';
 
 export const BUILDER_ESCALATION_TOOL = {
@@ -32,13 +32,7 @@ const BuilderEscalationToolParameters = Type.Object(
   { additionalProperties: false },
 );
 
-type RegisterOpenEscalationToolInput = {
-  pi: ExtensionAPI;
-};
-
-export const registerOpenEscalationTool = ({
-  pi,
-}: RegisterOpenEscalationToolInput): void => {
+export const registerOpenEscalationTool = (pi: ExtensionAPI): void => {
   pi.registerTool({
     name: BUILDER_ESCALATION_TOOL.NAME,
     label: BUILDER_ESCALATION_TOOL.LABEL,
@@ -47,7 +41,7 @@ export const registerOpenEscalationTool = ({
     async execute(_toolCallId, params, _signal, _onUpdate, context) {
       const { specId, ...escalation } = params;
 
-      const { paths } = await getChildContext({
+      const { paths } = await resolveWorkflowContext({
         cwd: context.cwd,
         specId,
       });
