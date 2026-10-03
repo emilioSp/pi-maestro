@@ -1,6 +1,6 @@
 /**
  * Objective: Manage the shared in-memory activation state for one Maestro session.
- * Used: By the main and child extensions in the foreground Pi runtime.
+ * Used: By the main and subagent extensions in the foreground Pi runtime.
  */
 
 import { getFileSha256 } from '#utils/getFileSha256.ts';

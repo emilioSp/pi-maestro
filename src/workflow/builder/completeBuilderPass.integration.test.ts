@@ -1,5 +1,7 @@
+import { writeFile } from 'node:fs/promises';
 import { afterEach, describe, expect, it } from 'vitest';
 import { runGitCommand } from '#git/command.ts';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import {
   cleanupBuilderWorkflows,
   commitAll,
@@ -14,6 +16,75 @@ import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 afterEach(cleanupBuilderWorkflows);
 
 describe('builder completion', () => {
+  it('rejects builder completion when the spec SHA baseline is missing', async () => {
+    const { paths } = await createApprovedWorkflow();
+    await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+    maestroSessionState.deactivate();
+
+    await expect(
+      completeBuilderPass({
+        paths,
+        specId: SPEC_ID,
+        handoff: {
+          status: 'done',
+          summary: 'Implemented the approved change.',
+          acceptanceCriteria: [],
+          notes: [],
+        },
+      }),
+    ).rejects.toThrow('Builder spec SHA-256 baseline is not initialized.');
+  });
+
+  it('rejects builder completion when the spec changes after launch', async () => {
+    const { paths } = await createApprovedWorkflow();
+    await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+    await writeFile(
+      paths.getSpecFilePath(SPEC_ID),
+      '# Changed specification\n',
+      'utf8',
+    );
+
+    await expect(
+      completeBuilderPass({
+        paths,
+        specId: SPEC_ID,
+        handoff: {
+          status: 'done',
+          summary: 'Implemented the approved change.',
+          acceptanceCriteria: [],
+          notes: [],
+        },
+      }),
+    ).rejects.toThrow('Builder changed spec.md after launch');
+  });
+
+  it('rejects a changed spec even when the change uses the checkpoint message', async () => {
+    const { paths, repository } = await createApprovedWorkflow();
+    await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+    await writeFile(
+      paths.getSpecFilePath(SPEC_ID),
+      '# Changed specification\n',
+      'utf8',
+    );
+    await commitAll({
+      path: repository.path,
+      message: 'maestro workflow checkpoint',
+    });
+
+    await expect(
+      completeBuilderPass({
+        paths,
+        specId: SPEC_ID,
+        handoff: {
+          status: 'done',
+          summary: 'Implemented the approved change.',
+          acceptanceCriteria: [],
+          notes: [],
+        },
+      }),
+    ).rejects.toThrow('Builder changed spec.md after launch');
+  });
+
   it('writes the builder handoff and state in the current checkout', async () => {
     const { paths, repository } = await createApprovedWorkflow();
     const launch = await prepareBuilderLaunch({ paths, specId: SPEC_ID });

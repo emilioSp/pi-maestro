@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task 35: Register the child extension and protect the builder spec
 
@@ -22,7 +22,7 @@ Register the child tools and protect the owner-approved `spec.md` in the current
 
 ## Plan references
 
-- Sections [5](../plan.md#plan-section-5), `extensions/maestro-child.ts`, and `src/tools/child/`
+- Sections [5](../plan.md#plan-section-5), `extensions/maestro-subagent.ts`, and `src/tools/child/`
 - Sections [6.11](../plan.md#plan-section-6-11) and [6.12](../plan.md#plan-section-6-12)
 - Sections [6.14](../plan.md#plan-section-6-14) and [6.25](../plan.md#plan-section-6-25)
 

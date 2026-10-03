@@ -777,7 +777,7 @@ Il contenuto esatto di `.gitignore` viene scelto durante l’implementazione. No
 
 `extensions/maestro.ts` è il composition root della sessione principale. Registra direttamente `/maestro`, gli eventi di sessione e i tool principali, collegandoli alle funzioni sotto `src/maestro/` e `src/tools/main/`. Contiene wiring Pi, ma non logica di workflow.
 
-`extensions/maestro-child.ts` importa e registra direttamente i tool da `src/tools/child/`, senza un barrel `index.ts`. Non registra eventi, comandi, status o tool di orchestrazione e non contiene logica degli artefatti.
+`extensions/maestro-subagent.ts` importa e registra direttamente i tool da `src/tools/child/`, senza un barrel `index.ts`. Non registra eventi, comandi, status o tool di orchestrazione e non contiene logica degli artefatti.
 
 `src/tools/main/` contiene i tool dell’owner e `src/tools/child/` contiene quelli dei ruoli figli. Ogni file esporta una sola operazione: la registrazione del proprio tool Pi. Schema degli input, tipi, costanti e helper privati restano nel file del tool che li usa. Il file chiama il dominio e converte il risultato nel formato Pi. Le estensioni importano ogni registrazione dal suo file, senza barrel.
 
@@ -1009,7 +1009,7 @@ Configurazione condivisa nei file agent:
 3. `inheritGlobalContext: false` e `inheritSkills: false`.
 4. `completionGuard: false`, perché Maestro usa handoff terminali propri.
 5. Nessun accesso a subagent annidati.
-6. `subagentOnlyExtensions: ../extensions/maestro-child.ts`.
+6. `subagentOnlyExtensions: ../extensions/maestro-subagent.ts`.
 
 I file agent non duplicano modello, thinking, timeout, modalità foreground o contesto. Maestro passa esplicitamente modello, thinking e timeout da `.pi/maestro.json`, oppure dai default in `src/config/defaults.ts` se il file manca. Ogni delega è foreground e usa il contesto `fresh`, senza un parametro `async`.
 
@@ -1120,7 +1120,7 @@ Responsabilità:
 
 Decisioni prese:
 
-1. Builder e verifier caricano `extensions/maestro-child.ts` tramite il campo agent `subagentOnlyExtensions`.
+1. Builder e verifier caricano `extensions/maestro-subagent.ts` tramite il campo agent `subagentOnlyExtensions`.
 2. `subagentOnlyExtensions` indica a `pi-subagents` quali estensioni caricare esclusivamente nella sessione figlia di quell’agent. Non rende l’estensione disponibile alla sessione principale.
 3. Il campo `tools` dell’agent resta una allowlist separata: caricare l’estensione registra i tool, mentre la allowlist decide quali di quei tool il ruolo può usare.
 4. Prima del primo turno, `pi-subagents` verifica che ogni tool dichiarato sia stato realmente registrato. Se manca il provider, il lancio fallisce.
