@@ -37,7 +37,7 @@ Three principles hold the workflow together:
 Install `pi-subagents` and Maestro:
 
 ```bash
-pi install npm:pi-subagents@0.71.0
+pi install npm:pi-subagents
 pi install npm:@emiliosp/pi-maestro
 ```
 
