@@ -46,13 +46,15 @@ const finding = (): VerifierHandoff['findings'][number] => ({
 
 describe('verifier handoff validation', () => {
   it('accepts an empty finding list with completed checks', () => {
-    expect(() => assertVerifierHandoff(handoff(), specId, 6)).not.toThrow();
+    expect(() =>
+      assertVerifierHandoff({ handoff: handoff(), specId, revision: 6 }),
+    ).not.toThrow();
   });
 
   it('accepts findings linked to incomplete checks and other spec rules', () => {
     expect(() =>
-      assertVerifierHandoff(
-        {
+      assertVerifierHandoff({
+        handoff: {
           ...handoff(),
           acceptanceCriteria: [
             {
@@ -71,8 +73,8 @@ describe('verifier handoff validation', () => {
           ],
         },
         specId,
-        6,
-      ),
+        revision: 6,
+      }),
     ).not.toThrow();
   });
 
@@ -142,16 +144,22 @@ describe('verifier handoff validation', () => {
       message: 'Invalid verifier handoff',
     },
   ])('rejects invalid handoff data %#', ({ handoff: input, message }) => {
-    expect(() => assertVerifierHandoff(input, specId, 6)).toThrow(message);
+    expect(() =>
+      assertVerifierHandoff({ handoff: input, specId, revision: 6 }),
+    ).toThrow(message);
   });
 
   it('requires the expected spec ID and revision', () => {
     expect(() =>
-      assertVerifierHandoff(handoff(), '20260321-143052-other-change', 6),
+      assertVerifierHandoff({
+        handoff: handoff(),
+        specId: '20260321-143052-other-change',
+        revision: 6,
+      }),
     ).toThrow('Verifier handoff spec ID mismatch');
 
-    expect(() => assertVerifierHandoff(handoff(), specId, 7)).toThrow(
-      'Verifier handoff revision mismatch',
-    );
+    expect(() =>
+      assertVerifierHandoff({ handoff: handoff(), specId, revision: 7 }),
+    ).toThrow('Verifier handoff revision mismatch');
   });
 });

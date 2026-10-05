@@ -45,7 +45,7 @@ export const openBuilderEscalation = async ({
   const workflowPath = paths.getWorkflowPath(specId);
   const handoffPath = paths.getBuilderHandoffPath(specId);
   const escalationsPath = paths.getEscalationsPath(specId);
-  const currentState = await readWorkflowState({ path: workflowPath });
+  const currentState = await readWorkflowState(workflowPath);
 
   if (currentState.specId !== specId) {
     throw new Error(

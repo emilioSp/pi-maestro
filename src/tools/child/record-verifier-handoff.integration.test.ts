@@ -2,6 +2,8 @@ import { access, writeFile } from 'node:fs/promises';
 import { relative } from 'node:path';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
+import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
+import { FINDING_SEVERITIES } from '#artifacts/verifier-handoff/schema.ts';
 import { runGitCommand } from '#git/command.ts';
 import { getParentCommit } from '#git/history/getParentCommit.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
@@ -51,7 +53,7 @@ describe('verifier handoff tool', () => {
           {
             id: 'F1',
             acceptanceCriterion: null,
-            severity: 'high',
+            severity: FINDING_SEVERITIES.HIGH,
             confidence: 1,
             summary: 'Finding',
             evidence: [{ source: 'test', observation: 'Observed' }],
@@ -80,7 +82,7 @@ describe('verifier handoff tool', () => {
   it('rejects a workflow spec identity mismatch', async () => {
     const workflow = await createApprovedWorkflow();
     const statePath = workflow.paths.getWorkflowPath(SPEC_ID);
-    const state = await readWorkflowState({ path: statePath });
+    const state = await readWorkflowState(statePath);
 
     await writeFile(
       statePath,
@@ -115,15 +117,13 @@ describe('verifier handoff tool', () => {
       paths: workflow.paths,
       specId: SPEC_ID,
       handoff: {
-        status: 'done',
+        status: BUILDER_HANDOFF_STATUSES.DONE,
         summary: 'Implemented the approved change.',
         acceptanceCriteria: [],
         notes: [],
       },
     });
-    await workflow.repository.commit({
-      message: 'Builder completed',
-    });
+    await workflow.repository.commit('Builder completed');
 
     const verifierLaunch = await prepareVerifierLaunch({
       paths: workflow.paths,
@@ -144,12 +144,10 @@ describe('verifier handoff tool', () => {
       specId: SPEC_ID,
     });
     await expect(
-      readWorkflowState({
-        path: workflow.paths.getWorkflowPath(SPEC_ID),
-      }),
+      readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
     await expect(
-      getRepositoryStatus({ repositoryRoot: workflow.repository.path }),
+      getRepositoryStatus(workflow.repository.path),
     ).resolves.toMatchObject({
       clean: true,
       staged: [],
@@ -189,15 +187,13 @@ describe('verifier handoff tool', () => {
       paths: workflow.paths,
       specId: SPEC_ID,
       handoff: {
-        status: 'done',
+        status: BUILDER_HANDOFF_STATUSES.DONE,
         summary: 'Implemented the approved change.',
         acceptanceCriteria: [],
         notes: [],
       },
     });
-    await workflow.repository.commit({
-      message: 'Builder completed',
-    });
+    await workflow.repository.commit('Builder completed');
     await prepareVerifierLaunch({ paths: workflow.paths, specId: SPEC_ID });
     await writeFile(
       `${workflow.repository.path}/.git/hooks/post-commit`,
@@ -216,7 +212,7 @@ describe('verifier handoff tool', () => {
       'Verifier handoff requires a clean checkout after its commit.',
     );
     await expect(
-      getRepositoryStatus({ repositoryRoot: workflow.repository.path }),
+      getRepositoryStatus(workflow.repository.path),
     ).resolves.toMatchObject({ clean: false, unstaged: ['README.md'] });
   });
 
@@ -231,23 +227,19 @@ describe('verifier handoff tool', () => {
       paths: workflow.paths,
       specId: SPEC_ID,
       handoff: {
-        status: 'done',
+        status: BUILDER_HANDOFF_STATUSES.DONE,
         summary: 'Implemented the approved change.',
         acceptanceCriteria: [],
         notes: [],
       },
     });
-    await workflow.repository.commit({
-      message: 'Builder completed',
-    });
+    await workflow.repository.commit('Builder completed');
     await prepareVerifierLaunch({
       paths: workflow.paths,
       specId: SPEC_ID,
     });
 
-    const headBefore = await getHeadCommit({
-      repositoryRoot: workflow.repository.path,
-    });
+    const headBefore = await getHeadCommit(workflow.repository.path);
 
     await writeFile(
       `${workflow.repository.path}/README.md`,
@@ -273,13 +265,11 @@ describe('verifier handoff tool', () => {
         text: 'Product files differ from the candidate commit. Restore the candidate before submitting the verifier handoff.',
       },
     ]);
+    await expect(getHeadCommit(workflow.repository.path)).resolves.toBe(
+      headBefore,
+    );
     await expect(
-      getHeadCommit({ repositoryRoot: workflow.repository.path }),
-    ).resolves.toBe(headBefore);
-    await expect(
-      readWorkflowState({
-        path: workflow.paths.getWorkflowPath(SPEC_ID),
-      }),
+      readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.VERIFIER_RUNNING });
     await expect(
       access(workflow.paths.getVerifierHandoffPath(SPEC_ID)),

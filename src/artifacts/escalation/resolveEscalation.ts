@@ -11,17 +11,19 @@ import type {
 } from '#artifacts/escalation/schema.ts';
 import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
 
+type ResolveEscalationInput = {
+  path: string;
+  specId: string;
+  revision: number;
+  resolution: EscalationResolution;
+};
+
 export const resolveEscalation = async ({
   path,
   specId,
   revision,
   resolution,
-}: {
-  path: string;
-  specId: string;
-  revision: number;
-  resolution: EscalationResolution;
-}): Promise<Escalation> => {
+}: ResolveEscalationInput): Promise<Escalation> => {
   const current = await readEscalation({
     path,
     specId,

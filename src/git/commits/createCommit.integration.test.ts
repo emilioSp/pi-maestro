@@ -18,7 +18,7 @@ const createRepositoryWithCommit = async () => {
   const repository = await createTemporaryRepository();
   cleanupFunctions.push(repository.cleanup);
   await writeFile(join(repository.path, 'README.md'), '# Test\n', 'utf8');
-  await repository.commit({ message: 'Initial commit' });
+  await repository.commit('Initial commit');
 
   return repository;
 };
@@ -45,9 +45,7 @@ describe('checkpoint creation', () => {
         message: 'maestro checkpoint current',
       }),
     ).resolves.toBe(commit);
-    await expect(
-      getStagedPaths({ repositoryRoot: repository.path }),
-    ).resolves.toEqual([]);
+    await expect(getStagedPaths(repository.path)).resolves.toEqual([]);
     await expect(
       getParentCommit({ repositoryRoot: repository.path, commit }),
     ).resolves.toBe(parent);
@@ -68,9 +66,7 @@ describe('checkpoint creation', () => {
         expectedPaths: [join(repository.path, '..', 'outside.txt')],
       }),
     ).rejects.toThrow('Checkpoint path must be inside the repository');
-    await expect(
-      getStagedPaths({ repositoryRoot: repository.path }),
-    ).resolves.toEqual([]);
+    await expect(getStagedPaths(repository.path)).resolves.toEqual([]);
   });
 
   it('rejects already staged paths outside the expected set on any branch', async () => {

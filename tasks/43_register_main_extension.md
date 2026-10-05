@@ -4,7 +4,7 @@ STATUS: DONE
 
 ## Dependency
 
-This task depends on [Task 42: Complete candidate-ready handoff](42_complete_candidate_ready_handoff.md). All `mvp_*` foundation tasks must also be complete. Activation checks are implemented in `src/maestro/checks/checkEnvironment.ts`.
+This task depends on [Task 42: Complete candidate-ready handoff](42_complete_candidate_ready_handoff.md). All `mvp_*` foundation tasks must also be complete. Activation checks are implemented in `src/maestro/checks/assertEnvironment.ts`.
 
 ## Objective
 
@@ -20,7 +20,7 @@ Wire the main Pi extension without moving domain logic into the composition root
 1. Register the six main tools from Section 6.10 once. Import each directly from `src/tools/main/`. Give the launch tools access to `pi.events`.
 2. Keep all six main tools, including `maestro_create_spec` and `maestro_mark_spec_ready`, inactive when Maestro mode is off.
 3. Implement and register `/maestro`:
-   - If Maestro is off, run `checkEnvironment`. If it passes, turn Maestro on and enable its tools, instructions, and status. If a check fails, leave Maestro off and show the error with `ctx.ui.notify(..., "error")`.
+   - If Maestro is off, run `assertEnvironment`. If it passes, turn Maestro on and enable its tools, instructions, and status. If a check fails, leave Maestro off and show the error with `ctx.ui.notify(..., "error")`.
    - If Maestro is on, turn it off and hide its tools, instructions, and status. Do not change the current branch, workflow files, or artifacts.
    - Run all checks again each time `/maestro` turns Maestro on.
 4. Leave Maestro off after `/resume`. Do not run Maestro checks or show Maestro notifications at startup.
@@ -38,7 +38,7 @@ Add Vitest integration tests with a fake Pi context. Test startup, activation, f
 
 ## Completion criteria
 
-- Maestro turns on only after `checkEnvironment` passes.
+- Maestro turns on only after `assertEnvironment` passes.
 - Main tools are usable only while Maestro is on.
 - Child tools never appear in the owner session.
 - `extensions/maestro.ts` contains no workflow logic.

@@ -6,18 +6,22 @@
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
 import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
 
-export const writeVerifierHandoff = async ({
-  path,
-  handoff,
-  specId,
-  revision,
-}: {
+type WriteVerifierHandoffInput = {
   path: string;
   handoff: unknown;
   specId: string;
   revision: number;
-}): Promise<void> => {
-  assertVerifierHandoff(handoff, specId, revision);
+};
+
+export const writeVerifierHandoff = async ({
+  path,
+  handoff: draftHandoff,
+  specId,
+  revision,
+}: WriteVerifierHandoffInput): Promise<void> => {
+  const input = { handoff: draftHandoff, specId, revision };
+  assertVerifierHandoff(input);
+  const { handoff } = input;
 
   if (handoff.findings.some((finding) => finding.rejection !== null)) {
     throw new Error('New verifier handoff findings must have no rejection.');

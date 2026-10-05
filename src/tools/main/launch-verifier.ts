@@ -20,7 +20,7 @@ import {
 import { resolveToolLaunchContext } from '#tools/utils/resolveToolLaunchContext.ts';
 import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
+import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
 import {
   VERIFIER_PASS_ERRORS,
   VERIFIER_PASS_MESSAGES,
@@ -83,6 +83,78 @@ type VerifierLaunchResult =
   | FindingsResult
   | ProductChangesResult;
 
+type ReadTerminalVerifierResultInput = {
+  paths: MaestroPaths;
+  specId: string;
+  launch: VerifierLaunch;
+  state: WorkflowState;
+  productChanges: boolean;
+};
+
+const readTerminalVerifierResult = async ({
+  paths,
+  specId,
+  launch,
+  state,
+  productChanges,
+}: ReadTerminalVerifierResultInput): Promise<
+  CandidateReadyResult | FindingsResult
+> => {
+  if (
+    state.phase !== WORKFLOW_PHASES.CANDIDATE_READY &&
+    state.phase !== WORKFLOW_PHASES.FINDINGS_DECISION
+  ) {
+    throw new Error(
+      `Verifier returned with unexpected workflow phase "${state.phase}".`,
+    );
+  }
+
+  if (productChanges) {
+    throw new Error(
+      'Product files differ from the candidate after the verifier handoff.',
+    );
+  }
+
+  const repositoryStatus = await getRepositoryStatus(launch.repositoryRoot);
+
+  if (!repositoryStatus.clean) {
+    throw new Error(
+      'The verifier returned without committing its final handoff.',
+    );
+  }
+
+  const handoff = await readVerifierHandoff({
+    path: paths.getVerifierHandoffPath(specId),
+    specId,
+    revision: state.revision,
+  });
+
+  const expectedPhase =
+    handoff.findings.length > 0
+      ? WORKFLOW_PHASES.FINDINGS_DECISION
+      : WORKFLOW_PHASES.CANDIDATE_READY;
+
+  if (state.phase !== expectedPhase) {
+    throw new Error(
+      `Verifier handoff findings do not match workflow phase "${state.phase}".`,
+    );
+  }
+
+  const details = {
+    specId,
+    revision: state.revision,
+    candidateCommit: launch.candidateCommit,
+    checkpointCommit: launch.checkpointCommit,
+    handoff,
+  };
+
+  if (state.phase === WORKFLOW_PHASES.CANDIDATE_READY) {
+    return { ...details, outcome: state.phase, phase: state.phase };
+  }
+
+  return { ...details, outcome: state.phase, phase: state.phase };
+};
+
 type ReadVerifierResultInput = {
   paths: MaestroPaths;
   specId: string;
@@ -95,9 +167,7 @@ const readVerifierResult = async ({
   launch,
 }: ReadVerifierResultInput): Promise<VerifierLaunchResult> => {
   try {
-    const state = await readWorkflowState({
-      path: paths.getWorkflowPath(specId),
-    });
+    const state = await readWorkflowState(paths.getWorkflowPath(specId));
 
     if (state.specId !== specId) {
       throw new Error(
@@ -131,69 +201,13 @@ const readVerifierResult = async ({
       );
     }
 
-    if (
-      state.phase !== WORKFLOW_PHASES.CANDIDATE_READY &&
-      state.phase !== WORKFLOW_PHASES.FINDINGS_DECISION
-    ) {
-      throw new Error(
-        `Verifier returned with unexpected workflow phase "${state.phase}".`,
-      );
-    }
-
-    if (productChanges) {
-      throw new Error(
-        'Product files differ from the candidate after the verifier handoff.',
-      );
-    }
-
-    const repositoryStatus = await getRepositoryStatus({
-      repositoryRoot: launch.repositoryRoot,
-    });
-
-    if (!repositoryStatus.clean) {
-      throw new Error(
-        'The verifier returned without committing its final handoff.',
-      );
-    }
-
-    const handoff = await readVerifierHandoff({
-      path: paths.getVerifierHandoffPath(specId),
+    return await readTerminalVerifierResult({
+      paths,
       specId,
-      revision: state.revision,
+      launch,
+      state,
+      productChanges,
     });
-
-    const expectedPhase =
-      handoff.findings.length > 0
-        ? WORKFLOW_PHASES.FINDINGS_DECISION
-        : WORKFLOW_PHASES.CANDIDATE_READY;
-
-    if (state.phase !== expectedPhase) {
-      throw new Error(
-        `Verifier handoff findings do not match workflow phase "${state.phase}".`,
-      );
-    }
-
-    if (state.phase === WORKFLOW_PHASES.CANDIDATE_READY) {
-      return {
-        outcome: state.phase,
-        specId,
-        revision: state.revision,
-        phase: state.phase,
-        candidateCommit: launch.candidateCommit,
-        checkpointCommit: launch.checkpointCommit,
-        handoff,
-      };
-    }
-
-    return {
-      outcome: state.phase,
-      specId,
-      revision: state.revision,
-      phase: state.phase,
-      candidateCommit: launch.candidateCommit,
-      checkpointCommit: launch.checkpointCommit,
-      handoff,
-    };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
 
@@ -201,11 +215,7 @@ const readVerifierResult = async ({
   }
 };
 
-const formatVerifierResult = ({
-  result,
-}: {
-  result: VerifierLaunchResult;
-}): string => {
+const formatVerifierResult = (result: VerifierLaunchResult): string => {
   if (result.outcome === WORKFLOW_PHASES.CANDIDATE_READY) {
     return `Verifier completed spec ${result.specId}. The workflow is candidate-ready.`;
   }
@@ -224,9 +234,7 @@ export const registerLaunchVerifierTool = (pi: ExtensionAPI): void => {
     description: LAUNCH_VERIFIER_TOOL.DESCRIPTION,
     parameters: LaunchVerifierToolParameters,
     async execute(toolCallId, { specId }, _signal, _onUpdate, context) {
-      const { paths, config } = await resolveToolLaunchContext({
-        cwd: context.cwd,
-      });
+      const { paths, config } = await resolveToolLaunchContext(context.cwd);
 
       const launch = await prepareVerifierLaunch({ paths, specId });
 
@@ -250,11 +258,11 @@ export const registerLaunchVerifierTool = (pi: ExtensionAPI): void => {
         request,
       });
 
-      assertDelegationResponse({ response });
+      assertDelegationResponse(response);
       const result = await readVerifierResult({ paths, specId, launch });
 
       return {
-        content: [{ type: 'text', text: formatVerifierResult({ result }) }],
+        content: [{ type: 'text', text: formatVerifierResult(result) }],
         details: result,
       };
     },

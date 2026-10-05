@@ -10,13 +10,12 @@ import { isPathStrictlyWithin } from '#utils/path-strictly-within.ts';
 
 export const WORKFLOW_CHECKPOINT_COMMIT_MESSAGE = 'maestro workflow checkpoint';
 
-const hasSamePaths = ({
-  actual,
-  expected,
-}: {
+type HasSamePathsInput = {
   actual: readonly string[];
   expected: readonly string[];
-}): boolean => {
+};
+
+const hasSamePaths = ({ actual, expected }: HasSamePathsInput): boolean => {
   if (actual.length !== expected.length) {
     return false;
   }
@@ -28,15 +27,17 @@ const hasSamePaths = ({
 // git diff --cached --name-only -z
 // git commit --message <message>
 // git rev-parse --verify HEAD^{commit}
+type CreateCommitInput = {
+  repositoryRoot: string;
+  expectedPaths: readonly string[];
+  message?: string;
+};
+
 export const createCommit = async ({
   repositoryRoot,
   expectedPaths,
   message = WORKFLOW_CHECKPOINT_COMMIT_MESSAGE,
-}: {
-  repositoryRoot: string;
-  expectedPaths: readonly string[];
-  message?: string;
-}): Promise<string> => {
+}: CreateCommitInput): Promise<string> => {
   const expectedGitPaths = expectedPaths.map((path) => {
     if (
       !isAbsolute(path) ||
@@ -55,7 +56,7 @@ export const createCommit = async ({
     cwd: repositoryRoot,
   });
 
-  const stagedPaths = await getStagedPaths({ repositoryRoot });
+  const stagedPaths = await getStagedPaths(repositoryRoot);
 
   if (!hasSamePaths({ actual: stagedPaths, expected: expectedGitPaths })) {
     throw new Error('Checkpoint has staged paths outside the expected set.');

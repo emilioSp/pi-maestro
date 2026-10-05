@@ -17,7 +17,7 @@ describe('repository root discovery', () => {
     const child = join(repository.path, 'nested', 'child');
     await mkdir(child, { recursive: true });
 
-    await expect(findRepositoryRoot({ cwd: child })).resolves.toBe(
+    await expect(findRepositoryRoot(child)).resolves.toBe(
       await realpath(repository.path),
     );
   });

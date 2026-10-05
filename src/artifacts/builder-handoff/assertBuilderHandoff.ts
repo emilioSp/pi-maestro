@@ -49,12 +49,17 @@ function assertBuilderHandoffSchema(
   }
 }
 
+type AssertBuilderHandoffInput<Handoff = unknown> = {
+  handoff: Handoff;
+  specId: string;
+  revision: number;
+};
+
 export function assertBuilderHandoff(
-  handoff: unknown,
-  specId: string,
-  revision: number,
-): asserts handoff is BuilderHandoff {
-  assertBuilderHandoffSchema(handoff);
+  input: AssertBuilderHandoffInput,
+): asserts input is AssertBuilderHandoffInput<BuilderHandoff> {
+  assertBuilderHandoffSchema(input.handoff);
+  const { handoff, specId, revision } = input;
 
   if (!isValidSpecId(handoff.specId)) {
     throw new Error(`Invalid builder handoff spec ID: "${handoff.specId}".`);

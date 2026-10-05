@@ -13,15 +13,31 @@ import {
   type WorkflowState,
 } from '#workflow/state/schema.ts';
 
+const acquireWorkflowLock = async (path: string): Promise<FileHandle> => {
+  try {
+    return await open(path, 'wx', 0o600);
+  } catch (error) {
+    if (isErrnoException(error) && error.code === 'EEXIST') {
+      throw new Error('Another workflow state update is in progress.', {
+        cause: error,
+      });
+    }
+
+    throw error;
+  }
+};
+
+type WriteWorkflowStateInput = {
+  path: string;
+  state: WorkflowState;
+  currentRevision: number;
+};
+
 export const writeWorkflowState = async ({
   path,
   state,
   currentRevision,
-}: {
-  path: string;
-  state: WorkflowState;
-  currentRevision: number;
-}): Promise<void> => {
+}: WriteWorkflowStateInput): Promise<void> => {
   assertWorkflowState(state);
 
   if (!Number.isSafeInteger(currentRevision) || currentRevision < 0) {
@@ -37,21 +53,9 @@ export const writeWorkflowState = async ({
   }
 
   const lockPath = `${path}.lock`;
-  let lock: FileHandle | undefined;
+  const lock = await acquireWorkflowLock(lockPath);
 
   try {
-    try {
-      lock = await open(lockPath, 'wx', 0o600);
-    } catch (error) {
-      if (isErrnoException(error) && error.code === 'EEXIST') {
-        throw new Error('Another workflow state update is in progress.', {
-          cause: error,
-        });
-      }
-
-      throw error;
-    }
-
     const exists = await pathExists(path);
 
     if (!exists && currentRevision !== 0) {
@@ -61,7 +65,7 @@ export const writeWorkflowState = async ({
     }
 
     if (exists) {
-      const current = await readWorkflowState({ path });
+      const current = await readWorkflowState(path);
 
       if (current.revision !== currentRevision) {
         throw new Error(
@@ -72,9 +76,7 @@ export const writeWorkflowState = async ({
 
     await writeJsonAtomically({ path, data: state });
   } finally {
-    if (lock !== undefined) {
-      await lock.close();
-      await rm(lockPath, { force: true });
-    }
+    await lock.close();
+    await rm(lockPath, { force: true });
   }
 };

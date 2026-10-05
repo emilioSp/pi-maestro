@@ -22,7 +22,7 @@ describe('temporary repository support', () => {
         '# Test repository\n',
         'utf8',
       );
-      const commit = await repository.commit({ message: 'Add readme' });
+      const commit = await repository.commit('Add readme');
 
       expect(
         runGit({

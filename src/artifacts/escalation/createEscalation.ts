@@ -13,17 +13,22 @@ import {
 } from '#artifacts/escalation/schema.ts';
 import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
 
+type CreateEscalationInput = {
+  directory: string;
+  specId: string;
+  revision: number;
+  escalation: NewEscalation;
+};
+
 export const createEscalation = async ({
   directory,
   specId,
   revision,
   escalation,
-}: {
-  directory: string;
-  specId: string;
-  revision: number;
-  escalation: NewEscalation;
-}): Promise<{ path: string; escalation: Escalation }> => {
+}: CreateEscalationInput): Promise<{
+  path: string;
+  escalation: Escalation;
+}> => {
   const id = await getNextEscalationId({
     directory,
     specId,

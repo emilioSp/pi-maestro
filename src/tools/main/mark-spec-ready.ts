@@ -31,7 +31,7 @@ export const registerMarkSpecReadyTool = (pi: ExtensionAPI): void => {
     description: MARK_SPEC_READY_TOOL.DESCRIPTION,
     parameters: MarkSpecReadyToolParameters,
     async execute(_toolCallId, { specId }, _signal, _onUpdate, context) {
-      const { paths } = await resolveToolLaunchContext({ cwd: context.cwd });
+      const { paths } = await resolveToolLaunchContext(context.cwd);
 
       const state = await markSpecReady({
         paths,

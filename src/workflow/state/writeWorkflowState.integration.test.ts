@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -53,7 +53,7 @@ describe('writeWorkflowState', () => {
       currentRevision: 1,
     });
 
-    await expect(readWorkflowState({ path })).resolves.toEqual(state(2));
+    await expect(readWorkflowState(path)).resolves.toEqual(state(2));
     await expect(readFile(path, 'utf8')).resolves.toBe(
       `${JSON.stringify(state(2), null, 2)}\n`,
     );
@@ -77,6 +77,9 @@ describe('writeWorkflowState', () => {
       }),
     ).rejects.toThrow('Stale workflow revision: expected 2, found 1.');
     await expect(readFile(path, 'utf8')).resolves.toBe(before);
+    await expect(readFile(`${path}.lock`, 'utf8')).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
   });
 
   it('rejects invalid replacement state and preserves the old file', async () => {
@@ -97,6 +100,23 @@ describe('writeWorkflowState', () => {
       }),
     ).rejects.toThrow('Invalid workflow state');
     await expect(readFile(path, 'utf8')).resolves.toBe(before);
+  });
+
+  it('given an existing lock when writing state then rejects and preserves the lock', async () => {
+    const directory = await createTemporaryDirectory();
+    const path = join(directory, 'workflow.json');
+    const lockPath = `${path}.lock`;
+    await writeFile(lockPath, 'Existing writer owns this lock.', 'utf8');
+
+    await expect(
+      writeWorkflowState({ path, state: state(1), currentRevision: 0 }),
+    ).rejects.toThrow('Another workflow state update is in progress.');
+    await expect(readFile(lockPath, 'utf8')).resolves.toBe(
+      'Existing writer owns this lock.',
+    );
+    await expect(readFile(path, 'utf8')).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
   });
 
   it('allows only one concurrent update for the same expected revision', async () => {
@@ -123,7 +143,7 @@ describe('writeWorkflowState', () => {
     expect(
       results.filter((result) => result.status === 'rejected'),
     ).toHaveLength(1);
-    await expect(readWorkflowState({ path })).resolves.toMatchObject({
+    await expect(readWorkflowState(path)).resolves.toMatchObject({
       revision: 2,
     });
   });

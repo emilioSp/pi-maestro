@@ -8,19 +8,21 @@ import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHan
 import type { VerifierHandoff } from '#artifacts/verifier-handoff/schema.ts';
 import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
 
+type RejectVerifierFindingInput = {
+  path: string;
+  specId: string;
+  revision: number;
+  findingId: string;
+  reason: string;
+};
+
 export const rejectVerifierFinding = async ({
   path,
   specId,
   revision,
   findingId,
   reason,
-}: {
-  path: string;
-  specId: string;
-  revision: number;
-  findingId: string;
-  reason: string;
-}): Promise<VerifierHandoff> => {
+}: RejectVerifierFindingInput): Promise<VerifierHandoff> => {
   const handoff = await readVerifierHandoff({ path, specId, revision });
   const finding = handoff.findings.find(({ id }) => id === findingId);
 
@@ -45,7 +47,7 @@ export const rejectVerifierFinding = async ({
     ),
   };
 
-  assertVerifierHandoff(rejectedHandoff, specId, revision);
+  assertVerifierHandoff({ handoff: rejectedHandoff, specId, revision });
   await writeJsonAtomically({ path, data: rejectedHandoff });
 
   return rejectedHandoff;

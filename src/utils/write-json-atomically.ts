@@ -15,12 +15,14 @@ const jsonContent = (data: unknown): string => {
   return `${content}\n`;
 };
 
+type WriteJsonAtomicallyInput = {
+  path: string;
+  data: unknown;
+};
+
 export const writeJsonAtomically = async ({
   path,
   data,
-}: {
-  path: string;
-  data: unknown;
-}): Promise<void> => {
+}: WriteJsonAtomicallyInput): Promise<void> => {
   await writeAtomically({ path, content: jsonContent(data) });
 };

@@ -41,7 +41,7 @@ describe('Maestro session state', () => {
 
     state.activate();
     state.setActiveSpecId(SPEC_ID);
-    await state.setSpecSha256({ specPath });
+    await state.setSpecSha256(specPath);
 
     expect(state.isActive()).toBe(true);
     expect(state.getActiveSpecId()).toBe(SPEC_ID);
@@ -62,8 +62,8 @@ describe('Maestro session state', () => {
 
     state.activate();
     state.setActiveSpecId(SPEC_ID);
-    await state.setSpecSha256({ specPath: firstSpecPath });
-    await state.setSpecSha256({ specPath: secondSpecPath });
+    await state.setSpecSha256(firstSpecPath);
+    await state.setSpecSha256(secondSpecPath);
 
     expect(state.getSpecSha256()).toBe(
       '480c2336b410f1ad5f8bf1b28944490255804b65350c527787e74ebdd511e3a4',
@@ -84,7 +84,7 @@ describe('Maestro session state', () => {
     const state = maestroSessionState;
     const specPath = await createSpecFile('specification\n');
 
-    await expect(state.setSpecSha256({ specPath })).rejects.toThrow(
+    await expect(state.setSpecSha256(specPath)).rejects.toThrow(
       'without an active spec',
     );
   });
@@ -95,7 +95,7 @@ describe('Maestro session state', () => {
 
     state.activate();
     state.setActiveSpecId(SPEC_ID);
-    await state.setSpecSha256({ specPath });
+    await state.setSpecSha256(specPath);
     state.deactivate();
 
     expect(state.isActive()).toBe(false);

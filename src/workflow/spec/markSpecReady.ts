@@ -38,7 +38,7 @@ export const markSpecReady = async ({
   }
 
   const workflowPath = paths.getWorkflowPath(specId);
-  const current = await readWorkflowState({ path: workflowPath });
+  const current = await readWorkflowState(workflowPath);
 
   if (current.specId !== specId) {
     throw new Error(

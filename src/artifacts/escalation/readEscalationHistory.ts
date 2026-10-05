@@ -10,15 +10,17 @@ import type { Escalation } from '#artifacts/escalation/schema.ts';
 
 const ESCALATION_FILE_PATTERN = /^E([1-9]\d*)\.json$/;
 
+type ReadEscalationHistoryInput = {
+  directory: string;
+  specId: string;
+  currentRevision: number;
+};
+
 export const readEscalationHistory = async ({
   directory,
   specId,
   currentRevision,
-}: {
-  directory: string;
-  specId: string;
-  currentRevision: number;
-}): Promise<Escalation[]> => {
+}: ReadEscalationHistoryInput): Promise<Escalation[]> => {
   const files = await readdir(directory);
 
   if (!files.every((file) => ESCALATION_FILE_PATTERN.test(file))) {

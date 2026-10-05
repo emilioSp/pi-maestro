@@ -65,25 +65,22 @@ export const waitForDelegationResponse = async ({
   piEventsBus,
   request,
 }: WaitForDelegationResponseInput): Promise<SubagentDelegationResponse> => {
-  let unsubscribe: (() => void) | undefined;
+  const { promise, resolve } =
+    Promise.withResolvers<SubagentDelegationResponse>();
+
+  const unsubscribe = piEventsBus.on(
+    SUBAGENT_DELEGATION_RESPONSE_EVENT,
+    (payload) => {
+      if (!matchesDelegationRequest({ request, payload })) {
+        return;
+      }
+
+      // JUSTIFICATION: matchesDelegationRequest accepts only the response for this pi-subagents request.
+      resolve(payload as SubagentDelegationResponse);
+    },
+  );
 
   try {
-    const responsePromise = new Promise<SubagentDelegationResponse>(
-      (resolve) => {
-        unsubscribe = piEventsBus.on(
-          SUBAGENT_DELEGATION_RESPONSE_EVENT,
-          (payload) => {
-            if (!matchesDelegationRequest({ request, payload })) {
-              return;
-            }
-
-            // JUSTIFICATION: matchesDelegationRequest accepts only the response for this pi-subagents request.
-            resolve(payload as SubagentDelegationResponse);
-          },
-        );
-      },
-    );
-
     try {
       piEventsBus.emit(SUBAGENT_DELEGATION_REQUEST_EVENT, request);
     } catch (error) {
@@ -94,21 +91,17 @@ export const waitForDelegationResponse = async ({
       });
     }
 
-    return await responsePromise;
+    return await promise;
   } finally {
-    unsubscribe?.();
+    unsubscribe();
   }
 };
 
-type HandleDelegationResponseInput = {
-  response: SubagentDelegationResponse;
-};
-
-export const assertDelegationResponse = ({
-  response,
-}: HandleDelegationResponseInput): true => {
+export function assertDelegationResponse(
+  response: SubagentDelegationResponse,
+): void {
   if (response.status === DELEGATION_STATUSES.COMPLETED) {
-    return true;
+    return;
   }
 
   const error = response.error ?? 'No delegation error details were provided.';
@@ -131,4 +124,4 @@ export const assertDelegationResponse = ({
   throw new Error(
     `Protocol error: unsupported final response status "${response.status}".`,
   );
-};
+}

@@ -9,11 +9,9 @@ import {
   type WorkflowState,
 } from '#workflow/state/schema.ts';
 
-export const readWorkflowState = async ({
-  path,
-}: {
-  path: string;
-}): Promise<WorkflowState> => {
+export const readWorkflowState = async (
+  path: string,
+): Promise<WorkflowState> => {
   const state = await readJsonFile({ path, description: 'Workflow state' });
   assertWorkflowState(state);
 

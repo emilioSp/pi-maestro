@@ -49,7 +49,7 @@ export const hasProductChanges = async ({
       ],
       cwd: repositoryRoot,
     }),
-    getRepositoryStatus({ repositoryRoot }),
+    getRepositoryStatus(repositoryRoot),
   ]);
 
   const allowedPaths = new Set([

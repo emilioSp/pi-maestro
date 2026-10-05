@@ -16,7 +16,7 @@ describe('getRepositoryStatus', () => {
     const repository = await createTemporaryRepository();
     cleanups.push(repository.cleanup);
     await writeFile(join(repository.path, 'tracked.txt'), 'initial\n', 'utf8');
-    await repository.commit({ message: 'Add tracked file' });
+    await repository.commit('Add tracked file');
     await writeFile(join(repository.path, 'tracked.txt'), 'changed\n', 'utf8');
     await writeFile(join(repository.path, 'staged.txt'), 'staged\n', 'utf8');
     await runGitCommand({
@@ -30,9 +30,7 @@ describe('getRepositoryStatus', () => {
       'utf8',
     );
 
-    const status = await getRepositoryStatus({
-      repositoryRoot: repository.path,
-    });
+    const status = await getRepositoryStatus(repository.path);
 
     expect(status.clean).toBe(false);
     expect(status.staged).toEqual(['staged.txt']);

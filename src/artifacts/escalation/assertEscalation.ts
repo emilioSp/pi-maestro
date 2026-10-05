@@ -10,7 +10,12 @@ import {
 } from '#artifacts/escalation/schema.ts';
 import { isValidSpecId } from '#ids/isValidSpecId.ts';
 
-const hasOption = (escalation: Escalation, optionId: string): boolean =>
+type HasOptionInput = {
+  escalation: Escalation;
+  optionId: string;
+};
+
+const hasOption = ({ escalation, optionId }: HasOptionInput): boolean =>
   escalation.options.some((option) => option.id === optionId);
 
 function assertEscalationSchema(input: unknown): asserts input is Escalation {
@@ -42,7 +47,7 @@ export function assertEscalation(input: unknown): asserts input is Escalation {
 
   if (
     escalation.recommendation !== null &&
-    !hasOption(escalation, escalation.recommendation.optionId)
+    !hasOption({ escalation, optionId: escalation.recommendation.optionId })
   ) {
     throw new Error(
       `Escalation recommendation references unknown option "${escalation.recommendation.optionId}".`,
@@ -52,7 +57,7 @@ export function assertEscalation(input: unknown): asserts input is Escalation {
   if (
     escalation.resolution !== null &&
     escalation.resolution.selectedOptionId !== null &&
-    !hasOption(escalation, escalation.resolution.selectedOptionId)
+    !hasOption({ escalation, optionId: escalation.resolution.selectedOptionId })
   ) {
     throw new Error(
       `Escalation resolution references unknown option "${escalation.resolution.selectedOptionId}".`,

@@ -7,7 +7,11 @@ import {
 } from 'pi-subagents/delegation';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
-import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
+import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
+import {
+  FINDING_SEVERITIES,
+  VERIFIER_HANDOFF_VERSION,
+} from '#artifacts/verifier-handoff/schema.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { AGENTS } from '#config/schema.ts';
 import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
@@ -43,15 +47,15 @@ const createReadyForVerifierWorkflow = async () => {
     paths: workflow.paths,
     specId: SPEC_ID,
     handoff: {
-      status: 'done',
+      status: BUILDER_HANDOFF_STATUSES.DONE,
       summary: 'The approved change was implemented.',
       acceptanceCriteria: [],
       notes: [],
     },
   });
-  await workflow.repository.commit({
-    message: `Builder completed at revision ${builderLaunch.revision + 1}`,
-  });
+  await workflow.repository.commit(
+    `Builder completed at revision ${builderLaunch.revision + 1}`,
+  );
 
   return workflow;
 };
@@ -59,7 +63,7 @@ const createReadyForVerifierWorkflow = async () => {
 const getCurrentCandidate = async (repositoryRoot: string): Promise<string> =>
   getParentCommit({
     repositoryRoot,
-    commit: await getHeadCommit({ repositoryRoot }),
+    commit: await getHeadCommit(repositoryRoot),
   });
 
 type VerifierHandoffInput = {
@@ -89,9 +93,7 @@ const recordVerifierHandoff = async ({
   paths: MaestroPaths;
   findings?: readonly unknown[];
 }): Promise<void> => {
-  const state = await readWorkflowState({
-    path: paths.getWorkflowPath(SPEC_ID),
-  });
+  const state = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
 
   const completed = await completeVerifierPass({
     paths,
@@ -155,7 +157,7 @@ describe('launch verifier tool', () => {
         requestId: 'other-request',
         ownerRunId: request.ownerRunId,
         nodeId: request.nodeId,
-        status: 'completed',
+        status: DELEGATION_STATUSES.COMPLETED,
         result: { kind: 'text', text: 'Ignore this response.' },
       });
 
@@ -222,7 +224,7 @@ describe('launch verifier tool', () => {
           {
             id: 'F1',
             acceptanceCriterion: null,
-            severity: 'medium',
+            severity: FINDING_SEVERITIES.MEDIUM,
             confidence: 1,
             summary: 'The verifier found a problem.',
             evidence: [
@@ -271,9 +273,9 @@ describe('launch verifier tool', () => {
         '# Changed\n',
       );
 
-      const state = await readWorkflowState({
-        path: workflow.paths.getWorkflowPath(SPEC_ID),
-      });
+      const state = await readWorkflowState(
+        workflow.paths.getWorkflowPath(SPEC_ID),
+      );
 
       const completed = await completeVerifierPass({
         paths: workflow.paths,
@@ -302,7 +304,7 @@ describe('launch verifier tool', () => {
       phase: WORKFLOW_PHASES.VERIFIER_RUNNING,
     });
     await expect(
-      readWorkflowState({ path: workflow.paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.VERIFIER_RUNNING });
     expect(on).toHaveBeenLastCalledWith(
       SUBAGENT_DELEGATION_RESPONSE_EVENT,
@@ -343,7 +345,7 @@ describe('launch verifier tool', () => {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
         nodeId: request.nodeId,
-        status: 'failed',
+        status: DELEGATION_STATUSES.FAILED,
         error: 'The configured provider is unavailable.',
       });
     });
@@ -354,7 +356,7 @@ describe('launch verifier tool', () => {
       'Delegation error: The configured provider is unavailable.',
     );
     await expect(
-      readWorkflowState({ path: workflow.paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.VERIFIER_RUNNING });
     expect(on).toHaveBeenLastCalledWith(
       SUBAGENT_DELEGATION_RESPONSE_EVENT,
@@ -378,7 +380,7 @@ describe('launch verifier tool', () => {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
         nodeId: request.nodeId,
-        status: 'timed_out',
+        status: DELEGATION_STATUSES.TIMED_OUT,
         error: 'The verifier exceeded its timeout.',
       });
     });
@@ -401,7 +403,7 @@ describe('launch verifier tool', () => {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
         nodeId: request.nodeId,
-        status: 'interrupted',
+        status: DELEGATION_STATUSES.INTERRUPTED,
         error: 'The verifier was interrupted.',
       });
     });

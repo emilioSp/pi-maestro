@@ -22,11 +22,7 @@ const TEMPLATE_SHA256 =
 
 const temporaryDirectories: string[] = [];
 
-const createWorkspace = async ({
-  specDirectory = 'custom-specs',
-}: {
-  specDirectory?: string;
-} = {}) => {
+const createWorkspace = async (specDirectory: string = 'custom-specs') => {
   const repositoryRoot = await mkdtemp(join(tmpdir(), 'pi-maestro-spec-'));
   temporaryDirectories.push(repositoryRoot);
 
@@ -72,9 +68,7 @@ describe('spec template and creation', () => {
     await expect(readFile(created.specFilePath, 'utf8')).resolves.toContain(
       `# ${SPEC_ID}: Add Weather Alerts`,
     );
-    await expect(
-      readWorkflowState({ path: created.workflowPath }),
-    ).resolves.toEqual({
+    await expect(readWorkflowState(created.workflowPath)).resolves.toEqual({
       version: WORKFLOW_STATE_VERSION,
       specId: SPEC_ID,
       revision: 1,

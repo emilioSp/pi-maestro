@@ -8,7 +8,7 @@ const execFileAsync = promisify(execFile);
 
 export type TemporaryRepository = {
   path: string;
-  commit: (input: { message: string }) => Promise<string>;
+  commit: (message: string) => Promise<string>;
   cleanup: () => Promise<void>;
 };
 
@@ -43,7 +43,7 @@ export const createTemporaryRepository =
 
     return {
       path: await realpath(path), // On macOS, /var is a symlink to /private/var.
-      commit: async ({ message }) => {
+      commit: async (message: string) => {
         await runGit({ arguments: ['add', '--all'], cwd: path });
         await runGit({
           arguments: ['commit', '--message', message],

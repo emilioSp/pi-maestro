@@ -67,18 +67,14 @@ describe('create spec tool', () => {
       `# ${details.specId}: Add Weather Alerts`,
     );
 
-    await expect(
-      readWorkflowState({ path: details.workflowPath }),
-    ).resolves.toEqual({
+    await expect(readWorkflowState(details.workflowPath)).resolves.toEqual({
       version: WORKFLOW_STATE_VERSION,
       specId: details.specId,
       revision: 1,
       phase: WORKFLOW_PHASES.DRAFTING_SPEC,
     });
 
-    const workflowState = await readWorkflowState({
-      path: details.workflowPath,
-    });
+    const workflowState = await readWorkflowState(details.workflowPath);
 
     expect(Object.keys(workflowState).sort()).toEqual([
       'phase',
