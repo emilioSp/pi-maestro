@@ -1,10 +1,4 @@
 import { readFile, writeFile } from 'node:fs/promises';
-import type {
-  ExtensionAPI,
-  ExtensionContext,
-  ToolDefinition,
-} from '@earendil-works/pi-coding-agent';
-import type { TSchema } from 'typebox';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
 import { readEscalation } from '#artifacts/escalation/readEscalation.ts';
@@ -14,54 +8,13 @@ import {
   createApprovedWorkflow,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
+import piTestSessions from '#test/support/pi-session.ts';
 import { registerResolveEscalationTool } from '#tools/main/resolve-escalation.ts';
 import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
 import { openBuilderEscalation } from '#workflow/escalation/openBuilderEscalation.ts';
 import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
-
-type RegisteredTool = ToolDefinition<TSchema, unknown, unknown>;
-
-type ResolveEscalationInput = {
-  specId: string;
-  escalationId: string;
-  selectedOptionId: string | null;
-  decision: string;
-  reason: string;
-};
-
-type ExecuteToolInput = {
-  repositoryRoot: string;
-  input: ResolveEscalationInput;
-};
-
-const createRegisteredTool = (): RegisteredTool => {
-  let registeredTool: RegisteredTool | undefined;
-
-  // JUSTIFICATION: The fake implements only the registration method used by this test.
-  const pi = {
-    registerTool: (tool: RegisteredTool): void => {
-      registeredTool = tool;
-    },
-  } as ExtensionAPI;
-
-  registerResolveEscalationTool(pi);
-
-  if (registeredTool === undefined) {
-    throw new Error('Resolve escalation tool was not registered.');
-  }
-
-  return registeredTool;
-};
-
-const executeTool = async ({ repositoryRoot, input }: ExecuteToolInput) => {
-  const tool = createRegisteredTool();
-  // JUSTIFICATION: The adapter only reads cwd from the extension context.
-  const context = { cwd: repositoryRoot } as ExtensionContext;
-
-  return tool.execute('test-call', input, undefined, undefined, context);
-};
 
 const openEscalation = async () => {
   const workflow = await createApprovedWorkflow();
@@ -89,11 +42,16 @@ const openEscalation = async () => {
   return { ...workflow, opened };
 };
 
-afterEach(cleanupBuilderWorkflows);
+afterEach(async () => {
+  await piTestSessions.cleanup();
+  await cleanupBuilderWorkflows();
+});
 
 describe('resolve escalation tool', () => {
-  it('registers a closed owner decision input schema', () => {
-    const tool = createRegisteredTool();
+  it('registers a closed owner decision input schema', async () => {
+    const { tool } = await piTestSessions.createRegisteredTool({
+      extension: registerResolveEscalationTool,
+    });
 
     expect(
       Value.Check(tool.parameters, {
@@ -137,15 +95,17 @@ describe('resolve escalation tool', () => {
     const { paths, repository, opened } = await openEscalation();
     const specBefore = await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8');
 
-    const result = await executeTool({
-      repositoryRoot: repository.path,
-      input: {
-        specId: SPEC_ID,
-        escalationId: opened.escalation.id,
-        selectedOptionId: 'option-a',
-        decision: 'Use option A.',
-        reason: 'It matches the approved contract.',
-      },
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveEscalationTool,
+    });
+
+    const result = await tool.execute('test-call', {
+      specId: SPEC_ID,
+      escalationId: opened.escalation.id,
+      selectedOptionId: 'option-a',
+      decision: 'Use option A.',
+      reason: 'It matches the approved contract.',
     });
 
     expect(result.content).toEqual([
@@ -220,16 +180,18 @@ describe('resolve escalation tool', () => {
   it('returns a domain error without resolving an old escalation', async () => {
     const { paths, opened, repository } = await openEscalation();
 
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveEscalationTool,
+    });
+
     await expect(
-      executeTool({
-        repositoryRoot: repository.path,
-        input: {
-          specId: SPEC_ID,
-          escalationId: 'E2',
-          selectedOptionId: 'option-a',
-          decision: 'Use option A.',
-          reason: 'It matches the approved contract.',
-        },
+      tool.execute('test-call', {
+        specId: SPEC_ID,
+        escalationId: 'E2',
+        selectedOptionId: 'option-a',
+        decision: 'Use option A.',
+        reason: 'It matches the approved contract.',
       }),
     ).rejects.toThrow(`expected "${opened.escalation.id}"`);
 
