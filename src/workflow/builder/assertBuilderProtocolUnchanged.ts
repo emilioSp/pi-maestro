@@ -12,10 +12,10 @@ type AssertBuilderProtocolUnchangedInput = {
   specId: string;
 };
 
-export const assertBuilderProtocolUnchanged = async ({
+export async function assertBuilderProtocolUnchanged({
   paths,
   specId,
-}: AssertBuilderProtocolUnchangedInput): Promise<void> => {
+}: AssertBuilderProtocolUnchangedInput): Promise<void> {
   const expectedSpecSha256 = maestroSessionState.getSpecSha256();
 
   if (expectedSpecSha256 === null) {
@@ -28,4 +28,4 @@ export const assertBuilderProtocolUnchanged = async ({
   if (actualSpecSha256 !== expectedSpecSha256) {
     throw new Error(`Builder changed spec.md after launch: "${specPath}".`);
   }
-};
+}
