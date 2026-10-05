@@ -14,7 +14,7 @@ This is a text-only task. Do not add modules, tools, tests, or workflow logic.
 
 ## Files
 
-- `src/maestro/instructions/buildMaestroInstructions.ts`
+- `src/maestro/instructions/getMaestroInstructions.ts`
 - `agents/builder.md`
 - `agents/verifier.md`
 
