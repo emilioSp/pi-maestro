@@ -23,13 +23,15 @@ export type VerifierLaunch = {
   revision: number;
 };
 
+type PrepareVerifierLaunchInput = {
+  paths: MaestroPaths;
+  specId: string;
+};
+
 export const prepareVerifierLaunch = async ({
   paths,
   specId,
-}: {
-  paths: MaestroPaths;
-  specId: string;
-}): Promise<VerifierLaunch> => {
+}: PrepareVerifierLaunchInput): Promise<VerifierLaunch> => {
   const repositoryRoot = paths.getRepositoryRoot();
   const workflowPath = paths.getWorkflowPath(specId);
   const handoffPath = paths.getVerifierHandoffPath(specId);
