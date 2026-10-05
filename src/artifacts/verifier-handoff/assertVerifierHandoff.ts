@@ -33,12 +33,17 @@ function assertVerifierHandoffSchema(
   }
 }
 
+type AssertVerifierHandoffInput<Handoff = unknown> = {
+  handoff: Handoff;
+  specId: string;
+  revision: number;
+};
+
 export function assertVerifierHandoff(
-  handoff: unknown,
-  specId: string,
-  revision: number,
-): asserts handoff is VerifierHandoff {
-  assertVerifierHandoffSchema(handoff);
+  input: AssertVerifierHandoffInput,
+): asserts input is AssertVerifierHandoffInput<VerifierHandoff> {
+  assertVerifierHandoffSchema(input.handoff);
+  const { handoff, specId, revision } = input;
 
   if (!isValidSpecId(handoff.specId)) {
     throw new Error(`Invalid verifier handoff spec ID: "${handoff.specId}".`);
