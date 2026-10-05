@@ -1,6 +1,7 @@
 import { access, readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
 import { runGitCommand } from '#git/command.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
@@ -43,7 +44,7 @@ const prepareRunningVerifier = async () => {
     paths: workflow.paths,
     specId: SPEC_ID,
     handoff: {
-      status: 'done',
+      status: BUILDER_HANDOFF_STATUSES.DONE,
       summary: 'Implemented the approved change.',
       acceptanceCriteria: [],
       notes: [],
