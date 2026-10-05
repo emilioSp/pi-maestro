@@ -45,19 +45,13 @@ describe('configuration loading', () => {
     const workspace = await createWorkspace();
     const piDirectory = join(workspace.path, '.pi');
     await mkdir(piDirectory, { recursive: true });
-    await writeFile(
-      join(piDirectory, 'maestro.json'),
-      JSON.stringify({
-        version: SUPPORTED_CONFIG_VERSION,
-        specDirectory: 'custom-specs',
-        builder: {
-          model: 'anthropic/claude-3-7-sonnet',
-          thinking: THINKING_LEVELS.MAX,
-          timeoutMinutes: 120,
-        },
-      }),
+
+    const fixture = await readFile(
+      new URL(import.meta.resolve('#test/fixtures/config/valid-full.json')),
       'utf8',
     );
+
+    await writeFile(join(piDirectory, 'maestro.json'), fixture, 'utf8');
 
     try {
       await expect(loadConfiguration({ cwd: workspace.path })).resolves.toEqual(
@@ -69,7 +63,11 @@ describe('configuration loading', () => {
             thinking: THINKING_LEVELS.MAX,
             timeoutMinutes: 120,
           },
-          verifier: DEFAULT_CONFIG.verifier,
+          verifier: {
+            model: 'anthropic/claude-3-5-haiku',
+            thinking: THINKING_LEVELS.LOW,
+            timeoutMinutes: 30,
+          },
         },
       );
     } finally {
@@ -126,7 +124,13 @@ describe('configuration loading', () => {
     const piDirectory = join(workspace.path, '.pi');
     await mkdir(piDirectory, { recursive: true });
     const configPath = join(piDirectory, 'maestro.json');
-    await writeFile(configPath, '{', 'utf8');
+
+    const fixture = await readFile(
+      new URL(import.meta.resolve('#test/fixtures/config/invalid-json.json')),
+      'utf8',
+    );
+
+    await writeFile(configPath, fixture, 'utf8');
 
     try {
       await expect(loadConfiguration({ cwd: workspace.path })).rejects.toThrow(
@@ -137,26 +141,44 @@ describe('configuration loading', () => {
     }
   });
 
-  it('keeps the full fixture usable after removing worktree settings', async () => {
-    const workspace = await createWorkspace();
-    const piDirectory = join(workspace.path, '.pi');
-    await mkdir(piDirectory, { recursive: true });
+  it.each([
+    {
+      fixture: 'valid-partial-builder-timeout.json',
+      specDirectory: DEFAULT_CONFIG.specDirectory,
+      builder: { ...DEFAULT_CONFIG.builder, timeoutMinutes: 90 },
+    },
+    {
+      fixture: 'valid-partial-directories.json',
+      specDirectory: 'specs-dir',
+      builder: DEFAULT_CONFIG.builder,
+    },
+  ])(
+    'given $fixture when loaded then supplied values override defaults and other settings keep their defaults',
+    async ({ fixture, specDirectory, builder }) => {
+      const workspace = await createWorkspace();
 
-    const fixture = await readFile(
-      new URL(import.meta.resolve('#test/fixtures/config/valid-full.json')),
-      'utf8',
-    );
+      try {
+        const piDirectory = join(workspace.path, '.pi');
+        await mkdir(piDirectory, { recursive: true });
 
-    await writeFile(join(piDirectory, 'maestro.json'), fixture, 'utf8');
+        const content = await readFile(
+          new URL(import.meta.resolve(`#test/fixtures/config/${fixture}`)),
+          'utf8',
+        );
 
-    try {
-      await expect(
-        loadConfiguration({ cwd: workspace.path }),
-      ).resolves.toMatchObject({
-        specDirectory: join(workspace.path, 'custom-specs'),
-      });
-    } finally {
-      await workspace.cleanup();
-    }
-  });
+        await writeFile(join(piDirectory, 'maestro.json'), content, 'utf8');
+
+        await expect(
+          loadConfiguration({ cwd: workspace.path }),
+        ).resolves.toEqual({
+          version: SUPPORTED_CONFIG_VERSION,
+          specDirectory: join(workspace.path, specDirectory),
+          builder,
+          verifier: DEFAULT_CONFIG.verifier,
+        });
+      } finally {
+        await workspace.cleanup();
+      }
+    },
+  );
 });
