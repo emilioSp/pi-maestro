@@ -10,13 +10,15 @@ import { basename, dirname, join } from 'node:path';
 const temporaryPathFor = (path: string): string =>
   join(dirname(path), `.${basename(path)}.${randomUUID()}.tmp`);
 
+type WriteAtomicallyInput = {
+  path: string;
+  content: string;
+};
+
 export const writeAtomically = async ({
   path,
   content,
-}: {
-  path: string;
-  content: string;
-}): Promise<void> => {
+}: WriteAtomicallyInput): Promise<void> => {
   const temporaryPath = temporaryPathFor(path);
   let file: FileHandle | undefined;
 
