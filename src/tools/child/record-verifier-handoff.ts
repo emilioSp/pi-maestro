@@ -69,11 +69,11 @@ export const registerRecordVerifierHandoffTool = (pi: ExtensionAPI): void => {
         specId,
       });
 
-      const currentState = await readWorkflowState({
-        path: paths.getWorkflowPath(specId),
-      });
+      const currentState = await readWorkflowState(
+        paths.getWorkflowPath(specId),
+      );
 
-      const headCommit = await getHeadCommit({ repositoryRoot });
+      const headCommit = await getHeadCommit(repositoryRoot);
 
       const candidateCommit = await getParentCommit({
         repositoryRoot,
@@ -113,7 +113,7 @@ export const registerRecordVerifierHandoffTool = (pi: ExtensionAPI): void => {
         ],
       });
 
-      if (!(await getRepositoryStatus({ repositoryRoot })).clean) {
+      if (!(await getRepositoryStatus(repositoryRoot)).clean) {
         throw new Error(
           'Verifier handoff requires a clean checkout after its commit.',
         );
