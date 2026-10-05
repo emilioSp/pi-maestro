@@ -9,7 +9,7 @@ import {
 } from '#config/defaults.ts';
 import { AGENTS } from '#config/schema.ts';
 import { runGitCommand } from '#git/command.ts';
-import { checkEnvironment } from '#maestro/checks/checkEnvironment.ts';
+import { assertEnvironment } from '#maestro/checks/assertEnvironment.ts';
 import piTestSessions from '#test/support/pi-session.ts';
 import { createTemporaryRepository } from '#test/support/temp-repository.ts';
 
@@ -20,12 +20,12 @@ afterEach(async () => {
   await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
 });
 
-describe('checkEnvironment', () => {
+describe('assertEnvironment', () => {
   it('given no Git repository when the environment is checked then the Git error is reported', async () => {
     const { session } = await piTestSessions.create({ extensions: [] });
 
     await expect(
-      checkEnvironment({ context: session.extensionRunner.createContext() }),
+      assertEnvironment({ context: session.extensionRunner.createContext() }),
     ).rejects.toThrow('Git repository check failed:');
   });
 
@@ -40,7 +40,7 @@ describe('checkEnvironment', () => {
     });
 
     await expect(
-      checkEnvironment({ context: session.extensionRunner.createContext() }),
+      assertEnvironment({ context: session.extensionRunner.createContext() }),
     ).rejects.toThrow(`Project is not trusted: "${repository.path}".`);
   });
 
@@ -55,7 +55,7 @@ describe('checkEnvironment', () => {
     });
 
     await expect(
-      checkEnvironment({ context: session.extensionRunner.createContext() }),
+      assertEnvironment({ context: session.extensionRunner.createContext() }),
     ).rejects.toThrow(
       `Builder or verifier agent check failed: Unknown agent: ${AGENTS.BUILDER}`,
     );
@@ -76,7 +76,7 @@ describe('checkEnvironment', () => {
     });
 
     await expect(
-      checkEnvironment({ context: session.extensionRunner.createContext() }),
+      assertEnvironment({ context: session.extensionRunner.createContext() }),
     ).rejects.toThrow('Maestro configuration check failed:');
   });
 
@@ -98,7 +98,7 @@ describe('checkEnvironment', () => {
     });
 
     await expect(
-      checkEnvironment({ context: session.extensionRunner.createContext() }),
+      assertEnvironment({ context: session.extensionRunner.createContext() }),
     ).rejects.toThrow(
       'Configured model is not available: "openai-codex/missing".',
     );
@@ -130,7 +130,7 @@ describe('checkEnvironment', () => {
     });
 
     await expect(
-      checkEnvironment({ context: session.extensionRunner.createContext() }),
+      assertEnvironment({ context: session.extensionRunner.createContext() }),
     ).resolves.toBeUndefined();
 
     expect(

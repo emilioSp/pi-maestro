@@ -10,18 +10,16 @@ import { AGENTS } from '#config/schema.ts';
 import { assertRepositoryTrusted } from '#git/repository/assertRepositoryTrusted.ts';
 import { findRepositoryRoot } from '#git/repository/findRepositoryRoot.ts';
 
-type CheckEnvironmentInput = {
-  context: ExtensionContext;
-};
-
 const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
+type GetRepositoryRootInput = {
+  context: ExtensionContext;
+};
+
 const getRepositoryRoot = async ({
   context,
-}: {
-  context: ExtensionContext;
-}): Promise<string> => {
+}: GetRepositoryRootInput): Promise<string> => {
   try {
     const repositoryRoot = await findRepositoryRoot({ cwd: context.cwd });
     await assertRepositoryTrusted({ repositoryRoot });
@@ -36,11 +34,15 @@ const getRepositoryRoot = async ({
   }
 };
 
+type GetActivationConfigurationInput = {
+  repositoryRoot: string;
+};
+
 const getActivationConfiguration = async ({
   repositoryRoot,
-}: {
-  repositoryRoot: string;
-}): Promise<Awaited<ReturnType<typeof loadConfiguration>>> => {
+}: GetActivationConfigurationInput): Promise<
+  Awaited<ReturnType<typeof loadConfiguration>>
+> => {
   try {
     return await loadConfiguration({ cwd: repositoryRoot });
   } catch (error) {
@@ -50,13 +52,15 @@ const getActivationConfiguration = async ({
   }
 };
 
-const assertModelsAvailable = ({
-  context,
-  config,
-}: {
+type AssertModelsAvailableInput = {
   context: ExtensionContext;
   config: Awaited<ReturnType<typeof loadConfiguration>>;
-}): void => {
+};
+
+function assertModelsAvailable({
+  context,
+  config,
+}: AssertModelsAvailableInput): void {
   const availableModels = context.modelRegistry.getAvailable();
 
   for (const model of [config.builder.model, config.verifier.model]) {
@@ -70,13 +74,15 @@ const assertModelsAvailable = ({
       throw new Error(`Configured model is not available: "${model}".`);
     }
   }
+}
+
+type AssertAgentsAvailableInput = {
+  repositoryRoot: string;
 };
 
-const assertAgentsAvailable = async ({
+async function assertAgentsAvailable({
   repositoryRoot,
-}: {
-  repositoryRoot: string;
-}): Promise<void> => {
+}: AssertAgentsAvailableInput): Promise<void> {
   for (const agent of [AGENTS.BUILDER, AGENTS.VERIFIER]) {
     const result = await resolveSubagentLaunchContract({
       agent,
@@ -88,11 +94,15 @@ const assertAgentsAvailable = async ({
       throw new Error(result.message);
     }
   }
+}
+
+type AssertEnvironmentInput = {
+  context: ExtensionContext;
 };
 
-export const checkEnvironment = async ({
+export async function assertEnvironment({
   context,
-}: CheckEnvironmentInput): Promise<void> => {
+}: AssertEnvironmentInput): Promise<void> {
   const repositoryRoot = await getRepositoryRoot({ context });
 
   try {
@@ -106,4 +116,4 @@ export const checkEnvironment = async ({
   const config = await getActivationConfiguration({ repositoryRoot });
 
   assertModelsAvailable({ context, config });
-};
+}
