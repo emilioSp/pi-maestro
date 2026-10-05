@@ -7,7 +7,11 @@ import {
 } from 'pi-subagents/delegation';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
-import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
+import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
+import {
+  FINDING_SEVERITIES,
+  VERIFIER_HANDOFF_VERSION,
+} from '#artifacts/verifier-handoff/schema.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { AGENTS } from '#config/schema.ts';
 import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
@@ -43,7 +47,7 @@ const createReadyForVerifierWorkflow = async () => {
     paths: workflow.paths,
     specId: SPEC_ID,
     handoff: {
-      status: 'done',
+      status: BUILDER_HANDOFF_STATUSES.DONE,
       summary: 'The approved change was implemented.',
       acceptanceCriteria: [],
       notes: [],
@@ -155,7 +159,7 @@ describe('launch verifier tool', () => {
         requestId: 'other-request',
         ownerRunId: request.ownerRunId,
         nodeId: request.nodeId,
-        status: 'completed',
+        status: DELEGATION_STATUSES.COMPLETED,
         result: { kind: 'text', text: 'Ignore this response.' },
       });
 
@@ -222,7 +226,7 @@ describe('launch verifier tool', () => {
           {
             id: 'F1',
             acceptanceCriterion: null,
-            severity: 'medium',
+            severity: FINDING_SEVERITIES.MEDIUM,
             confidence: 1,
             summary: 'The verifier found a problem.',
             evidence: [
@@ -343,7 +347,7 @@ describe('launch verifier tool', () => {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
         nodeId: request.nodeId,
-        status: 'failed',
+        status: DELEGATION_STATUSES.FAILED,
         error: 'The configured provider is unavailable.',
       });
     });
@@ -378,7 +382,7 @@ describe('launch verifier tool', () => {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
         nodeId: request.nodeId,
-        status: 'timed_out',
+        status: DELEGATION_STATUSES.TIMED_OUT,
         error: 'The verifier exceeded its timeout.',
       });
     });
@@ -401,7 +405,7 @@ describe('launch verifier tool', () => {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
         nodeId: request.nodeId,
-        status: 'interrupted',
+        status: DELEGATION_STATUSES.INTERRUPTED,
         error: 'The verifier was interrupted.',
       });
     });
