@@ -51,7 +51,6 @@ describe('spec template and creation', () => {
     expect(createHash('sha256').update(template).digest('hex')).toBe(
       TEMPLATE_SHA256,
     );
-    expect(template.match(/^## \d+\./gm)).toHaveLength(4);
   });
 
   it('creates a drafting spec in the configured directory', async () => {

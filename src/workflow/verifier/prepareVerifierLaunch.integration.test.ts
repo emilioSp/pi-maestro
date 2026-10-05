@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
@@ -29,15 +28,8 @@ describe('verifier launch preparation', () => {
     await completeBuilderPass({
       paths,
       specId: SPEC_ID,
-      handoff: {
-        status: BUILDER_HANDOFF_STATUSES.DONE,
-        summary: 'Implemented the approved change.',
-        acceptanceCriteria: [],
-        notes: [],
-      },
+      handoff: doneHandoff(builderLaunch.revision + 1),
     });
-    const builderHandoff = doneHandoff(builderLaunch.revision + 1);
-    expect(builderHandoff.status).toBe(BUILDER_HANDOFF_STATUSES.DONE);
     await repository.commit('Builder completed');
 
     const candidateBefore = await getHeadCommit(repository.path);

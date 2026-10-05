@@ -29,14 +29,10 @@ afterEach(async () => {
 });
 
 describe('Maestro session state', () => {
-  it('returns the same inactive state instance each time', () => {
-    const first = maestroSessionState;
-    const second = maestroSessionState;
-
-    expect(first).toBe(second);
-    expect(first.isActive()).toBe(false);
-    expect(first.getActiveSpecId()).toBeNull();
-    expect(first.getSpecSha256()).toBeNull();
+  it('given an inactive session then no active spec or SHA is stored', () => {
+    expect(maestroSessionState.isActive()).toBe(false);
+    expect(maestroSessionState.getActiveSpecId()).toBeNull();
+    expect(maestroSessionState.getSpecSha256()).toBeNull();
   });
 
   it('keeps the active spec and SHA only in live state', async () => {
@@ -69,8 +65,8 @@ describe('Maestro session state', () => {
     await state.setSpecSha256(firstSpecPath);
     await state.setSpecSha256(secondSpecPath);
 
-    expect(state.getSpecSha256()).not.toBe(
-      '976bb7fd4f9d42cce09fd5dad6081198da99a1f03bf39747b1f0e817b9540308',
+    expect(state.getSpecSha256()).toBe(
+      '480c2336b410f1ad5f8bf1b28944490255804b65350c527787e74ebdd511e3a4',
     );
   });
 
