@@ -10,15 +10,17 @@ const TEMPLATE_URL = new URL('../../templates/spec.md', import.meta.url);
 export const loadSpecTemplate = async (): Promise<string> =>
   readFile(TEMPLATE_URL, 'utf8');
 
+type RenderSpecTemplateInput = {
+  template: string;
+  specId: string;
+  title: string;
+};
+
 export const renderSpecTemplate = ({
   template,
   specId,
   title,
-}: {
-  template: string;
-  specId: string;
-  title: string;
-}): string =>
+}: RenderSpecTemplateInput): string =>
   template
     .replace('<id>', specId)
     .replace('<short, outcome-oriented title>', title.trim());
