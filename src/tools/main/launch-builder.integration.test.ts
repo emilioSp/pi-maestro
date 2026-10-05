@@ -62,7 +62,7 @@ describe('launch builder tool', () => {
         requestId: 'other-request',
         ownerRunId: request.ownerRunId,
         nodeId: request.nodeId,
-        status: 'completed',
+        status: DELEGATION_STATUSES.COMPLETED,
         result: { kind: 'text', text: 'Ignore this response.' },
       });
 
@@ -118,7 +118,7 @@ describe('launch builder tool', () => {
     );
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
     expect(result.details).toMatchObject({
-      outcome: 'done',
+      outcome: BUILDER_HANDOFF_STATUSES.DONE,
       specId: SPEC_ID,
       phase: WORKFLOW_PHASES.READY_FOR_VERIFIER,
     });
@@ -166,7 +166,7 @@ describe('launch builder tool', () => {
     const result = await tool.execute('test-call', { specId: SPEC_ID });
 
     expect(result.details).toMatchObject({
-      outcome: 'failed',
+      outcome: BUILDER_HANDOFF_STATUSES.FAILED,
       phase: WORKFLOW_PHASES.BUILDER_FAILED,
     });
 
@@ -229,7 +229,7 @@ describe('launch builder tool', () => {
     const result = await tool.execute('test-call', { specId: SPEC_ID });
 
     expect(result.details).toMatchObject({
-      outcome: 'escalation',
+      outcome: BUILDER_HANDOFF_STATUSES.ESCALATION,
       phase: WORKFLOW_PHASES.ESCALATION_DECISION,
       escalation: { id: 'E1' },
     });
@@ -267,7 +267,7 @@ describe('launch builder tool', () => {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
         nodeId: request.nodeId,
-        status: 'failed',
+        status: DELEGATION_STATUSES.FAILED,
         error: 'The configured provider is unavailable.',
       });
     });
@@ -302,7 +302,7 @@ describe('launch builder tool', () => {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
         nodeId: request.nodeId,
-        status: 'timed_out',
+        status: DELEGATION_STATUSES.TIMED_OUT,
         error: 'The builder exceeded its timeout.',
       });
     });
@@ -330,7 +330,7 @@ describe('launch builder tool', () => {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
         nodeId: request.nodeId,
-        status: 'interrupted',
+        status: DELEGATION_STATUSES.INTERRUPTED,
         error: 'The builder was interrupted.',
       });
     });
