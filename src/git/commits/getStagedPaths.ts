@@ -11,11 +11,9 @@ const parsePaths = (output: string): readonly string[] =>
 
 // Lists the paths currently staged for commit.
 // git diff --cached --name-only -z
-export const getStagedPaths = async ({
-  repositoryRoot,
-}: {
-  repositoryRoot: string;
-}): Promise<readonly string[]> => {
+export const getStagedPaths = async (
+  repositoryRoot: string,
+): Promise<readonly string[]> => {
   const result = await runGitCommand({
     arguments: ['diff', '--cached', '--name-only', '-z'],
     cwd: repositoryRoot,

@@ -53,9 +53,9 @@ const createReadyForVerifierWorkflow = async () => {
       notes: [],
     },
   });
-  await workflow.repository.commit({
-    message: `Builder completed at revision ${builderLaunch.revision + 1}`,
-  });
+  await workflow.repository.commit(
+    `Builder completed at revision ${builderLaunch.revision + 1}`,
+  );
 
   return workflow;
 };
@@ -63,7 +63,7 @@ const createReadyForVerifierWorkflow = async () => {
 const getCurrentCandidate = async (repositoryRoot: string): Promise<string> =>
   getParentCommit({
     repositoryRoot,
-    commit: await getHeadCommit({ repositoryRoot }),
+    commit: await getHeadCommit(repositoryRoot),
   });
 
 type VerifierHandoffInput = {
@@ -93,9 +93,7 @@ const recordVerifierHandoff = async ({
   paths: MaestroPaths;
   findings?: readonly unknown[];
 }): Promise<void> => {
-  const state = await readWorkflowState({
-    path: paths.getWorkflowPath(SPEC_ID),
-  });
+  const state = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
 
   const completed = await completeVerifierPass({
     paths,
@@ -275,9 +273,9 @@ describe('launch verifier tool', () => {
         '# Changed\n',
       );
 
-      const state = await readWorkflowState({
-        path: workflow.paths.getWorkflowPath(SPEC_ID),
-      });
+      const state = await readWorkflowState(
+        workflow.paths.getWorkflowPath(SPEC_ID),
+      );
 
       const completed = await completeVerifierPass({
         paths: workflow.paths,
@@ -306,7 +304,7 @@ describe('launch verifier tool', () => {
       phase: WORKFLOW_PHASES.VERIFIER_RUNNING,
     });
     await expect(
-      readWorkflowState({ path: workflow.paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.VERIFIER_RUNNING });
     expect(on).toHaveBeenLastCalledWith(
       SUBAGENT_DELEGATION_RESPONSE_EVENT,
@@ -358,7 +356,7 @@ describe('launch verifier tool', () => {
       'Delegation error: The configured provider is unavailable.',
     );
     await expect(
-      readWorkflowState({ path: workflow.paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.VERIFIER_RUNNING });
     expect(on).toHaveBeenLastCalledWith(
       SUBAGENT_DELEGATION_RESPONSE_EVENT,

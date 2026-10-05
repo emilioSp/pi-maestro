@@ -62,11 +62,9 @@ const parseRepositoryStatus = (result: GitCommandResult): RepositoryStatus => {
 };
 
 // git status --porcelain=v1 --untracked-files=all -z
-export const getRepositoryStatus = async ({
-  repositoryRoot,
-}: {
-  repositoryRoot: string;
-}): Promise<RepositoryStatus> => {
+export const getRepositoryStatus = async (
+  repositoryRoot: string,
+): Promise<RepositoryStatus> => {
   const result = await runGitCommand({
     arguments: ['status', '--porcelain=v1', '--untracked-files=all', '-z'],
     cwd: repositoryRoot,
