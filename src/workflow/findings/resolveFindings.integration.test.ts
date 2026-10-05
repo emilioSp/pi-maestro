@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
-import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
+import {
+  FINDING_SEVERITIES,
+  VERIFIER_HANDOFF_VERSION,
+} from '#artifacts/verifier-handoff/schema.ts';
 import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import {
@@ -33,13 +37,13 @@ describe('finding resolution', () => {
       paths,
       specId: SPEC_ID,
       handoff: {
-        status: 'done',
+        status: BUILDER_HANDOFF_STATUSES.DONE,
         summary: 'Implemented the approved change.',
         acceptanceCriteria: [],
         notes: [],
       },
     });
-    await repository.commit({ message: 'Builder completed' });
+    await repository.commit('Builder completed');
 
     const firstVerifierLaunch = await prepareVerifierLaunch({
       paths,
@@ -49,7 +53,7 @@ describe('finding resolution', () => {
     const finding = {
       id: 'F1',
       acceptanceCriterion: null,
-      severity: 'medium' as const,
+      severity: FINDING_SEVERITIES.MEDIUM,
       confidence: 0.9,
       summary: 'The implementation misses an edge case.',
       evidence: [
@@ -75,7 +79,7 @@ describe('finding resolution', () => {
         notes: [],
       },
     });
-    await repository.commit({ message: 'Verifier finding' });
+    await repository.commit('Verifier finding');
 
     const resolved = await resolveFindings({
       paths,
@@ -103,19 +107,15 @@ describe('finding resolution', () => {
       paths,
       specId: SPEC_ID,
       handoff: {
-        status: 'done',
+        status: BUILDER_HANDOFF_STATUSES.DONE,
         summary: 'Fixed the reported finding.',
         acceptanceCriteria: [],
         notes: [],
       },
     });
-    await repository.commit({
-      message: 'Builder fixed finding',
-    });
+    await repository.commit('Builder fixed finding');
 
-    const secondCandidateCommit = await getHeadCommit({
-      repositoryRoot: repository.path,
-    });
+    const secondCandidateCommit = await getHeadCommit(repository.path);
 
     const secondVerifierLaunch = await prepareVerifierLaunch({
       paths,
@@ -148,9 +148,7 @@ describe('finding resolution', () => {
       throw new Error('Expected the second verifier pass to succeed.');
     }
 
-    await repository.commit({
-      message: 'Verifier approved fix',
-    });
+    await repository.commit('Verifier approved fix');
 
     expect(secondVerifier.state.phase).toBe(WORKFLOW_PHASES.CANDIDATE_READY);
     await expect(
@@ -165,7 +163,7 @@ describe('finding resolution', () => {
       findings: [],
     });
     await expect(
-      getCurrentBranch({ repositoryRoot: repository.path }),
+      getCurrentBranch(repository.path),
     ).resolves.toBe('main');
   });
 });
