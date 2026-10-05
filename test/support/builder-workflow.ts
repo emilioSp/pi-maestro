@@ -45,9 +45,9 @@ export const createApprovedWorkflow = async ({
     JSON.stringify({ version: DEFAULT_CONFIG.version, specDirectory }, null, 2),
     'utf8',
   );
-  await repository.commit({ message: 'Initial commit' });
+  await repository.commit('Initial commit');
 
-  const config = await loadConfiguration({ cwd: repository.path });
+  const config = await loadConfiguration(repository.path);
   const paths = new MaestroPaths({ repositoryRoot: repository.path, config });
   await createSpec({
     paths,
@@ -64,7 +64,7 @@ export const createApprovedWorkflow = async ({
   maestroSessionState.setActiveSpecId(SPEC_ID);
 
   if (commitApproval) {
-    await repository.commit({ message: 'Approve builder spec' });
+    await repository.commit('Approve builder spec');
   }
 
   return { paths, repository };

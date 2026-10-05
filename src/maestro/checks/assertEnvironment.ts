@@ -13,16 +13,12 @@ import { findRepositoryRoot } from '#git/repository/findRepositoryRoot.ts';
 const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
-type GetRepositoryRootInput = {
-  context: ExtensionContext;
-};
-
-const getRepositoryRoot = async ({
-  context,
-}: GetRepositoryRootInput): Promise<string> => {
+const getRepositoryRoot = async (
+  context: ExtensionContext,
+): Promise<string> => {
   try {
-    const repositoryRoot = await findRepositoryRoot({ cwd: context.cwd });
-    await assertRepositoryTrusted({ repositoryRoot });
+    const repositoryRoot = await findRepositoryRoot(context.cwd);
+    await assertRepositoryTrusted(repositoryRoot);
 
     if (!context.isProjectTrusted()) {
       throw new Error(`Project is not trusted: "${repositoryRoot}".`);
@@ -34,17 +30,11 @@ const getRepositoryRoot = async ({
   }
 };
 
-type GetActivationConfigurationInput = {
-  repositoryRoot: string;
-};
-
-const getActivationConfiguration = async ({
-  repositoryRoot,
-}: GetActivationConfigurationInput): Promise<
-  Awaited<ReturnType<typeof loadConfiguration>>
-> => {
+const getActivationConfiguration = async (
+  repositoryRoot: string,
+): Promise<Awaited<ReturnType<typeof loadConfiguration>>> => {
   try {
-    return await loadConfiguration({ cwd: repositoryRoot });
+    return await loadConfiguration(repositoryRoot);
   } catch (error) {
     throw new Error(
       `Maestro configuration check failed: ${getErrorMessage(error)}`,
@@ -76,13 +66,7 @@ function assertModelsAvailable({
   }
 }
 
-type AssertAgentsAvailableInput = {
-  repositoryRoot: string;
-};
-
-async function assertAgentsAvailable({
-  repositoryRoot,
-}: AssertAgentsAvailableInput): Promise<void> {
+async function assertAgentsAvailable(repositoryRoot: string): Promise<void> {
   for (const agent of [AGENTS.BUILDER, AGENTS.VERIFIER]) {
     const result = await resolveSubagentLaunchContract({
       agent,
@@ -96,24 +80,20 @@ async function assertAgentsAvailable({
   }
 }
 
-type AssertEnvironmentInput = {
-  context: ExtensionContext;
-};
-
-export async function assertEnvironment({
-  context,
-}: AssertEnvironmentInput): Promise<void> {
-  const repositoryRoot = await getRepositoryRoot({ context });
+export async function assertEnvironment(
+  context: ExtensionContext,
+): Promise<void> {
+  const repositoryRoot = await getRepositoryRoot(context);
 
   try {
-    await assertAgentsAvailable({ repositoryRoot });
+    await assertAgentsAvailable(repositoryRoot);
   } catch (error) {
     throw new Error(
       `Builder or verifier agent check failed: ${getErrorMessage(error)}`,
     );
   }
 
-  const config = await getActivationConfiguration({ repositoryRoot });
+  const config = await getActivationConfiguration(repositoryRoot);
 
   assertModelsAvailable({ context, config });
 }
