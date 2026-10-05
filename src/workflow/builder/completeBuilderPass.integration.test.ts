@@ -66,9 +66,7 @@ describe('builder completion', () => {
       '# Changed specification\n',
       'utf8',
     );
-    await repository.commit({
-      message: 'maestro workflow checkpoint',
-    });
+    await repository.commit('maestro workflow checkpoint');
 
     await expect(
       completeBuilderPass({
@@ -103,9 +101,9 @@ describe('builder completion', () => {
 
     expect(completed.repositoryRoot).toBe(repository.path);
     expect(completed.state.phase).toBe(WORKFLOW_PHASES.READY_FOR_VERIFIER);
-    await repository.commit({ message: 'Builder completed' });
+    await repository.commit('Builder completed');
     await expect(
-      readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({
       revision: launch.revision + 1,
       phase: WORKFLOW_PHASES.READY_FOR_VERIFIER,

@@ -56,7 +56,7 @@ export const createCommit = async ({
     cwd: repositoryRoot,
   });
 
-  const stagedPaths = await getStagedPaths({ repositoryRoot });
+  const stagedPaths = await getStagedPaths(repositoryRoot);
 
   if (!hasSamePaths({ actual: stagedPaths, expected: expectedGitPaths })) {
     throw new Error('Checkpoint has staged paths outside the expected set.');

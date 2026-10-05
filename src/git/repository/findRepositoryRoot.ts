@@ -7,11 +7,9 @@ import { realpath } from 'node:fs/promises';
 import { runGitCommand } from '#git/command.ts';
 
 // git rev-parse --path-format=absolute --show-toplevel
-export const findRepositoryRoot = async ({
-  cwd = process.cwd(),
-}: {
-  cwd?: string;
-} = {}): Promise<string> => {
+export const findRepositoryRoot = async (
+  cwd: string = process.cwd(),
+): Promise<string> => {
   const result = await runGitCommand({
     arguments: ['rev-parse', '--path-format=absolute', '--show-toplevel'],
     cwd,

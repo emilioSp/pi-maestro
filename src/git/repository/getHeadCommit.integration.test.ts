@@ -14,9 +14,7 @@ describe('HEAD inspection', () => {
     const repository = await createTemporaryRepository();
     cleanupFunctions.push(repository.cleanup);
 
-    await expect(
-      getHeadCommit({ repositoryRoot: repository.path }),
-    ).rejects.toMatchObject({
+    await expect(getHeadCommit(repository.path)).rejects.toMatchObject({
       code: GIT_COMMAND_ERROR_CODES.COMMAND_FAILED,
     });
   });

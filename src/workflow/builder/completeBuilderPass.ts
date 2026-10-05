@@ -79,7 +79,7 @@ export const completeBuilderPass = async ({
 
   const workflowPath = paths.getWorkflowPath(specId);
   const handoffPath = paths.getBuilderHandoffPath(specId);
-  const currentState = await readWorkflowState({ path: workflowPath });
+  const currentState = await readWorkflowState(workflowPath);
 
   if (currentState.specId !== specId) {
     throw new Error(

@@ -58,7 +58,7 @@ export const completeVerifierPass = async ({
   const repositoryRoot = paths.getRepositoryRoot();
   const workflowPath = paths.getWorkflowPath(specId);
   const handoffPath = paths.getVerifierHandoffPath(specId);
-  const currentState = await readWorkflowState({ path: workflowPath });
+  const currentState = await readWorkflowState(workflowPath);
 
   if (currentState.specId !== specId) {
     throw new Error(

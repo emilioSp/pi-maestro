@@ -27,7 +27,7 @@ const PHASE_LABEL_CASES: Array<{ phase: WorkflowPhase; label: string }> = [
   { phase: WORKFLOW_PHASES.CANDIDATE_READY, label: 'Completed' },
 ];
 
-const createWorkflow = ({ phase }: { phase: WorkflowPhase }) => {
+const createWorkflow = (phase: WorkflowPhase) => {
   const state: WorkflowState = {
     version: WORKFLOW_STATE_VERSION,
     specId: SPEC_ID,
@@ -56,7 +56,7 @@ describe('Maestro status', () => {
     ({ phase, label }) => {
       const status = formatMaestroStatus({
         active: true,
-        workflow: createWorkflow({ phase }),
+        workflow: createWorkflow(phase),
       });
 
       expect(status).toBe(`Maestro active · ${SPEC_ID} · ${label}`);

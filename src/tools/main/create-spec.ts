@@ -30,7 +30,7 @@ export const registerCreateSpecTool = (pi: ExtensionAPI): void => {
     description: CREATE_SPEC_TOOL.DESCRIPTION,
     parameters: CreateSpecToolParameters,
     async execute(_toolCallId, { title }, _signal, _onUpdate, context) {
-      const { paths } = await resolveToolLaunchContext({ cwd: context.cwd });
+      const { paths } = await resolveToolLaunchContext(context.cwd);
 
       const created = await createSpec({
         paths,
