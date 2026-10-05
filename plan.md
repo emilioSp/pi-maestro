@@ -437,7 +437,7 @@ Regole per `Technical design`:
 2. Non tenta di prevedere ogni classe, funzione o dettaglio locale.
 3. Le decisioni approvate sono vincolanti; il builder resta libero sui dettagli non specificati.
 4. Una deviazione architetturale richiede un’escalation.
-5. Le sottosezioni non applicabili vengono rimosse.
+5. Le sottosezioni opzionali non applicabili vengono rimosse. `Prototype and user interaction`, `API specification` e `Monitoring and observability` restano presenti con `Not applicable.` quando non applicabili.
 6. Quando non esistono decisioni architetturali, la sezione contiene `No architectural changes. Follow the existing repository patterns.`.
 7. Nuove dipendenze, migrazioni e integrazioni sono dichiarate esplicitamente.
 8. Diagrammi Mermaid sono consentiti quando chiariscono flussi o confini.
@@ -772,7 +772,7 @@ Il contenuto esatto di `.gitignore` viene scelto durante l’implementazione. No
 
 `extensions/maestro.ts` è il composition root della sessione principale. Registra direttamente `/maestro`, gli eventi di sessione e i tool principali, collegandoli alle funzioni sotto `src/maestro/` e `src/tools/main/`. Contiene wiring Pi, ma non logica di workflow.
 
-`extensions/maestro-subagent.ts` importa e registra direttamente i tool da `src/tools/child/`, senza un barrel `index.ts`. Non registra eventi, comandi, status o tool di orchestrazione e non contiene logica degli artefatti.
+`extensions/maestro-subagent.ts` importa e registra direttamente i tool da `src/tools/child/`, senza un barrel `index.ts`. Registra un hook `tool_call` per proteggere `spec.md` dalle modifiche dirette tramite `write` ed `edit`. Non registra comandi, status o tool di orchestrazione e non contiene logica degli artefatti.
 
 `src/tools/main/` contiene i tool dell’owner e `src/tools/child/` contiene quelli dei ruoli figli. Ogni file esporta una sola operazione: la registrazione del proprio tool Pi. Schema degli input, tipi, costanti e helper privati restano nel file del tool che li usa. Il file chiama il dominio e converte il risultato nel formato Pi. Le estensioni importano ogni registrazione dal suo file, senza barrel.
 
@@ -800,11 +800,11 @@ Ogni tool attende la risposta terminale foreground, la abbina alla richiesta e r
 
 L’owner deve avere `pi-subagents` installato e attivo in Pi; Maestro ne verifica la presenza tramite l’API pubblica durante l’attivazione.
 
-`src/maestro/` implementa la modalità principale. Le directory `checks/`, `activation/`, `session/`, `instructions/` e `status/` separano i rispettivi ambiti. Ogni funzione pubblica ha un modulo. Tipi, costanti, errori e helper privati restano con la funzione che servono.
+`src/maestro/` implementa la modalità principale. Le directory `checks/`, `session/`, `instructions/` e `status/` separano i rispettivi ambiti. Ogni funzione pubblica ha un modulo. Tipi, costanti, errori e helper privati restano con la funzione che servono.
 
 Gli import usano percorsi diretti, senza `index.ts` o altri barrel. I placeholder nella root di `src/maestro/` vengono rimossi quando si implementa il rispettivo ambito. Il wiring con le API Pi resta in `extensions/maestro.ts`.
 
-`src/git/` implementa le operazioni Git senza dipendere da Pi. `command.ts` esegue Git con argv, cwd e timeout, senza passare da una shell. Le directory `repository/`, `branches/`, `commits/` e `history/` raggruppano le operazioni per ambito. Maestro non crea né gestisce worktree.
+`src/git/` implementa le operazioni Git senza dipendere da Pi. `command.ts` esegue Git con argv, cwd e timeout, senza passare da una shell. Le directory `repository/`, `commits/` e `history/` raggruppano le operazioni per ambito. Maestro non crea né gestisce worktree.
 
 Ogni operazione pubblica ha un modulo. Tipi, costanti, errori e helper privati restano con l’operazione che servono. Gli import usano il percorso diretto del modulo, senza barrel. `utils.ts` contiene il singolo helper condiviso per gli errori Git.
 
@@ -1612,7 +1612,7 @@ Copertura minima approvata per la prima versione:
 10. Test che nessuna operazione esca dalla root Git.
 11. Test degli handoff builder `done` e `failed`, inclusi identità, revisione, acceptance criteria e stati terminali.
 12. Test che il verifier ripristini ogni modifica staged, unstaged o untracked prima dell’handoff e che il rifiuto restituisca `PRODUCT_FILES_MODIFIED` con un messaggio, senza modifiche a handoff e workflow.
-13. Test che escalation e finding possano portare a `ready-for-builder` solo dopo l’approvazione esplicita della revisione della spec.
+13. Test che la risoluzione di un’escalation o una decisione `fix-code` riportino il workflow a `ready-for-builder` senza una revisione della spec. Se il contratto cambia, il ritorno passa da `maestro_mark_spec_ready` dopo l’approvazione esplicita della revisione.
 14. Test rappresentativi di `maestro_resolve_findings`: tutti respinti e almeno un `fix-code`.
 15. Test del blocco di `write` ed `edit` su `spec.md` tramite percorsi relativi, assoluti, normalizzati e symlink e del confronto SHA-256 contro modifiche effettuate tramite `bash`, incluse modifiche commesse con il messaggio del checkpoint.
 16. Test nei moduli proprietari dei due percorsi verso `candidate-ready`: handoff con identità e revisione corrette, nessun finding attivo, rifiuto delle modifiche estranee prima della scrittura e checkout pulito dopo il commit. Nessun tool o checkpoint finale aggiuntivo.
@@ -1639,7 +1639,7 @@ Decisione presa per `pi-subagents`:
 pi-subagents >=0.68.0
 ```
 
-La prima versione include `pi-subagents` 0.71.0 come library bundled per gli import pubblici. L’estensione owner realmente caricata in Pi deve essere `pi-subagents >=0.68.0`. Il manifest Maestro non carica una seconda copia dell’estensione. Non viene garantita compatibilità con versioni precedenti.
+La prima versione include `pi-subagents` 0.75.0 come library bundled per gli import pubblici. L’estensione owner realmente caricata in Pi deve essere `pi-subagents >=0.68.0`. Il manifest Maestro non carica una seconda copia dell’estensione. Non viene garantita compatibilità con versioni precedenti.
 
 Decisione presa per Node.js:
 

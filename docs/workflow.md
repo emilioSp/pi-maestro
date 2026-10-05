@@ -237,7 +237,7 @@ The summary does not change files or workflow state, create commits, or run veri
 
 ## Stored artifacts
 
-Maestro creates the spec directory with `spec.md` and `workflow.json` when the owner creates a spec. It creates handoff, escalation, and prototype directories only when an action needs them.
+When the owner creates a spec, Maestro creates the spec directory with `spec.md` and `workflow.json`. It also creates the empty `handoffs/escalations/` and `prototypes/` directories. Later workflow actions create the artifact files.
 
 The default spec directory contains:
 
