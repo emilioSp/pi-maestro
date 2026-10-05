@@ -53,7 +53,7 @@ describe('writeWorkflowState', () => {
       currentRevision: 1,
     });
 
-    await expect(readWorkflowState({ path })).resolves.toEqual(state(2));
+    await expect(readWorkflowState(path)).resolves.toEqual(state(2));
     await expect(readFile(path, 'utf8')).resolves.toBe(
       `${JSON.stringify(state(2), null, 2)}\n`,
     );
@@ -123,7 +123,7 @@ describe('writeWorkflowState', () => {
     expect(
       results.filter((result) => result.status === 'rejected'),
     ).toHaveLength(1);
-    await expect(readWorkflowState({ path })).resolves.toMatchObject({
+    await expect(readWorkflowState(path)).resolves.toMatchObject({
       revision: 2,
     });
   });
