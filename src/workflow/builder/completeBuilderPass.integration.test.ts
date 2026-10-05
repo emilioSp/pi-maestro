@@ -1,5 +1,6 @@
 import { writeFile } from 'node:fs/promises';
 import { afterEach, describe, expect, it } from 'vitest';
+import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { runGitCommand } from '#git/command.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import {
@@ -25,7 +26,7 @@ describe('builder completion', () => {
         paths,
         specId: SPEC_ID,
         handoff: {
-          status: 'done',
+          status: BUILDER_HANDOFF_STATUSES.DONE,
           summary: 'Implemented the approved change.',
           acceptanceCriteria: [],
           notes: [],
@@ -48,7 +49,7 @@ describe('builder completion', () => {
         paths,
         specId: SPEC_ID,
         handoff: {
-          status: 'done',
+          status: BUILDER_HANDOFF_STATUSES.DONE,
           summary: 'Implemented the approved change.',
           acceptanceCriteria: [],
           notes: [],
@@ -74,7 +75,7 @@ describe('builder completion', () => {
         paths,
         specId: SPEC_ID,
         handoff: {
-          status: 'done',
+          status: BUILDER_HANDOFF_STATUSES.DONE,
           summary: 'Implemented the approved change.',
           acceptanceCriteria: [],
           notes: [],
@@ -88,7 +89,7 @@ describe('builder completion', () => {
     const launch = await prepareBuilderLaunch({ paths, specId: SPEC_ID });
 
     const handoff = {
-      status: 'done' as const,
+      status: BUILDER_HANDOFF_STATUSES.DONE,
       summary: 'Implemented the approved change.',
       acceptanceCriteria: [],
       notes: [],
