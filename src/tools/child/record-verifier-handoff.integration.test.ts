@@ -9,6 +9,7 @@ import type { TSchema } from 'typebox';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
 import { runGitCommand } from '#git/command.ts';
+import { getParentCommit } from '#git/history/getParentCommit.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import {
@@ -205,8 +206,48 @@ describe('verifier handoff tool', () => {
       ].sort(),
     );
     await expect(
-      getHeadCommit({ repositoryRoot: workflow.repository.path }),
-    ).resolves.not.toBe(verifierLaunch.checkpointCommit);
+      getParentCommit({
+        repositoryRoot: workflow.repository.path,
+        commit: 'HEAD',
+      }),
+    ).resolves.toBe(verifierLaunch.checkpointCommit);
+  });
+
+  it('given a commit hook that changes the product when the verifier records its handoff then the tool does not report success', async () => {
+    const workflow = await createApprovedWorkflow();
+    await prepareBuilderLaunch({ paths: workflow.paths, specId: SPEC_ID });
+    await completeBuilderPass({
+      paths: workflow.paths,
+      specId: SPEC_ID,
+      handoff: {
+        status: 'done',
+        summary: 'Implemented the approved change.',
+        acceptanceCriteria: [],
+        notes: [],
+      },
+    });
+    await commitAll({
+      path: workflow.repository.path,
+      message: 'Builder completed',
+    });
+    await prepareVerifierLaunch({ paths: workflow.paths, specId: SPEC_ID });
+    await writeFile(
+      `${workflow.repository.path}/.git/hooks/post-commit`,
+      '#!/bin/sh\nprintf "Changed by hook\\n" >> README.md\n',
+      { mode: 0o755 },
+    );
+
+    await expect(
+      executeTool({
+        repositoryRoot: workflow.repository.path,
+        input: createHandoffInput(),
+      }),
+    ).rejects.toThrow(
+      'Verifier handoff requires a clean checkout after its commit.',
+    );
+    await expect(
+      getRepositoryStatus({ repositoryRoot: workflow.repository.path }),
+    ).resolves.toMatchObject({ clean: false, unstaged: ['README.md'] });
   });
 
   it('rejects product changes without writing or committing protocol files', async () => {

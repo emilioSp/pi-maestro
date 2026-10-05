@@ -13,6 +13,7 @@ import {
 import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
 import { getParentCommit } from '#git/history/getParentCommit.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
+import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import { resolveWorkflowContext } from '#tools/child/utils/resolveWorkflowContext.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -111,6 +112,12 @@ export const registerRecordVerifierHandoffTool = (pi: ExtensionAPI): void => {
           paths.getVerifierHandoffPath(specId),
         ],
       });
+
+      if (!(await getRepositoryStatus({ repositoryRoot })).clean) {
+        throw new Error(
+          'Verifier handoff requires a clean checkout after its commit.',
+        );
+      }
 
       return {
         content: [
