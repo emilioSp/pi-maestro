@@ -74,10 +74,14 @@ const protectSpecPath = async ({
 };
 
 export default (pi: ExtensionAPI): void => {
+  // pi-subagents selects active tools from each agent's tools allowlist after registration.
+  // Child sessions have no Maestro mode toggle, so setActiveTools() is not needed here.
   registerOpenEscalationTool(pi);
   registerRecordBuilderHandoffTool(pi);
   registerRecordVerifierHandoffTool(pi);
 
+  // Pi fires this before a tool runs. A handler can block the call.
+  // Block direct child writes and edits to the owner-approved spec.md.
   pi.on('tool_call', (event, context) =>
     protectSpecPath({ cwd: context.cwd, event }),
   );

@@ -23,7 +23,7 @@ End the workflow at `candidate-ready`. Keep the required checks in the operation
 3. Reject unrelated staged, unstaged, and untracked changes before writing protocol files. Preserve the verifier's existing product restoration check. Only the expected protocol changes are allowed.
 4. Commit only `workflow.json` and `handoffs/verifier.json`. Return success only when the checkout is clean after the commit.
 5. Remove the old `src/tools/main/prepare-final-review.ts` adapter, `src/workflow/final-review/` operation and tests, and final-review phase, event, transition, and role references. Remove obsolete registration or imports where present. Do not replace them with another checkpoint.
-6. Update `src/maestro/instructions/buildMaestroInstructions.ts`. State that the workflow ends at `candidate-ready`, with no further tool call or owner commit.
+6. Update `src/maestro/instructions/getMaestroInstructions.ts`. State that the workflow ends at `candidate-ready`, with no further tool call or owner commit.
 7. Assign the final summary to Maestro. It reads the existing artifacts and Git information with available inspection tools. The summary includes changes, verification results, rejected findings and reasons, applicable builder notes, the current branch, and final `HEAD` after the protocol commit.
 8. Distinguish owner rejections from passed verification. The summary must not change files or workflow state, create commits, or run verification again.
 9. Leave the owner in control of review, later changes, Git flow, Pull Request creation, and merge. Later changes do not reopen the completed workflow.

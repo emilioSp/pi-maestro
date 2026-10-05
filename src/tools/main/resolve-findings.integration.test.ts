@@ -5,12 +5,6 @@
 
 import { readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
-import type {
-  ExtensionAPI,
-  ExtensionContext,
-  ToolDefinition,
-} from '@earendil-works/pi-coding-agent';
-import type { TSchema } from 'typebox';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
@@ -31,6 +25,7 @@ import {
   createApprovedWorkflow,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
+import piTestSessions from '#test/support/pi-session.ts';
 import { registerResolveFindingsTool } from '#tools/main/resolve-findings.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
@@ -41,24 +36,6 @@ import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
 import { prepareVerifierLaunch } from '#workflow/verifier/prepareVerifierLaunch.ts';
 
-type RegisteredTool = ToolDefinition<TSchema, unknown, unknown>;
-
-type FindingDecisionInput =
-  | {
-      findingId: string;
-      decision: typeof FINDING_DECISIONS.REJECT;
-      reason: string;
-    }
-  | {
-      findingId: string;
-      decision: typeof FINDING_DECISIONS.FIX_CODE;
-    };
-
-type ResolveFindingsInput = {
-  specId: string;
-  decisions: FindingDecisionInput[];
-};
-
 type FindingResolutionDetails = {
   specId: string;
   revision: number;
@@ -67,38 +44,6 @@ type FindingResolutionDetails = {
   checkpointCommit: string;
   rejectedFindingIds: string[];
   findingsRequiringFixIds: string[];
-};
-
-const createRegisteredTool = (): RegisteredTool => {
-  let registeredTool: RegisteredTool | undefined;
-
-  // JUSTIFICATION: The fake implements only the registration method used by this test.
-  const pi = {
-    registerTool: (tool: RegisteredTool): void => {
-      registeredTool = tool;
-    },
-  } as ExtensionAPI;
-
-  registerResolveFindingsTool(pi);
-
-  if (registeredTool === undefined) {
-    throw new Error('Resolve findings tool was not registered.');
-  }
-
-  return registeredTool;
-};
-
-type ExecuteToolInput = {
-  repositoryRoot: string;
-  input: ResolveFindingsInput;
-};
-
-const executeTool = async ({ repositoryRoot, input }: ExecuteToolInput) => {
-  const tool = createRegisteredTool();
-  // JUSTIFICATION: The adapter only reads cwd from the extension context.
-  const context = { cwd: repositoryRoot } as ExtensionContext;
-
-  return tool.execute('test-call', input, undefined, undefined, context);
 };
 
 const createFinding = (id: string): VerifierFinding => ({
@@ -180,11 +125,16 @@ const readCurrentHandoff = async ({ paths }: { paths: MaestroPaths }) => {
   });
 };
 
-afterEach(cleanupBuilderWorkflows);
+afterEach(async () => {
+  await piTestSessions.cleanup();
+  await cleanupBuilderWorkflows();
+});
 
 describe('resolve findings tool', () => {
-  it('registers a closed schema with conditional rejection reasons', () => {
-    const tool = createRegisteredTool();
+  it('registers a closed schema with conditional rejection reasons', async () => {
+    const { tool } = await piTestSessions.createRegisteredTool({
+      extension: registerResolveFindingsTool,
+    });
 
     expect(
       Value.Check(tool.parameters, {
@@ -249,22 +199,24 @@ describe('resolve findings tool', () => {
       findings: [createFinding('F1'), createFinding('F2')],
     });
 
-    const result = await executeTool({
-      repositoryRoot: repository.path,
-      input: {
-        specId: SPEC_ID,
-        decisions: [
-          {
-            findingId: 'F1',
-            decision: FINDING_DECISIONS.REJECT,
-            reason: 'The owner accepts this behavior.',
-          },
-          {
-            findingId: 'F2',
-            decision: FINDING_DECISIONS.FIX_CODE,
-          },
-        ],
-      },
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveFindingsTool,
+    });
+
+    const result = await tool.execute('test-call', {
+      specId: SPEC_ID,
+      decisions: [
+        {
+          findingId: 'F1',
+          decision: FINDING_DECISIONS.REJECT,
+          reason: 'The owner accepts this behavior.',
+        },
+        {
+          findingId: 'F2',
+          decision: FINDING_DECISIONS.FIX_CODE,
+        },
+      ],
     });
 
     // JUSTIFICATION: The adapter returns this exact structured details shape.
@@ -304,23 +256,25 @@ describe('resolve findings tool', () => {
 
     const headBefore = await getHeadCommit({ repositoryRoot: repository.path });
 
-    const result = await executeTool({
-      repositoryRoot: repository.path,
-      input: {
-        specId: SPEC_ID,
-        decisions: [
-          {
-            findingId: 'F1',
-            decision: FINDING_DECISIONS.REJECT,
-            reason: 'The owner accepts the observed behavior.',
-          },
-          {
-            findingId: 'F2',
-            decision: FINDING_DECISIONS.REJECT,
-            reason: 'The finding is outside the approved scope.',
-          },
-        ],
-      },
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveFindingsTool,
+    });
+
+    const result = await tool.execute('test-call', {
+      specId: SPEC_ID,
+      decisions: [
+        {
+          findingId: 'F1',
+          decision: FINDING_DECISIONS.REJECT,
+          reason: 'The owner accepts the observed behavior.',
+        },
+        {
+          findingId: 'F2',
+          decision: FINDING_DECISIONS.REJECT,
+          reason: 'The finding is outside the approved scope.',
+        },
+      ],
     });
 
     // JUSTIFICATION: The adapter returns this exact structured details shape.
@@ -387,43 +341,42 @@ describe('resolve findings tool', () => {
     const handoffBefore = await readCurrentHandoff({ paths });
     const headBefore = await getHeadCommit({ repositoryRoot: repository.path });
 
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveFindingsTool,
+    });
+
     await expect(
-      executeTool({
-        repositoryRoot: repository.path,
-        input: {
-          specId: SPEC_ID,
-          decisions: [
-            {
-              findingId: 'F1',
-              decision: FINDING_DECISIONS.REJECT,
-              reason: 'The owner accepts the observed behavior.',
-            },
-          ],
-        },
+      tool.execute('test-call', {
+        specId: SPEC_ID,
+        decisions: [
+          {
+            findingId: 'F1',
+            decision: FINDING_DECISIONS.REJECT,
+            reason: 'The owner accepts the observed behavior.',
+          },
+        ],
       }),
     ).rejects.toThrow('Missing decision for finding "F2"');
 
     await expect(
-      executeTool({
-        repositoryRoot: repository.path,
-        input: {
-          specId: SPEC_ID,
-          decisions: [
-            {
-              findingId: 'F1',
-              decision: FINDING_DECISIONS.REJECT,
-              reason: 'The owner accepts the observed behavior.',
-            },
-            {
-              findingId: 'F1',
-              decision: FINDING_DECISIONS.FIX_CODE,
-            },
-            {
-              findingId: 'F2',
-              decision: FINDING_DECISIONS.FIX_CODE,
-            },
-          ],
-        },
+      tool.execute('test-call', {
+        specId: SPEC_ID,
+        decisions: [
+          {
+            findingId: 'F1',
+            decision: FINDING_DECISIONS.REJECT,
+            reason: 'The owner accepts the observed behavior.',
+          },
+          {
+            findingId: 'F1',
+            decision: FINDING_DECISIONS.FIX_CODE,
+          },
+          {
+            findingId: 'F2',
+            decision: FINDING_DECISIONS.FIX_CODE,
+          },
+        ],
       }),
     ).rejects.toThrow('Duplicate decision for finding "F1"');
 
@@ -461,19 +414,21 @@ describe('resolve findings tool', () => {
       cwd: repository.path,
     });
 
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveFindingsTool,
+    });
+
     await expect(
-      executeTool({
-        repositoryRoot: repository.path,
-        input: {
-          specId: SPEC_ID,
-          decisions: [
-            {
-              findingId: 'F1',
-              decision: FINDING_DECISIONS.REJECT,
-              reason: 'The owner accepts this behavior.',
-            },
-          ],
-        },
+      tool.execute('test-call', {
+        specId: SPEC_ID,
+        decisions: [
+          {
+            findingId: 'F1',
+            decision: FINDING_DECISIONS.REJECT,
+            reason: 'The owner accepts this behavior.',
+          },
+        ],
       }),
     ).rejects.toThrow(
       'Finding resolution requires no changes outside its protocol files.',
@@ -506,19 +461,21 @@ describe('resolve findings tool', () => {
       'utf8',
     );
 
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveFindingsTool,
+    });
+
     await expect(
-      executeTool({
-        repositoryRoot: repository.path,
-        input: {
-          specId: SPEC_ID,
-          decisions: [
-            {
-              findingId: 'F1',
-              decision: FINDING_DECISIONS.REJECT,
-              reason: 'The owner accepts this behavior.',
-            },
-          ],
-        },
+      tool.execute('test-call', {
+        specId: SPEC_ID,
+        decisions: [
+          {
+            findingId: 'F1',
+            decision: FINDING_DECISIONS.REJECT,
+            reason: 'The owner accepts this behavior.',
+          },
+        ],
       }),
     ).rejects.toThrow(
       'Finding resolution requires no changes outside its protocol files.',
@@ -551,19 +508,21 @@ describe('resolve findings tool', () => {
       'utf8',
     );
 
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveFindingsTool,
+    });
+
     await expect(
-      executeTool({
-        repositoryRoot: repository.path,
-        input: {
-          specId: SPEC_ID,
-          decisions: [
-            {
-              findingId: 'F1',
-              decision: FINDING_DECISIONS.REJECT,
-              reason: 'The owner accepts this behavior.',
-            },
-          ],
-        },
+      tool.execute('test-call', {
+        specId: SPEC_ID,
+        decisions: [
+          {
+            findingId: 'F1',
+            decision: FINDING_DECISIONS.REJECT,
+            reason: 'The owner accepts this behavior.',
+          },
+        ],
       }),
     ).rejects.toThrow(
       'Finding resolution requires no changes outside its protocol files.',
@@ -600,19 +559,21 @@ describe('resolve findings tool', () => {
       repositoryRoot: repository.path,
     });
 
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveFindingsTool,
+    });
+
     await expect(
-      executeTool({
-        repositoryRoot: repository.path,
-        input: {
-          specId: SPEC_ID,
-          decisions: [
-            {
-              findingId: 'F1',
-              decision: FINDING_DECISIONS.REJECT,
-              reason: 'The owner accepts this behavior.',
-            },
-          ],
-        },
+      tool.execute('test-call', {
+        specId: SPEC_ID,
+        decisions: [
+          {
+            findingId: 'F1',
+            decision: FINDING_DECISIONS.REJECT,
+            reason: 'The owner accepts this behavior.',
+          },
+        ],
       }),
     ).rejects.toThrow('Verifier handoff spec ID mismatch');
 
@@ -647,19 +608,21 @@ describe('resolve findings tool', () => {
       repositoryRoot: repository.path,
     });
 
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveFindingsTool,
+    });
+
     await expect(
-      executeTool({
-        repositoryRoot: repository.path,
-        input: {
-          specId: SPEC_ID,
-          decisions: [
-            {
-              findingId: 'F1',
-              decision: FINDING_DECISIONS.REJECT,
-              reason: 'The owner accepts this behavior.',
-            },
-          ],
-        },
+      tool.execute('test-call', {
+        specId: SPEC_ID,
+        decisions: [
+          {
+            findingId: 'F1',
+            decision: FINDING_DECISIONS.REJECT,
+            reason: 'The owner accepts this behavior.',
+          },
+        ],
       }),
     ).rejects.toThrow('Verifier handoff revision mismatch');
 
@@ -680,19 +643,21 @@ describe('resolve findings tool', () => {
     const stateBefore = await readFile(statePath, 'utf8');
     const handoffBefore = await readFile(handoffPath, 'utf8');
 
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveFindingsTool,
+    });
+
     await expect(
-      executeTool({
-        repositoryRoot: repository.path,
-        input: {
-          specId: SPEC_ID,
-          decisions: [
-            {
-              findingId: 'F1',
-              decision: FINDING_DECISIONS.REJECT,
-              reason: '   ',
-            },
-          ],
-        },
+      tool.execute('test-call', {
+        specId: SPEC_ID,
+        decisions: [
+          {
+            findingId: 'F1',
+            decision: FINDING_DECISIONS.REJECT,
+            reason: '   ',
+          },
+        ],
       }),
     ).rejects.toThrow('Rejection reason for "F1" must not be empty.');
 
@@ -711,19 +676,21 @@ describe('resolve findings tool', () => {
       { mode: 0o755 },
     );
 
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveFindingsTool,
+    });
+
     await expect(
-      executeTool({
-        repositoryRoot: repository.path,
-        input: {
-          specId: SPEC_ID,
-          decisions: [
-            {
-              findingId: 'F1',
-              decision: FINDING_DECISIONS.REJECT,
-              reason: 'The owner accepts this behavior.',
-            },
-          ],
-        },
+      tool.execute('test-call', {
+        specId: SPEC_ID,
+        decisions: [
+          {
+            findingId: 'F1',
+            decision: FINDING_DECISIONS.REJECT,
+            reason: 'The owner accepts this behavior.',
+          },
+        ],
       }),
     ).rejects.toThrow(
       'Finding resolution requires a clean checkout after its commit.',
@@ -789,18 +756,20 @@ describe('resolve findings tool', () => {
 
     const handoffBefore = await readCurrentHandoff({ paths });
 
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveFindingsTool,
+    });
+
     await expect(
-      executeTool({
-        repositoryRoot: repository.path,
-        input: {
-          specId: SPEC_ID,
-          decisions: [
-            {
-              findingId: 'F2',
-              decision: FINDING_DECISIONS.FIX_CODE,
-            },
-          ],
-        },
+      tool.execute('test-call', {
+        specId: SPEC_ID,
+        decisions: [
+          {
+            findingId: 'F2',
+            decision: FINDING_DECISIONS.FIX_CODE,
+          },
+        ],
       }),
     ).rejects.toThrow('Unknown finding ID: "F2"');
 
