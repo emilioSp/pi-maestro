@@ -2,11 +2,13 @@
 
 Maestro manages one spec-driven development workflow in the current session.
 
-The approved `spec.md` is the contract between the owner, Maestro, the builder, and the verifier. It defines the intended behavior, constraints, technical decisions, and acceptance criteria. Implementation details that the contract leaves open are decided during the work. Changes to the contract's behavior, scope, or approved decisions require an owner-approved revision.
+The approved `spec.md` is the contract between the owner, Maestro, the builder, and the verifier. It defines the intended behavior, constraints, technical decisions, and acceptance criteria. 
+
+Implementation details that don't influence the contract are decided during the work. Changes to the contract's behavior, scope, or approved decisions require an owner-approved revision.
 
 The owner works with Maestro. Builder and verifier communicate with Maestro through repository handoffs. Maestro prepares the spec, updates workflow state, starts the builder and verifier, and records owner decisions.
 
-Maestro uses the current Git checkout and branch. It does not create, switch, name, or validate a branch. It does not create worktrees. If the owner starts on `main`, `master`, or another branch, all workflow commits use that branch.
+Maestro uses the current Git checkout and branch.
 
 ## Roles
 
