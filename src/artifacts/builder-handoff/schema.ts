@@ -12,6 +12,7 @@ export const BUILDER_HANDOFF_VERSION = '1.0.0';
 export const BUILDER_HANDOFF_STATUSES = {
   DONE: 'done',
   FAILED: 'failed',
+  ESCALATION: 'escalation',
 } as const;
 
 export type BuilderHandoffStatus =
