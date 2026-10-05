@@ -6,7 +6,7 @@ Pi extension for a spec-driven multiagent development workflow.
 
 ## The idea
 
-One spec describes one small reversible change. An agent builds it. A second, independent agent regenerates each acceptance criteria from scratch. The owner makes the final review alongside the commit on the base branch.
+One spec describes one small reversible change. An agent builds it. A second, independent agent regenerates each acceptance criterion from scratch. The owner performs the final review and controls the Git flow after the candidate is ready.
 
 Four principles hold the workflow together:
 
@@ -17,7 +17,7 @@ Four principles hold the workflow together:
 
 ## The roles
 
-- **Owner** — You. You bring the problem, decide every escalation and every finding, review the final code, and make every commit on the base branch. You never talk to a builder or a verifier.
+- **Owner** — You. You bring the problem, decide every escalation and every finding, review the final code, and control the Git flow after the candidate is ready. You never talk to a builder or a verifier.
 - **Maestro** — The agent you talk to. It writes the spec with you, spawns and supervises the other agents, records your decisions.
 - **Builder** — The agent that implements one spec. It never verifies its own work.
 - **Verifier** — The agent that verifies if the builder implementation is technically compliant to the spec.
@@ -70,10 +70,10 @@ Follow this workflow:
 6. Ask Maestro to launch the builder.
 7. Review builder escalations and answer them.
 8. Review verifier findings and choose an action for each finding.
-9. Ask Maestro to prepare the final review when the candidate is ready.
-10. Open a pull request from the current branch and choose the merge method, including squash merge.
+9. Ask Maestro to run `maestro_check_candidate` when the candidate is ready.
+10. Review or change the candidate as needed, then open a Pull Request from the current branch and choose the merge method.
 
-Do not change product code while the workflow runs. Changes made outside the workflow are not reviewed by Maestro.
+Do not change product code while the workflow runs. After `maestro_check_candidate` returns, the workflow is complete. Changes after that handoff are outside the Maestro review.
 
 If an escalation or finding requires a contract change, edit and approve `spec.md`, then call `maestro_mark_spec_ready`. The workflow returns to `ready-for-builder` on the same branch. A technical builder failure stops the workflow and requires owner follow-up.
 
