@@ -29,6 +29,8 @@ Let the owner decide what to do with every current verifier finding on the curre
 9. If the owner wants to change the approved contract, do not resolve the findings. The owner edits the spec and calls `maestro_mark_spec_ready` directly from `findings-decision`; the old findings remain historical.
 10. Do not guess the owner's decisions or launch another agent automatically.
 
+[Task 42](42_complete_candidate_ready_handoff.md) completes the candidate-ready checks in this existing resolution path. It does not add a separate final check tool.
+
 ## Implementation
 
 Keep the Pi adapter thin. If any decision is `fix-code`, it takes priority over `reject` decisions. Keep the current `verifier.json`; Git preserves earlier versions. Builder and verifier decide whether historical artifacts still apply to the active spec.

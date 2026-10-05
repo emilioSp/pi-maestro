@@ -10,7 +10,7 @@ This task depends on `mvp_03_rework_builder_for_current_checkout.md` and `mvp_04
 
 Verify the builder, verifier, and owner code-fix cycle on one current checkout and branch.
 
-Spec revision, verifier protocol commits, candidate checking, prompts, and Pi adapters are covered by their own tasks.
+Spec revision, verifier protocol commits, candidate-ready checks, prompts, and Pi adapters are covered by their own tasks.
 
 ## Plan references
 
@@ -30,7 +30,7 @@ Spec revision, verifier protocol commits, candidate checking, prompts, and Pi ad
 4. Keep the existing fake subagent support generic. Do not add workflow-specific resource fixtures.
 5. Run the package checks and inspect the package file list.
 
-Do not duplicate the spec revision, verifier protocol commit, candidate check, prompt, or Pi adapter tests owned by other tasks.
+Do not duplicate the spec revision, verifier protocol commit, candidate-ready, prompt, or Pi adapter tests owned by other tasks.
 
 ## Tests
 

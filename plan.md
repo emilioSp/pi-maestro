@@ -22,7 +22,7 @@ Il maestro:
 4. Legge gli handoff.
 5. Riporta escalation e finding all’owner.
 6. Registra le decisioni dell’owner.
-7. Consegna il candidate e il controllo del Git all’owner per la Pull Request.
+7. Riassume i risultati e i dati della Pull Request, poi consegna il candidate e il controllo del Git all’owner.
 8. Non decide requisiti o scelte di prodotto al posto dell’owner.
 
 L’estensione nasce da un workflow implementato e usato nel repository `my-weather-station`. `AGENTS_CONTRIBUTING.md`, `CONTRIBUTING.md`, gli script e i template sono stati copiati da lì in questa directory. Servono come riferimento per la documentazione e lo sviluppo dell’estensione.
@@ -74,7 +74,7 @@ Il pacchetto gestisce:
 8. Il branch corrente e i checkpoint Git.
 9. Il ciclo builder e verifier.
 10. Il candidate commit.
-11. La review finale dell’owner e il check del candidate.
+11. I controlli per raggiungere `candidate-ready` e il riepilogo finale di Maestro.
 12. La pulizia finale.
 13. La persistenza del workflow nel repository.
 
@@ -642,17 +642,16 @@ Il candidate commit è:
 
 <a id="plan-section-3-8"></a>
 
-## 3.8 Check del candidate
+## 3.8 Conclusione e riepilogo
 
-1. Il candidate ha già superato il verifier e soddisfa tecnicamente la spec e gli acceptance criteria.
-2. Maestro usa l’HEAD corrente come candidate e verifica lo stato del checkout corrente.
-3. `maestro_check_candidate` richiede la fase `candidate-ready`, il verifier handoff della revisione corrente, nessun finding attivo e un checkout pulito.
-4. Il tool restituisce i dati strutturati della consegna. Non scrive file, non cambia `workflow.json`, non crea commit e non cambia fase.
-5. `candidate-ready` è l’ultima fase persistita del workflow Maestro.
-6. Il Maestro LLM usa il risultato per informare l’owner che il branch corrente è pronto per una Pull Request.
-7. Dopo il check, l’owner controlla il Git flow, la review, la Pull Request e il merge.
-8. Se desidera cambiare l’implementazione, la spec o un acceptance criterion, lo fa sotto la propria responsabilità fuori dal workflow Maestro.
-9. Queste modifiche non vengono verificate da Maestro o dal verifier.
+1. Il workflow termina in `candidate-ready`, dopo un verifier handoff senza finding oppure il rifiuto motivato di tutti i finding.
+2. I controlli appartengono alle operazioni che producono questa fase: `maestro_record_verifier_handoff` e `maestro_resolve_findings`. Non esiste un tool separato di check o riepilogo.
+3. Prima di scrivere la transizione, le operazioni validano identità e revisione dell’handoff risultante e l’assenza di finding attivi. Rifiutano modifiche estranee ai file di protocollo previsti; il verifier deve anche ripristinare il prodotto al candidate verificato.
+4. Il commit di handoff o risoluzione include solo i file di protocollo previsti. Il successo richiede un checkout pulito dopo il commit.
+5. `candidate-ready` è l’ultima fase persistita. Non servono altre chiamate o commit per concludere il workflow.
+6. Il Maestro LLM legge gli artefatti e i dati Git con gli strumenti di ispezione disponibili. Riassume modifiche, risultati della verifica, finding respinti con le ragioni, note significative applicabili, branch corrente e HEAD finale.
+7. Il riepilogo non modifica file o stato e non esegue una nuova verifica. Un rifiuto dell’owner non viene presentato come una verifica superata.
+8. L’owner controlla il Git flow, la review, la Pull Request e il merge. Le sue modifiche successive sono fuori dal workflow concluso e non vengono verificate da Maestro o dal verifier.
 
 <a id="plan-section-4"></a>
 
@@ -724,8 +723,8 @@ flowchart TD
 
     ownerFindings -->|Spec must change| reviseSpec
 
-    candidate --> checked[Maestro checks the candidate and returns Pull Request facts]
-    checked --> humanReview[Owner reviews the candidate]
+    candidate --> summary[Maestro summarizes results and Pull Request facts]
+    summary --> humanReview[Owner reviews the candidate]
 
     humanReview -->|Changes needed| adjust[Owner changes code, spec, or acceptance criteria outside Maestro]
     adjust --> humanReview
@@ -789,9 +788,9 @@ I tool delegano la logica condivisa ai moduli sotto `src/` invece di duplicare o
 
 `src/specs/` gestisce il caricamento del template e la creazione della spec. Il contenuto Markdown resta opaco all’estensione. ID, percorsi e stato restano responsabilità dei rispettivi moduli.
 
-`src/workflow/` coordina i domini senza dipendere dai tool Pi. `state/`, `builder/`, `verifier/`, `escalation/`, `findings/` e `final-review/` separano le rispettive responsabilità. `roles.ts` contiene i ruoli condivisi del workflow. Non esiste un modulo `recovery/`: il recupero dopo restart o disattivazione è fuori dall’MVP. Ogni operazione pubblica ha il proprio modulo, con test accanto e import diretti senza barrel.
+`src/workflow/` coordina i domini senza dipendere dai tool Pi. `state/`, `builder/`, `verifier/`, `escalation/` e `findings/` separano le rispettive responsabilità. `roles.ts` contiene i ruoli condivisi del workflow. Non esiste un modulo `recovery/`: il recupero dopo restart o disattivazione è fuori dall’MVP. Ogni operazione pubblica ha il proprio modulo, con test accanto e import diretti senza barrel.
 
-`src/workflow/spec/markSpecReady.ts` contiene l’operazione di approvazione del workflow spec, con test accanto e import diretto. La creazione della spec appartiene a `src/specs/create.ts` e non usa un wrapper workflow. `src/workflow/transitions.ts` resta nella root di `src/workflow/`. Le operazioni del workflow usano il checkout corrente e non richiedono un controllo dei worktree. Il check del candidate resta nel dominio `final-review/` e non introduce una nuova fase persistente. Non si creano implementazioni parallele.
+`src/workflow/spec/markSpecReady.ts` contiene l’operazione di approvazione del workflow spec, con test accanto e import diretto. La creazione della spec appartiene a `src/specs/create.ts` e non usa un wrapper workflow. `src/workflow/transitions.ts` resta nella root di `src/workflow/`. Le operazioni del workflow usano il checkout corrente e non richiedono un controllo dei worktree. I controlli per raggiungere `candidate-ready` restano nelle operazioni di verifier e findings. Il vecchio dominio `final-review/`, il suo tool e la relativa fase vengono rimossi. Non si creano implementazioni parallele.
 
 Non esiste una directory globale `src/schemas/`. Ogni schema resta vicino al dominio che lo usa. Gli import sono diretti e non esistono barrel `index.ts`.
 
@@ -807,7 +806,7 @@ Gli import usano percorsi diretti, senza `index.ts` o altri barrel. I placeholde
 
 `src/git/` implementa le operazioni Git senza dipendere da Pi. `command.ts` esegue Git con argv, cwd e timeout, senza passare da una shell. Le directory `repository/`, `branches/`, `commits/` e `history/` raggruppano le operazioni per ambito. Maestro non crea né gestisce worktree.
 
-Ogni operazione pubblica ha un modulo. Tipi, costanti, errori e helper privati restano con l’operazione che servono. Gli import usano il percorso diretto del modulo, senza barrel. `utils.ts` contiene il singolo helper condiviso per gli errori Git. Il codice per il check del candidate usa `final-review/` e non crea una fase `final-review`.
+Ogni operazione pubblica ha un modulo. Tipi, costanti, errori e helper privati restano con l’operazione che servono. Gli import usano il percorso diretto del modulo, senza barrel. `utils.ts` contiene il singolo helper condiviso per gli errori Git.
 
 `src/config/` contiene default, schema e caricamento di `.pi/maestro.json`. `schema.ts` definisce i contratti. `assertConfiguration.ts` e `loadConfiguration.ts` gestiscono una funzione pubblica ciascuno. `resolveConfiguration` e `resolveDirectories` sono helper privati di `loadConfiguration.ts`. Gli import usano percorsi diretti, senza barrel.
 
@@ -1089,7 +1088,6 @@ maestro_launch_builder
 maestro_resolve_escalation
 maestro_launch_verifier
 maestro_resolve_findings
-maestro_check_candidate
 ```
 
 Tool child-only approvati:
@@ -1106,7 +1104,7 @@ Responsabilità:
 2. `maestro_mark_spec_ready` verifica lo stato e l’esistenza di `spec.md`, quindi imposta `ready-for-builder` dopo l’approvazione dell’owner, sia per la spec iniziale sia per una revisione autorizzata.
 3. `maestro_launch_builder` e `maestro_launch_verifier` preparano Git, aggiornano lo stato e avviano il subagent.
 4. `maestro_resolve_escalation` e `maestro_resolve_findings` registrano solo decisioni esplicite dell’owner quando la spec approvata resta valida. Se il contratto cambia, l’owner usa `maestro_mark_spec_ready` dalla fase bloccante autorizzata; il workflow mantiene lo stesso `specId` e branch e rende storico il blocco precedente.
-5. `maestro_check_candidate` verifica il candidate sul branch corrente e restituisce i dati necessari per la Pull Request dell’owner. Non scrive file, non cambia `workflow.json`, non crea commit o fasi e non esegue squash locale, staging, merge, push o cleanup di branch e worktree.
+5. `maestro_record_verifier_handoff` e `maestro_resolve_findings` eseguono i controlli necessari per raggiungere `candidate-ready`, come definito nella sezione 3.8. Maestro prepara il riepilogo finale senza un tool dedicato.
 6. I tool child-only scrivono e validano gli artefatti terminali. `maestro_record_verifier_handoff` restituisce una diagnostica strutturata e non scrive nulla quando rileva modifiche di prodotto residue.
 7. La prima versione non offre un tool per abbandonare un workflow. L’owner gestisce manualmente risorse e artefatti quando decide di abbandonarlo.
 
@@ -1282,7 +1280,7 @@ Gli artefatti restano nel branch corrente durante una revisione. `builder.json` 
 
 Non esiste un numero separato per i pass del verifier e non esistono percorsi distinti per passaggio. Esiste un solo `verifier.json`; Git conserva gli handoff precedenti.
 
-Quando `maestro_check_candidate` termina con successo, il workflow Maestro è concluso in `candidate-ready`. Una successiva modifica all’implementazione, alla spec o a un acceptance criterion è responsabilità dell’owner e non riapre, abbandona o modifica il workflow Maestro concluso.
+Il workflow Maestro è concluso quando l’operazione di handoff o risoluzione termina con successo in `candidate-ready`. Una successiva modifica all’implementazione, alla spec o a un acceptance criterion è responsabilità dell’owner e non riapre, abbandona o modifica il workflow Maestro concluso.
 
 29. Ogni passaggio a `ready-for-builder`, iniziale o successivo a una revisione, avviene prima del commit di approvazione dell’owner. Il builder resta bloccato finché la spec e `workflow.json` non risultano committati.
 30. Handoff e nuova fase vengono scritti nella stessa operazione.
@@ -1297,12 +1295,12 @@ Quando `maestro_check_candidate` termina con successo, il workflow Maestro è co
 39. La richiesta di correzioni viene committata da Maestro insieme alla transizione `ready-for-builder`.
 40. Il rifiuto dei finding viene committato da Maestro insieme alla transizione `candidate-ready`.
 41. In `candidate-ready`, l’HEAD corrente è il candidate perché l’owner non modifica il codice mentre il workflow è in esecuzione.
-42. `maestro_check_candidate` verifica l’HEAD, il verifier handoff della revisione corrente, l’assenza di finding attivi e il checkout pulito.
-43. Il tool restituisce i dati strutturati necessari all’owner per aprire la Pull Request.
-44. Il tool non scrive file, non cambia `workflow.json`, non crea commit e non cambia la fase. Un errore lascia invariato il workflow.
-45. Il Maestro LLM informa l’owner che il branch è pronto per la Pull Request.
-46. `candidate-ready` è l’ultima fase persistita e la consegna conclude il workflow Maestro senza attendere commit dell’owner.
-47. Una chiamata successiva è consentita se il workflow resta in `candidate-ready` e il checkout resta pulito.
+42. Le operazioni che producono `candidate-ready` eseguono i controlli della sezione 3.8 prima di dichiarare successo.
+43. Il Maestro LLM ricava i dati della Pull Request dagli artefatti e dal branch e HEAD correnti.
+44. Il riepilogo non scrive file, non cambia `workflow.json`, non crea commit e non cambia la fase.
+45. Maestro riassume i risultati e distingue i finding respinti dalle verifiche superate.
+46. `candidate-ready` è l’ultima fase persistita e conclude il workflow senza attendere altre chiamate o commit dell’owner.
+47. Il riepilogo non è una transizione né un controllo aggiuntivo del candidate.
 48. Dopo la consegna, il branch corrente resta sotto il controllo dell’owner.
 49. L’owner apre la Pull Request e gestisce review, eventuali modifiche e merge sotto la propria responsabilità.
 50. Dopo la consegna, Maestro non verifica le modifiche successive dell’owner.
@@ -1589,9 +1587,9 @@ Decisioni prese:
 Decisioni prese:
 
 1. La prima versione non introduce un percorso di modifica diretta interno a Maestro.
-2. `maestro_check_candidate` verifica il candidate in `candidate-ready` e consegna all’owner i dati necessari per la Pull Request.
-3. Il tool non scrive file, non cambia lo stato persistente e non crea commit.
-4. Dopo il check, l’owner controlla la review, le modifiche, i commit, la Pull Request e il merge.
+2. Il workflow termina in `candidate-ready`; Maestro consegna all’owner il riepilogo e i dati della Pull Request.
+3. Il riepilogo non scrive file, non cambia lo stato persistente e non crea commit.
+4. Da `candidate-ready`, l’owner controlla la review, le modifiche, i commit, la Pull Request e il merge.
 5. Le modifiche successive non vengono verificate dal verifier e non modificano lo stato del workflow Maestro concluso.
 6. Se l’owner vuole usare lo stesso agent Pi per modificare il prodotto, disattiva Maestro con `/maestro`.
 7. Non è richiesta una successiva riattivazione o conferma del merge.
@@ -1607,7 +1605,7 @@ Copertura minima approvata per la prima versione:
 3. Test del template della spec e degli schemi JSON nei file unit o integration corrispondenti.
 4. Unit test minimi delle transizioni di `workflow.json`: un percorso normale, un retry, incremento monotono e immutabilità dell’input. L’autorizzazione dei ruoli resta negli allowlist dei tool e negli adapter.
 5. Integration test con repository Git temporanei.
-6. Integration test per checkpoint Git sul branch corrente e check del candidate.
+6. Integration test per checkpoint Git sul branch corrente e transizioni a `candidate-ready`.
 7. Test del ciclo builder, verifier, escalation e finding nei moduli di dominio con un fake di `pi-subagents`. I test dei tool adapter coprono schema input, derivazione dei campi, wiring di un successo e propagazione di un errore senza ripetere l’intera matrice del dominio.
 8. Test che disattivazione e `/resume` perdano lo spec ID e lo SHA atteso live senza modificare workflow persistenti.
 9. Test che le operazioni della sessione live usino il checkout corrente e rispettino fase e stato Git previsti.
@@ -1617,7 +1615,7 @@ Copertura minima approvata per la prima versione:
 13. Test che escalation e finding possano portare a `ready-for-builder` solo dopo l’approvazione esplicita della revisione della spec.
 14. Test rappresentativi di `maestro_resolve_findings`: tutti respinti e almeno un `fix-code`.
 15. Test del blocco di `write` ed `edit` su `spec.md` tramite percorsi relativi, assoluti, normalizzati e symlink e del confronto SHA-256 contro modifiche effettuate tramite `bash`, incluse modifiche commesse con il messaggio del checkpoint.
-16. Test che `maestro_check_candidate` verifichi il candidate sul branch corrente, non modifichi file o stato, restituisca i dati necessari alla Pull Request e mantenga `candidate-ready` quando la verifica fallisce.
+16. Test nei moduli proprietari dei due percorsi verso `candidate-ready`: handoff con identità e revisione corrette, nessun finding attivo, rifiuto delle modifiche estranee prima della scrittura e checkout pulito dopo il commit. Nessun tool o checkpoint finale aggiuntivo.
 17. La suite end-to-end contiene un happy path completo e un percorso di disattivazione che dimostra l’assenza di recovery. Gli altri edge case restano nei test dei moduli proprietari.
 18. I test della sessione live coprono set/get, reset con `deactivate()` e `clearActiveSpecId()`, sostituzione dello SHA dopo una revisione autorizzata, uso della baseline da parte di handoff ed escalation e rifiuto di modifiche a `spec.md`, incluse modifiche commesse con il messaggio `maestro workflow checkpoint`.
 
