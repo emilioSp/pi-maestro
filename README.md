@@ -71,7 +71,7 @@ Follow this workflow:
 7. Review builder escalations and answer them.
 8. Review verifier findings and choose an action for each finding.
 9. When the workflow reaches `candidate-ready`, read Maestro's summary of the results and Pull Request facts.
-10. Review or change the candidate as needed, then open a Pull Request from the current branch and choose the merge method.
+10. Review or change the candidate as needed. 
 
 Do not change product code while the workflow runs. The workflow is complete when it reaches `candidate-ready`. No final tool call is needed. Changes after completion are outside the Maestro review.
 
@@ -79,7 +79,7 @@ If an escalation or finding requires a contract change, edit and approve `spec.m
 
 Builder and verifier runs stay in the foreground. Pi waits for each run before you continue the conversation. Maestro shows the current phase in Pi's status. Use pi-subagents FleetView or `/subagents-fleet` to inspect live activity and the transcript.
 
-Restarting Pi, disabling Maestro, or using `/resume` clears live session state. Maestro does not recover an incomplete workflow from `workflow.json`.
+Restarting Pi, disabling Maestro, or using `/resume` clears live session state. Maestro does not recover an incomplete workflow. 
 
 ## Configuration
 
