@@ -14,8 +14,7 @@ const WORKFLOW_PHASE_LABELS = {
   [WORKFLOW_PHASES.READY_FOR_VERIFIER]: 'Ready for verifier',
   [WORKFLOW_PHASES.VERIFIER_RUNNING]: 'Verifier running',
   [WORKFLOW_PHASES.FINDINGS_DECISION]: 'Owner decision needed: findings',
-  [WORKFLOW_PHASES.CANDIDATE_READY]: 'Candidate ready for final review',
-  [WORKFLOW_PHASES.FINAL_REVIEW]: 'Completed',
+  [WORKFLOW_PHASES.CANDIDATE_READY]: 'Completed',
 } as const;
 
 type MaestroStatusWorkflow = {
