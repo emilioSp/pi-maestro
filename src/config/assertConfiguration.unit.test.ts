@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { assertConfiguration } from '#config/assertConfiguration.ts';
 import { SUPPORTED_CONFIG_VERSION, THINKING_LEVELS } from '#config/schema.ts';
@@ -57,12 +58,63 @@ describe('configuration input validation', () => {
     ).toThrow('Invalid specDirectory: expected a non-empty string.');
   });
 
-  it('rejects invalid versions', () => {
-    expect(() => assertConfiguration({ version: 'v1.0.0' })).toThrow(
-      'Invalid configuration version: "v1.0.0".',
-    );
-    expect(() => assertConfiguration({ version: '2.0.0' })).toThrow(
-      'Unsupported configuration major version: 2.',
-    );
-  });
+  it.each([
+    {
+      fixture: 'invalid-version-format.json',
+      message: 'Invalid configuration version: "v1.0.0".',
+    },
+    {
+      fixture: 'unsupported-major-version.json',
+      message: 'Unsupported configuration major version: 2.',
+    },
+    {
+      fixture: 'unsupported-minor-version.json',
+      message: 'Unsupported configuration version: "1.1.0".',
+    },
+    {
+      fixture: 'missing-version.json',
+      message:
+        "Missing configuration version. The 'version' field is required.",
+    },
+    {
+      fixture: 'invalid-model-format.json',
+      message: 'Invalid model identifier at "builder.model".',
+    },
+    {
+      fixture: 'invalid-thinking-level.json',
+      message: 'Invalid thinking level at "verifier.thinking".',
+    },
+    {
+      fixture: 'invalid-timeout-zero.json',
+      message: 'Invalid timeout at "builder.timeoutMinutes".',
+    },
+    {
+      fixture: 'invalid-timeout-too-large.json',
+      message: 'Invalid timeout at "builder.timeoutMinutes".',
+    },
+    {
+      fixture: 'unknown-root-field.json',
+      message: 'Unknown configuration field: "unknownField".',
+    },
+    {
+      fixture: 'unknown-builder-field.json',
+      message: 'Unknown configuration field: "builder.unknownOption".',
+    },
+    {
+      fixture: 'unknown-verifier-field.json',
+      message: 'Unknown configuration field: "verifier.unknownOption".',
+    },
+  ])(
+    'given $fixture when validated then the configuration is rejected',
+    async ({ fixture, message }) => {
+      const input = JSON.parse(
+        await readFile(
+          new URL(import.meta.resolve(`#test/fixtures/config/${fixture}`)),
+          'utf8',
+        ),
+      );
+
+      expect(() => assertConfiguration(input)).toThrow(message);
+    },
+  );
 });
