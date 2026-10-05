@@ -10,6 +10,7 @@ import {
   BUILDER_HANDOFF_STATUSES,
   PROBE_STATUSES,
 } from '#artifacts/builder-handoff/schema.ts';
+import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { AGENTS } from '#config/schema.ts';
 import {
   cleanupBuilderWorkflows,
@@ -99,9 +100,9 @@ describe('launch builder tool', () => {
       agent: AGENTS.BUILDER,
       context: 'fresh',
       cwd: repository.path,
-      model: 'openai-codex/gpt-6-luna',
-      thinking: 'high',
-      timeoutMs: 60 * 60 * 1000,
+      model: DEFAULT_CONFIG.builder.model,
+      thinking: DEFAULT_CONFIG.builder.thinking,
+      timeoutMs: DEFAULT_CONFIG.builder.timeoutMinutes * 60_000,
       task: expect.stringContaining(SPEC_ID),
       result: { kind: 'text' },
     });

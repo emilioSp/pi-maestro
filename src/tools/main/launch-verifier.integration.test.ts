@@ -8,6 +8,7 @@ import {
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
 import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
+import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { AGENTS } from '#config/schema.ts';
 import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
 import { getParentCommit } from '#git/history/getParentCommit.ts';
@@ -179,9 +180,9 @@ describe('launch verifier tool', () => {
       nodeId: 'verifier',
       context: 'fresh',
       cwd: workflow.repository.path,
-      model: 'openai-codex/gpt-6-sol',
-      thinking: 'medium',
-      timeoutMs: 60 * 60 * 1000,
+      model: DEFAULT_CONFIG.verifier.model,
+      thinking: DEFAULT_CONFIG.verifier.thinking,
+      timeoutMs: DEFAULT_CONFIG.verifier.timeoutMinutes * 60_000,
       task: expect.stringContaining(SPEC_ID),
       result: { kind: 'text' },
     });
