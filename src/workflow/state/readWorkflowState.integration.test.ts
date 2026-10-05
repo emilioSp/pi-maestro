@@ -40,7 +40,7 @@ describe('readWorkflowState', () => {
 
     await writeFile(path, JSON.stringify(state), 'utf8');
 
-    await expect(readWorkflowState({ path })).resolves.toEqual(state);
+    await expect(readWorkflowState(path)).resolves.toEqual(state);
   });
 
   it('rejects malformed and unvalidated files on read', async () => {
@@ -48,7 +48,7 @@ describe('readWorkflowState', () => {
     const path = join(directory, 'workflow.json');
     await writeFile(path, '{broken', 'utf8');
 
-    await expect(readWorkflowState({ path })).rejects.toThrow(
+    await expect(readWorkflowState(path)).rejects.toThrow(
       'Workflow state contains malformed JSON',
     );
 
@@ -63,7 +63,7 @@ describe('readWorkflowState', () => {
       }),
       'utf8',
     );
-    await expect(readWorkflowState({ path })).rejects.toThrow(
+    await expect(readWorkflowState(path)).rejects.toThrow(
       'Invalid workflow state',
     );
   });
