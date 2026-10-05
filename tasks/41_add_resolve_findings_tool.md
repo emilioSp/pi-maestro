@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task 41: Add the resolve-findings tool
 
