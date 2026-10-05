@@ -7,6 +7,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
+import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import {
   FINDING_SEVERITIES,
@@ -74,7 +75,7 @@ const createFindingsDecisionWorkflow = async ({
     paths: workflow.paths,
     specId: SPEC_ID,
     handoff: {
-      status: 'done',
+      status: BUILDER_HANDOFF_STATUSES.DONE,
       summary: 'Implemented the approved change.',
       acceptanceCriteria: [],
       notes: [],
@@ -280,7 +281,7 @@ describe('resolve findings tool', () => {
     expect(result.content).toEqual([
       {
         type: 'text',
-        text: expect.stringContaining('candidate-ready'),
+        text: expect.stringContaining(WORKFLOW_PHASES.CANDIDATE_READY),
       },
     ]);
     expect(details).toMatchObject({
