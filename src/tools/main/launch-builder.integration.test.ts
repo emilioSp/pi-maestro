@@ -287,6 +287,28 @@ describe('launch builder tool', () => {
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
   });
 
+  it('given request emission fails when launching then reports the error and removes the response listener', async () => {
+    const { repository } = await createApprovedWorkflow();
+
+    const { tool, emit, on } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerLaunchBuilderTool,
+    });
+
+    emit.mockImplementationOnce(() => {
+      throw new Error('Request emission failed.');
+    });
+
+    await expect(
+      tool.execute('test-call', { specId: SPEC_ID }),
+    ).rejects.toThrow('Delegation request error: Request emission failed.');
+    expect(on).toHaveBeenLastCalledWith(
+      SUBAGENT_DELEGATION_RESPONSE_EVENT,
+      expect.any(Function),
+    );
+    expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
+  });
+
   it('returns a timeout without advancing the workflow', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
