@@ -23,7 +23,7 @@ export async function assertBuilderProtocolUnchanged({
   }
 
   const specPath = paths.getSpecFilePath(specId);
-  const actualSpecSha256 = await getFileSha256({ path: specPath });
+  const actualSpecSha256 = await getFileSha256(specPath);
 
   if (actualSpecSha256 !== expectedSpecSha256) {
     throw new Error(`Builder changed spec.md after launch: "${specPath}".`);
