@@ -100,13 +100,9 @@ export const waitForDelegationResponse = async ({
   }
 };
 
-type AssertDelegationResponseInput = {
-  response: SubagentDelegationResponse;
-};
-
-export function assertDelegationResponse({
-  response,
-}: AssertDelegationResponseInput): void {
+export function assertDelegationResponse(
+  response: SubagentDelegationResponse,
+): void {
   if (response.status === DELEGATION_STATUSES.COMPLETED) {
     return;
   }
