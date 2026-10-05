@@ -4,7 +4,7 @@
  */
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
-import { checkEnvironment } from '#maestro/checks/checkEnvironment.ts';
+import { assertEnvironment } from '#maestro/checks/assertEnvironment.ts';
 import { getMaestroInstructions } from '#maestro/instructions/getMaestroInstructions.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
@@ -82,7 +82,7 @@ export default (pi: ExtensionAPI): void => {
       }
 
       try {
-        await checkEnvironment({ context });
+        await assertEnvironment({ context });
       } catch (error) {
         context.ui.notify(
           error instanceof Error ? error.message : String(error),
