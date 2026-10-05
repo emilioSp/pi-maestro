@@ -162,8 +162,6 @@ describe('finding resolution', () => {
       revision: secondVerifier.state.revision,
       findings: [],
     });
-    await expect(
-      getCurrentBranch(repository.path),
-    ).resolves.toBe('main');
+    await expect(getCurrentBranch(repository.path)).resolves.toBe('main');
   });
 });
