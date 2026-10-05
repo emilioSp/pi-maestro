@@ -8,14 +8,10 @@ import {
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { SUPPORTED_CONFIG_VERSION, THINKING_LEVELS } from '#config/schema.ts';
-
-const fixturePath = (fileName: string): string =>
-  fileURLToPath(import.meta.resolve(`#test/fixtures/config/${fileName}`));
 
 const createWorkspace = async (): Promise<{
   path: string;
@@ -145,7 +141,12 @@ describe('configuration loading', () => {
     const workspace = await createWorkspace();
     const piDirectory = join(workspace.path, '.pi');
     await mkdir(piDirectory, { recursive: true });
-    const fixture = await readFile(fixturePath('valid-full.json'), 'utf8');
+
+    const fixture = await readFile(
+      new URL(import.meta.resolve('#test/fixtures/config/valid-full.json')),
+      'utf8',
+    );
+
     await writeFile(join(piDirectory, 'maestro.json'), fixture, 'utf8');
 
     try {

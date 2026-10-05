@@ -1,4 +1,3 @@
-import type { EventBus } from '@earendil-works/pi-coding-agent';
 import {
   SUBAGENT_DELEGATION_REQUEST_EVENT,
   SUBAGENT_DELEGATION_RESPONSE_EVENT,
@@ -14,34 +13,16 @@ import {
 import { AGENTS } from '#config/schema.ts';
 import {
   cleanupBuilderWorkflows,
-  commitAll,
   createApprovedWorkflow,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import piTestSessions from '#test/support/pi-session.ts';
 import { registerLaunchBuilderTool } from '#tools/main/launch-builder.ts';
+import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { openBuilderEscalation } from '#workflow/escalation/openBuilderEscalation.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
-
-type EmitCompletedResponseInput = {
-  events: EventBus;
-  request: SubagentDelegationRequest;
-};
-
-const emitCompletedResponse = ({
-  events,
-  request,
-}: EmitCompletedResponseInput): void => {
-  events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-    requestId: request.requestId,
-    ownerRunId: request.ownerRunId,
-    nodeId: request.nodeId,
-    status: 'completed',
-    result: { kind: 'text', text: 'The builder finished.' },
-  });
-};
 
 afterEach(async () => {
   await piTestSessions.cleanup();
@@ -101,8 +82,14 @@ describe('launch builder tool', () => {
           notes: [],
         },
       });
-      await commitAll({ path: repository.path, message: 'Builder done' });
-      emitCompletedResponse({ events, request });
+      await repository.commit({ message: 'Builder done' });
+      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
+        requestId: request.requestId,
+        ownerRunId: request.ownerRunId,
+        nodeId: request.nodeId,
+        status: DELEGATION_STATUSES.COMPLETED,
+        result: { kind: 'text', text: 'The builder finished.' },
+      });
     });
 
     const result = await tool.execute('test-call', { specId: SPEC_ID });
@@ -165,8 +152,14 @@ describe('launch builder tool', () => {
           notes: [],
         },
       });
-      await commitAll({ path: repository.path, message: 'Builder failed' });
-      emitCompletedResponse({ events, request });
+      await repository.commit({ message: 'Builder failed' });
+      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
+        requestId: request.requestId,
+        ownerRunId: request.ownerRunId,
+        nodeId: request.nodeId,
+        status: DELEGATION_STATUSES.COMPLETED,
+        result: { kind: 'text', text: 'The builder finished.' },
+      });
     });
 
     const result = await tool.execute('test-call', { specId: SPEC_ID });
@@ -220,11 +213,16 @@ describe('launch builder tool', () => {
       });
 
       expect(opened.state.phase).toBe(WORKFLOW_PHASES.ESCALATION_DECISION);
-      await commitAll({
-        path: repository.path,
+      await repository.commit({
         message: 'Builder escalation',
       });
-      emitCompletedResponse({ events, request });
+      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
+        requestId: request.requestId,
+        ownerRunId: request.ownerRunId,
+        nodeId: request.nodeId,
+        status: DELEGATION_STATUSES.COMPLETED,
+        result: { kind: 'text', text: 'The builder finished.' },
+      });
     });
 
     const result = await tool.execute('test-call', { specId: SPEC_ID });

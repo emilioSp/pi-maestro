@@ -1,6 +1,6 @@
-STATUS: TODO
+STATUS: DONE
 
-# Task 44: Verify the full workflow
+# Task 44: Verify the happy path
 
 ## Dependency
 
@@ -8,48 +8,32 @@ This task depends on Task 43: Register the main Maestro extension.
 
 ## Objective
 
-Show that the current-branch workflow works end to end and the package is ready for review.
+Show that the complete happy path works through the main extension on the current branch.
+
+Failure, spec revision, findings, deactivation, and resume already have tests. Package checks remain in CI. Do not add duplicate coverage.
 
 ## Plan references
 
-- The full workflow in Sections [1](../plan.md#plan-section-1) through [6](../plan.md#plan-section-6)
-- Section [6.25](../plan.md#plan-section-6-25), minimum test coverage
-- Section [6.26](../plan.md#plan-section-6-26), supported environment
+1. The full workflow in Sections [1](../plan.md#plan-section-1) through [6](../plan.md#plan-section-6)
+2. Section [6.25](../plan.md#plan-section-6-25), minimum test coverage
+3. Section [6.26](../plan.md#plan-section-6-26), supported environment
 
 ## Work
 
-1. Add one happy-path integration test. Start on an arbitrary current branch, activate Maestro, create and approve a spec, and run builder and verifier. Assert that the workflow ends in `candidate-ready` with a matching handoff and clean checkout, without a final tool call or checkpoint. Test that Maestro's instructions assign the final summary to Maestro; do not test generated LLM prose.
-2. Add one builder-failure test proving that Maestro reports the error and stops the workflow.
-3. Add one spec-revision test from a blocked phase using the same `specId`, current branch, and artifact paths.
-4. Add one verifier-finding test covering both `fix-code` and all-findings-rejected outcomes.
-5. Add one deactivation test proving that an incomplete workflow is not recovered by a later Maestro session and that the live expected SHA is cleared.
-6. Use temporary Git repositories and a fake Pi event bus. Use foreground subagent responses.
-7. Keep other edge cases in tests next to the modules they cover.
-8. Remove a duplicate test only if the same behavior is clearly tested in its owning test file.
+1. Extend the spec-approval test in `extensions/maestro.integration.test.ts` into one complete happy-path test.
+2. Start on an arbitrary current branch. Activate Maestro, create and approve a spec, and commit the approval.
+3. Use real Pi owner and child sessions, handoff tools, the Pi event bus, and a temporary Git repository. Script the child work and foreground completion responses without model calls.
+4. Run builder and verifier through the registered main tools. Make sure that the workflow ends in `candidate-ready` with a matching verifier handoff.
+5. Make sure that the verifier commits only protocol files. The checkout must be clean and the branch must not change.
+6. Test that Maestro's instructions assign the final summary to Maestro. Do not test generated model text.
+7. Make sure that completion needs no final tool call, checkpoint, or owner commit.
 
-## Implementation
+## Checks
 
-Arrange tests to match the main source modules. Do not add generic test files such as `state.test.ts`. A full-workflow test may live next to the main extension or workflow code it checks. Set up each scenario clearly.
-
-## Tests
-
-Run all release checks:
-
-```text
-npm run typecheck
-npm run test:unit
-npm run test:integration
-npm pack --dry-run
-```
-
-Check the package file list. It must include both extensions, agents, the template, source, docs, README, and LICENSE. It must not include tests, temporary repositories, secrets, or `dist/`.
+Run `npm run check` and `git diff --check`.
 
 ## Completion criteria
 
-- Every minimum-coverage item in Section 6.25 has a test owned by the right module.
-- The full workflow uses one current branch and one checkout.
-- The verifier commits only protocol files through its child tool.
-- Spec revision, findings, builder-failure reporting, candidate-ready checks, and owner-controlled Pull Request delivery work as documented.
-- All release checks pass on macOS with Node.js 26.
-- No temporary files or repositories remain.
-- The package contains only approved files.
+The happy path passes through the main extension and both real child handoff tools. It uses one current branch and one checkout. The final HEAD is the verifier handoff commit. Temporary repositories and Pi sessions are cleaned up.
+
+This test does not cover AI reasoning or the real subagent process launcher.

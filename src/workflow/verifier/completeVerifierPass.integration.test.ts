@@ -6,7 +6,6 @@ import { runGitCommand } from '#git/command.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import {
   cleanupBuilderWorkflows,
-  commitAll,
   createApprovedWorkflow,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
@@ -50,8 +49,7 @@ const prepareRunningVerifier = async () => {
       notes: [],
     },
   });
-  await commitAll({
-    path: workflow.repository.path,
+  await workflow.repository.commit({
     message: 'Builder completed',
   });
 
@@ -97,7 +95,7 @@ describe('verifier completion', () => {
         relative(repository.path, paths.getVerifierHandoffPath(SPEC_ID)),
       ],
     });
-    await commitAll({ path: repository.path, message: 'Verifier completed' });
+    await repository.commit({ message: 'Verifier completed' });
     await expect(
       readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });

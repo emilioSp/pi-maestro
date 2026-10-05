@@ -27,7 +27,7 @@ Four principles hold the workflow together:
 - macOS
 - Node.js 26 or later
 - Git
-- Pi 0.85.1 or later
+- Pi 1.0.0 or later
 - `pi-subagents` 0.68.0 or later, installed and enabled in Pi
 - Access to the configured builder and verifier models
 - A trusted Git repository

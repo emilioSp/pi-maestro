@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   cleanupBuilderWorkflows,
-  commitAll,
   createApprovedWorkflow,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
@@ -41,6 +40,6 @@ describe('builder escalation', () => {
     await expect(
       readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.ESCALATION_DECISION });
-    await commitAll({ path: repository.path, message: 'Builder escalation' });
+    await repository.commit({ message: 'Builder escalation' });
   });
 });

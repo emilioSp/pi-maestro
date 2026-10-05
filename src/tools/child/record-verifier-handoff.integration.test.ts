@@ -8,7 +8,6 @@ import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import {
   cleanupBuilderWorkflows,
-  commitAll,
   createApprovedWorkflow,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
@@ -122,8 +121,7 @@ describe('verifier handoff tool', () => {
         notes: [],
       },
     });
-    await commitAll({
-      path: workflow.repository.path,
+    await workflow.repository.commit({
       message: 'Builder completed',
     });
 
@@ -197,8 +195,7 @@ describe('verifier handoff tool', () => {
         notes: [],
       },
     });
-    await commitAll({
-      path: workflow.repository.path,
+    await workflow.repository.commit({
       message: 'Builder completed',
     });
     await prepareVerifierLaunch({ paths: workflow.paths, specId: SPEC_ID });
@@ -240,8 +237,7 @@ describe('verifier handoff tool', () => {
         notes: [],
       },
     });
-    await commitAll({
-      path: workflow.repository.path,
+    await workflow.repository.commit({
       message: 'Builder completed',
     });
     await prepareVerifierLaunch({
