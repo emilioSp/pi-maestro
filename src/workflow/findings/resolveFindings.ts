@@ -6,7 +6,7 @@
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import type { VerifierFinding } from '#artifacts/verifier-handoff/schema.ts';
-import { createCommit } from '#git/commits/createCommit.ts';
+import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -160,10 +160,9 @@ export const resolveFindings = async ({
     currentRevision: currentState.revision,
   });
 
-  const checkpointCommit = await createCommit({
+  const checkpointCommit = await createWorkflowCheckpointCommit({
     repositoryRoot,
     expectedPaths: [handoffPath, workflowPath],
-    message: nextState.phase,
   });
 
   return {
