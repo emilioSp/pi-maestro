@@ -15,13 +15,13 @@ The file is optional. Maestro uses all default values when the file is absent.
   "version": "1.0.0",
   "specDirectory": ".specs",
   "builder": {
-    "model": "openai-codex/gpt-6-luna",
-    "thinking": "high",
+    "model": "openai-codex/gpt-5.6-luna",
+    "thinking": "max",
     "timeoutMinutes": 60
   },
   "verifier": {
-    "model": "openai-codex/gpt-6-sol",
-    "thinking": "medium",
+    "model": "openai-codex/gpt-6.1-sol",
+    "thinking": "high",
     "timeoutMinutes": 60
   }
 }

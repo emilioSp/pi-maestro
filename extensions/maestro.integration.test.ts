@@ -1,10 +1,12 @@
+/**
+ * Objective: Check main Maestro registration and the current-checkout workflow.
+ * Used: In integration tests with real Pi sessions and scripted child work.
+ */
+
 import { readFile, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import type {
-  AgentSession,
-  BuildSystemPromptOptions,
   ExtensionAPI,
-  SessionStartEvent,
   wrapRegisteredTool,
 } from '@earendil-works/pi-coding-agent';
 import { getAgentDir } from '@earendil-works/pi-coding-agent';
@@ -15,11 +17,21 @@ import {
 } from 'pi-subagents/delegation';
 import { Type } from 'typebox';
 import { afterEach, describe, expect, it } from 'vitest';
+import {
+  BREAKAGE_STATUSES,
+  BUILDER_HANDOFF_STATUSES,
+  PROBE_STATUSES,
+} from '#artifacts/builder-handoff/schema.ts';
+import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import { AGENTS } from '#config/schema.ts';
 import maestroExtension from '#extensions/maestro.ts';
+import maestroSubagentExtension from '#extensions/maestro-subagent.ts';
 import { runGitCommand } from '#git/command.ts';
+import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
+import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { MAESTRO_STATUS_KEY } from '#maestro/status/refreshMaestroStatus.ts';
+import type { CreatedSpec } from '#specs/create.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -28,6 +40,8 @@ import {
 } from '#test/support/builder-workflow.ts';
 import piTestSessions from '#test/support/pi-session.ts';
 import { createTemporaryRepository } from '#test/support/temp-repository.ts';
+import { BUILDER_HANDOFF_TOOL } from '#tools/child/record-builder-handoff.ts';
+import { VERIFIER_HANDOFF_TOOL } from '#tools/child/record-verifier-handoff.ts';
 import { CREATE_SPEC_TOOL } from '#tools/main/create-spec.ts';
 import { LAUNCH_BUILDER_TOOL } from '#tools/main/launch-builder.ts';
 import { LAUNCH_VERIFIER_TOOL } from '#tools/main/launch-verifier.ts';
@@ -62,34 +76,6 @@ const foreignExtension = (pi: ExtensionAPI): void => {
   });
 };
 
-type CreateMainSessionInput = {
-  cwd?: string;
-  projectTrusted?: boolean;
-  maestroAgentsAvailable?: boolean;
-  sessionStartEvent?: SessionStartEvent;
-};
-
-const createMainSession = (input: CreateMainSessionInput = {}) =>
-  piTestSessions.create({
-    ...input,
-    extensions: [foreignExtension, maestroExtension],
-  });
-
-type EmitPromptInput = {
-  session: AgentSession;
-  options?: BuildSystemPromptOptions;
-};
-
-const emitPrompt = ({ session, options }: EmitPromptInput) =>
-  session.extensionRunner.emitBeforeAgentStart(
-    'Discuss the next change.',
-    undefined,
-    options ?? {
-      cwd: session.extensionRunner.createContext().cwd,
-      sections: { foreign: 'Keep foreign instructions' },
-    },
-  );
-
 type RegisteredTool = ReturnType<typeof wrapRegisteredTool>;
 
 function assertToolRegistered(
@@ -97,33 +83,6 @@ function assertToolRegistered(
 ): asserts tool is RegisteredTool {
   if (tool === undefined) throw new Error('The tool is not active in Pi.');
 }
-
-type ExecuteMainToolInput = {
-  session: AgentSession;
-  name: string;
-  input: Record<string, unknown>;
-};
-
-// Exercise Pi's active tool and result handlers without a model call.
-const executeMainTool = async ({
-  session,
-  name,
-  input,
-}: ExecuteMainToolInput) => {
-  const tool = session.agent.state.tools.find((tool) => tool.name === name);
-  assertToolRegistered(tool);
-  const result = await tool.execute('test-call', input);
-  await session.extensionRunner.emitToolResult({
-    type: 'tool_result',
-    toolName: name,
-    toolCallId: 'test-call',
-    input,
-    ...result,
-    isError: false,
-  });
-
-  return result;
-};
 
 const cleanupFunctions: Array<() => Promise<void>> = [];
 
@@ -135,7 +94,8 @@ afterEach(async () => {
 
 describe('main Maestro extension', () => {
   it('given startup when the extension loads then only main tools register once and Maestro stays silent and off', async () => {
-    const { session, notify, setStatus } = await createMainSession({
+    const { session, notify, setStatus } = await piTestSessions.create({
+      extensions: [foreignExtension, maestroExtension],
       maestroAgentsAvailable: false,
     });
 
@@ -148,7 +108,16 @@ describe('main Maestro extension', () => {
     expect(maestroSessionState.isActive()).toBe(false);
     expect(notify).not.toHaveBeenCalled();
     expect(setStatus).toHaveBeenLastCalledWith(MAESTRO_STATUS_KEY, undefined);
-    const event = await emitPrompt({ session });
+
+    const event = await session.extensionRunner.emitBeforeAgentStart(
+      'Discuss the next change.',
+      undefined,
+      {
+        cwd: session.extensionRunner.createContext().cwd,
+        sections: { foreign: 'Keep foreign instructions' },
+      },
+    );
+
     expect(event.systemPromptOptions.sections).toEqual({
       foreign: 'Keep foreign instructions',
     });
@@ -158,7 +127,8 @@ describe('main Maestro extension', () => {
     const repository = await createTemporaryRepository();
     cleanupFunctions.push(repository.cleanup);
 
-    const { session, notify, setStatus } = await createMainSession({
+    const { session, notify, setStatus } = await piTestSessions.create({
+      extensions: [foreignExtension, maestroExtension],
       cwd: repository.path,
     });
 
@@ -174,7 +144,16 @@ describe('main Maestro extension', () => {
       'Maestro active · No active spec',
     );
     expect(notify).not.toHaveBeenCalled();
-    const event = await emitPrompt({ session });
+
+    const event = await session.extensionRunner.emitBeforeAgentStart(
+      'Discuss the next change.',
+      undefined,
+      {
+        cwd: session.extensionRunner.createContext().cwd,
+        sections: { foreign: 'Keep foreign instructions' },
+      },
+    );
+
     expect(event.systemPromptOptions.sections.maestro).toContain(
       'You are Maestro',
     );
@@ -216,7 +195,8 @@ describe('main Maestro extension', () => {
     const repository = await createTemporaryRepository();
     cleanupFunctions.push(repository.cleanup);
 
-    const { session, notify } = await createMainSession({
+    const { session, notify } = await piTestSessions.create({
+      extensions: [foreignExtension, maestroExtension],
       cwd: repository.path,
     });
 
@@ -246,7 +226,8 @@ describe('main Maestro extension', () => {
     cleanupFunctions.push(repository.cleanup);
 
     const { session, notify, setStatus, settingsManager } =
-      await createMainSession({
+      await piTestSessions.create({
+        extensions: [foreignExtension, maestroExtension],
         cwd: repository.path,
         projectTrusted: false,
       });
@@ -273,7 +254,8 @@ describe('main Maestro extension', () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { session, notify, setStatus, settingsManager } =
-      await createMainSession({
+      await piTestSessions.create({
+        extensions: [foreignExtension, maestroExtension],
         cwd: repository.path,
       });
 
@@ -298,17 +280,26 @@ describe('main Maestro extension', () => {
       cwd: repository.path,
     });
 
-    const event = await emitPrompt({ session });
+    const event = await session.extensionRunner.emitBeforeAgentStart(
+      'Discuss the next change.',
+      undefined,
+      {
+        cwd: session.extensionRunner.createContext().cwd,
+        sections: { foreign: 'Keep foreign instructions' },
+      },
+    );
+
     expect(maestroSessionState.getSpecSha256()).not.toBeNull();
 
     session.setActiveToolsByName(['read', FOREIGN_TOOL, ...MAIN_TOOL_NAMES]);
     settingsManager.setProjectTrusted(false);
     await session.prompt('/maestro');
 
-    const inactivePrompt = await emitPrompt({
-      session,
-      options: event.systemPromptOptions,
-    });
+    const inactivePrompt = await session.extensionRunner.emitBeforeAgentStart(
+      'Discuss the next change.',
+      undefined,
+      event.systemPromptOptions,
+    );
 
     expect(maestroSessionState.isActive()).toBe(false);
     expect(maestroSessionState.getActiveSpecId()).toBeNull();
@@ -364,7 +355,8 @@ describe('main Maestro extension', () => {
     });
     const workflow = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
 
-    const { session, notify, setStatus } = await createMainSession({
+    const { session, notify, setStatus } = await piTestSessions.create({
+      extensions: [foreignExtension, maestroExtension],
       cwd: repository.path,
       sessionStartEvent: { type: 'session_start', reason: 'resume' },
       maestroAgentsAvailable: false,
@@ -381,40 +373,285 @@ describe('main Maestro extension', () => {
     );
   });
 
-  it('given Maestro on when a spec is created and approved then the registered tools refresh the current workflow status', async () => {
+  it('given an approved spec on the current branch when builder and verifier finish then Maestro reaches candidate-ready without a final checkpoint', async () => {
     const repository = await createTemporaryRepository();
     cleanupFunctions.push(repository.cleanup);
+    await runGitCommand({
+      arguments: ['switch', '-c', 'feature/test'],
+      cwd: repository.path,
+    });
 
-    const { session, setStatus } = await createMainSession({
+    const { session, events, setStatus } = await piTestSessions.create({
+      extensions: [foreignExtension, maestroExtension],
       cwd: repository.path,
     });
 
     await session.prompt('/maestro');
-    await executeMainTool({
-      session,
-      name: CREATE_SPEC_TOOL.NAME,
-      input: { title: 'Add Weather Alerts' },
+
+    const createSpecTool = session.agent.state.tools.find(
+      (tool) => tool.name === CREATE_SPEC_TOOL.NAME,
+    );
+
+    assertToolRegistered(createSpecTool);
+
+    const created = await createSpecTool.execute('test-call', {
+      title: 'Add Weather Alerts',
     });
-    const specId = maestroSessionState.getActiveSpecId();
-    expect(specId).not.toBeNull();
+
+    await session.extensionRunner.emitToolResult({
+      type: 'tool_result',
+      toolName: CREATE_SPEC_TOOL.NAME,
+      toolCallId: 'test-call',
+      input: { title: 'Add Weather Alerts' },
+      ...created,
+      isError: false,
+    });
+
+    // JUSTIFICATION: The registered create-spec tool returns CreatedSpec details.
+    const { specId, specPath, specFilePath, workflowPath } =
+      created.details as CreatedSpec;
+
+    expect(maestroSessionState.getActiveSpecId()).toBe(specId);
     expect(setStatus).toHaveBeenLastCalledWith(
       MAESTRO_STATUS_KEY,
       `Maestro active · ${specId} · Preparing specification`,
     );
 
-    const result = await executeMainTool({
-      session,
-      name: MARK_SPEC_READY_TOOL.NAME,
+    const approvedSpec = (
+      await readFile(
+        new URL(import.meta.resolve('#test/fixtures/weather-alert-spec.md')),
+        'utf8',
+      )
+    ).replace('<id>', specId);
+
+    await writeFile(specFilePath, approvedSpec);
+
+    const markSpecReadyTool = session.agent.state.tools.find(
+      (tool) => tool.name === MARK_SPEC_READY_TOOL.NAME,
+    );
+
+    assertToolRegistered(markSpecReadyTool);
+    const approved = await markSpecReadyTool.execute('test-call', { specId });
+    await session.extensionRunner.emitToolResult({
+      type: 'tool_result',
+      toolName: MARK_SPEC_READY_TOOL.NAME,
+      toolCallId: 'test-call',
       input: { specId },
+      ...approved,
+      isError: false,
     });
 
-    expect(result.details).toMatchObject({
+    expect(approved.details).toMatchObject({
       phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
     });
     expect(setStatus).toHaveBeenLastCalledWith(
       MAESTRO_STATUS_KEY,
       `Maestro active · ${specId} · Ready for builder`,
     );
+    await repository.commit({
+      message: 'Approve weather alerts specification',
+    });
+
+    const productPath = join(repository.path, 'alert.txt');
+    const productContents = 'Weather alerts enabled\n';
+
+    const acceptanceCriteria = [
+      {
+        id: 'AC1',
+        probe: 'Read alert.txt and compare it with Weather alerts enabled\\n.',
+        probeStatus: PROBE_STATUSES.PASSED,
+        breakageStatus: BREAKAGE_STATUSES.CONFIRMED,
+      },
+    ];
+
+    const requests: SubagentDelegationRequest[] = [];
+    const childCommits: string[] = [];
+
+    // Script only the AI work and completion response. Pi sessions, tools, and Git are real.
+    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
+      // JUSTIFICATION: The registered launch tools emit delegation requests on this channel.
+      const request = payload as SubagentDelegationRequest;
+      requests.push(request);
+
+      try {
+        const { session: child } = await piTestSessions.create({
+          cwd: request.cwd,
+          extensions: [maestroSubagentExtension],
+        });
+
+        expect([AGENTS.BUILDER, AGENTS.VERIFIER]).toContain(request.agent);
+
+        if (request.agent === AGENTS.BUILDER) {
+          await writeFile(productPath, productContents);
+        }
+
+        const toolName =
+          request.agent === AGENTS.BUILDER
+            ? BUILDER_HANDOFF_TOOL.NAME
+            : VERIFIER_HANDOFF_TOOL.NAME;
+
+        const tool = child.agent.state.tools.find(
+          (tool) => tool.name === toolName,
+        );
+
+        assertToolRegistered(tool);
+        await tool.execute(request.requestId, {
+          specId,
+          summary:
+            'The weather alert message passed the probe and breakage checks.',
+          acceptanceCriteria,
+          notes: [],
+          ...(request.agent === AGENTS.BUILDER
+            ? { status: BUILDER_HANDOFF_STATUSES.DONE }
+            : { findings: [] }),
+        });
+
+        if (request.agent === AGENTS.BUILDER) {
+          await repository.commit({ message: 'Implement weather alerts' });
+        }
+
+        childCommits.push(
+          await getHeadCommit({ repositoryRoot: repository.path }),
+        );
+
+        events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
+          requestId: request.requestId,
+          ownerRunId: request.ownerRunId,
+          nodeId: request.nodeId,
+          status: 'completed',
+          result: { kind: 'text', text: 'The scripted child work finished.' },
+        });
+      } catch (error) {
+        events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
+          requestId: request.requestId,
+          ownerRunId: request.ownerRunId,
+          nodeId: request.nodeId,
+          status: 'failed',
+          error: String(error),
+        });
+      }
+    });
+
+    const launchBuilderTool = session.agent.state.tools.find(
+      (tool) => tool.name === LAUNCH_BUILDER_TOOL.NAME,
+    );
+
+    assertToolRegistered(launchBuilderTool);
+    const built = await launchBuilderTool.execute('test-call', { specId });
+    await session.extensionRunner.emitToolResult({
+      type: 'tool_result',
+      toolName: LAUNCH_BUILDER_TOOL.NAME,
+      toolCallId: 'test-call',
+      input: { specId },
+      ...built,
+      isError: false,
+    });
+
+    expect(built.details).toMatchObject({
+      specId,
+      phase: WORKFLOW_PHASES.READY_FOR_VERIFIER,
+      revision: 4,
+      handoff: { specId, revision: 4, status: BUILDER_HANDOFF_STATUSES.DONE },
+    });
+
+    const launchVerifierTool = session.agent.state.tools.find(
+      (tool) => tool.name === LAUNCH_VERIFIER_TOOL.NAME,
+    );
+
+    assertToolRegistered(launchVerifierTool);
+    const verified = await launchVerifierTool.execute('test-call', { specId });
+    await session.extensionRunner.emitToolResult({
+      type: 'tool_result',
+      toolName: LAUNCH_VERIFIER_TOOL.NAME,
+      toolCallId: 'test-call',
+      input: { specId },
+      ...verified,
+      isError: false,
+    });
+
+    expect(verified.details).toMatchObject({
+      specId,
+      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+      revision: 6,
+      candidateCommit: childCommits[0],
+      handoff: { specId, revision: 6, acceptanceCriteria, findings: [] },
+    });
+    expect(requests).toMatchObject([
+      {
+        agent: AGENTS.BUILDER,
+        cwd: repository.path,
+        context: 'fresh',
+        task: expect.stringContaining(specId),
+      },
+      {
+        agent: AGENTS.VERIFIER,
+        cwd: repository.path,
+        context: 'fresh',
+        task: expect.stringContaining(specId),
+      },
+    ]);
+    expect(setStatus).toHaveBeenLastCalledWith(
+      MAESTRO_STATUS_KEY,
+      `Maestro active · ${specId} · Completed`,
+    );
+
+    const state = await readWorkflowState({ path: workflowPath });
+    expect(state).toMatchObject({
+      specId,
+      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+      revision: 6,
+    });
+    const verifierHandoffPath = join(specPath, 'handoffs', 'verifier.json');
+    expect(
+      await readVerifierHandoff({
+        path: verifierHandoffPath,
+        specId,
+        revision: state.revision,
+      }),
+    ).toMatchObject({ specId, revision: 6, acceptanceCriteria, findings: [] });
+    expect(
+      await runGitCommand({
+        arguments: ['show', '--format=', '--name-only', 'HEAD'],
+        cwd: repository.path,
+      }),
+    ).toMatchObject({
+      stdout: `${[
+        relative(repository.path, verifierHandoffPath),
+        relative(repository.path, workflowPath),
+      ]
+        .sort()
+        .join('\n')}\n`,
+    });
+    expect(await readFile(specFilePath, 'utf8')).toBe(approvedSpec);
+    expect(await readFile(productPath, 'utf8')).toBe(productContents);
+
+    const event = await session.extensionRunner.emitBeforeAgentStart(
+      'Discuss the next change.',
+      undefined,
+      {
+        cwd: session.extensionRunner.createContext().cwd,
+        sections: { foreign: 'Keep foreign instructions' },
+      },
+    );
+
+    expect(event.systemPromptOptions.sections.maestro).toContain(
+      'You own the final summary.',
+    );
+    expect(event.systemPromptOptions.sections.maestro).toContain(
+      'No final tool call, checkpoint, or owner commit is required.',
+    );
+    expect(await getHeadCommit({ repositoryRoot: repository.path })).toBe(
+      childCommits[1],
+    );
+    expect(
+      await getRepositoryStatus({ repositoryRoot: repository.path }),
+    ).toMatchObject({ clean: true });
+    expect(
+      await runGitCommand({
+        arguments: ['branch', '--show-current'],
+        cwd: repository.path,
+      }),
+    ).toMatchObject({ stdout: 'feature/test\n' });
   });
 
   it.each([
@@ -440,17 +677,31 @@ describe('main Maestro extension', () => {
         'utf8',
       );
 
-      const { session, setStatus } = await createMainSession({
+      const { session, setStatus } = await piTestSessions.create({
+        extensions: [foreignExtension, maestroExtension],
         cwd: repository.path,
       });
 
       await session.prompt('/maestro');
       maestroSessionState.setActiveSpecId(SPEC_ID);
 
-      const result = await executeMainTool({
-        session,
-        name: MARK_SPEC_READY_TOOL.NAME,
+      const markSpecReadyTool = session.agent.state.tools.find(
+        (tool) => tool.name === MARK_SPEC_READY_TOOL.NAME,
+      );
+
+      assertToolRegistered(markSpecReadyTool);
+
+      const result = await markSpecReadyTool.execute('test-call', {
+        specId: SPEC_ID,
+      });
+
+      await session.extensionRunner.emitToolResult({
+        type: 'tool_result',
+        toolName: MARK_SPEC_READY_TOOL.NAME,
+        toolCallId: 'test-call',
         input: { specId: SPEC_ID },
+        ...result,
+        isError: false,
       });
 
       expect(result.details).toMatchObject({
@@ -474,7 +725,8 @@ describe('main Maestro extension', () => {
   it('given a committed builder failure when the registered launch tool returns then the owner receives the failure and status updates', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
-    const { session, events, setStatus } = await createMainSession({
+    const { session, events, setStatus } = await piTestSessions.create({
+      extensions: [foreignExtension, maestroExtension],
       cwd: repository.path,
     });
 
@@ -511,10 +763,23 @@ describe('main Maestro extension', () => {
       }
     });
 
-    const result = await executeMainTool({
-      session,
-      name: LAUNCH_BUILDER_TOOL.NAME,
+    const launchBuilderTool = session.agent.state.tools.find(
+      (tool) => tool.name === LAUNCH_BUILDER_TOOL.NAME,
+    );
+
+    assertToolRegistered(launchBuilderTool);
+
+    const result = await launchBuilderTool.execute('test-call', {
+      specId: SPEC_ID,
+    });
+
+    await session.extensionRunner.emitToolResult({
+      type: 'tool_result',
+      toolName: LAUNCH_BUILDER_TOOL.NAME,
+      toolCallId: 'test-call',
       input: { specId: SPEC_ID },
+      ...result,
+      isError: false,
     });
 
     expect(requests).toHaveLength(1);
@@ -539,13 +804,22 @@ describe('main Maestro extension', () => {
     const repository = await createTemporaryRepository();
     cleanupFunctions.push(repository.cleanup);
 
-    const { session, notify, setStatus } = await createMainSession({
+    const { session, notify, setStatus } = await piTestSessions.create({
+      extensions: [foreignExtension, maestroExtension],
       cwd: repository.path,
     });
 
     await session.prompt('/maestro');
     maestroSessionState.setActiveSpecId(SPEC_ID);
-    const event = await emitPrompt({ session });
+
+    const event = await session.extensionRunner.emitBeforeAgentStart(
+      'Discuss the next change.',
+      undefined,
+      {
+        cwd: session.extensionRunner.createContext().cwd,
+        sections: { foreign: 'Keep foreign instructions' },
+      },
+    );
 
     expect(event.systemPromptOptions.sections.maestro).toContain(
       'You are Maestro',

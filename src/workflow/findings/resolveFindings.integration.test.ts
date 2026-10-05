@@ -5,7 +5,6 @@ import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import {
   cleanupBuilderWorkflows,
-  commitAll,
   createApprovedWorkflow,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
@@ -40,7 +39,7 @@ describe('finding resolution', () => {
         notes: [],
       },
     });
-    await commitAll({ path: repository.path, message: 'Builder completed' });
+    await repository.commit({ message: 'Builder completed' });
 
     const firstVerifierLaunch = await prepareVerifierLaunch({
       paths,
@@ -76,7 +75,7 @@ describe('finding resolution', () => {
         notes: [],
       },
     });
-    await commitAll({ path: repository.path, message: 'Verifier finding' });
+    await repository.commit({ message: 'Verifier finding' });
 
     const resolved = await resolveFindings({
       paths,
@@ -110,8 +109,7 @@ describe('finding resolution', () => {
         notes: [],
       },
     });
-    await commitAll({
-      path: repository.path,
+    await repository.commit({
       message: 'Builder fixed finding',
     });
 
@@ -150,8 +148,7 @@ describe('finding resolution', () => {
       throw new Error('Expected the second verifier pass to succeed.');
     }
 
-    await commitAll({
-      path: repository.path,
+    await repository.commit({
       message: 'Verifier approved fix',
     });
 

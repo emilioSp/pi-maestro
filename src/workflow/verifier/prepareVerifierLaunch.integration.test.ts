@@ -4,7 +4,6 @@ import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import {
   cleanupBuilderWorkflows,
-  commitAll,
   createApprovedWorkflow,
   doneHandoff,
   SPEC_ID,
@@ -38,7 +37,7 @@ describe('verifier launch preparation', () => {
     });
     const builderHandoff = doneHandoff(builderLaunch.revision + 1);
     expect(builderHandoff.status).toBe('done');
-    await commitAll({ path: repository.path, message: 'Builder completed' });
+    await repository.commit({ message: 'Builder completed' });
 
     const candidateBefore = await getHeadCommit({
       repositoryRoot: repository.path,

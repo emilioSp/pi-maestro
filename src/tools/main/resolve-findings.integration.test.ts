@@ -21,7 +21,6 @@ import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import {
   cleanupBuilderWorkflows,
-  commitAll,
   createApprovedWorkflow,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
@@ -81,8 +80,7 @@ const createFindingsDecisionWorkflow = async ({
       notes: [],
     },
   });
-  await commitAll({
-    path: workflow.repository.path,
+  await workflow.repository.commit({
     message: 'Builder completed',
   });
 
@@ -105,8 +103,7 @@ const createFindingsDecisionWorkflow = async ({
       notes: [],
     },
   });
-  await commitAll({
-    path: workflow.repository.path,
+  await workflow.repository.commit({
     message: 'Verifier findings',
   });
 
@@ -548,8 +545,7 @@ describe('resolve findings tool', () => {
       JSON.stringify({ ...handoff, specId: '20260321-143052-other-spec' }),
       'utf8',
     );
-    await commitAll({
-      path: repository.path,
+    await repository.commit({
       message: 'Invalid verifier handoff',
     });
     const stateBefore = await readFile(statePath, 'utf8');
@@ -597,8 +593,7 @@ describe('resolve findings tool', () => {
       JSON.stringify({ ...handoff, revision: 1 }),
       'utf8',
     );
-    await commitAll({
-      path: repository.path,
+    await repository.commit({
       message: 'Invalid verifier handoff',
     });
     const stateBefore = await readFile(statePath, 'utf8');

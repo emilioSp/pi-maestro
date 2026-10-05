@@ -1,6 +1,5 @@
 import { access, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { EventBus } from '@earendil-works/pi-coding-agent';
 import {
   SUBAGENT_DELEGATION_REQUEST_EVENT,
   SUBAGENT_DELEGATION_RESPONSE_EVENT,
@@ -9,6 +8,7 @@ import {
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
 import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
+import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { AGENTS } from '#config/schema.ts';
 import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
 import { getParentCommit } from '#git/history/getParentCommit.ts';
@@ -16,12 +16,12 @@ import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import {
   cleanupBuilderWorkflows,
-  commitAll,
   createApprovedWorkflow,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import piTestSessions from '#test/support/pi-session.ts';
 import { registerLaunchVerifierTool } from '#tools/main/launch-verifier.ts';
+import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -49,8 +49,7 @@ const createReadyForVerifierWorkflow = async () => {
       notes: [],
     },
   });
-  await commitAll({
-    path: workflow.repository.path,
+  await workflow.repository.commit({
     message: `Builder completed at revision ${builderLaunch.revision + 1}`,
   });
 
@@ -117,24 +116,6 @@ const recordVerifierHandoff = async ({
   });
 };
 
-type EmitCompletedResponseInput = {
-  events: EventBus;
-  request: SubagentDelegationRequest;
-};
-
-const emitCompletedResponse = ({
-  events,
-  request,
-}: EmitCompletedResponseInput): void => {
-  events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-    requestId: request.requestId,
-    ownerRunId: request.ownerRunId,
-    nodeId: request.nodeId,
-    status: 'completed',
-    result: { kind: 'text', text: 'The verifier finished.' },
-  });
-};
-
 afterEach(async () => {
   await piTestSessions.cleanup();
   await cleanupBuilderWorkflows();
@@ -182,7 +163,13 @@ describe('launch verifier tool', () => {
         repositoryRoot: workflow.repository.path,
         paths: workflow.paths,
       });
-      emitCompletedResponse({ events, request });
+      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
+        requestId: request.requestId,
+        ownerRunId: request.ownerRunId,
+        nodeId: request.nodeId,
+        status: DELEGATION_STATUSES.COMPLETED,
+        result: { kind: 'text', text: 'The verifier finished.' },
+      });
     });
 
     const result = await tool.execute('test-call', { specId: SPEC_ID });
@@ -193,9 +180,9 @@ describe('launch verifier tool', () => {
       nodeId: 'verifier',
       context: 'fresh',
       cwd: workflow.repository.path,
-      model: 'openai-codex/gpt-6-sol',
-      thinking: 'medium',
-      timeoutMs: 60 * 60 * 1000,
+      model: DEFAULT_CONFIG.verifier.model,
+      thinking: DEFAULT_CONFIG.verifier.thinking,
+      timeoutMs: DEFAULT_CONFIG.verifier.timeoutMinutes * 60_000,
       task: expect.stringContaining(SPEC_ID),
       result: { kind: 'text' },
     });
@@ -245,7 +232,13 @@ describe('launch verifier tool', () => {
           },
         ],
       });
-      emitCompletedResponse({ events, request });
+      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
+        requestId: request.requestId,
+        ownerRunId: request.ownerRunId,
+        nodeId: request.nodeId,
+        status: DELEGATION_STATUSES.COMPLETED,
+        result: { kind: 'text', text: 'The verifier finished.' },
+      });
     });
 
     const result = await tool.execute('test-call', { specId: SPEC_ID });
@@ -292,7 +285,13 @@ describe('launch verifier tool', () => {
       expect(completed).toMatchObject({
         error: VERIFIER_PASS_ERRORS.PRODUCT_FILES_MODIFIED,
       });
-      emitCompletedResponse({ events, request });
+      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
+        requestId: request.requestId,
+        ownerRunId: request.ownerRunId,
+        nodeId: request.nodeId,
+        status: DELEGATION_STATUSES.COMPLETED,
+        result: { kind: 'text', text: 'The verifier finished.' },
+      });
     });
 
     const result = await tool.execute('test-call', { specId: SPEC_ID });
@@ -423,7 +422,13 @@ describe('launch verifier tool', () => {
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
       // JUSTIFICATION: The launch tool emits a delegation request on this channel.
       const request = payload as SubagentDelegationRequest;
-      emitCompletedResponse({ events, request });
+      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
+        requestId: request.requestId,
+        ownerRunId: request.ownerRunId,
+        nodeId: request.nodeId,
+        status: DELEGATION_STATUSES.COMPLETED,
+        result: { kind: 'text', text: 'The verifier finished.' },
+      });
     });
 
     await expect(

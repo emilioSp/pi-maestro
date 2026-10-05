@@ -12,17 +12,6 @@ afterEach(async () => {
   await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
 });
 
-const runGit = async ({
-  arguments: gitArguments,
-  cwd,
-}: {
-  arguments: string[];
-  cwd: string;
-}): Promise<void> => {
-  const result = await runGitCommand({ arguments: gitArguments, cwd });
-  expect(result.exitCode).toBe(0);
-};
-
 describe('current branch inspection', () => {
   it('reads the current branch and HEAD commit', async () => {
     const repository = await createTemporaryRepository();
@@ -43,7 +32,7 @@ describe('current branch inspection', () => {
     cleanupFunctions.push(repository.cleanup);
     await writeFile(join(repository.path, 'README.md'), '# Test\n', 'utf8');
     await repository.commit({ message: 'Initial commit' });
-    await runGit({
+    await runGitCommand({
       arguments: ['checkout', '--detach'],
       cwd: repository.path,
     });

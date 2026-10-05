@@ -1,3 +1,8 @@
+/**
+ * Objective: Create approved workflows and handoff data for tests.
+ * Used: In workflow integration tests that need a temporary Git repository.
+ */
+
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
@@ -9,7 +14,6 @@ import {
 } from '#artifacts/builder-handoff/schema.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { loadConfiguration } from '#config/loadConfiguration.ts';
-import { runGitCommand } from '#git/command.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { createSpec } from '#specs/create.ts';
@@ -69,20 +73,6 @@ export const createApprovedWorkflow = async ({
 export const cleanupBuilderWorkflows = async (): Promise<void> => {
   await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
   maestroSessionState.deactivate();
-};
-
-export const commitAll = async ({
-  path,
-  message,
-}: {
-  path: string;
-  message: string;
-}): Promise<void> => {
-  await runGitCommand({ arguments: ['add', '--all'], cwd: path });
-  await runGitCommand({
-    arguments: ['commit', '--message', message],
-    cwd: path,
-  });
 };
 
 export const doneHandoff = (revision: number): BuilderHandoff => ({

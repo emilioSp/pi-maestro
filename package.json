@@ -31,7 +31,7 @@
     "agents/",
     "templates/",
     "src/",
-    "!src/**/*.test.ts",
+    "!**/*.test.ts",
     "docs/",
     "README.md",
     "LICENSE"
@@ -56,6 +56,7 @@
     "test:integration": "vitest run --exclude \"**/*.unit.test.ts\"",
     "check": "npm run lint:fix && npm run typecheck && npm test",
     "prepublishOnly": "npm run check",
+    "publish:npm": "npm publish --access public",
     "lint": "biome check .",
     "lint:anti-slop": "oxlint --fix",
     "lint:fix": "biome check --write . && npm run lint:anti-slop"
@@ -68,8 +69,8 @@
     "pi-subagents"
   ],
   "peerDependencies": {
-    "@earendil-works/pi-ai": ">=0.85.1",
-    "@earendil-works/pi-coding-agent": ">=0.85.1"
+    "@earendil-works/pi-ai": ">=1.0.0",
+    "@earendil-works/pi-coding-agent": ">=1.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

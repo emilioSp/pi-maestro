@@ -3,30 +3,18 @@
  * Used: When Maestro loads a workflow phase or revision.
  */
 
-import { readFile } from 'node:fs/promises';
+import { readJsonFile } from '#utils/read-json.ts';
 import {
   assertWorkflowState,
   type WorkflowState,
 } from '#workflow/state/schema.ts';
-
-const readJson = async (path: string): Promise<unknown> => {
-  const content = await readFile(path, 'utf8');
-
-  try {
-    return JSON.parse(content);
-  } catch (error) {
-    throw new Error(`Workflow state contains malformed JSON: ${path}.`, {
-      cause: error,
-    });
-  }
-};
 
 export const readWorkflowState = async ({
   path,
 }: {
   path: string;
 }): Promise<WorkflowState> => {
-  const state = await readJson(path);
+  const state = await readJsonFile({ path, description: 'Workflow state' });
   assertWorkflowState(state);
 
   return state;

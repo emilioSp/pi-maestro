@@ -4,7 +4,6 @@ import { runGitCommand } from '#git/command.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import {
   cleanupBuilderWorkflows,
-  commitAll,
   createApprovedWorkflow,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
@@ -66,8 +65,7 @@ describe('builder completion', () => {
       '# Changed specification\n',
       'utf8',
     );
-    await commitAll({
-      path: repository.path,
+    await repository.commit({
       message: 'maestro workflow checkpoint',
     });
 
@@ -104,7 +102,7 @@ describe('builder completion', () => {
 
     expect(completed.repositoryRoot).toBe(repository.path);
     expect(completed.state.phase).toBe(WORKFLOW_PHASES.READY_FOR_VERIFIER);
-    await commitAll({ path: repository.path, message: 'Builder completed' });
+    await repository.commit({ message: 'Builder completed' });
     await expect(
       readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
     ).resolves.toMatchObject({

@@ -7,7 +7,6 @@ import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import {
   cleanupBuilderWorkflows,
-  commitAll,
   createApprovedWorkflow,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
@@ -78,7 +77,7 @@ describe('builder launch preparation', () => {
         notes: [],
       },
     });
-    await commitAll({ path: repository.path, message: 'Builder failed' });
+    await repository.commit({ message: 'Builder failed' });
 
     await expect(
       prepareBuilderLaunch({ paths, specId: SPEC_ID }),
