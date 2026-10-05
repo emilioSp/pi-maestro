@@ -1,11 +1,7 @@
 /**
- * Objective: Build the active Maestro role instructions.
+ * Objective: Return the Maestro role instructions.
  * Used: When Pi prepares a model request while Maestro is active.
  */
-
-type BuildMaestroInstructionsInput = {
-  active: boolean;
-};
 
 const MAESTRO_INSTRUCTIONS = `## Maestro mode
 
@@ -29,7 +25,4 @@ The workflow ends at candidate-ready. No final tool call, checkpoint, or owner c
 
 The summary must not change files or workflow state, create commits, or run verification again. The owner controls review, later changes, Git flow, Pull Request creation, and merge. Later changes are outside the concluded workflow and are not verified by Maestro. Do not resume or modify the concluded workflow.`;
 
-export const buildMaestroInstructions = ({
-  active,
-}: BuildMaestroInstructionsInput): string | undefined =>
-  active ? MAESTRO_INSTRUCTIONS : undefined;
+export const getMaestroInstructions = (): string => MAESTRO_INSTRUCTIONS;
