@@ -18,21 +18,21 @@ const PATHS = {
   PROTOTYPES: 'prototypes',
 } as const;
 
-const assertSpecId = (specId: string): void => {
+function assertSpecId(specId: string): void {
   if (!isValidSpecId(specId)) {
     throw new Error(
       `Invalid spec ID: "${specId}". Expected YYYYMMDD-HHmmss-<slug>.`,
     );
   }
-};
+}
 
-const assertEscalationNumber = (escalationNumber: number): void => {
+function assertEscalationNumber(escalationNumber: number): void {
   if (!Number.isSafeInteger(escalationNumber) || escalationNumber < 1) {
     throw new Error('Escalation number must be a positive integer.');
   }
-};
+}
 
-const assertSafeRelativePrototypePath = (value: string): void => {
+function assertSafeRelativePrototypePath(value: string): void {
   if (value.length === 0 || value.includes('\0')) {
     throw new Error('Prototype path must be a non-empty relative path.');
   }
@@ -42,7 +42,7 @@ const assertSafeRelativePrototypePath = (value: string): void => {
       'Prototype path must be relative to the prototypes directory.',
     );
   }
-};
+}
 
 export type MaestroPathsInput = {
   repositoryRoot: string;
