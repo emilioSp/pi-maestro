@@ -72,13 +72,15 @@ export const WORKFLOW_TRANSITIONS: Record<WorkflowEvent, WorkflowTransition> = {
   },
 };
 
+type TransitionWorkflowInput = {
+  state: WorkflowState;
+  event: WorkflowEvent;
+};
+
 export const transitionWorkflow = ({
   state,
   event,
-}: {
-  state: WorkflowState;
-  event: WorkflowEvent;
-}): WorkflowState => {
+}: TransitionWorkflowInput): WorkflowState => {
   assertWorkflowState(state);
   const current = state;
   const transition = WORKFLOW_TRANSITIONS[event];
