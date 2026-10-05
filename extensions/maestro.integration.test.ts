@@ -48,6 +48,7 @@ import { LAUNCH_VERIFIER_TOOL } from '#tools/main/launch-verifier.ts';
 import { MARK_SPEC_READY_TOOL } from '#tools/main/mark-spec-ready.ts';
 import { RESOLVE_ESCALATION_TOOL } from '#tools/main/resolve-escalation.ts';
 import { RESOLVE_FINDINGS_TOOL } from '#tools/main/resolve-findings.ts';
+import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
@@ -518,7 +519,7 @@ describe('main Maestro extension', () => {
           requestId: request.requestId,
           ownerRunId: request.ownerRunId,
           nodeId: request.nodeId,
-          status: 'completed',
+          status: DELEGATION_STATUSES.COMPLETED,
           result: { kind: 'text', text: 'The scripted child work finished.' },
         });
       } catch (error) {
@@ -526,7 +527,7 @@ describe('main Maestro extension', () => {
           requestId: request.requestId,
           ownerRunId: request.ownerRunId,
           nodeId: request.nodeId,
-          status: 'failed',
+          status: DELEGATION_STATUSES.FAILED,
           error: String(error),
         });
       }
@@ -749,7 +750,7 @@ describe('main Maestro extension', () => {
           requestId: request.requestId,
           ownerRunId: request.ownerRunId,
           nodeId: request.nodeId,
-          status: 'completed',
+          status: DELEGATION_STATUSES.COMPLETED,
           result: { kind: 'text', text: 'The builder failed.' },
         });
       } catch (error) {
@@ -757,7 +758,7 @@ describe('main Maestro extension', () => {
           requestId: request.requestId,
           ownerRunId: request.ownerRunId,
           nodeId: request.nodeId,
-          status: 'failed',
+          status: DELEGATION_STATUSES.FAILED,
           error: String(error),
         });
       }
