@@ -18,14 +18,15 @@ Wire the main Pi extension without moving domain logic into the composition root
 ## Work
 
 1. Register the seven main tools once. Import each directly from `src/tools/main/`. Give the launch tools access to `pi.events`.
-2. Implement and register `/maestro`:
+2. Keep all seven main tools, including `maestro_create_spec` and `maestro_mark_spec_ready`, inactive when Maestro mode is off.
+3. Implement and register `/maestro`:
    - If Maestro is off, run `checkEnvironment`. If it passes, turn Maestro on and enable its tools, instructions, and status. If a check fails, leave Maestro off and show the error with `ctx.ui.notify(..., "error")`.
    - If Maestro is on, turn it off and hide its tools, instructions, and status. Do not change the current branch, workflow files, or artifacts.
    - Run all checks again each time `/maestro` turns Maestro on.
-3. Leave Maestro off after `/resume`. Do not run Maestro checks or show Maestro notifications at startup.
-4. Register only the session, resume, instruction, status, and tool-activation events that this behavior needs.
-5. Use the shared `MaestroSessionState` instance that the child extension reads in the foreground runtime.
-6. Do not add branch or worktree management to the extension.
+4. Leave Maestro off after `/resume`. Do not run Maestro checks or show Maestro notifications at startup.
+5. Register only the session, resume, instruction, status, and tool-activation events that this behavior needs.
+6. Use the shared `MaestroSessionState` instance that the child extension reads in the foreground runtime.
+7. Do not add branch or worktree management to the extension.
 
 ## Implementation
 

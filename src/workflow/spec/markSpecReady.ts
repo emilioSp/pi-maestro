@@ -37,9 +37,14 @@ export const markSpecReady = async ({
     throw new Error(`Spec file is missing: ${specFilePath}.`);
   }
 
-  const current = await readWorkflowState({
-    path: paths.getWorkflowPath(specId),
-  });
+  const workflowPath = paths.getWorkflowPath(specId);
+  const current = await readWorkflowState({ path: workflowPath });
+
+  if (current.specId !== specId) {
+    throw new Error(
+      `Workflow spec ID mismatch: expected "${specId}", found "${current.specId}".`,
+    );
+  }
 
   const state = transitionWorkflow({
     state: current,
@@ -47,7 +52,7 @@ export const markSpecReady = async ({
   });
 
   await writeWorkflowState({
-    path: paths.getWorkflowPath(specId),
+    path: workflowPath,
     state,
     currentRevision: current.revision,
   });
