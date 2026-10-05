@@ -21,13 +21,15 @@ export type BuilderLaunch = {
   checkpointCommit: string;
 };
 
-const assertBuilderLaunchBase = async ({
-  paths,
-  specId,
-}: {
+type AssertBuilderLaunchBaseInput = {
   paths: MaestroPaths;
   specId: string;
-}): Promise<void> => {
+};
+
+async function assertBuilderLaunchBase({
+  paths,
+  specId,
+}: AssertBuilderLaunchBaseInput): Promise<void> {
   const state = await readWorkflowState({
     path: paths.getWorkflowPath(specId),
   });
@@ -53,15 +55,17 @@ const assertBuilderLaunchBase = async ({
   if (!(await pathExists(paths.getSpecFilePath(specId)))) {
     throw new Error(`Spec file is missing: ${paths.getSpecFilePath(specId)}.`);
   }
+}
+
+type PrepareBuilderLaunchInput = {
+  paths: MaestroPaths;
+  specId: string;
 };
 
 export const prepareBuilderLaunch = async ({
   paths,
   specId,
-}: {
-  paths: MaestroPaths;
-  specId: string;
-}): Promise<BuilderLaunch> => {
+}: PrepareBuilderLaunchInput): Promise<BuilderLaunch> => {
   const activeSpecId = maestroSessionState.getActiveSpecId();
 
   if (activeSpecId !== specId) {
