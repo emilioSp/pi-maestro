@@ -2,6 +2,8 @@ import { access, writeFile } from 'node:fs/promises';
 import { relative } from 'node:path';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
+import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
+import { FINDING_SEVERITIES } from '#artifacts/verifier-handoff/schema.ts';
 import { runGitCommand } from '#git/command.ts';
 import { getParentCommit } from '#git/history/getParentCommit.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
@@ -51,7 +53,7 @@ describe('verifier handoff tool', () => {
           {
             id: 'F1',
             acceptanceCriterion: null,
-            severity: 'high',
+            severity: FINDING_SEVERITIES.HIGH,
             confidence: 1,
             summary: 'Finding',
             evidence: [{ source: 'test', observation: 'Observed' }],
@@ -115,7 +117,7 @@ describe('verifier handoff tool', () => {
       paths: workflow.paths,
       specId: SPEC_ID,
       handoff: {
-        status: 'done',
+        status: BUILDER_HANDOFF_STATUSES.DONE,
         summary: 'Implemented the approved change.',
         acceptanceCriteria: [],
         notes: [],
@@ -189,7 +191,7 @@ describe('verifier handoff tool', () => {
       paths: workflow.paths,
       specId: SPEC_ID,
       handoff: {
-        status: 'done',
+        status: BUILDER_HANDOFF_STATUSES.DONE,
         summary: 'Implemented the approved change.',
         acceptanceCriteria: [],
         notes: [],
@@ -231,7 +233,7 @@ describe('verifier handoff tool', () => {
       paths: workflow.paths,
       specId: SPEC_ID,
       handoff: {
-        status: 'done',
+        status: BUILDER_HANDOFF_STATUSES.DONE,
         summary: 'Implemented the approved change.',
         acceptanceCriteria: [],
         notes: [],
