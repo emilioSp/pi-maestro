@@ -27,17 +27,19 @@ export type CreatedSpec = {
   state: WorkflowState;
 };
 
+type CreateSpecInput = {
+  paths: MaestroPaths;
+  title: string;
+  activeWorkflowSpecId: string | null;
+  instant?: Temporal.Instant;
+};
+
 export const createSpec = async ({
   paths,
   title,
   activeWorkflowSpecId,
   instant,
-}: {
-  paths: MaestroPaths;
-  title: string;
-  activeWorkflowSpecId: string | null;
-  instant?: Temporal.Instant;
-}): Promise<CreatedSpec> => {
+}: CreateSpecInput): Promise<CreatedSpec> => {
   if (activeWorkflowSpecId !== null) {
     throw new Error(`Workflow ${activeWorkflowSpecId} is already active.`);
   }
