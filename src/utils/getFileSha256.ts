@@ -6,13 +6,7 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
-type GetFileSha256Input = {
-  path: string;
-};
-
-export const getFileSha256 = async ({
-  path,
-}: GetFileSha256Input): Promise<string> => {
+export const getFileSha256 = async (path: string): Promise<string> => {
   const contents = await readFile(path);
 
   return createHash('sha256').update(contents).digest('hex');

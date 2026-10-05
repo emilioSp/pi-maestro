@@ -5,15 +5,17 @@
 
 import { readEscalationHistory } from '#artifacts/escalation/readEscalationHistory.ts';
 
+type GetNextEscalationIdInput = {
+  directory: string;
+  specId: string;
+  currentRevision: number;
+};
+
 export const getNextEscalationId = async ({
   directory,
   specId,
   currentRevision,
-}: {
-  directory: string;
-  specId: string;
-  currentRevision: number;
-}): Promise<string> => {
+}: GetNextEscalationIdInput): Promise<string> => {
   const history = await readEscalationHistory({
     directory,
     specId,

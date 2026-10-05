@@ -27,15 +27,17 @@ const acquireWorkflowLock = async (path: string): Promise<FileHandle> => {
   }
 };
 
+type WriteWorkflowStateInput = {
+  path: string;
+  state: WorkflowState;
+  currentRevision: number;
+};
+
 export const writeWorkflowState = async ({
   path,
   state,
   currentRevision,
-}: {
-  path: string;
-  state: WorkflowState;
-  currentRevision: number;
-}): Promise<void> => {
+}: WriteWorkflowStateInput): Promise<void> => {
   assertWorkflowState(state);
 
   if (!Number.isSafeInteger(currentRevision) || currentRevision < 0) {
@@ -63,7 +65,7 @@ export const writeWorkflowState = async ({
     }
 
     if (exists) {
-      const current = await readWorkflowState({ path });
+      const current = await readWorkflowState(path);
 
       if (current.revision !== currentRevision) {
         throw new Error(

@@ -7,17 +7,24 @@ import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifie
 import type { VerifierHandoff } from '#artifacts/verifier-handoff/schema.ts';
 import { readJsonFile } from '#utils/read-json.ts';
 
+type ReadVerifierHandoffInput = {
+  path: string;
+  specId: string;
+  revision: number;
+};
+
 export const readVerifierHandoff = async ({
   path,
   specId,
   revision,
-}: {
-  path: string;
-  specId: string;
-  revision: number;
-}): Promise<VerifierHandoff> => {
-  const handoff = await readJsonFile({ path, description: 'Verifier handoff' });
-  assertVerifierHandoff(handoff, specId, revision);
+}: ReadVerifierHandoffInput): Promise<VerifierHandoff> => {
+  const input = {
+    handoff: await readJsonFile({ path, description: 'Verifier handoff' }),
+    specId,
+    revision,
+  };
 
-  return handoff;
+  assertVerifierHandoff(input);
+
+  return input.handoff;
 };

@@ -7,17 +7,24 @@ import { assertBuilderHandoff } from '#artifacts/builder-handoff/assertBuilderHa
 import type { BuilderHandoff } from '#artifacts/builder-handoff/schema.ts';
 import { readJsonFile } from '#utils/read-json.ts';
 
+type ReadBuilderHandoffInput = {
+  path: string;
+  specId: string;
+  revision: number;
+};
+
 export const readBuilderHandoff = async ({
   path,
   specId,
   revision,
-}: {
-  path: string;
-  specId: string;
-  revision: number;
-}): Promise<BuilderHandoff> => {
-  const handoff = await readJsonFile({ path, description: 'Builder handoff' });
-  assertBuilderHandoff(handoff, specId, revision);
+}: ReadBuilderHandoffInput): Promise<BuilderHandoff> => {
+  const input = {
+    handoff: await readJsonFile({ path, description: 'Builder handoff' }),
+    specId,
+    revision,
+  };
 
-  return handoff;
+  assertBuilderHandoff(input);
+
+  return input.handoff;
 };

@@ -10,21 +10,15 @@ import { AGENTS } from '#config/schema.ts';
 import { assertRepositoryTrusted } from '#git/repository/assertRepositoryTrusted.ts';
 import { findRepositoryRoot } from '#git/repository/findRepositoryRoot.ts';
 
-type CheckEnvironmentInput = {
-  context: ExtensionContext;
-};
-
 const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
-const getRepositoryRoot = async ({
-  context,
-}: {
-  context: ExtensionContext;
-}): Promise<string> => {
+const getRepositoryRoot = async (
+  context: ExtensionContext,
+): Promise<string> => {
   try {
-    const repositoryRoot = await findRepositoryRoot({ cwd: context.cwd });
-    await assertRepositoryTrusted({ repositoryRoot });
+    const repositoryRoot = await findRepositoryRoot(context.cwd);
+    await assertRepositoryTrusted(repositoryRoot);
 
     if (!context.isProjectTrusted()) {
       throw new Error(`Project is not trusted: "${repositoryRoot}".`);
@@ -36,13 +30,11 @@ const getRepositoryRoot = async ({
   }
 };
 
-const getActivationConfiguration = async ({
-  repositoryRoot,
-}: {
-  repositoryRoot: string;
-}): Promise<Awaited<ReturnType<typeof loadConfiguration>>> => {
+const getActivationConfiguration = async (
+  repositoryRoot: string,
+): Promise<Awaited<ReturnType<typeof loadConfiguration>>> => {
   try {
-    return await loadConfiguration({ cwd: repositoryRoot });
+    return await loadConfiguration(repositoryRoot);
   } catch (error) {
     throw new Error(
       `Maestro configuration check failed: ${getErrorMessage(error)}`,
@@ -50,13 +42,15 @@ const getActivationConfiguration = async ({
   }
 };
 
-const assertModelsAvailable = ({
-  context,
-  config,
-}: {
+type AssertModelsAvailableInput = {
   context: ExtensionContext;
   config: Awaited<ReturnType<typeof loadConfiguration>>;
-}): void => {
+};
+
+function assertModelsAvailable({
+  context,
+  config,
+}: AssertModelsAvailableInput): void {
   const availableModels = context.modelRegistry.getAvailable();
 
   for (const model of [config.builder.model, config.verifier.model]) {
@@ -70,13 +64,9 @@ const assertModelsAvailable = ({
       throw new Error(`Configured model is not available: "${model}".`);
     }
   }
-};
+}
 
-const assertAgentsAvailable = async ({
-  repositoryRoot,
-}: {
-  repositoryRoot: string;
-}): Promise<void> => {
+async function assertAgentsAvailable(repositoryRoot: string): Promise<void> {
   for (const agent of [AGENTS.BUILDER, AGENTS.VERIFIER]) {
     const result = await resolveSubagentLaunchContract({
       agent,
@@ -88,22 +78,22 @@ const assertAgentsAvailable = async ({
       throw new Error(result.message);
     }
   }
-};
+}
 
-export const checkEnvironment = async ({
-  context,
-}: CheckEnvironmentInput): Promise<void> => {
-  const repositoryRoot = await getRepositoryRoot({ context });
+export async function assertEnvironment(
+  context: ExtensionContext,
+): Promise<void> {
+  const repositoryRoot = await getRepositoryRoot(context);
 
   try {
-    await assertAgentsAvailable({ repositoryRoot });
+    await assertAgentsAvailable(repositoryRoot);
   } catch (error) {
     throw new Error(
       `Builder or verifier agent check failed: ${getErrorMessage(error)}`,
     );
   }
 
-  const config = await getActivationConfiguration({ repositoryRoot });
+  const config = await getActivationConfiguration(repositoryRoot);
 
   assertModelsAvailable({ context, config });
-};
+}

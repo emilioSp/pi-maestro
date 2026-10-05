@@ -37,7 +37,7 @@ export const registerResolveEscalationTool = (pi: ExtensionAPI): void => {
     parameters: ResolveEscalationToolParameters,
     async execute(_toolCallId, params, _signal, _onUpdate, context) {
       const { specId, escalationId, ...resolution } = params;
-      const { paths } = await resolveToolLaunchContext({ cwd: context.cwd });
+      const { paths } = await resolveToolLaunchContext(context.cwd);
 
       const resolved = await resolveBuilderEscalation({
         paths,

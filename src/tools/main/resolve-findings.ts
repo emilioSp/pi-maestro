@@ -68,11 +68,7 @@ type FindingResolutionDetails = {
 const formatFindingIds = (findingIds: string[]): string =>
   findingIds.length === 0 ? 'none' : findingIds.join(', ');
 
-const formatResolution = ({
-  details,
-}: {
-  details: FindingResolutionDetails;
-}): string => {
+const formatResolution = (details: FindingResolutionDetails): string => {
   const rejected = formatFindingIds(details.rejectedFindingIds);
   const requiringFix = formatFindingIds(details.findingsRequiringFixIds);
 
@@ -96,7 +92,7 @@ export const registerResolveFindingsTool = (pi: ExtensionAPI): void => {
       _onUpdate,
       context,
     ) {
-      const { paths } = await resolveToolLaunchContext({ cwd: context.cwd });
+      const { paths } = await resolveToolLaunchContext(context.cwd);
 
       const resolved = await resolveFindings({
         paths,
@@ -119,7 +115,7 @@ export const registerResolveFindingsTool = (pi: ExtensionAPI): void => {
       };
 
       return {
-        content: [{ type: 'text', text: formatResolution({ details }) }],
+        content: [{ type: 'text', text: formatResolution(details) }],
         details,
       };
     },

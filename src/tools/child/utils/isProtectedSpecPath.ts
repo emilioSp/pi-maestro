@@ -7,13 +7,7 @@ import { lstat, realpath } from 'node:fs/promises';
 import { basename, dirname, resolve } from 'node:path';
 import { isErrnoException } from '#utils/is-errno-exception.ts';
 
-type ResolvePathInput = {
-  path: string;
-};
-
-const resolveThroughExistingParent = async ({
-  path,
-}: ResolvePathInput): Promise<string> => {
+const resolveThroughExistingParent = async (path: string): Promise<string> => {
   const unresolvedParts: string[] = [];
   let currentPath = path;
 
@@ -59,8 +53,8 @@ export const isProtectedSpecPath = async ({
   const resolvedTargetPath = resolve(repositoryRoot, pathWithoutPrefix);
 
   const [resolvedSpecPath, resolvedTarget] = await Promise.all([
-    resolveThroughExistingParent({ path: specPath }),
-    resolveThroughExistingParent({ path: resolvedTargetPath }),
+    resolveThroughExistingParent(specPath),
+    resolveThroughExistingParent(resolvedTargetPath),
   ]);
 
   return resolvedTarget === resolvedSpecPath;

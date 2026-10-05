@@ -5,13 +5,15 @@
 
 import { isAbsolute, relative, sep } from 'node:path';
 
+type IsPathWithinOrEqualInput = {
+  parent: string;
+  candidate: string;
+};
+
 export const isPathWithinOrEqual = ({
   parent,
   candidate,
-}: {
-  parent: string;
-  candidate: string;
-}): boolean => {
+}: IsPathWithinOrEqualInput): boolean => {
   const pathToCandidate = relative(parent, candidate);
 
   return (

@@ -19,15 +19,11 @@ const OTHER_SPEC_ID = '20260322-143052-add-weather-alerts';
 
 const cleanupFunctions: Array<() => Promise<void>> = [];
 
-type CreateWorkflowInput = {
-  phase?: WorkflowPhase;
-};
-
 const createRepository = async () => {
   const repository = await createTemporaryRepository();
   cleanupFunctions.push(repository.cleanup);
   await writeFile(join(repository.path, 'README.md'), '# Test\n', 'utf8');
-  await repository.commit({ message: 'Initial commit' });
+  await repository.commit('Initial commit');
 
   const paths = new MaestroPaths({
     repositoryRoot: repository.path,
@@ -40,9 +36,9 @@ const createRepository = async () => {
   return { repository, paths };
 };
 
-const createWorkflow = async ({
-  phase = WORKFLOW_PHASES.DRAFTING_SPEC,
-}: CreateWorkflowInput = {}) => {
+const createWorkflow = async (
+  phase: WorkflowPhase = WORKFLOW_PHASES.DRAFTING_SPEC,
+) => {
   const { repository, paths } = await createRepository();
 
   const created = await createSpec({
@@ -72,7 +68,7 @@ describe('markSpecReady', () => {
     const { repository, paths, created } = await createWorkflow();
     const markdown = '# Owner-approved content\n';
     await writeFile(created.specFilePath, markdown, 'utf8');
-    const headBefore = await getHeadCommit({ repositoryRoot: repository.path });
+    const headBefore = await getHeadCommit(repository.path);
 
     await expect(
       markSpecReady({
@@ -97,9 +93,7 @@ describe('markSpecReady', () => {
     await expect(readFile(created.specFilePath, 'utf8')).resolves.toBe(
       markdown,
     );
-    await expect(
-      getHeadCommit({ repositoryRoot: repository.path }),
-    ).resolves.toBe(headBefore);
+    await expect(getHeadCommit(repository.path)).resolves.toBe(headBefore);
   });
 
   it.each([
@@ -108,7 +102,7 @@ describe('markSpecReady', () => {
   ])(
     'approves the spec from %s without changing its content',
     async (phase) => {
-      const { created, paths, repository } = await createWorkflow({ phase });
+      const { created, paths, repository } = await createWorkflow(phase);
       const originalContent = await readFile(created.specFilePath, 'utf8');
 
       await expect(
@@ -138,7 +132,7 @@ describe('markSpecReady', () => {
     WORKFLOW_PHASES.VERIFIER_RUNNING,
     WORKFLOW_PHASES.CANDIDATE_READY,
   ])('rejects a spec revision from %s', async (phase) => {
-    const { created, paths } = await createWorkflow({ phase });
+    const { created, paths } = await createWorkflow(phase);
 
     await expect(
       markSpecReady({
@@ -151,7 +145,7 @@ describe('markSpecReady', () => {
     );
 
     await expect(
-      readWorkflowState({ path: created.workflowPath }),
+      readWorkflowState(created.workflowPath),
     ).resolves.toMatchObject({
       revision: 2,
       phase,
@@ -192,8 +186,8 @@ describe('markSpecReady', () => {
         activeWorkflowSpecId: SPEC_ID,
       }),
     ).rejects.toThrow(`Spec file is missing: ${created.specFilePath}.`);
-    await expect(
-      readWorkflowState({ path: created.workflowPath }),
-    ).resolves.toEqual(created.state);
+    await expect(readWorkflowState(created.workflowPath)).resolves.toEqual(
+      created.state,
+    );
   });
 });

@@ -17,29 +17,23 @@ describe('current branch inspection', () => {
     const repository = await createTemporaryRepository();
     cleanupFunctions.push(repository.cleanup);
     await writeFile(join(repository.path, 'README.md'), '# Test\n', 'utf8');
-    const commit = await repository.commit({ message: 'Initial commit' });
+    const commit = await repository.commit('Initial commit');
 
-    await expect(
-      getCurrentBranch({ repositoryRoot: repository.path }),
-    ).resolves.toBe('main');
-    await expect(
-      getHeadCommit({ repositoryRoot: repository.path }),
-    ).resolves.toBe(commit);
+    await expect(getCurrentBranch(repository.path)).resolves.toBe('main');
+    await expect(getHeadCommit(repository.path)).resolves.toBe(commit);
   });
 
   it('rejects a detached HEAD', async () => {
     const repository = await createTemporaryRepository();
     cleanupFunctions.push(repository.cleanup);
     await writeFile(join(repository.path, 'README.md'), '# Test\n', 'utf8');
-    await repository.commit({ message: 'Initial commit' });
+    await repository.commit('Initial commit');
     await runGitCommand({
       arguments: ['checkout', '--detach'],
       cwd: repository.path,
     });
 
-    await expect(
-      getCurrentBranch({ repositoryRoot: repository.path }),
-    ).rejects.toMatchObject({
+    await expect(getCurrentBranch(repository.path)).rejects.toMatchObject({
       code: GIT_COMMAND_ERROR_CODES.COMMAND_FAILED,
     });
   });

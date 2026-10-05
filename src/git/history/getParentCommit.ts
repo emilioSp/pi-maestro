@@ -7,13 +7,15 @@ import { runGitCommand } from '#git/command.ts';
 
 // Gets a commit's direct parent.
 // git rev-parse --verify <commit>^
+type GetParentCommitInput = {
+  repositoryRoot: string;
+  commit: string;
+};
+
 export const getParentCommit = async ({
   repositoryRoot,
   commit,
-}: {
-  repositoryRoot: string;
-  commit: string;
-}): Promise<string> => {
+}: GetParentCommitInput): Promise<string> => {
   const result = await runGitCommand({
     arguments: ['rev-parse', '--verify', `${commit}^`],
     cwd: repositoryRoot,

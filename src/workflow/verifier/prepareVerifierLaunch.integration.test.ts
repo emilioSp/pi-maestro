@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
@@ -29,33 +30,29 @@ describe('verifier launch preparation', () => {
       paths,
       specId: SPEC_ID,
       handoff: {
-        status: 'done',
+        status: BUILDER_HANDOFF_STATUSES.DONE,
         summary: 'Implemented the approved change.',
         acceptanceCriteria: [],
         notes: [],
       },
     });
     const builderHandoff = doneHandoff(builderLaunch.revision + 1);
-    expect(builderHandoff.status).toBe('done');
-    await repository.commit({ message: 'Builder completed' });
+    expect(builderHandoff.status).toBe(BUILDER_HANDOFF_STATUSES.DONE);
+    await repository.commit('Builder completed');
 
-    const candidateBefore = await getHeadCommit({
-      repositoryRoot: repository.path,
-    });
+    const candidateBefore = await getHeadCommit(repository.path);
 
     const launch = await prepareVerifierLaunch({ paths, specId: SPEC_ID });
 
     expect(launch.candidateCommit).toBe(candidateBefore);
     expect(launch.repositoryRoot).toBe(repository.path);
     expect(launch.checkpointCommit).not.toBe(candidateBefore);
+    await expect(getCurrentBranch(repository.path)).resolves.toBe('main');
+    await expect(getRepositoryStatus(repository.path)).resolves.toMatchObject({
+      clean: true,
+    });
     await expect(
-      getCurrentBranch({ repositoryRoot: repository.path }),
-    ).resolves.toBe('main');
-    await expect(
-      getRepositoryStatus({ repositoryRoot: repository.path }),
-    ).resolves.toMatchObject({ clean: true });
-    await expect(
-      readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({
       phase: WORKFLOW_PHASES.VERIFIER_RUNNING,
     });

@@ -27,10 +27,17 @@ export type ResolvedBuilderEscalation = {
   checkpointCommit: string;
 };
 
+type AssertCurrentEscalationInput<CurrentEscalation = Escalation | undefined> =
+  {
+    currentEscalation: CurrentEscalation;
+    escalationId: string;
+  };
+
 function assertCurrentEscalation(
-  currentEscalation: Escalation | undefined,
-  escalationId: string,
-): asserts currentEscalation is Escalation {
+  input: AssertCurrentEscalationInput,
+): asserts input is AssertCurrentEscalationInput<Escalation> {
+  const { currentEscalation, escalationId } = input;
+
   if (currentEscalation === undefined) {
     throw new Error('There is no escalation to solve.');
   }
@@ -46,20 +53,22 @@ function assertCurrentEscalation(
   }
 }
 
+type ResolveBuilderEscalationInput = {
+  paths: MaestroPaths;
+  specId: string;
+  escalationId: string;
+  resolution: EscalationResolution;
+};
+
 export const resolveBuilderEscalation = async ({
   paths,
   specId,
   escalationId,
   resolution,
-}: {
-  paths: MaestroPaths;
-  specId: string;
-  escalationId: string;
-  resolution: EscalationResolution;
-}): Promise<ResolvedBuilderEscalation> => {
+}: ResolveBuilderEscalationInput): Promise<ResolvedBuilderEscalation> => {
   const workflowPath = paths.getWorkflowPath(specId);
   const escalationsPath = paths.getEscalationsPath(specId);
-  const currentState = await readWorkflowState({ path: workflowPath });
+  const currentState = await readWorkflowState(workflowPath);
 
   if (currentState.phase !== WORKFLOW_PHASES.ESCALATION_DECISION) {
     throw new Error(
@@ -73,8 +82,9 @@ export const resolveBuilderEscalation = async ({
     currentRevision: currentState.revision,
   });
 
-  const currentEscalation = history.at(-1);
-  assertCurrentEscalation(currentEscalation, escalationId);
+  const escalationInput = { currentEscalation: history.at(-1), escalationId };
+  assertCurrentEscalation(escalationInput);
+  const { currentEscalation } = escalationInput;
 
   const nextState = transitionWorkflow({
     state: currentState,

@@ -62,7 +62,7 @@ describe('launch builder tool', () => {
         requestId: 'other-request',
         ownerRunId: request.ownerRunId,
         nodeId: request.nodeId,
-        status: 'completed',
+        status: DELEGATION_STATUSES.COMPLETED,
         result: { kind: 'text', text: 'Ignore this response.' },
       });
 
@@ -83,7 +83,7 @@ describe('launch builder tool', () => {
           notes: [],
         },
       });
-      await repository.commit({ message: 'Builder done' });
+      await repository.commit('Builder done');
       events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
@@ -118,7 +118,7 @@ describe('launch builder tool', () => {
     );
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
     expect(result.details).toMatchObject({
-      outcome: 'done',
+      outcome: BUILDER_HANDOFF_STATUSES.DONE,
       specId: SPEC_ID,
       phase: WORKFLOW_PHASES.READY_FOR_VERIFIER,
     });
@@ -153,7 +153,7 @@ describe('launch builder tool', () => {
           notes: [],
         },
       });
-      await repository.commit({ message: 'Builder failed' });
+      await repository.commit('Builder failed');
       events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
@@ -166,7 +166,7 @@ describe('launch builder tool', () => {
     const result = await tool.execute('test-call', { specId: SPEC_ID });
 
     expect(result.details).toMatchObject({
-      outcome: 'failed',
+      outcome: BUILDER_HANDOFF_STATUSES.FAILED,
       phase: WORKFLOW_PHASES.BUILDER_FAILED,
     });
 
@@ -214,9 +214,7 @@ describe('launch builder tool', () => {
       });
 
       expect(opened.state.phase).toBe(WORKFLOW_PHASES.ESCALATION_DECISION);
-      await repository.commit({
-        message: 'Builder escalation',
-      });
+      await repository.commit('Builder escalation');
       events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
@@ -229,7 +227,7 @@ describe('launch builder tool', () => {
     const result = await tool.execute('test-call', { specId: SPEC_ID });
 
     expect(result.details).toMatchObject({
-      outcome: 'escalation',
+      outcome: BUILDER_HANDOFF_STATUSES.ESCALATION,
       phase: WORKFLOW_PHASES.ESCALATION_DECISION,
       escalation: { id: 'E1' },
     });
@@ -267,7 +265,7 @@ describe('launch builder tool', () => {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
         nodeId: request.nodeId,
-        status: 'failed',
+        status: DELEGATION_STATUSES.FAILED,
         error: 'The configured provider is unavailable.',
       });
     });
@@ -278,7 +276,7 @@ describe('launch builder tool', () => {
       'Delegation error: The configured provider is unavailable.',
     );
     await expect(
-      readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_RUNNING });
     expect(on).toHaveBeenLastCalledWith(
       SUBAGENT_DELEGATION_RESPONSE_EVENT,
@@ -324,7 +322,7 @@ describe('launch builder tool', () => {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
         nodeId: request.nodeId,
-        status: 'timed_out',
+        status: DELEGATION_STATUSES.TIMED_OUT,
         error: 'The builder exceeded its timeout.',
       });
     });
@@ -333,7 +331,7 @@ describe('launch builder tool', () => {
       tool.execute('test-call', { specId: SPEC_ID }),
     ).rejects.toThrow('Delegation timeout: The builder exceeded its timeout.');
     await expect(
-      readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_RUNNING });
   });
 
@@ -352,7 +350,7 @@ describe('launch builder tool', () => {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
         nodeId: request.nodeId,
-        status: 'interrupted',
+        status: DELEGATION_STATUSES.INTERRUPTED,
         error: 'The builder was interrupted.',
       });
     });
@@ -361,7 +359,7 @@ describe('launch builder tool', () => {
       tool.execute('test-call', { specId: SPEC_ID }),
     ).rejects.toThrow('Delegation interruption: The builder was interrupted.');
     await expect(
-      readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_RUNNING });
   });
 
@@ -390,7 +388,7 @@ describe('launch builder tool', () => {
       'Protocol error: unsupported final response status "unsupported".',
     );
     await expect(
-      readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_RUNNING });
   });
 });

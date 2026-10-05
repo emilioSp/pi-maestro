@@ -30,7 +30,7 @@ describe('configuration loading', () => {
     const workspace = await createWorkspace();
 
     try {
-      const config = await loadConfiguration({ cwd: workspace.path });
+      const config = await loadConfiguration(workspace.path);
 
       expect(config).toEqual({
         ...DEFAULT_CONFIG,
@@ -60,18 +60,16 @@ describe('configuration loading', () => {
     );
 
     try {
-      await expect(loadConfiguration({ cwd: workspace.path })).resolves.toEqual(
-        {
-          version: SUPPORTED_CONFIG_VERSION,
-          specDirectory: join(workspace.path, 'custom-specs'),
-          builder: {
-            model: 'anthropic/claude-3-7-sonnet',
-            thinking: THINKING_LEVELS.MAX,
-            timeoutMinutes: 120,
-          },
-          verifier: DEFAULT_CONFIG.verifier,
+      await expect(loadConfiguration(workspace.path)).resolves.toEqual({
+        version: SUPPORTED_CONFIG_VERSION,
+        specDirectory: join(workspace.path, 'custom-specs'),
+        builder: {
+          model: 'anthropic/claude-3-7-sonnet',
+          thinking: THINKING_LEVELS.MAX,
+          timeoutMinutes: 120,
         },
-      );
+        verifier: DEFAULT_CONFIG.verifier,
+      });
     } finally {
       await workspace.cleanup();
     }
@@ -91,7 +89,7 @@ describe('configuration loading', () => {
     );
 
     try {
-      await expect(loadConfiguration({ cwd: workspace.path })).rejects.toThrow(
+      await expect(loadConfiguration(workspace.path)).rejects.toThrow(
         'Unknown configuration field: "worktreeDirectory".',
       );
     } finally {
@@ -113,7 +111,7 @@ describe('configuration loading', () => {
     );
 
     try {
-      await expect(loadConfiguration({ cwd: workspace.path })).rejects.toThrow(
+      await expect(loadConfiguration(workspace.path)).rejects.toThrow(
         'specDirectory must stay inside the Git root.',
       );
     } finally {
@@ -129,7 +127,7 @@ describe('configuration loading', () => {
     await writeFile(configPath, '{', 'utf8');
 
     try {
-      await expect(loadConfiguration({ cwd: workspace.path })).rejects.toThrow(
+      await expect(loadConfiguration(workspace.path)).rejects.toThrow(
         `Invalid JSON in configuration file "${configPath}":`,
       );
     } finally {
@@ -150,9 +148,7 @@ describe('configuration loading', () => {
     await writeFile(join(piDirectory, 'maestro.json'), fixture, 'utf8');
 
     try {
-      await expect(
-        loadConfiguration({ cwd: workspace.path }),
-      ).resolves.toMatchObject({
+      await expect(loadConfiguration(workspace.path)).resolves.toMatchObject({
         specDirectory: join(workspace.path, 'custom-specs'),
       });
     } finally {

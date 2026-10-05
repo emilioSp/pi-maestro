@@ -17,7 +17,7 @@ describe('workflow checkpoint commit creation', () => {
     const repository = await createTemporaryRepository();
     cleanupFunctions.push(repository.cleanup);
     await writeFile(join(repository.path, 'workflow.json'), '{}\n', 'utf8');
-    await repository.commit({ message: 'Initial commit' });
+    await repository.commit('Initial commit');
     await writeFile(
       join(repository.path, 'workflow.json'),
       '{"revision":1}\n',

@@ -67,17 +67,19 @@ type BuilderLaunchResult =
       escalation: Escalation;
     };
 
+type ReadCommittedBuilderResultInput = {
+  paths: MaestroPaths;
+  specId: string;
+};
+
 const readCommittedBuilderResult = async ({
   paths,
   specId,
-}: {
-  paths: MaestroPaths;
-  specId: string;
-}): Promise<BuilderLaunchResult> => {
+}: ReadCommittedBuilderResultInput): Promise<BuilderLaunchResult> => {
   try {
-    const repositoryStatus = await getRepositoryStatus({
-      repositoryRoot: paths.getRepositoryRoot(),
-    });
+    const repositoryStatus = await getRepositoryStatus(
+      paths.getRepositoryRoot(),
+    );
 
     if (!repositoryStatus.clean) {
       throw new Error(
@@ -85,9 +87,7 @@ const readCommittedBuilderResult = async ({
       );
     }
 
-    const state = await readWorkflowState({
-      path: paths.getWorkflowPath(specId),
-    });
+    const state = await readWorkflowState(paths.getWorkflowPath(specId));
 
     if (state.specId !== specId) {
       throw new Error(
@@ -103,6 +103,57 @@ const readCommittedBuilderResult = async ({
   }
 };
 
+type ReadTerminalBuilderResultInput = {
+  paths: MaestroPaths;
+  specId: string;
+  revision: number;
+  phase:
+    | typeof WORKFLOW_PHASES.READY_FOR_VERIFIER
+    | typeof WORKFLOW_PHASES.BUILDER_FAILED;
+};
+
+const readTerminalBuilderResult = async ({
+  paths,
+  specId,
+  revision,
+  phase,
+}: ReadTerminalBuilderResultInput): Promise<BuilderLaunchResult> => {
+  const handoff = await readBuilderHandoff({
+    path: paths.getBuilderHandoffPath(specId),
+    specId,
+    revision,
+  });
+
+  const expectedStatus =
+    phase === WORKFLOW_PHASES.READY_FOR_VERIFIER
+      ? BUILDER_HANDOFF_STATUSES.DONE
+      : BUILDER_HANDOFF_STATUSES.FAILED;
+
+  if (handoff.status !== expectedStatus) {
+    throw new Error(
+      `Builder handoff status does not match workflow phase "${phase}".`,
+    );
+  }
+
+  if (phase === WORKFLOW_PHASES.READY_FOR_VERIFIER) {
+    return {
+      outcome: BUILDER_HANDOFF_STATUSES.DONE,
+      specId,
+      revision,
+      phase,
+      handoff,
+    };
+  }
+
+  return {
+    outcome: BUILDER_HANDOFF_STATUSES.FAILED,
+    specId,
+    revision,
+    phase,
+    handoff,
+  };
+};
+
 type BuildLaunchResultInput = {
   paths: MaestroPaths;
   specId: string;
@@ -114,48 +165,16 @@ const buildLaunchResult = async ({
   specId,
   state,
 }: BuildLaunchResultInput): Promise<BuilderLaunchResult> => {
-  if (state.phase === WORKFLOW_PHASES.READY_FOR_VERIFIER) {
-    const handoff = await readBuilderHandoff({
-      path: paths.getBuilderHandoffPath(specId),
-      specId,
-      revision: state.revision,
-    });
-
-    if (handoff.status !== BUILDER_HANDOFF_STATUSES.DONE) {
-      throw new Error(
-        `Builder handoff status does not match workflow phase "${state.phase}".`,
-      );
-    }
-
-    return {
-      outcome: BUILDER_HANDOFF_STATUSES.DONE,
+  if (
+    state.phase === WORKFLOW_PHASES.READY_FOR_VERIFIER ||
+    state.phase === WORKFLOW_PHASES.BUILDER_FAILED
+  ) {
+    return await readTerminalBuilderResult({
+      paths,
       specId,
       revision: state.revision,
       phase: state.phase,
-      handoff,
-    };
-  }
-
-  if (state.phase === WORKFLOW_PHASES.BUILDER_FAILED) {
-    const handoff = await readBuilderHandoff({
-      path: paths.getBuilderHandoffPath(specId),
-      specId,
-      revision: state.revision,
     });
-
-    if (handoff.status !== BUILDER_HANDOFF_STATUSES.FAILED) {
-      throw new Error(
-        `Builder handoff status does not match workflow phase "${state.phase}".`,
-      );
-    }
-
-    return {
-      outcome: BUILDER_HANDOFF_STATUSES.FAILED,
-      specId,
-      revision: state.revision,
-      phase: state.phase,
-      handoff,
-    };
   }
 
   if (state.phase === WORKFLOW_PHASES.ESCALATION_DECISION) {
@@ -191,11 +210,7 @@ const buildLaunchResult = async ({
   );
 };
 
-const formatBuilderResult = ({
-  result,
-}: {
-  result: BuilderLaunchResult;
-}): string => {
+const formatBuilderResult = (result: BuilderLaunchResult): string => {
   if (result.outcome === BUILDER_HANDOFF_STATUSES.DONE) {
     return `Builder completed spec ${result.specId}. The workflow is ready-for-verifier.`;
   }
@@ -214,9 +229,7 @@ export const registerLaunchBuilderTool = (pi: ExtensionAPI): void => {
     description: LAUNCH_BUILDER_TOOL.DESCRIPTION,
     parameters: LaunchBuilderToolParameters,
     async execute(toolCallId, { specId }, _signal, _onUpdate, context) {
-      const { paths, config } = await resolveToolLaunchContext({
-        cwd: context.cwd,
-      });
+      const { paths, config } = await resolveToolLaunchContext(context.cwd);
 
       const launch = await prepareBuilderLaunch({ paths, specId });
 
@@ -241,11 +254,11 @@ export const registerLaunchBuilderTool = (pi: ExtensionAPI): void => {
         request,
       });
 
-      assertDelegationResponse({ response });
+      assertDelegationResponse(response);
       const result = await readCommittedBuilderResult({ paths, specId });
 
       return {
-        content: [{ type: 'text', text: formatBuilderResult({ result }) }],
+        content: [{ type: 'text', text: formatBuilderResult(result) }],
         details: result,
       };
     },

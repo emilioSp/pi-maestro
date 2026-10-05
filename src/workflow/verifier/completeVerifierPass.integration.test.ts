@@ -1,6 +1,7 @@
 import { access, readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
 import { runGitCommand } from '#git/command.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
@@ -43,15 +44,13 @@ const prepareRunningVerifier = async () => {
     paths: workflow.paths,
     specId: SPEC_ID,
     handoff: {
-      status: 'done',
+      status: BUILDER_HANDOFF_STATUSES.DONE,
       summary: 'Implemented the approved change.',
       acceptanceCriteria: [],
       notes: [],
     },
   });
-  await workflow.repository.commit({
-    message: 'Builder completed',
-  });
+  await workflow.repository.commit('Builder completed');
 
   const verifierLaunch = await prepareVerifierLaunch({
     paths: workflow.paths,
@@ -86,18 +85,16 @@ describe('verifier completion', () => {
 
     expect(completed.repositoryRoot).toBe(repository.path);
     expect(completed.state.phase).toBe(WORKFLOW_PHASES.CANDIDATE_READY);
-    await expect(
-      getRepositoryStatus({ repositoryRoot: repository.path }),
-    ).resolves.toMatchObject({
+    await expect(getRepositoryStatus(repository.path)).resolves.toMatchObject({
       staged: [],
       unstaged: [relative(repository.path, paths.getWorkflowPath(SPEC_ID))],
       untracked: [
         relative(repository.path, paths.getVerifierHandoffPath(SPEC_ID)),
       ],
     });
-    await repository.commit({ message: 'Verifier completed' });
+    await repository.commit('Verifier completed');
     await expect(
-      readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
   });
 
@@ -124,7 +121,7 @@ describe('verifier completion', () => {
         'Product files differ from the candidate commit. Restore the candidate before submitting the verifier handoff.',
     });
     await expect(
-      readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.VERIFIER_RUNNING });
     await expect(
       import('node:fs/promises').then(({ access }) => access(handoffPath)),

@@ -17,15 +17,11 @@ describe('repository trust inspection', () => {
     cleanupFunctions.push(repository.cleanup);
     await writeFile(join(repository.path, 'untracked.txt'), 'new\n', 'utf8');
 
-    const before = await getRepositoryStatus({
-      repositoryRoot: repository.path,
-    });
+    const before = await getRepositoryStatus(repository.path);
 
     await expect(
-      assertRepositoryTrusted({ repositoryRoot: repository.path }),
+      assertRepositoryTrusted(repository.path),
     ).resolves.toBeUndefined();
-    await expect(
-      getRepositoryStatus({ repositoryRoot: repository.path }),
-    ).resolves.toEqual(before);
+    await expect(getRepositoryStatus(repository.path)).resolves.toEqual(before);
   });
 });

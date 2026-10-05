@@ -72,7 +72,15 @@ const findExistingAncestor = async (
   }
 };
 
-const assertSafeDirectoryInput = (value: string, name: string): void => {
+type AssertSafeDirectoryInput = {
+  value: string;
+  name: string;
+};
+
+function assertSafeDirectoryInput({
+  value,
+  name,
+}: AssertSafeDirectoryInput): void {
   if (value.includes('\0')) {
     throw new Error(`${name} must not contain a null byte.`);
   }
@@ -80,18 +88,20 @@ const assertSafeDirectoryInput = (value: string, name: string): void => {
   if (isAbsolute(value)) {
     throw new Error(`${name} must be relative to the Git root.`);
   }
+}
+
+type ResolveSafeDirectoryInput = {
+  repositoryRoot: string;
+  directory: string;
+  name: string;
 };
 
 const resolveSafeDirectory = async ({
   repositoryRoot,
   directory,
   name,
-}: {
-  repositoryRoot: string;
-  directory: string;
-  name: string;
-}): Promise<string> => {
-  assertSafeDirectoryInput(directory, name);
+}: ResolveSafeDirectoryInput): Promise<string> => {
+  assertSafeDirectoryInput({ value: directory, name });
 
   const requestedDirectory = resolve(repositoryRoot, directory);
 
@@ -135,13 +145,15 @@ const resolveSafeDirectory = async ({
   return resolvedDirectory;
 };
 
+type ResolveDirectoriesInput = {
+  repositoryRoot: string;
+  config: MaestroConfig;
+};
+
 const resolveDirectories = async ({
   repositoryRoot: configuredRepositoryRoot,
   config,
-}: {
-  repositoryRoot: string;
-  config: MaestroConfig;
-}): Promise<MaestroConfig> => {
+}: ResolveDirectoriesInput): Promise<MaestroConfig> => {
   const repositoryRoot = await realpath(configuredRepositoryRoot);
 
   const specDirectory = await resolveSafeDirectory({
@@ -167,11 +179,9 @@ const readConfigurationFile = async (path: string): Promise<unknown> => {
   }
 };
 
-export const loadConfiguration = async ({
-  cwd = process.cwd(),
-}: {
-  cwd?: string;
-} = {}): Promise<MaestroConfig> => {
+export const loadConfiguration = async (
+  cwd: string = process.cwd(),
+): Promise<MaestroConfig> => {
   const repositoryRoot = await realpath(cwd);
   const targetPath = join(repositoryRoot, CONFIG_FILE_PATH);
 

@@ -16,11 +16,6 @@ import { registerRecordVerifierHandoffTool } from '#tools/child/record-verifier-
 import { isProtectedSpecPath } from '#tools/child/utils/isProtectedSpecPath.ts';
 import { resolveWorkflowContext } from '#tools/child/utils/resolveWorkflowContext.ts';
 
-type ProtectSpecPathInput = {
-  cwd: string;
-  event: ToolCallEvent;
-};
-
 const getWriteOrEditPath = (event: ToolCallEvent): string | undefined => {
   if (isToolCallEventType('write', event)) {
     return event.input.path;
@@ -31,6 +26,11 @@ const getWriteOrEditPath = (event: ToolCallEvent): string | undefined => {
   }
 
   return undefined;
+};
+
+type ProtectSpecPathInput = {
+  cwd: string;
+  event: ToolCallEvent;
 };
 
 const protectSpecPath = async ({

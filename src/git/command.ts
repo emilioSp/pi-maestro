@@ -28,6 +28,17 @@ export const GIT_COMMAND_ERROR_CODES = {
 export type GitCommandErrorCode =
   (typeof GIT_COMMAND_ERROR_CODES)[keyof typeof GIT_COMMAND_ERROR_CODES];
 
+type GitCommandErrorInput = {
+  code: GitCommandErrorCode;
+  message: string;
+  arguments: readonly string[];
+  cwd: string;
+  stdout: string;
+  stderr: string;
+  exitCode?: number | null;
+  cause: unknown;
+};
+
 export class GitCommandError extends Error {
   readonly code: GitCommandErrorCode;
   readonly arguments: readonly string[];
@@ -45,16 +56,7 @@ export class GitCommandError extends Error {
     stderr,
     exitCode = null,
     cause,
-  }: {
-    code: GitCommandErrorCode;
-    message: string;
-    arguments: readonly string[];
-    cwd: string;
-    stdout: string;
-    stderr: string;
-    exitCode?: number | null;
-    cause: unknown;
-  }) {
+  }: GitCommandErrorInput) {
     super(message, { cause });
     this.name = 'GitCommandError';
     this.code = code;
@@ -65,13 +67,6 @@ export class GitCommandError extends Error {
     this.exitCode = exitCode;
   }
 }
-
-type RunGitCommandInput = {
-  arguments: readonly string[];
-  cwd?: string;
-  timeoutMs?: number;
-  environment?: NodeJS.ProcessEnv;
-};
 
 type GitExecutionError = {
   message: string;
@@ -86,6 +81,13 @@ const isGitExecutionError = (value: unknown): value is GitExecutionError =>
 
 const isNumericExitCode = (value: unknown): value is number =>
   typeof value === 'number';
+
+type RunGitCommandInput = {
+  arguments: readonly string[];
+  cwd?: string;
+  timeoutMs?: number;
+  environment?: NodeJS.ProcessEnv;
+};
 
 // git <arguments>
 export const runGitCommand = async ({

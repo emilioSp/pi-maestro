@@ -47,22 +47,24 @@ const failedHandoff = (): BuilderHandoff => ({
 
 describe('builder handoff validation', () => {
   it('accepts a done handoff with completed checks', () => {
-    expect(() => assertBuilderHandoff(doneHandoff(), specId, 4)).not.toThrow();
+    expect(() =>
+      assertBuilderHandoff({ handoff: doneHandoff(), specId, revision: 4 }),
+    ).not.toThrow();
   });
 
   it('accepts a failed handoff with explicit partial checks', () => {
     expect(() =>
-      assertBuilderHandoff(failedHandoff(), specId, 4),
+      assertBuilderHandoff({ handoff: failedHandoff(), specId, revision: 4 }),
     ).not.toThrow();
   });
 
   it('accepts a failed handoff without acceptance criteria', () => {
     expect(() =>
-      assertBuilderHandoff(
-        { ...failedHandoff(), acceptanceCriteria: [] },
+      assertBuilderHandoff({
+        handoff: { ...failedHandoff(), acceptanceCriteria: [] },
         specId,
-        4,
-      ),
+        revision: 4,
+      }),
     ).not.toThrow();
   });
 
@@ -138,26 +140,35 @@ describe('builder handoff validation', () => {
       message: 'Invalid builder handoff',
     },
   ])('rejects invalid handoff data %#', ({ handoff, message }) => {
-    expect(() => assertBuilderHandoff(handoff, specId, 4)).toThrow(message);
+    expect(() =>
+      assertBuilderHandoff({ handoff, specId, revision: 4 }),
+    ).toThrow(message);
   });
 
   it('rejects a structurally valid spec ID with an invalid UTC date', () => {
     expect(() =>
-      assertBuilderHandoff(
-        { ...doneHandoff(), specId: '20260230-143052-add-weather-alerts' },
+      assertBuilderHandoff({
+        handoff: {
+          ...doneHandoff(),
+          specId: '20260230-143052-add-weather-alerts',
+        },
         specId,
-        4,
-      ),
+        revision: 4,
+      }),
     ).toThrow('Invalid builder handoff spec ID');
   });
 
   it('requires the expected spec ID and revision', () => {
     expect(() =>
-      assertBuilderHandoff(doneHandoff(), '20260321-143052-other-change', 4),
+      assertBuilderHandoff({
+        handoff: doneHandoff(),
+        specId: '20260321-143052-other-change',
+        revision: 4,
+      }),
     ).toThrow('Builder handoff spec ID mismatch');
 
-    expect(() => assertBuilderHandoff(doneHandoff(), specId, 5)).toThrow(
-      'Builder handoff revision mismatch',
-    );
+    expect(() =>
+      assertBuilderHandoff({ handoff: doneHandoff(), specId, revision: 5 }),
+    ).toThrow('Builder handoff revision mismatch');
   });
 });
