@@ -111,7 +111,7 @@ describe('resolve escalation tool', () => {
     expect(result.content).toEqual([
       {
         type: 'text',
-        text: expect.stringContaining('ready-for-builder'),
+        text: expect.stringContaining(WORKFLOW_PHASES.READY_FOR_BUILDER),
       },
     ]);
     expect(result.details).toMatchObject({
