@@ -40,17 +40,21 @@ export type VerifierPassRejection = {
   message: string;
 };
 
-export const completeVerifierPass = async ({
-  paths,
-  specId,
-  candidateCommit,
-  handoff,
-}: {
+type CompleteVerifierPassInput = {
   paths: MaestroPaths;
   specId: string;
   candidateCommit: string;
   handoff: unknown;
-}): Promise<CompletedVerifierPass | VerifierPassRejection> => {
+};
+
+export const completeVerifierPass = async ({
+  paths,
+  specId,
+  candidateCommit,
+  handoff: draftHandoff,
+}: CompleteVerifierPassInput): Promise<
+  CompletedVerifierPass | VerifierPassRejection
+> => {
   const repositoryRoot = paths.getRepositoryRoot();
   const workflowPath = paths.getWorkflowPath(specId);
   const handoffPath = paths.getVerifierHandoffPath(specId);
@@ -86,7 +90,14 @@ export const completeVerifierPass = async ({
     };
   }
 
-  assertVerifierHandoff(handoff, specId, currentState.revision + 1);
+  const handoffInput = {
+    handoff: draftHandoff,
+    specId,
+    revision: currentState.revision + 1,
+  };
+
+  assertVerifierHandoff(handoffInput);
+  const { handoff } = handoffInput;
 
   const nextState = transitionWorkflow({
     state: currentState,
