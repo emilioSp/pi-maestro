@@ -6,7 +6,7 @@ Pi extension for a spec-driven multiagent development workflow.
 
 ## The idea
 
-One spec describes one small reversible change. An agent builds it. A second, independent agent regenerates each acceptance criterion from scratch. The owner performs the final review and controls the Git flow after the candidate is ready.
+One spec describes one small reversible change. An agent builds it. A second, independent agent regenerates each acceptance criterion from scratch. The owner performs the final review. 
 
 Four principles hold the workflow together:
 
