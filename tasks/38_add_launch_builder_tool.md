@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task 38: Add the launch-builder tool
 
@@ -23,7 +23,8 @@ Launch a builder in the foreground on the current checkout and current branch.
 4. Launch `maestro.builder` in the foreground. Pass its configured model, thinking level, timeout, fresh context, current checkout, and explicit `specId`.
 5. When the child returns, inspect and validate its final result.
 6. Return distinct results for done, failed, escalation, timeout, interruption, and protocol error.
-7. Return a failed builder result without relaunching it. `builder-failed` is a sink.
+7. Treat only a valid committed `failed` handoff as a builder failure. Return it without relaunching the builder; `builder-failed` is a sink.
+8. Return timeout, interruption, delegation, and protocol errors without advancing the workflow or synthesizing a failed handoff.
 
 ## Implementation
 
@@ -31,7 +32,7 @@ Use `pi-subagents/delegation` directly in this Pi tool adapter and pass `agent: 
 
 Before sending the launch request, register a listener for the final response on the injected `pi.events`. Match the response to the request. Remove the listener when the request ends.
 
-Do not listen for progress updates. FleetView shows the live status and transcript. The `task` must identify the spec and current checkout and tell the builder to read applicable `AGENTS.md` files. Do not restate or weaken the builder's role. Do not install dependencies. Keep the owner waiting while the foreground run is active.
+Do not listen for progress updates. FleetView shows the live status and transcript. The `task` must identify the spec and current checkout and tell the builder to read applicable `AGENTS.md` files. Do not restate or weaken the builder's role. Do not install dependencies. Keep the owner waiting while the foreground run is active. Do not synthesize or persist a builder handoff for a delegation, timeout, interruption, or protocol error.
 
 ## Tests
 
@@ -42,4 +43,5 @@ Add adapter tests for the input schema, current-checkout launch parameters, expl
 - Every launch has a committed `builder-running` checkpoint and an expected live `spec.md` SHA.
 - A spec revision gets a new baseline only after the owner approves it.
 - Only a valid committed final artifact advances the workflow.
-- Failures persist `builder-failed`, report the error, and do not launch another builder in the current workflow.
+- A valid committed `failed` builder handoff persists `builder-failed`, reports the error, and does not launch another builder in the current workflow.
+- Timeout, interruption, delegation, and protocol errors report distinct errors and leave the workflow phase unchanged.
