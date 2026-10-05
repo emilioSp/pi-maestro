@@ -61,13 +61,7 @@ const createFinding = (id: string): VerifierFinding => ({
   rejection: null,
 });
 
-type CreateFindingsDecisionWorkflowInput = {
-  findings: VerifierFinding[];
-};
-
-const createFindingsDecisionWorkflow = async ({
-  findings,
-}: CreateFindingsDecisionWorkflowInput) => {
+const createFindingsDecisionWorkflow = async (findings: VerifierFinding[]) => {
   const workflow = await createApprovedWorkflow();
 
   await prepareBuilderLaunch({ paths: workflow.paths, specId: SPEC_ID });
@@ -81,9 +75,7 @@ const createFindingsDecisionWorkflow = async ({
       notes: [],
     },
   });
-  await workflow.repository.commit({
-    message: 'Builder completed',
-  });
+  await workflow.repository.commit('Builder completed');
 
   const verifierLaunch = await prepareVerifierLaunch({
     paths: workflow.paths,
@@ -104,17 +96,13 @@ const createFindingsDecisionWorkflow = async ({
       notes: [],
     },
   });
-  await workflow.repository.commit({
-    message: 'Verifier findings',
-  });
+  await workflow.repository.commit('Verifier findings');
 
   return workflow;
 };
 
-const readCurrentHandoff = async ({ paths }: { paths: MaestroPaths }) => {
-  const state = await readWorkflowState({
-    path: paths.getWorkflowPath(SPEC_ID),
-  });
+const readCurrentHandoff = async (paths: MaestroPaths) => {
+  const state = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
 
   return readVerifierHandoff({
     path: paths.getVerifierHandoffPath(SPEC_ID),
@@ -193,9 +181,10 @@ describe('resolve findings tool', () => {
   });
 
   it('records mixed decisions, prioritizes code fixes, and commits the current branch', async () => {
-    const { paths, repository } = await createFindingsDecisionWorkflow({
-      findings: [createFinding('F1'), createFinding('F2')],
-    });
+    const { paths, repository } = await createFindingsDecisionWorkflow([
+      createFinding('F1'),
+      createFinding('F2'),
+    ]);
 
     const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
@@ -233,14 +222,12 @@ describe('resolve findings tool', () => {
       rejectedFindingIds: ['F1'],
       findingsRequiringFixIds: ['F2'],
     });
-    await expect(
-      getCurrentBranch({ repositoryRoot: repository.path }),
-    ).resolves.toBe('main');
-    await expect(
-      getHeadCommit({ repositoryRoot: repository.path }),
-    ).resolves.toBe(details.checkpointCommit);
+    await expect(getCurrentBranch(repository.path)).resolves.toBe('main');
+    await expect(getHeadCommit(repository.path)).resolves.toBe(
+      details.checkpointCommit,
+    );
 
-    const handoff = await readCurrentHandoff({ paths });
+    const handoff = await readCurrentHandoff(paths);
     expect(handoff.findings).toMatchObject([
       { id: 'F1', rejection: { reason: 'The owner accepts this behavior.' } },
       { id: 'F2', rejection: null },
@@ -248,11 +235,12 @@ describe('resolve findings tool', () => {
   });
 
   it('records all rejections and commits candidate-ready on the current branch', async () => {
-    const { paths, repository } = await createFindingsDecisionWorkflow({
-      findings: [createFinding('F1'), createFinding('F2')],
-    });
+    const { paths, repository } = await createFindingsDecisionWorkflow([
+      createFinding('F1'),
+      createFinding('F2'),
+    ]);
 
-    const headBefore = await getHeadCommit({ repositoryRoot: repository.path });
+    const headBefore = await getHeadCommit(repository.path);
 
     const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
@@ -290,11 +278,11 @@ describe('resolve findings tool', () => {
       rejectedFindingIds: ['F1', 'F2'],
       findingsRequiringFixIds: [],
     });
-    await expect(
-      getHeadCommit({ repositoryRoot: repository.path }),
-    ).resolves.toBe(details.checkpointCommit);
+    await expect(getHeadCommit(repository.path)).resolves.toBe(
+      details.checkpointCommit,
+    );
 
-    const handoff = await readCurrentHandoff({ paths });
+    const handoff = await readCurrentHandoff(paths);
     expect(handoff.findings).toMatchObject([
       {
         id: 'F1',
@@ -305,9 +293,9 @@ describe('resolve findings tool', () => {
         rejection: { reason: 'The finding is outside the approved scope.' },
       },
     ]);
-    await expect(
-      getRepositoryStatus({ repositoryRoot: repository.path }),
-    ).resolves.toMatchObject({ clean: true });
+    await expect(getRepositoryStatus(repository.path)).resolves.toMatchObject({
+      clean: true,
+    });
     await expect(
       getParentCommit({
         repositoryRoot: repository.path,
@@ -328,16 +316,15 @@ describe('resolve findings tool', () => {
   });
 
   it('requires exact finding coverage before changing the workflow', async () => {
-    const { paths, repository } = await createFindingsDecisionWorkflow({
-      findings: [createFinding('F1'), createFinding('F2')],
-    });
+    const { paths, repository } = await createFindingsDecisionWorkflow([
+      createFinding('F1'),
+      createFinding('F2'),
+    ]);
 
-    const stateBefore = await readWorkflowState({
-      path: paths.getWorkflowPath(SPEC_ID),
-    });
+    const stateBefore = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
 
-    const handoffBefore = await readCurrentHandoff({ paths });
-    const headBefore = await getHeadCommit({ repositoryRoot: repository.path });
+    const handoffBefore = await readCurrentHandoff(paths);
+    const headBefore = await getHeadCommit(repository.path);
 
     const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
@@ -379,27 +366,23 @@ describe('resolve findings tool', () => {
     ).rejects.toThrow('Duplicate decision for finding "F1"');
 
     await expect(
-      readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toEqual(stateBefore);
-    await expect(readCurrentHandoff({ paths })).resolves.toEqual(handoffBefore);
-    await expect(
-      getHeadCommit({ repositoryRoot: repository.path }),
-    ).resolves.toBe(headBefore);
+    await expect(readCurrentHandoff(paths)).resolves.toEqual(handoffBefore);
+    await expect(getHeadCommit(repository.path)).resolves.toBe(headBefore);
   });
 
   it('given an unrelated staged change when all findings are rejected then protocol files stay unchanged', async () => {
-    const { paths, repository } = await createFindingsDecisionWorkflow({
-      findings: [createFinding('F1')],
-    });
+    const { paths, repository } = await createFindingsDecisionWorkflow([
+      createFinding('F1'),
+    ]);
 
     const statePath = paths.getWorkflowPath(SPEC_ID);
     const handoffPath = paths.getVerifierHandoffPath(SPEC_ID);
     const stateBefore = await readFile(statePath, 'utf8');
     const handoffBefore = await readFile(handoffPath, 'utf8');
 
-    const headBefore = await getHeadCommit({
-      repositoryRoot: repository.path,
-    });
+    const headBefore = await getHeadCommit(repository.path);
 
     await writeFile(
       join(repository.path, 'README.md'),
@@ -434,24 +417,20 @@ describe('resolve findings tool', () => {
 
     await expect(readFile(statePath, 'utf8')).resolves.toBe(stateBefore);
     await expect(readFile(handoffPath, 'utf8')).resolves.toBe(handoffBefore);
-    await expect(
-      getHeadCommit({ repositoryRoot: repository.path }),
-    ).resolves.toBe(headBefore);
+    await expect(getHeadCommit(repository.path)).resolves.toBe(headBefore);
   });
 
   it('given an unrelated unstaged change when all findings are rejected then protocol files stay unchanged', async () => {
-    const { paths, repository } = await createFindingsDecisionWorkflow({
-      findings: [createFinding('F1')],
-    });
+    const { paths, repository } = await createFindingsDecisionWorkflow([
+      createFinding('F1'),
+    ]);
 
     const statePath = paths.getWorkflowPath(SPEC_ID);
     const handoffPath = paths.getVerifierHandoffPath(SPEC_ID);
     const stateBefore = await readFile(statePath, 'utf8');
     const handoffBefore = await readFile(handoffPath, 'utf8');
 
-    const headBefore = await getHeadCommit({
-      repositoryRoot: repository.path,
-    });
+    const headBefore = await getHeadCommit(repository.path);
 
     await writeFile(
       join(repository.path, 'README.md'),
@@ -481,24 +460,20 @@ describe('resolve findings tool', () => {
 
     await expect(readFile(statePath, 'utf8')).resolves.toBe(stateBefore);
     await expect(readFile(handoffPath, 'utf8')).resolves.toBe(handoffBefore);
-    await expect(
-      getHeadCommit({ repositoryRoot: repository.path }),
-    ).resolves.toBe(headBefore);
+    await expect(getHeadCommit(repository.path)).resolves.toBe(headBefore);
   });
 
   it('given an unrelated untracked change when all findings are rejected then protocol files stay unchanged', async () => {
-    const { paths, repository } = await createFindingsDecisionWorkflow({
-      findings: [createFinding('F1')],
-    });
+    const { paths, repository } = await createFindingsDecisionWorkflow([
+      createFinding('F1'),
+    ]);
 
     const statePath = paths.getWorkflowPath(SPEC_ID);
     const handoffPath = paths.getVerifierHandoffPath(SPEC_ID);
     const stateBefore = await readFile(statePath, 'utf8');
     const handoffBefore = await readFile(handoffPath, 'utf8');
 
-    const headBefore = await getHeadCommit({
-      repositoryRoot: repository.path,
-    });
+    const headBefore = await getHeadCommit(repository.path);
 
     await writeFile(
       join(repository.path, 'unrelated.txt'),
@@ -528,33 +503,27 @@ describe('resolve findings tool', () => {
 
     await expect(readFile(statePath, 'utf8')).resolves.toBe(stateBefore);
     await expect(readFile(handoffPath, 'utf8')).resolves.toBe(handoffBefore);
-    await expect(
-      getHeadCommit({ repositoryRoot: repository.path }),
-    ).resolves.toBe(headBefore);
+    await expect(getHeadCommit(repository.path)).resolves.toBe(headBefore);
   });
 
   it('given an invalid handoff specId when all findings are rejected then no protocol write occurs', async () => {
-    const { paths, repository } = await createFindingsDecisionWorkflow({
-      findings: [createFinding('F1')],
-    });
+    const { paths, repository } = await createFindingsDecisionWorkflow([
+      createFinding('F1'),
+    ]);
 
     const statePath = paths.getWorkflowPath(SPEC_ID);
     const handoffPath = paths.getVerifierHandoffPath(SPEC_ID);
-    const handoff = await readCurrentHandoff({ paths });
+    const handoff = await readCurrentHandoff(paths);
     await writeFile(
       handoffPath,
       JSON.stringify({ ...handoff, specId: '20260321-143052-other-spec' }),
       'utf8',
     );
-    await repository.commit({
-      message: 'Invalid verifier handoff',
-    });
+    await repository.commit('Invalid verifier handoff');
     const stateBefore = await readFile(statePath, 'utf8');
     const handoffBefore = await readFile(handoffPath, 'utf8');
 
-    const headBefore = await getHeadCommit({
-      repositoryRoot: repository.path,
-    });
+    const headBefore = await getHeadCommit(repository.path);
 
     const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
@@ -576,33 +545,27 @@ describe('resolve findings tool', () => {
 
     await expect(readFile(statePath, 'utf8')).resolves.toBe(stateBefore);
     await expect(readFile(handoffPath, 'utf8')).resolves.toBe(handoffBefore);
-    await expect(
-      getHeadCommit({ repositoryRoot: repository.path }),
-    ).resolves.toBe(headBefore);
+    await expect(getHeadCommit(repository.path)).resolves.toBe(headBefore);
   });
 
   it('given an invalid handoff revision when all findings are rejected then no protocol write occurs', async () => {
-    const { paths, repository } = await createFindingsDecisionWorkflow({
-      findings: [createFinding('F1')],
-    });
+    const { paths, repository } = await createFindingsDecisionWorkflow([
+      createFinding('F1'),
+    ]);
 
     const statePath = paths.getWorkflowPath(SPEC_ID);
     const handoffPath = paths.getVerifierHandoffPath(SPEC_ID);
-    const handoff = await readCurrentHandoff({ paths });
+    const handoff = await readCurrentHandoff(paths);
     await writeFile(
       handoffPath,
       JSON.stringify({ ...handoff, revision: 1 }),
       'utf8',
     );
-    await repository.commit({
-      message: 'Invalid verifier handoff',
-    });
+    await repository.commit('Invalid verifier handoff');
     const stateBefore = await readFile(statePath, 'utf8');
     const handoffBefore = await readFile(handoffPath, 'utf8');
 
-    const headBefore = await getHeadCommit({
-      repositoryRoot: repository.path,
-    });
+    const headBefore = await getHeadCommit(repository.path);
 
     const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
@@ -624,15 +587,13 @@ describe('resolve findings tool', () => {
 
     await expect(readFile(statePath, 'utf8')).resolves.toBe(stateBefore);
     await expect(readFile(handoffPath, 'utf8')).resolves.toBe(handoffBefore);
-    await expect(
-      getHeadCommit({ repositoryRoot: repository.path }),
-    ).resolves.toBe(headBefore);
+    await expect(getHeadCommit(repository.path)).resolves.toBe(headBefore);
   });
 
   it('given an empty rejection reason when resolving findings then no protocol write occurs', async () => {
-    const { paths, repository } = await createFindingsDecisionWorkflow({
-      findings: [createFinding('F1')],
-    });
+    const { paths, repository } = await createFindingsDecisionWorkflow([
+      createFinding('F1'),
+    ]);
 
     const statePath = paths.getWorkflowPath(SPEC_ID);
     const handoffPath = paths.getVerifierHandoffPath(SPEC_ID);
@@ -662,9 +623,9 @@ describe('resolve findings tool', () => {
   });
 
   it('given a commit hook that changes the product when findings are rejected then resolution does not report success', async () => {
-    const { paths, repository } = await createFindingsDecisionWorkflow({
-      findings: [createFinding('F1')],
-    });
+    const { paths, repository } = await createFindingsDecisionWorkflow([
+      createFinding('F1'),
+    ]);
 
     await writeFile(
       join(repository.path, '.git/hooks/post-commit'),
@@ -692,25 +653,24 @@ describe('resolve findings tool', () => {
       'Finding resolution requires a clean checkout after its commit.',
     );
 
+    await expect(getRepositoryStatus(repository.path)).resolves.toMatchObject({
+      clean: false,
+      unstaged: ['README.md'],
+    });
     await expect(
-      getRepositoryStatus({ repositoryRoot: repository.path }),
-    ).resolves.toMatchObject({ clean: false, unstaged: ['README.md'] });
-    await expect(
-      readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
   });
 
   it('bypasses finding resolution when the owner revises the spec', async () => {
-    const { paths, repository } = await createFindingsDecisionWorkflow({
-      findings: [createFinding('F1')],
-    });
+    const { paths, repository } = await createFindingsDecisionWorkflow([
+      createFinding('F1'),
+    ]);
 
-    const stateBefore = await readWorkflowState({
-      path: paths.getWorkflowPath(SPEC_ID),
-    });
+    const stateBefore = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
 
-    const handoffBefore = await readCurrentHandoff({ paths });
-    const headBefore = await getHeadCommit({ repositoryRoot: repository.path });
+    const handoffBefore = await readCurrentHandoff(paths);
+    const headBefore = await getHeadCommit(repository.path);
     const revisedSpec = '# Revised contract\n';
 
     await writeFile(paths.getSpecFilePath(SPEC_ID), revisedSpec, 'utf8');
@@ -726,10 +686,8 @@ describe('resolve findings tool', () => {
     await expect(
       readFile(paths.getSpecFilePath(SPEC_ID), 'utf8'),
     ).resolves.toBe(revisedSpec);
-    await expect(
-      getHeadCommit({ repositoryRoot: repository.path }),
-    ).resolves.toBe(headBefore);
-    await expect(readCurrentHandoff({ paths })).rejects.toThrow(
+    await expect(getHeadCommit(repository.path)).resolves.toBe(headBefore);
+    await expect(readCurrentHandoff(paths)).rejects.toThrow(
       `expected ${stateAfter.revision}`,
     );
     await expect(
@@ -742,15 +700,13 @@ describe('resolve findings tool', () => {
   });
 
   it('returns a domain error without resolving an unknown finding', async () => {
-    const { paths, repository } = await createFindingsDecisionWorkflow({
-      findings: [createFinding('F1')],
-    });
+    const { paths, repository } = await createFindingsDecisionWorkflow([
+      createFinding('F1'),
+    ]);
 
-    const stateBefore = await readWorkflowState({
-      path: paths.getWorkflowPath(SPEC_ID),
-    });
+    const stateBefore = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
 
-    const handoffBefore = await readCurrentHandoff({ paths });
+    const handoffBefore = await readCurrentHandoff(paths);
 
     const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
@@ -770,8 +726,8 @@ describe('resolve findings tool', () => {
     ).rejects.toThrow('Unknown finding ID: "F2"');
 
     await expect(
-      readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toEqual(stateBefore);
-    await expect(readCurrentHandoff({ paths })).resolves.toEqual(handoffBefore);
+    await expect(readCurrentHandoff(paths)).resolves.toEqual(handoffBefore);
   });
 });
