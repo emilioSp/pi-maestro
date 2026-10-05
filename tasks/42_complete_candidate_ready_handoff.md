@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task 42: Complete candidate-ready handoff
 
@@ -43,7 +43,7 @@ Extend tests next to the owning operations. Reuse existing coverage where it alr
 3. Invalid identity or revision, unresolved findings, and unrelated staged, unstaged, or untracked changes cannot produce a successful candidate-ready result. Precondition failures do not write protocol files.
 4. Active findings still lead to `findings-decision`; a `fix-code` decision still leads to `ready-for-builder`.
 
-Use the existing instruction or extension tests to check that Maestro owns the summary and requires no final tool call. Do not test generated LLM prose. Remove obsolete final-review tests rather than translating them into tests for another tool.
+Test Maestro's instructions next to their source module to check that Maestro owns the summary and requires no final tool call. Do not test generated LLM prose. Remove obsolete final-review tests rather than translating them into tests for another tool.
 
 ## Completion criteria
 
