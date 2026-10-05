@@ -70,10 +70,6 @@ export const WORKFLOW_TRANSITIONS: Record<WorkflowEvent, WorkflowTransition> = {
     from: [WORKFLOW_PHASES.FINDINGS_DECISION],
     to: WORKFLOW_PHASES.READY_FOR_BUILDER,
   },
-  [WORKFLOW_EVENTS.PREPARE_FINAL_REVIEW]: {
-    from: [WORKFLOW_PHASES.CANDIDATE_READY],
-    to: WORKFLOW_PHASES.FINAL_REVIEW,
-  },
 };
 
 export const transitionWorkflow = ({

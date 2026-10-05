@@ -7,6 +7,8 @@ import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifie
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import type { VerifierFinding } from '#artifacts/verifier-handoff/schema.ts';
 import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
+import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
+import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -17,6 +19,7 @@ import {
 } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
+import { hasProductChanges } from '#workflow/verifier/hasProductChanges.ts';
 
 export const FINDING_DECISIONS = {
   REJECT: 'reject',
@@ -153,6 +156,20 @@ export const resolveFindings = async ({
   const nextHandoff = { ...handoff, revision: nextState.revision, findings };
 
   assertVerifierHandoff(nextHandoff, specId, nextState.revision);
+
+  if (
+    await hasProductChanges({
+      repositoryRoot,
+      candidateCommit: await getHeadCommit({ repositoryRoot }),
+      workflowPath,
+      handoffPath,
+    })
+  ) {
+    throw new Error(
+      'Finding resolution requires no changes outside its protocol files.',
+    );
+  }
+
   await writeJsonAtomically({ path: handoffPath, data: nextHandoff });
   await writeWorkflowState({
     path: workflowPath,
@@ -164,6 +181,12 @@ export const resolveFindings = async ({
     repositoryRoot,
     expectedPaths: [handoffPath, workflowPath],
   });
+
+  if (!(await getRepositoryStatus({ repositoryRoot })).clean) {
+    throw new Error(
+      'Finding resolution requires a clean checkout after its commit.',
+    );
+  }
 
   return {
     findings,
