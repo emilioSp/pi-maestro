@@ -28,15 +28,8 @@ describe('verifier launch preparation', () => {
     await completeBuilderPass({
       paths,
       specId: SPEC_ID,
-      handoff: {
-        status: 'done',
-        summary: 'Implemented the approved change.',
-        acceptanceCriteria: [],
-        notes: [],
-      },
+      handoff: doneHandoff(builderLaunch.revision + 1),
     });
-    const builderHandoff = doneHandoff(builderLaunch.revision + 1);
-    expect(builderHandoff.status).toBe('done');
     await repository.commit({ message: 'Builder completed' });
 
     const candidateBefore = await getHeadCommit({
