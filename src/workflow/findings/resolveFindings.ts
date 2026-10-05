@@ -5,7 +5,10 @@
 
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
-import type { VerifierFinding } from '#artifacts/verifier-handoff/schema.ts';
+import type {
+  VerifierFinding,
+  VerifierHandoff,
+} from '#artifacts/verifier-handoff/schema.ts';
 import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
@@ -46,13 +49,12 @@ export type ResolvedFindings = {
   checkpointCommit: string;
 };
 
-const assertDecisions = ({
-  decisions,
-  findings,
-}: {
+type AssertDecisionsInput = {
   decisions: FindingDecision[];
   findings: VerifierFinding[];
-}): void => {
+};
+
+function assertDecisions({ decisions, findings }: AssertDecisionsInput): void {
   const expectedIds = new Set(findings.map(({ id }) => id));
   const seenIds = new Set<string>();
 
@@ -84,38 +86,40 @@ const assertDecisions = ({
   if (missing !== undefined) {
     throw new Error(`Missing decision for finding "${missing.id}".`);
   }
+}
+
+type FindingWorkflow = {
+  state: WorkflowState;
+  handoff: VerifierHandoff;
 };
 
-export const resolveFindings = async ({
-  paths,
-  specId,
-  decisions,
-}: {
+type ReadFindingWorkflowInput = {
   paths: MaestroPaths;
   specId: string;
-  decisions: FindingDecision[];
-}): Promise<ResolvedFindings> => {
-  const repositoryRoot = paths.getRepositoryRoot();
-  const workflowPath = paths.getWorkflowPath(specId);
-  const handoffPath = paths.getVerifierHandoffPath(specId);
-  const currentState = await readWorkflowState({ path: workflowPath });
+};
 
-  if (currentState.specId !== specId) {
+const readFindingWorkflow = async ({
+  paths,
+  specId,
+}: ReadFindingWorkflowInput): Promise<FindingWorkflow> => {
+  const state = await readWorkflowState(paths.getWorkflowPath(specId));
+
+  if (state.specId !== specId) {
     throw new Error(
-      `Workflow spec ID mismatch: expected "${specId}", found "${currentState.specId}".`,
+      `Workflow spec ID mismatch: expected "${specId}", found "${state.specId}".`,
     );
   }
 
-  if (currentState.phase !== WORKFLOW_PHASES.FINDINGS_DECISION) {
+  if (state.phase !== WORKFLOW_PHASES.FINDINGS_DECISION) {
     throw new Error(
-      `Finding resolution requires findings-decision state, found "${currentState.phase}".`,
+      `Finding resolution requires findings-decision state, found "${state.phase}".`,
     );
   }
 
   const handoff = await readVerifierHandoff({
-    path: handoffPath,
+    path: paths.getVerifierHandoffPath(specId),
     specId,
-    revision: currentState.revision,
+    revision: state.revision,
   });
 
   if (handoff.findings.length === 0) {
@@ -128,6 +132,19 @@ export const resolveFindings = async ({
     throw new Error('Current verifier findings already contain a rejection.');
   }
 
+  return { state, handoff };
+};
+
+type BuildFindingWorkflowInput = {
+  workflow: FindingWorkflow;
+  decisions: FindingDecision[];
+};
+
+const buildFindingWorkflow = ({
+  workflow,
+  decisions,
+}: BuildFindingWorkflowInput): FindingWorkflow => {
+  const { state, handoff } = workflow;
   assertDecisions({ decisions, findings: handoff.findings });
 
   const decisionsById = new Map(
@@ -148,19 +165,44 @@ export const resolveFindings = async ({
     (decision) => decision.decision === FINDING_DECISIONS.FIX_CODE,
   );
 
-  const event = isFixCodeRequested
-    ? WORKFLOW_EVENTS.REQUEST_FIXES
-    : WORKFLOW_EVENTS.REJECT_FINDINGS;
+  const nextState = transitionWorkflow({
+    state,
+    event: isFixCodeRequested
+      ? WORKFLOW_EVENTS.REQUEST_FIXES
+      : WORKFLOW_EVENTS.REJECT_FINDINGS,
+  });
 
-  const nextState = transitionWorkflow({ state: currentState, event });
   const nextHandoff = { ...handoff, revision: nextState.revision, findings };
+  assertVerifierHandoff({
+    handoff: nextHandoff,
+    specId: state.specId,
+    revision: nextState.revision,
+  });
 
-  assertVerifierHandoff(nextHandoff, specId, nextState.revision);
+  return { state: nextState, handoff: nextHandoff };
+};
+
+type CommitFindingWorkflowInput = {
+  paths: MaestroPaths;
+  specId: string;
+  currentRevision: number;
+  workflow: FindingWorkflow;
+};
+
+const commitFindingWorkflow = async ({
+  paths,
+  specId,
+  currentRevision,
+  workflow,
+}: CommitFindingWorkflowInput): Promise<string> => {
+  const repositoryRoot = paths.getRepositoryRoot();
+  const workflowPath = paths.getWorkflowPath(specId);
+  const handoffPath = paths.getVerifierHandoffPath(specId);
 
   if (
     await hasProductChanges({
       repositoryRoot,
-      candidateCommit: await getHeadCommit({ repositoryRoot }),
+      candidateCommit: await getHeadCommit(repositoryRoot),
       workflowPath,
       handoffPath,
     })
@@ -170,11 +212,11 @@ export const resolveFindings = async ({
     );
   }
 
-  await writeJsonAtomically({ path: handoffPath, data: nextHandoff });
+  await writeJsonAtomically({ path: handoffPath, data: workflow.handoff });
   await writeWorkflowState({
     path: workflowPath,
-    state: nextState,
-    currentRevision: currentState.revision,
+    state: workflow.state,
+    currentRevision,
   });
 
   const checkpointCommit = await createWorkflowCheckpointCommit({
@@ -182,16 +224,44 @@ export const resolveFindings = async ({
     expectedPaths: [handoffPath, workflowPath],
   });
 
-  if (!(await getRepositoryStatus({ repositoryRoot })).clean) {
+  if (!(await getRepositoryStatus(repositoryRoot)).clean) {
     throw new Error(
       'Finding resolution requires a clean checkout after its commit.',
     );
   }
 
+  return checkpointCommit;
+};
+
+type ResolveFindingsInput = {
+  paths: MaestroPaths;
+  specId: string;
+  decisions: FindingDecision[];
+};
+
+export const resolveFindings = async ({
+  paths,
+  specId,
+  decisions,
+}: ResolveFindingsInput): Promise<ResolvedFindings> => {
+  const currentWorkflow = await readFindingWorkflow({ paths, specId });
+
+  const workflow = buildFindingWorkflow({
+    workflow: currentWorkflow,
+    decisions,
+  });
+
+  const checkpointCommit = await commitFindingWorkflow({
+    paths,
+    specId,
+    currentRevision: currentWorkflow.state.revision,
+    workflow,
+  });
+
   return {
-    findings,
-    state: nextState,
-    repositoryRoot,
+    findings: workflow.handoff.findings,
+    state: workflow.state,
+    repositoryRoot: paths.getRepositoryRoot(),
     checkpointCommit,
   };
 };
