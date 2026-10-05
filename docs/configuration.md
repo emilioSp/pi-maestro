@@ -36,12 +36,12 @@ Maestro does not configure a branch, a target branch, or a worktree directory. I
 | `version` | Yes, when the file exists | `1.0.0` | Semantic version of the configuration schema. Must be supported by the installed Maestro release. |
 | `specDirectory` | No | `.specs` | Relative path inside the Git repository. |
 | `builder` | No | Builder defaults | May contain supported builder overrides. |
-| `builder.model` | No | `openai-codex/gpt-6-luna` | Full `provider/model` identifier. |
-| `builder.thinking` | No | `high` | One supported thinking level. |
+| `builder.model` | No | `openai-codex/gpt-5.6-luna` | Full `provider/model` identifier. |
+| `builder.thinking` | No | `max` | One supported thinking level. |
 | `builder.timeoutMinutes` | No | `60` | Integer from `1` to `1440`. Applies to each builder run. |
 | `verifier` | No | Verifier defaults | May contain supported verifier overrides. |
-| `verifier.model` | No | `openai-codex/gpt-6-sol` | Full `provider/model` identifier. |
-| `verifier.thinking` | No | `medium` | One supported thinking level. |
+| `verifier.model` | No | `openai-codex/gpt-6.1-sol` | Full `provider/model` identifier. |
+| `verifier.thinking` | No | `high` | One supported thinking level. |
 | `verifier.timeoutMinutes` | No | `60` | Integer from `1` to `1440`. Applies to each verifier run. |
 
 Supported thinking levels:

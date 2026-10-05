@@ -168,6 +168,17 @@ const resolveDirectories = async ({
   };
 };
 
+const readConfigurationFile = async (path: string): Promise<unknown> => {
+  try {
+    const content = await readFile(path, 'utf8');
+
+    return JSON.parse(content);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Invalid JSON in configuration file "${path}": ${message}`);
+  }
+};
+
 export const loadConfiguration = async (
   cwd: string = process.cwd(),
 ): Promise<MaestroConfig> => {
@@ -178,17 +189,7 @@ export const loadConfiguration = async (
     return await resolveDirectories({ repositoryRoot, config: DEFAULT_CONFIG });
   }
 
-  let parsed: unknown;
-
-  try {
-    const content = await readFile(targetPath, 'utf8');
-    parsed = JSON.parse(content);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(
-      `Invalid JSON in configuration file "${targetPath}": ${message}`,
-    );
-  }
+  const parsed = await readConfigurationFile(targetPath);
 
   assertConfiguration(parsed);
   const config = resolveConfiguration(parsed);
