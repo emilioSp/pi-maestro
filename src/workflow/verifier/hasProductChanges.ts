@@ -1,6 +1,6 @@
 /**
- * Objective: Check whether verifier changes differ from the candidate product.
- * Used: Before accepting a verifier handoff in the current checkout.
+ * Objective: Check whether product files differ from a commit.
+ * Used: Before verifier handoffs and owner finding resolutions.
  */
 
 import { relative } from 'node:path';
