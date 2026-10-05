@@ -67,7 +67,7 @@ export default (pi: ExtensionAPI): void => {
   pi.on('session_start', async (_event, context) => {
     maestroSessionState.deactivate();
     syncMainTools();
-    await refreshMaestroStatus({ context });
+    await refreshMaestroStatus(context);
   });
 
   pi.registerCommand('maestro', {
@@ -76,13 +76,13 @@ export default (pi: ExtensionAPI): void => {
       if (maestroSessionState.isActive()) {
         maestroSessionState.deactivate();
         syncMainTools();
-        await refreshMaestroStatus({ context });
+        await refreshMaestroStatus(context);
 
         return;
       }
 
       try {
-        await assertEnvironment({ context });
+        await assertEnvironment(context);
       } catch (error) {
         context.ui.notify(
           error instanceof Error ? error.message : String(error),
@@ -94,7 +94,7 @@ export default (pi: ExtensionAPI): void => {
 
       maestroSessionState.activate();
       syncMainTools();
-      await refreshMaestroStatus({ context });
+      await refreshMaestroStatus(context);
     },
   });
 
@@ -110,14 +110,14 @@ export default (pi: ExtensionAPI): void => {
     }
 
     event.systemPromptOptions.sections.maestro = getMaestroInstructions();
-    await refreshMaestroStatus({ context });
+    await refreshMaestroStatus(context);
   });
 
   // Pi fires this after a tool returns, before its result reaches the AI.
   // Refresh status after main Maestro tools, without changing the tool result.
   pi.on('tool_result', async (event, context) => {
     if (MAIN_TOOL_NAMES.includes(event.toolName)) {
-      await refreshMaestroStatus({ context });
+      await refreshMaestroStatus(context);
     }
   });
 };

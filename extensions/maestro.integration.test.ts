@@ -263,7 +263,7 @@ describe('main Maestro extension', () => {
     await session.prompt('/maestro');
     maestroSessionState.setActiveSpecId(SPEC_ID);
     const specPath = paths.getSpecFilePath(SPEC_ID);
-    await maestroSessionState.setSpecSha256({ specPath });
+    await maestroSessionState.setSpecSha256(specPath);
     const spec = await readFile(specPath, 'utf8');
     const workflow = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
     await runGitCommand({
@@ -351,9 +351,7 @@ describe('main Maestro extension', () => {
 
   it('given an active workflow when a session resumes then Maestro stays off without recovering the workflow', async () => {
     const { paths, repository } = await createApprovedWorkflow();
-    await maestroSessionState.setSpecSha256({
-      specPath: paths.getSpecFilePath(SPEC_ID),
-    });
+    await maestroSessionState.setSpecSha256(paths.getSpecFilePath(SPEC_ID));
     const workflow = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
 
     const { session, notify, setStatus } = await piTestSessions.create({
@@ -449,9 +447,7 @@ describe('main Maestro extension', () => {
       MAESTRO_STATUS_KEY,
       `Maestro active · ${specId} · Ready for builder`,
     );
-    await repository.commit({
-      message: 'Approve weather alerts specification',
-    });
+    await repository.commit('Approve weather alerts specification');
 
     const productPath = join(repository.path, 'alert.txt');
     const productContents = 'Weather alerts enabled\n';
@@ -508,12 +504,10 @@ describe('main Maestro extension', () => {
         });
 
         if (request.agent === AGENTS.BUILDER) {
-          await repository.commit({ message: 'Implement weather alerts' });
+          await repository.commit('Implement weather alerts');
         }
 
-        childCommits.push(
-          await getHeadCommit({ repositoryRoot: repository.path }),
-        );
+        childCommits.push(await getHeadCommit(repository.path));
 
         events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
           requestId: request.requestId,
@@ -596,7 +590,7 @@ describe('main Maestro extension', () => {
       `Maestro active · ${specId} · Completed`,
     );
 
-    const state = await readWorkflowState({ path: workflowPath });
+    const state = await readWorkflowState(workflowPath);
     expect(state).toMatchObject({
       specId,
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
@@ -641,12 +635,10 @@ describe('main Maestro extension', () => {
     expect(event.systemPromptOptions.sections.maestro).toContain(
       'No final tool call, checkpoint, or owner commit is required.',
     );
-    expect(await getHeadCommit({ repositoryRoot: repository.path })).toBe(
-      childCommits[1],
-    );
-    expect(
-      await getRepositoryStatus({ repositoryRoot: repository.path }),
-    ).toMatchObject({ clean: true });
+    expect(await getHeadCommit(repository.path)).toBe(childCommits[1]);
+    expect(await getRepositoryStatus(repository.path)).toMatchObject({
+      clean: true,
+    });
     expect(
       await runGitCommand({
         arguments: ['branch', '--show-current'],
@@ -663,9 +655,7 @@ describe('main Maestro extension', () => {
     async (phase) => {
       const { paths, repository } = await createApprovedWorkflow();
 
-      const current = await readWorkflowState({
-        path: paths.getWorkflowPath(SPEC_ID),
-      });
+      const current = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
 
       await writeWorkflowState({
         path: paths.getWorkflowPath(SPEC_ID),
@@ -745,7 +735,7 @@ describe('main Maestro extension', () => {
           specId: SPEC_ID,
           handoff: failedHandoff(3),
         });
-        await repository.commit({ message: 'Builder failure handoff' });
+        await repository.commit('Builder failure handoff');
         events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
           requestId: request.requestId,
           ownerRunId: request.ownerRunId,

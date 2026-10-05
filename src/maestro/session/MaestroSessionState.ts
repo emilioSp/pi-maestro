@@ -5,10 +5,6 @@
 
 import { getFileSha256 } from '#utils/getFileSha256.ts';
 
-type SetSpecSha256Input = {
-  specPath: string;
-};
-
 class MaestroSessionState {
   private active = false;
   private activeSpecId: string | null = null;
@@ -30,14 +26,12 @@ class MaestroSessionState {
 
   public getSpecSha256 = (): string | null => this.specSha256;
 
-  public setSpecSha256 = async ({
-    specPath,
-  }: SetSpecSha256Input): Promise<void> => {
+  public setSpecSha256 = async (specPath: string): Promise<void> => {
     if (this.activeSpecId === null) {
       throw new Error('Cannot set spec SHA-256 without an active spec.');
     }
 
-    this.specSha256 = await getFileSha256({ path: specPath });
+    this.specSha256 = await getFileSha256(specPath);
   };
 
   public activate = (): void => {
