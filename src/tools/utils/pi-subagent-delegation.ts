@@ -100,15 +100,15 @@ export const waitForDelegationResponse = async ({
   }
 };
 
-type HandleDelegationResponseInput = {
+type AssertDelegationResponseInput = {
   response: SubagentDelegationResponse;
 };
 
-export const assertDelegationResponse = ({
+export function assertDelegationResponse({
   response,
-}: HandleDelegationResponseInput): true => {
+}: AssertDelegationResponseInput): void {
   if (response.status === DELEGATION_STATUSES.COMPLETED) {
-    return true;
+    return;
   }
 
   const error = response.error ?? 'No delegation error details were provided.';
@@ -131,4 +131,4 @@ export const assertDelegationResponse = ({
   throw new Error(
     `Protocol error: unsupported final response status "${response.status}".`,
   );
-};
+}
