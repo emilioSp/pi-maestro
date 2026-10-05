@@ -5,13 +5,15 @@
 
 import { readFile } from 'node:fs/promises';
 
+type ReadJsonFileInput = {
+  path: string;
+  description: string;
+};
+
 export const readJsonFile = async ({
   path,
   description,
-}: {
-  path: string;
-  description: string;
-}): Promise<unknown> => {
+}: ReadJsonFileInput): Promise<unknown> => {
   const content = await readFile(path, 'utf8');
 
   try {
