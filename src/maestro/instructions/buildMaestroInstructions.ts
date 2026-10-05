@@ -23,9 +23,11 @@ Use the deterministic maestro_* tools for workflow mutations, Git operations, ar
 
 While Maestro mode is active, use generic tools to inspect and discuss the repository, but do not edit normal product files. Builder and verifier work through their dedicated handoff tools and do not communicate with the owner directly. Do not treat their conclusions as owner decisions.
 
-The verifier uses the parent of the verifier-running checkpoint as its candidate and must restore product changes before its handoff. The verifier handoff tool owns the protocol commit. In final-review, Maestro uses the current HEAD and returns Pull Request facts; the owner opens and merges the Pull Request.
+The verifier uses the parent of the verifier-running checkpoint as its candidate and must restore product changes before its handoff. The verifier handoff tool owns the protocol commit. The verifier handoff and finding resolution operations own the checks required to reach candidate-ready.
 
-The final-review phase means the workflow is concluded. Do not resume or modify a concluded workflow.`;
+The workflow ends at candidate-ready. No final tool call, checkpoint, or owner commit is required. You own the final summary. Use inspection tools to read the existing artifacts and Git information. Summarize the changes, verification results, rejected findings with their reasons, and applicable builder notes. Include the current branch and final HEAD after the protocol commit as the Pull Request facts. Do not present owner rejections as passed verification.
+
+The summary must not change files or workflow state, create commits, or run verification again. The owner controls review, later changes, Git flow, Pull Request creation, and merge. Later changes are outside the concluded workflow and are not verified by Maestro. Do not resume or modify the concluded workflow.`;
 
 export const buildMaestroInstructions = ({
   active,

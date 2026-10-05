@@ -22,6 +22,7 @@ The owner has final authority over:
 - Escalation answers
 - Finding decisions
 - Spec approval
+- Git flow after the candidate is ready
 - Final Pull Request and merge
 
 The owner does not change product code while the workflow is running. The owner may revise `spec.md` while the workflow is blocked, as described below.
@@ -37,7 +38,7 @@ Maestro:
 - Reads their handoffs
 - Presents escalations and findings to the owner
 - Records explicit owner decisions
-- Prepares the current branch for a Pull Request
+- Summarizes the results and facts for a Pull Request when the candidate is ready
 
 Maestro does not know or manage a target branch.
 
@@ -114,12 +115,14 @@ flowchart TD
     returnBuilder --> build
     ownerFindings -->|Spec must change| reviseSpec
 
-    candidate --> finalReview[Maestro verifies HEAD and commits final-review]
-    finalReview --> pullRequest[Owner opens a Pull Request]
-    pullRequest --> ownerReview[Owner reviews the Pull Request]
-    ownerReview --> merge[Owner merges the Pull Request]
+    candidate --> summary[Maestro summarizes results and Pull Request facts]
+    summary --> ownerReview[Owner reviews the candidate]
+    ownerReview -->|Changes needed| adjust[Owner changes code, spec, or acceptance criteria]
+    adjust --> ownerReview
+    ownerReview -->|Satisfied| pullRequest[Owner opens a Pull Request]
+    pullRequest --> merge[Owner merges the Pull Request]
 
-    linkStyle 0,1,2,3,13,14,15,21,22,23,24 stroke:#2e7d32,stroke-width:3px
+    linkStyle 0,1,2,3,13,14,15,21,22,23,24,25,26 stroke:#2e7d32,stroke-width:3px
 ```
 
 ## Workflow phases
@@ -136,10 +139,9 @@ Maestro stores the current phase in `.specs/<spec-id>/workflow.json` by default.
 | `ready-for-verifier` | Builder work is ready for independent verification. |
 | `verifier-running` | A verifier run is active. |
 | `findings-decision` | The owner must decide how to handle verifier findings. |
-| `candidate-ready` | The candidate passed verification or all findings were rejected with reasons. |
-| `final-review` | Maestro verified the current candidate and completed the workflow. |
+| `candidate-ready` | The candidate passed verification or all findings were rejected with reasons. This is the last persisted Maestro phase. |
 
-A session can have one active Maestro workflow. Completed or abandoned workflows can remain under the spec directory.
+A session can have one active Maestro workflow. A workflow in `candidate-ready` is complete from Maestro's point of view. Completed or abandoned workflows can remain under the spec directory.
 
 Disabling Maestro, restarting Pi, or using `/resume` clears live session state. Maestro does not resume an incomplete workflow from `workflow.json`; the owner must clean it up manually.
 
@@ -217,25 +219,25 @@ A finding records a technical issue found by the verifier. Every finding blocks 
 
 When decisions are mixed, any `fix-code` decision starts another builder run. If the approved contract must change, the owner uses the same spec revision flow instead of resolving obsolete findings.
 
-## Final review and Pull Request
+## Completion and Pull Request
 
-A candidate becomes ready after a verifier run with no findings, or after the owner rejects every finding with a reason.
+The workflow ends at `candidate-ready` after a verifier run with no findings, or after the owner rejects every finding with a reason.
 
-When the workflow is `candidate-ready`:
+The operations that produce this phase, `maestro_record_verifier_handoff` and `maestro_resolve_findings`, own the required checks:
 
-1. The current `HEAD` is the candidate.
-2. The owner has not changed product code while the workflow was running.
-3. Maestro verifies the current checkout and candidate state.
-4. Maestro writes and commits `workflow.json` in `final-review` on the current branch.
-5. Maestro returns the current branch and candidate facts to the owner.
+1. Before writing the transition, they make sure that the resulting handoff matches the spec identity and workflow revision, with no active findings.
+2. They reject changes outside the expected protocol files. The verifier must also restore the product to the verified candidate.
+3. They commit only the expected protocol files and return success only when the checkout is clean.
 
-Maestro does not squash, stage, merge, create, or remove branches. It does not create worktrees.
+No final tool call or checkpoint is needed. `candidate-ready` is the last persisted Maestro phase.
 
-The owner opens the Pull Request from the current branch and chooses the merge method, including squash merge. After `final-review`, changes are outside the Maestro workflow and are not verified again by Maestro.
+Maestro reads the artifacts and Git information to summarize the changes, verification results, rejected findings and reasons, and applicable builder notes. The summary includes the current branch and final `HEAD`. Rejected findings are owner decisions, not proof that verification passed.
+
+The summary does not change files or workflow state, create commits, or run verification again. The owner controls the Git flow, review, Pull Request, and merge. Maestro does not squash, stage, merge, create, or remove branches. It does not create worktrees.
 
 ## Stored artifacts
 
-Maestro creates the spec directory with `spec.md` and `workflow.json` when the owner creates a spec. It creates handoff, escalation, and prototype directories only when an action needs them.
+When the owner creates a spec, Maestro creates the spec directory with `spec.md` and `workflow.json`. It also creates the empty `handoffs/escalations/` and `prototypes/` directories. Later workflow actions create the artifact files.
 
 The default spec directory contains:
 

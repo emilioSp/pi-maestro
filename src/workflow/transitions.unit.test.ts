@@ -42,7 +42,6 @@ describe('workflow transitions', () => {
       WORKFLOW_EVENTS.BUILDER_DONE,
       WORKFLOW_EVENTS.LAUNCH_VERIFIER,
       WORKFLOW_EVENTS.VERIFIER_APPROVED,
-      WORKFLOW_EVENTS.PREPARE_FINAL_REVIEW,
     ];
 
     const finalState = events.reduce(
@@ -51,8 +50,8 @@ describe('workflow transitions', () => {
     );
 
     expect(finalState).toMatchObject({
-      revision: 7,
-      phase: WORKFLOW_PHASES.FINAL_REVIEW,
+      revision: 6,
+      phase: WORKFLOW_PHASES.CANDIDATE_READY,
     });
   });
 
@@ -67,13 +66,15 @@ describe('workflow transitions', () => {
     }
   });
 
-  it('rejects an event from an invalid phase', () => {
-    expect(() =>
-      transitionWorkflow({
-        state: state(WORKFLOW_PHASES.FINAL_REVIEW),
-        event: WORKFLOW_EVENTS.LAUNCH_BUILDER,
-      }),
-    ).toThrow('is not allowed from phase');
+  it('given candidate-ready when any event is requested then the workflow stays concluded', () => {
+    for (const event of Object.values(WORKFLOW_EVENTS)) {
+      expect(() =>
+        transitionWorkflow({
+          state: state(WORKFLOW_PHASES.CANDIDATE_READY),
+          event,
+        }),
+      ).toThrow('is not allowed from phase');
+    }
   });
 
   it('does not mutate the input state', () => {

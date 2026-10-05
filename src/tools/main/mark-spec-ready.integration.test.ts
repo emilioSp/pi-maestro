@@ -188,7 +188,6 @@ describe('mark spec ready tool', () => {
     WORKFLOW_PHASES.READY_FOR_VERIFIER,
     WORKFLOW_PHASES.VERIFIER_RUNNING,
     WORKFLOW_PHASES.CANDIDATE_READY,
-    WORKFLOW_PHASES.FINAL_REVIEW,
   ])('rejects approval from %s', async (phase) => {
     const { created, repository } = await createWorkflow({
       phase,

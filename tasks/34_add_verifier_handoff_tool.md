@@ -26,6 +26,8 @@ Implement `maestro_record_verifier_handoff` for the current checkout. The tool o
 
 The verifier must not run `git commit`. Do not create a second verifier handoff implementation.
 
+[Task 42](42_complete_candidate_ready_handoff.md) completes the candidate-ready checks in this existing handoff path. It does not add a separate final check tool.
+
 ## Tests
 
 Cover:

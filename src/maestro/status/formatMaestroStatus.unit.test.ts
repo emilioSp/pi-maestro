@@ -24,11 +24,7 @@ const PHASE_LABEL_CASES: Array<{ phase: WorkflowPhase; label: string }> = [
     phase: WORKFLOW_PHASES.FINDINGS_DECISION,
     label: 'Owner decision needed: findings',
   },
-  {
-    phase: WORKFLOW_PHASES.CANDIDATE_READY,
-    label: 'Candidate ready for final review',
-  },
-  { phase: WORKFLOW_PHASES.FINAL_REVIEW, label: 'Completed' },
+  { phase: WORKFLOW_PHASES.CANDIDATE_READY, label: 'Completed' },
 ];
 
 const createWorkflow = ({ phase }: { phase: WorkflowPhase }) => {
@@ -66,13 +62,4 @@ describe('Maestro status', () => {
       expect(status).toBe(`Maestro active · ${SPEC_ID} · ${label}`);
     },
   );
-
-  it('does not show a completed final-review workflow as active work', () => {
-    const status = formatMaestroStatus({
-      active: true,
-      workflow: createWorkflow({ phase: WORKFLOW_PHASES.FINAL_REVIEW }),
-    });
-
-    expect(status).toContain('Completed');
-  });
 });

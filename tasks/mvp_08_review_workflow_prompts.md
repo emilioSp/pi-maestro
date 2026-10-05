@@ -26,9 +26,11 @@ This is a text-only task. Do not add modules, tools, tests, or workflow logic.
 4. Describe spec revisions as changes to the same `specId` and current branch, with Git preserving earlier artifacts.
 5. Keep builder instructions aligned with the explicit `specId`, committed approved workflow state, dedicated child tools, and builder-owned implementation commits.
 6. Keep verifier instructions aligned with the explicit `specId`, the parent of the `verifier-running` checkpoint as candidate, complete product restoration, and the verifier handoff tool's protocol-only commit.
-7. Keep retry, failure, escalation, findings, and final-review wording consistent with the workflow state machine.
+7. Keep retry, failure, escalation, findings, and completion wording consistent with the workflow state machine.
 8. Remove stale worktree, operational-branch, `baseBranch`, target-branch, verifier-pass, local-squash, staging, and resource-cleanup instructions.
 9. Keep the text concise, deterministic, and consistent with the existing tool allowlists.
+
+[Task 42](42_complete_candidate_ready_handoff.md) owns the follow-up prompt change: end the workflow at `candidate-ready` and assign the final summary to Maestro without a dedicated tool.
 
 Do not add a new prompt module or prompt test. Do not change domain code, tool schemas, extension registration, or agent allowlists.
 

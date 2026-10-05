@@ -27,7 +27,7 @@ Allow the owner to approve a changed contract in the same workflow, spec ID, and
 Cover:
 
 - revision approval from each of the two authorized blocked phases;
-- rejection from running, ready, candidate, and final phases;
+- rejection from running, ready, and candidate-ready phases;
 - unchanged spec content accepted by the tool;
 - the same `specId` and current checkout after revision;
 - rejection of an uncommitted approved state by the next builder launch.
