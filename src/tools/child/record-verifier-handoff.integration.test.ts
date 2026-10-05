@@ -1,11 +1,5 @@
 import { access, writeFile } from 'node:fs/promises';
 import { relative } from 'node:path';
-import type {
-  ExtensionAPI,
-  ExtensionContext,
-  ToolDefinition,
-} from '@earendil-works/pi-coding-agent';
-import type { TSchema } from 'typebox';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
 import { runGitCommand } from '#git/command.ts';
@@ -18,34 +12,13 @@ import {
   createApprovedWorkflow,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
+import piTestSessions from '#test/support/pi-session.ts';
 import { registerRecordVerifierHandoffTool } from '#tools/child/record-verifier-handoff.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { prepareVerifierLaunch } from '#workflow/verifier/prepareVerifierLaunch.ts';
-
-const createRegisteredTool = () => {
-  type RegisteredTool = ToolDefinition<TSchema, unknown, unknown>;
-
-  let registeredTool: RegisteredTool | undefined;
-
-  // JUSTIFICATION: The fake implements only the registration method used by this test.
-  const pi = {
-    registerTool: (tool: RegisteredTool): void => {
-      // JUSTIFICATION: The test erases the registration generic to invoke the captured tool.
-      registeredTool = tool;
-    },
-  } as ExtensionAPI;
-
-  registerRecordVerifierHandoffTool(pi);
-
-  if (registeredTool === undefined) {
-    throw new Error('Verifier handoff tool was not registered.');
-  }
-
-  return registeredTool;
-};
 
 const createHandoffInput = () => ({
   specId: SPEC_ID,
@@ -55,25 +28,17 @@ const createHandoffInput = () => ({
   notes: [],
 });
 
-const executeTool = async ({
-  repositoryRoot,
-  input,
-}: {
-  repositoryRoot: string;
-  input: ReturnType<typeof createHandoffInput>;
-}) => {
-  const tool = createRegisteredTool();
-  // JUSTIFICATION: The adapter only reads cwd from the extension context.
-  const context = { cwd: repositoryRoot } as ExtensionContext;
-
-  return tool.execute('test-call', input, undefined, undefined, context);
-};
-
-afterEach(cleanupBuilderWorkflows);
+afterEach(async () => {
+  await piTestSessions.cleanup();
+  await cleanupBuilderWorkflows();
+});
 
 describe('verifier handoff tool', () => {
-  it('registers a closed input schema with explicit verifier identity', () => {
-    const tool = createRegisteredTool();
+  it('registers a closed input schema with explicit verifier identity', async () => {
+    const { tool } = await piTestSessions.createRegisteredTool({
+      extension: registerRecordVerifierHandoffTool,
+    });
+
     const input = createHandoffInput();
 
     expect(Value.Check(tool.parameters, input)).toBe(true);
@@ -101,11 +66,13 @@ describe('verifier handoff tool', () => {
   it('rejects a handoff outside the verifier-running phase', async () => {
     const workflow = await createApprovedWorkflow();
 
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: workflow.repository.path,
+      extension: registerRecordVerifierHandoffTool,
+    });
+
     await expect(
-      executeTool({
-        repositoryRoot: workflow.repository.path,
-        input: createHandoffInput(),
-      }),
+      tool.execute('test-call', createHandoffInput()),
     ).rejects.toThrow(
       'Verifier handoff requires verifier-running state, found "ready-for-builder".',
     );
@@ -126,11 +93,13 @@ describe('verifier handoff tool', () => {
       'utf8',
     );
 
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: workflow.repository.path,
+      extension: registerRecordVerifierHandoffTool,
+    });
+
     await expect(
-      executeTool({
-        repositoryRoot: workflow.repository.path,
-        input: createHandoffInput(),
-      }),
+      tool.execute('test-call', createHandoffInput()),
     ).rejects.toThrow(
       `Workflow spec ID mismatch: expected "${SPEC_ID}", found "20260321-143052-other-spec".`,
     );
@@ -163,10 +132,12 @@ describe('verifier handoff tool', () => {
       specId: SPEC_ID,
     });
 
-    const result = await executeTool({
-      repositoryRoot: workflow.repository.path,
-      input: createHandoffInput(),
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: workflow.repository.path,
+      extension: registerRecordVerifierHandoffTool,
     });
+
+    const result = await tool.execute('test-call', createHandoffInput());
 
     expect(result.details).toMatchObject({
       candidateCommit: verifierLaunch.candidateCommit,
@@ -237,11 +208,13 @@ describe('verifier handoff tool', () => {
       { mode: 0o755 },
     );
 
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: workflow.repository.path,
+      extension: registerRecordVerifierHandoffTool,
+    });
+
     await expect(
-      executeTool({
-        repositoryRoot: workflow.repository.path,
-        input: createHandoffInput(),
-      }),
+      tool.execute('test-call', createHandoffInput()),
     ).rejects.toThrow(
       'Verifier handoff requires a clean checkout after its commit.',
     );
@@ -286,10 +259,12 @@ describe('verifier handoff tool', () => {
       'utf8',
     );
 
-    const result = await executeTool({
-      repositoryRoot: workflow.repository.path,
-      input: createHandoffInput(),
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: workflow.repository.path,
+      extension: registerRecordVerifierHandoffTool,
     });
+
+    const result = await tool.execute('test-call', createHandoffInput());
 
     expect(result).toMatchObject({
       details: {
