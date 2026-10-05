@@ -8,7 +8,7 @@ import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 
 export const ESCALATION_VERSION = '1.0.0';
 
-const ESCALATION_ID_PATTERN = /^E([1-9]\d*)$/;
+export const ESCALATION_ID_PATTERN = /^E([1-9]\d*)$/;
 
 export const EscalationOptionSchema = Type.Object(
   {
