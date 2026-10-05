@@ -347,7 +347,7 @@ describe('launch builder tool', () => {
     await expect(
       executeTool({ tool, repositoryRoot: repository.path, specId: SPEC_ID }),
     ).rejects.toThrow(
-      'Builder delegation error: The configured provider is unavailable.',
+      'Delegation error: The configured provider is unavailable.',
     );
     await expect(
       readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
@@ -371,7 +371,7 @@ describe('launch builder tool', () => {
 
     await expect(
       executeTool({ tool, repositoryRoot: repository.path, specId: SPEC_ID }),
-    ).rejects.toThrow('Builder timeout: The builder exceeded its timeout.');
+    ).rejects.toThrow('Delegation timeout: The builder exceeded its timeout.');
     await expect(
       readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_RUNNING });
@@ -393,7 +393,7 @@ describe('launch builder tool', () => {
 
     await expect(
       executeTool({ tool, repositoryRoot: repository.path, specId: SPEC_ID }),
-    ).rejects.toThrow('Builder interruption: The builder was interrupted.');
+    ).rejects.toThrow('Delegation interruption: The builder was interrupted.');
     await expect(
       readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_RUNNING });
@@ -408,14 +408,14 @@ describe('launch builder tool', () => {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
         nodeId: request.nodeId,
-        status: 'completed',
+        status: 'unsupported',
       });
     });
 
     await expect(
       executeTool({ tool, repositoryRoot: repository.path, specId: SPEC_ID }),
     ).rejects.toThrow(
-      'Builder protocol error: the completed response has no text result.',
+      'Protocol error: unsupported final response status "unsupported".',
     );
     await expect(
       readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),

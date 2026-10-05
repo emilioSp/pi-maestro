@@ -5,11 +5,9 @@
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
-import { loadConfiguration } from '#config/loadConfiguration.ts';
-import { findRepositoryRoot } from '#git/repository/findRepositoryRoot.ts';
-import { MaestroPaths } from '#MaestroPaths.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { createSpec } from '#specs/create.ts';
+import { resolveToolLaunchContext } from '#tools/utils/resolveToolLaunchContext.ts';
 
 export const CREATE_SPEC_TOOL = {
   NAME: 'maestro_create_spec',
@@ -25,13 +23,6 @@ const CreateSpecToolParameters = Type.Object(
   { additionalProperties: false },
 );
 
-const resolvePaths = async (cwd: string): Promise<MaestroPaths> => {
-  const repositoryRoot = await findRepositoryRoot({ cwd });
-  const config = await loadConfiguration({ cwd: repositoryRoot });
-
-  return new MaestroPaths({ repositoryRoot, config });
-};
-
 export const registerCreateSpecTool = (pi: ExtensionAPI): void => {
   pi.registerTool({
     name: CREATE_SPEC_TOOL.NAME,
@@ -39,7 +30,7 @@ export const registerCreateSpecTool = (pi: ExtensionAPI): void => {
     description: CREATE_SPEC_TOOL.DESCRIPTION,
     parameters: CreateSpecToolParameters,
     async execute(_toolCallId, { title }, _signal, _onUpdate, context) {
-      const paths = await resolvePaths(context.cwd);
+      const { paths } = await resolveToolLaunchContext({ cwd: context.cwd });
 
       const created = await createSpec({
         paths,
