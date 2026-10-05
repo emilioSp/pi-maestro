@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task 36: Add the create-spec and mark-ready tools
 
@@ -27,7 +27,6 @@ Give the owner tools to create a spec and approve the initial spec or an authori
 8. Do not compare the current `spec.md` content with an earlier version.
 9. When called from an authorized blocked phase, make the old blocker historical and do not require a separate escalation or finding resolution.
 10. Do not create an owner commit. The owner must commit the approved `spec.md` and `workflow.json` on the current branch.
-11. Keep both tools inactive when Maestro mode is off.
 
 ## Implementation
 

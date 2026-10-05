@@ -159,6 +159,29 @@ describe('markSpecReady', () => {
     });
   });
 
+  it('rejects a workflow spec identity mismatch', async () => {
+    const { created, paths } = await createWorkflow();
+    await writeFile(
+      created.workflowPath,
+      `${JSON.stringify(
+        { ...created.state, specId: OTHER_SPEC_ID },
+        null,
+        2,
+      )}\n`,
+      'utf8',
+    );
+
+    await expect(
+      markSpecReady({
+        paths,
+        specId: SPEC_ID,
+        activeWorkflowSpecId: SPEC_ID,
+      }),
+    ).rejects.toThrow(
+      `Workflow spec ID mismatch: expected "${SPEC_ID}", found "${OTHER_SPEC_ID}".`,
+    );
+  });
+
   it('rejects readiness when spec.md is missing', async () => {
     const { paths, created } = await createWorkflow();
     await rm(created.specFilePath);
