@@ -35,7 +35,7 @@ export const prepareVerifierLaunch = async ({
   const repositoryRoot = paths.getRepositoryRoot();
   const workflowPath = paths.getWorkflowPath(specId);
   const handoffPath = paths.getVerifierHandoffPath(specId);
-  const currentState = await readWorkflowState({ path: workflowPath });
+  const currentState = await readWorkflowState(workflowPath);
 
   if (currentState.specId !== specId) {
     throw new Error(
@@ -49,7 +49,7 @@ export const prepareVerifierLaunch = async ({
     );
   }
 
-  const status = await getRepositoryStatus({ repositoryRoot });
+  const status = await getRepositoryStatus(repositoryRoot);
 
   if (!status.clean) {
     throw new Error(
@@ -80,7 +80,7 @@ export const prepareVerifierLaunch = async ({
     expectedPaths.push(handoffPath);
   }
 
-  const previousHead = await getHeadCommit({ repositoryRoot });
+  const previousHead = await getHeadCommit(repositoryRoot);
 
   const checkpointCommit = await createWorkflowCheckpointCommit({
     repositoryRoot,

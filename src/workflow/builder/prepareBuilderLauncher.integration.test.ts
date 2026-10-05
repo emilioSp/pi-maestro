@@ -34,14 +34,12 @@ describe('builder launch preparation', () => {
       revision: 3,
       repositoryRoot: repository.path,
     });
+    await expect(getCurrentBranch(repository.path)).resolves.toBe('main');
+    await expect(getHeadCommit(repository.path)).resolves.toBe(
+      launch.checkpointCommit,
+    );
     await expect(
-      getCurrentBranch({ repositoryRoot: repository.path }),
-    ).resolves.toBe('main');
-    await expect(
-      getHeadCommit({ repositoryRoot: repository.path }),
-    ).resolves.toBe(launch.checkpointCommit);
-    await expect(
-      readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({
       revision: 3,
       phase: WORKFLOW_PHASES.BUILDER_RUNNING,
@@ -82,7 +80,7 @@ describe('builder launch preparation', () => {
         notes: [],
       },
     });
-    await repository.commit({ message: 'Builder failed' });
+    await repository.commit('Builder failed');
 
     await expect(
       prepareBuilderLaunch({ paths, specId: SPEC_ID }),
@@ -90,7 +88,7 @@ describe('builder launch preparation', () => {
       'Builder launch is not valid from phase "builder-failed".',
     );
     await expect(
-      readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_FAILED });
     await expect(
       pathExists(paths.getBuilderHandoffPath(SPEC_ID)),
@@ -106,9 +104,7 @@ describe('builder launch preparation', () => {
     await expect(
       prepareBuilderLaunch({ paths, specId: SPEC_ID }),
     ).rejects.toThrow('clean current checkout');
-    await expect(
-      getCurrentBranch({ repositoryRoot: repository.path }),
-    ).resolves.toBe('main');
+    await expect(getCurrentBranch(repository.path)).resolves.toBe('main');
   });
 
   it('rejects dirty product changes in the current checkout', async () => {

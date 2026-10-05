@@ -36,7 +36,7 @@ const createWorkflow = async ({
   const repository = await createTemporaryRepository();
   cleanupFunctions.push(repository.cleanup);
 
-  const config = await loadConfiguration({ cwd: repository.path });
+  const config = await loadConfiguration(repository.path);
 
   const paths = new MaestroPaths({
     repositoryRoot: repository.path,
@@ -113,9 +113,9 @@ describe('mark spec ready tool', () => {
     await expect(readFile(created.specFilePath, 'utf8')).resolves.toBe(
       approvedContent,
     );
-    await expect(
-      readWorkflowState({ path: created.workflowPath }),
-    ).resolves.toEqual(result.details);
+    await expect(readWorkflowState(created.workflowPath)).resolves.toEqual(
+      result.details,
+    );
   });
 
   it.each([
@@ -140,9 +140,9 @@ describe('mark spec ready tool', () => {
       revision: 3,
       phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
     });
-    await expect(
-      readWorkflowState({ path: created.workflowPath }),
-    ).resolves.toEqual(result.details);
+    await expect(readWorkflowState(created.workflowPath)).resolves.toEqual(
+      result.details,
+    );
   });
 
   it.each([
@@ -169,7 +169,7 @@ describe('mark spec ready tool', () => {
       `Workflow event "mark-spec-ready" is not allowed from phase "${phase}".`,
     );
     await expect(
-      readWorkflowState({ path: created.workflowPath }),
+      readWorkflowState(created.workflowPath),
     ).resolves.toMatchObject({ revision: 2, phase });
   });
 

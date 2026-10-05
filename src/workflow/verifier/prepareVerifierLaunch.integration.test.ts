@@ -38,25 +38,21 @@ describe('verifier launch preparation', () => {
     });
     const builderHandoff = doneHandoff(builderLaunch.revision + 1);
     expect(builderHandoff.status).toBe(BUILDER_HANDOFF_STATUSES.DONE);
-    await repository.commit({ message: 'Builder completed' });
+    await repository.commit('Builder completed');
 
-    const candidateBefore = await getHeadCommit({
-      repositoryRoot: repository.path,
-    });
+    const candidateBefore = await getHeadCommit(repository.path);
 
     const launch = await prepareVerifierLaunch({ paths, specId: SPEC_ID });
 
     expect(launch.candidateCommit).toBe(candidateBefore);
     expect(launch.repositoryRoot).toBe(repository.path);
     expect(launch.checkpointCommit).not.toBe(candidateBefore);
+    await expect(getCurrentBranch(repository.path)).resolves.toBe('main');
+    await expect(getRepositoryStatus(repository.path)).resolves.toMatchObject({
+      clean: true,
+    });
     await expect(
-      getCurrentBranch({ repositoryRoot: repository.path }),
-    ).resolves.toBe('main');
-    await expect(
-      getRepositoryStatus({ repositoryRoot: repository.path }),
-    ).resolves.toMatchObject({ clean: true });
-    await expect(
-      readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({
       phase: WORKFLOW_PHASES.VERIFIER_RUNNING,
     });

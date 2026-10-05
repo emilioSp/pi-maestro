@@ -30,9 +30,7 @@ async function assertBuilderLaunchBase({
   paths,
   specId,
 }: AssertBuilderLaunchBaseInput): Promise<void> {
-  const state = await readWorkflowState({
-    path: paths.getWorkflowPath(specId),
-  });
+  const state = await readWorkflowState(paths.getWorkflowPath(specId));
 
   if (state.specId !== specId) {
     throw new Error(
@@ -44,9 +42,7 @@ async function assertBuilderLaunchBase({
     throw new Error(`Builder launch is not valid from phase "${state.phase}".`);
   }
 
-  const status = await getRepositoryStatus({
-    repositoryRoot: paths.getRepositoryRoot(),
-  });
+  const status = await getRepositoryStatus(paths.getRepositoryRoot());
 
   if (!status.clean) {
     throw new Error('Builder launch requires a clean current checkout.');
@@ -78,7 +74,7 @@ export const prepareBuilderLaunch = async ({
 
   const workflowPath = paths.getWorkflowPath(specId);
   const handoffPath = paths.getBuilderHandoffPath(specId);
-  const currentState = await readWorkflowState({ path: workflowPath });
+  const currentState = await readWorkflowState(workflowPath);
   const handoffExists = await pathExists(handoffPath);
 
   if (handoffExists) {
@@ -107,9 +103,7 @@ export const prepareBuilderLaunch = async ({
     expectedPaths,
   });
 
-  await maestroSessionState.setSpecSha256({
-    specPath: paths.getSpecFilePath(specId),
-  });
+  await maestroSessionState.setSpecSha256(paths.getSpecFilePath(specId));
 
   return {
     specId,
