@@ -1,4 +1,4 @@
-STATUS: TODO
+STATUS: DONE
 
 # Task 40: Add the launch-verifier tool
 

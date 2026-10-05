@@ -5,11 +5,9 @@
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
-import { loadConfiguration } from '#config/loadConfiguration.ts';
-import { findRepositoryRoot } from '#git/repository/findRepositoryRoot.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
-import { MaestroPaths } from '#MaestroPaths.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
+import { resolveToolLaunchContext } from '#tools/utils/resolveToolLaunchContext.ts';
 import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
 
 export const MARK_SPEC_READY_TOOL = {
@@ -26,13 +24,6 @@ const MarkSpecReadyToolParameters = Type.Object(
   { additionalProperties: false },
 );
 
-const resolvePaths = async (cwd: string): Promise<MaestroPaths> => {
-  const repositoryRoot = await findRepositoryRoot({ cwd });
-  const config = await loadConfiguration({ cwd: repositoryRoot });
-
-  return new MaestroPaths({ repositoryRoot, config });
-};
-
 export const registerMarkSpecReadyTool = (pi: ExtensionAPI): void => {
   pi.registerTool({
     name: MARK_SPEC_READY_TOOL.NAME,
@@ -40,7 +31,7 @@ export const registerMarkSpecReadyTool = (pi: ExtensionAPI): void => {
     description: MARK_SPEC_READY_TOOL.DESCRIPTION,
     parameters: MarkSpecReadyToolParameters,
     async execute(_toolCallId, { specId }, _signal, _onUpdate, context) {
-      const paths = await resolvePaths(context.cwd);
+      const { paths } = await resolveToolLaunchContext({ cwd: context.cwd });
 
       const state = await markSpecReady({
         paths,

@@ -9,10 +9,8 @@ import {
   ESCALATION_ID_PATTERN,
   EscalationResolutionSchema,
 } from '#artifacts/escalation/schema.ts';
-import { loadConfiguration } from '#config/loadConfiguration.ts';
-import { findRepositoryRoot } from '#git/repository/findRepositoryRoot.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
-import { MaestroPaths } from '#MaestroPaths.ts';
+import { resolveToolLaunchContext } from '#tools/utils/resolveToolLaunchContext.ts';
 import { resolveBuilderEscalation } from '#workflow/escalation/resolveBuilderEscalation.ts';
 
 export const RESOLVE_ESCALATION_TOOL = {
@@ -31,13 +29,6 @@ const ResolveEscalationToolParameters = Type.Object(
   { additionalProperties: false },
 );
 
-const resolvePaths = async (cwd: string): Promise<MaestroPaths> => {
-  const repositoryRoot = await findRepositoryRoot({ cwd });
-  const config = await loadConfiguration({ cwd: repositoryRoot });
-
-  return new MaestroPaths({ repositoryRoot, config });
-};
-
 export const registerResolveEscalationTool = (pi: ExtensionAPI): void => {
   pi.registerTool({
     name: RESOLVE_ESCALATION_TOOL.NAME,
@@ -46,7 +37,7 @@ export const registerResolveEscalationTool = (pi: ExtensionAPI): void => {
     parameters: ResolveEscalationToolParameters,
     async execute(_toolCallId, params, _signal, _onUpdate, context) {
       const { specId, escalationId, ...resolution } = params;
-      const paths = await resolvePaths(context.cwd);
+      const { paths } = await resolveToolLaunchContext({ cwd: context.cwd });
 
       const resolved = await resolveBuilderEscalation({
         paths,
