@@ -31,13 +31,15 @@ export type CompletedBuilderPass = {
   repositoryRoot: string;
 };
 
+type BuildBuilderHandoffInput = {
+  draftHandoff: BuilderHandoffSubmissionInput;
+  state: WorkflowState;
+};
+
 const buildBuilderHandoff = ({
   draftHandoff,
   state,
-}: {
-  draftHandoff: BuilderHandoffSubmissionInput;
-  state: WorkflowState;
-}) => {
+}: BuildBuilderHandoffInput) => {
   if (draftHandoff.status === BUILDER_HANDOFF_STATUSES.FAILED) {
     return {
       version: BUILDER_HANDOFF_VERSION,
@@ -62,15 +64,17 @@ const buildBuilderHandoff = ({
   };
 };
 
+type CompleteBuilderPassInput = {
+  paths: MaestroPaths;
+  specId: string;
+  handoff: BuilderHandoffSubmissionInput;
+};
+
 export const completeBuilderPass = async ({
   paths,
   specId,
   handoff: draftHandoff,
-}: {
-  paths: MaestroPaths;
-  specId: string;
-  handoff: BuilderHandoffSubmissionInput;
-}): Promise<CompletedBuilderPass> => {
+}: CompleteBuilderPassInput): Promise<CompletedBuilderPass> => {
   await assertBuilderProtocolUnchanged({ paths, specId });
 
   const workflowPath = paths.getWorkflowPath(specId);
@@ -93,8 +97,14 @@ export const completeBuilderPass = async ({
     throw new Error('Builder terminal handoff already exists.');
   }
 
-  const handoff = buildBuilderHandoff({ draftHandoff, state: currentState });
-  assertBuilderHandoff(handoff, currentState.specId, currentState.revision + 1);
+  const handoffInput = {
+    handoff: buildBuilderHandoff({ draftHandoff, state: currentState }),
+    specId: currentState.specId,
+    revision: currentState.revision + 1,
+  };
+
+  assertBuilderHandoff(handoffInput);
+  const { handoff } = handoffInput;
 
   const nextState = transitionWorkflow({
     state: currentState,
