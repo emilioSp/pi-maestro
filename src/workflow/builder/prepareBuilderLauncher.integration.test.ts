@@ -1,6 +1,11 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import {
+  BREAKAGE_STATUSES,
+  BUILDER_HANDOFF_STATUSES,
+  PROBE_STATUSES,
+} from '#artifacts/builder-handoff/schema.ts';
 import { runGitCommand } from '#git/command.ts';
 import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
@@ -63,14 +68,14 @@ describe('builder launch preparation', () => {
       paths,
       specId: SPEC_ID,
       handoff: {
-        status: 'failed',
+        status: BUILDER_HANDOFF_STATUSES.FAILED,
         summary: 'The builder was blocked.',
         acceptanceCriteria: [
           {
             id: 'AC1',
             probe: 'npm test',
-            probeStatus: 'not-run',
-            breakageStatus: 'not-run',
+            probeStatus: PROBE_STATUSES.NOT_RUN,
+            breakageStatus: BREAKAGE_STATUSES.NOT_RUN,
           },
         ],
         failure: { reason: 'The implementation was blocked.' },
