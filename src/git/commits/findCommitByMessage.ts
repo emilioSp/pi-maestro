@@ -7,13 +7,15 @@ import { runGitCommand } from '#git/command.ts';
 
 // Finds a commit whose subject exactly matches the given message.
 // git log --all --format=%H%x00%s --fixed-strings --grep=<message>
+type FindCommitByMessageInput = {
+  repositoryRoot: string;
+  message: string;
+};
+
 export const findCommitByMessage = async ({
   repositoryRoot,
   message,
-}: {
-  repositoryRoot: string;
-  message: string;
-}): Promise<string | undefined> => {
+}: FindCommitByMessageInput): Promise<string | undefined> => {
   const result = await runGitCommand({
     arguments: [
       'log',
