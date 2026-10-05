@@ -127,9 +127,9 @@ describe('resolve escalation tool', () => {
       checkpointCommit: string;
     };
 
-    await expect(
-      getHeadCommit({ repositoryRoot: repository.path }),
-    ).resolves.toBe(details.checkpointCommit);
+    await expect(getHeadCommit(repository.path)).resolves.toBe(
+      details.checkpointCommit,
+    );
     await expect(
       readFile(paths.getSpecFilePath(SPEC_ID), 'utf8'),
     ).resolves.toBe(specBefore);
@@ -196,7 +196,7 @@ describe('resolve escalation tool', () => {
     ).rejects.toThrow(`expected "${opened.escalation.id}"`);
 
     await expect(
-      readWorkflowState({ path: paths.getWorkflowPath(SPEC_ID) }),
+      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({
       revision: opened.state.revision,
       phase: WORKFLOW_PHASES.ESCALATION_DECISION,

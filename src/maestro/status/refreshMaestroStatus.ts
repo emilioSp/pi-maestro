@@ -11,13 +11,9 @@ import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 
 export const MAESTRO_STATUS_KEY = 'maestro';
 
-type RefreshMaestroStatusInput = {
-  context: ExtensionContext;
-};
-
-export const refreshMaestroStatus = async ({
-  context,
-}: RefreshMaestroStatusInput): Promise<void> => {
+export const refreshMaestroStatus = async (
+  context: ExtensionContext,
+): Promise<void> => {
   if (!maestroSessionState.isActive()) {
     context.ui.setStatus(MAESTRO_STATUS_KEY, undefined);
 
@@ -36,11 +32,9 @@ export const refreshMaestroStatus = async ({
   }
 
   try {
-    const { paths } = await resolveToolLaunchContext({ cwd: context.cwd });
+    const { paths } = await resolveToolLaunchContext(context.cwd);
 
-    const state = await readWorkflowState({
-      path: paths.getWorkflowPath(specId),
-    });
+    const state = await readWorkflowState(paths.getWorkflowPath(specId));
 
     context.ui.setStatus(
       MAESTRO_STATUS_KEY,
