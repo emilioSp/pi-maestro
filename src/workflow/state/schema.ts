@@ -19,7 +19,6 @@ export const WORKFLOW_PHASES = {
   VERIFIER_RUNNING: 'verifier-running',
   FINDINGS_DECISION: 'findings-decision',
   CANDIDATE_READY: 'candidate-ready',
-  FINAL_REVIEW: 'final-review',
 } as const;
 
 export const WORKFLOW_EVENTS = {
@@ -35,7 +34,6 @@ export const WORKFLOW_EVENTS = {
   VERIFIER_APPROVED: 'verifier-approved',
   REJECT_FINDINGS: 'reject-findings',
   REQUEST_FIXES: 'request-fixes',
-  PREPARE_FINAL_REVIEW: 'prepare-final-review',
 } as const;
 
 export const WorkflowPhaseSchema = Type.Union([
@@ -48,7 +46,6 @@ export const WorkflowPhaseSchema = Type.Union([
   Type.Literal(WORKFLOW_PHASES.VERIFIER_RUNNING),
   Type.Literal(WORKFLOW_PHASES.FINDINGS_DECISION),
   Type.Literal(WORKFLOW_PHASES.CANDIDATE_READY),
-  Type.Literal(WORKFLOW_PHASES.FINAL_REVIEW),
 ]);
 
 export const WorkflowStateSchema = Type.Object(
