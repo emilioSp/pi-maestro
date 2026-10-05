@@ -1,14 +1,9 @@
 import { readFile } from 'node:fs/promises';
-import type {
-  ExtensionAPI,
-  ExtensionContext,
-  ToolDefinition,
-} from '@earendil-works/pi-coding-agent';
-import type { TSchema } from 'typebox';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import type { CreatedSpec } from '#specs/create.ts';
+import piTestSessions from '#test/support/pi-session.ts';
 import { createTemporaryRepository } from '#test/support/temp-repository.ts';
 import { registerCreateSpecTool } from '#tools/main/create-spec.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -17,54 +12,19 @@ import {
   WORKFLOW_STATE_VERSION,
 } from '#workflow/state/schema.ts';
 
-type RegisteredTool = ToolDefinition<TSchema, unknown, unknown>;
-
-type CreateSpecInput = {
-  title: string;
-};
-
-type ExecuteToolInput = {
-  repositoryRoot: string;
-  input: CreateSpecInput;
-};
-
 const cleanupFunctions: Array<() => Promise<void>> = [];
 
-const createRegisteredTool = (): RegisteredTool => {
-  let registeredTool: RegisteredTool | undefined;
-
-  // JUSTIFICATION: The fake implements only the registration method used by this test.
-  const pi = {
-    registerTool: (tool: RegisteredTool): void => {
-      registeredTool = tool;
-    },
-  } as ExtensionAPI;
-
-  registerCreateSpecTool(pi);
-
-  if (registeredTool === undefined) {
-    throw new Error('Create spec tool was not registered.');
-  }
-
-  return registeredTool;
-};
-
-const executeTool = async ({ repositoryRoot, input }: ExecuteToolInput) => {
-  const tool = createRegisteredTool();
-  // JUSTIFICATION: The adapter only reads cwd from the extension context.
-  const context = { cwd: repositoryRoot } as ExtensionContext;
-
-  return tool.execute('test-call', input, undefined, undefined, context);
-};
-
 afterEach(async () => {
+  await piTestSessions.cleanup();
   maestroSessionState.deactivate();
   await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
 });
 
 describe('create spec tool', () => {
-  it('registers a closed title-only input schema', () => {
-    const tool = createRegisteredTool();
+  it('registers a closed title-only input schema', async () => {
+    const { tool } = await piTestSessions.createRegisteredTool({
+      extension: registerCreateSpecTool,
+    });
 
     expect(Value.Check(tool.parameters, { title: 'Add Weather Alerts' })).toBe(
       true,
@@ -83,9 +43,13 @@ describe('create spec tool', () => {
     cleanupFunctions.push(repository.cleanup);
     maestroSessionState.activate();
 
-    const result = await executeTool({
-      repositoryRoot: repository.path,
-      input: { title: 'Add Weather Alerts' },
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerCreateSpecTool,
+    });
+
+    const result = await tool.execute('test-call', {
+      title: 'Add Weather Alerts',
     });
 
     expect(result.content).toEqual([
@@ -130,11 +94,13 @@ describe('create spec tool', () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId('20260321-143052-current-workflow');
 
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerCreateSpecTool,
+    });
+
     await expect(
-      executeTool({
-        repositoryRoot: repository.path,
-        input: { title: 'Add Weather Alerts' },
-      }),
+      tool.execute('test-call', { title: 'Add Weather Alerts' }),
     ).rejects.toThrow(
       'Workflow 20260321-143052-current-workflow is already active.',
     );
