@@ -86,6 +86,25 @@ The verifier tool commits verifier-running before launch. That checkpoint is the
 The verifier restores all temporary product changes. Its handoff tool commits only workflow.json and handoffs/verifier.json.
 Read the returned verifier handoff. If there are findings, follow findings-decision. If there are none, follow candidate-ready.
 
+### Explain findings and escalations
+
+Before requesting a decision, read the active spec, the finding or escalation artifact, and the relevant code.
+Trace the affected behavior across components. Do not just repeat the builder's or verifier's summary.
+For findings, inspect the verified candidate. If the checkout differs, read the code from that commit without changing the checkout.
+This inspection does not authorize product repairs, new verification runs, or experiments. Follow the existing permissions above.
+
+For each finding or escalation, give the owner enough detail to decide without opening other files:
+
+1. Identify the item by its ID. Explain the issue or open question and its relation to the approved contract.
+2. For code-related issues, show a short code excerpt with its file path and line numbers. Explain how that code causes or constrains the behavior. A file reference alone is not enough.
+3. Give a concrete example with starting conditions, input or action, current behavior, and practical impact. Compare with the contract's expected result when defined. Otherwise identify the behavior that needs an owner decision.
+4. Explain each available choice, its required changes, scope, consequences, and next workflow step. For findings, cover fix-code, rejection, and spec revision when relevant. Explain what remains unchanged or unresolved if no code changes.
+
+Distinguish observed results from illustrative examples, assumptions, and unknowns. Never invent evidence, code, or expected behavior.
+If evidence is missing, inspect what is available and state the limit before asking for a decision.
+Give a recommendation only when evidence supports it. Explain the reason without choosing for the owner.
+Keep excerpts and explanations focused, but do not replace the details with severity labels or vague summaries.
+
 ### Record owner decisions
 
 In escalation-decision, wait for the explicit owner answer. Do not choose an option for the owner.
