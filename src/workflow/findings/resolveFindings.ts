@@ -3,12 +3,14 @@
  * Used: When the owner resolves a findings-decision handoff.
  */
 
+import { relative } from 'node:path';
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import type {
   VerifierFinding,
   VerifierHandoff,
 } from '#artifacts/verifier-handoff/schema.ts';
+import { runGitCommand } from '#git/command.ts';
 import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
@@ -22,7 +24,6 @@ import {
 } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-import { hasProductChanges } from '#workflow/verifier/hasProductChanges.ts';
 
 export const FINDING_DECISIONS = {
   REJECT: 'reject',
@@ -182,6 +183,67 @@ const buildFindingWorkflow = ({
   return { state: nextState, handoff: nextHandoff };
 };
 
+type AssertNoChangesOutsideFindingArtifactsInput = {
+  repositoryRoot: string;
+  workflowPath: string;
+  handoffPath: string;
+};
+
+async function assertNoChangesOutsideFindingArtifacts({
+  repositoryRoot,
+  workflowPath,
+  handoffPath,
+}: AssertNoChangesOutsideFindingArtifactsInput): Promise<void> {
+  const headCommit = await getHeadCommit(repositoryRoot);
+
+  // Compare both the checkout and index with HEAD. The index comparison also
+  // catches staged changes when the working file was restored on disk.
+  const [diff, stagedDiff, status] = await Promise.all([
+    runGitCommand({
+      arguments: [
+        'diff',
+        '--no-renames',
+        '--name-only',
+        '-z',
+        headCommit,
+        '--',
+      ],
+      cwd: repositoryRoot,
+    }),
+    runGitCommand({
+      arguments: [
+        'diff',
+        '--cached',
+        '--no-renames',
+        '--name-only',
+        '-z',
+        headCommit,
+        '--',
+      ],
+      cwd: repositoryRoot,
+    }),
+    getRepositoryStatus(repositoryRoot),
+  ]);
+
+  const allowedPaths = new Set([
+    relative(repositoryRoot, workflowPath),
+    relative(repositoryRoot, handoffPath),
+  ]);
+
+  const changedTrackedPaths = [diff.stdout, stagedDiff.stdout]
+    .flatMap((output) => output.split('\0'))
+    .filter((path) => path.length > 0);
+
+  if (
+    changedTrackedPaths.some((path) => !allowedPaths.has(path)) ||
+    status.untracked.some((path) => !allowedPaths.has(path))
+  ) {
+    throw new Error(
+      'Finding resolution requires no changes outside its protocol files.',
+    );
+  }
+}
+
 type CommitFindingWorkflowInput = {
   paths: MaestroPaths;
   specId: string;
@@ -199,18 +261,11 @@ const commitFindingWorkflow = async ({
   const workflowPath = paths.getWorkflowPath(specId);
   const handoffPath = paths.getVerifierHandoffPath(specId);
 
-  if (
-    await hasProductChanges({
-      repositoryRoot,
-      candidateCommit: await getHeadCommit(repositoryRoot),
-      workflowPath,
-      handoffPath,
-    })
-  ) {
-    throw new Error(
-      'Finding resolution requires no changes outside its protocol files.',
-    );
-  }
+  await assertNoChangesOutsideFindingArtifacts({
+    repositoryRoot,
+    workflowPath,
+    handoffPath,
+  });
 
   await writeJsonAtomically({ path: handoffPath, data: workflow.handoff });
   await writeWorkflowState({
