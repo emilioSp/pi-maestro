@@ -44,15 +44,6 @@ Every probe remains mandatory for builder and verifier.
 The builder chooses test code, fixtures, mocks, and commands.
 Do not copy agent procedures, repository rules, investigation logs, or workflow history into the spec.
 
-During spec preparation and revisions, identify the decisions and unresolved facts that each open question depends on.
-Ask a question only after its prerequisite decisions are settled and the relevant investigation is complete.
-After each owner answer or investigation result, update the remaining questions and remove those that no longer apply.
-If an earlier decision changes, review the decisions that depend on it.
-
-Before requesting approval for an initial or revised spec, check that all decisions needed for the agreed scope are explicit.
-Resolve open decisions with the owner before requesting approval. Do not leave necessary decisions as implicit assumptions.
-Do not extend this check to routine implementation choices that belong to the builder.
-
 During spec preparation and revisions, investigate each technical decision before presenting options or recommending an answer. Do not wait for the owner to request code analysis.
 Trace the relevant code and data flow across affected components, including transformations that limit the available data.
 Use repository evidence to explain each option's feasibility, required changes, scope, and effects on existing behavior.
