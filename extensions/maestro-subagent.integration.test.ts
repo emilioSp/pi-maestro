@@ -1,108 +1,125 @@
-import { mkdir, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
-import type { ToolCallEvent } from '@earendil-works/pi-coding-agent';
+import { fileURLToPath } from 'node:url';
+import { wrapRegisteredTool } from '@earendil-works/pi-coding-agent';
 import { afterEach, describe, expect, it } from 'vitest';
-import childExtension from '#extensions/maestro-subagent.ts';
+import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
+import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
+import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
+import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
+import {
+  cleanupBuilderWorkflows,
+  createApprovedWorkflow,
+  SPEC_ID,
+} from '#test/support/builder-workflow.ts';
 import piTestSessions from '#test/support/pi-session.ts';
-import { createTemporaryRepository } from '#test/support/temp-repository.ts';
 import { BUILDER_ESCALATION_TOOL } from '#tools/child/open-escalation.ts';
 import { BUILDER_HANDOFF_TOOL } from '#tools/child/record-builder-handoff.ts';
 import { VERIFIER_HANDOFF_TOOL } from '#tools/child/record-verifier-handoff.ts';
-
-type CreateToolCallInput = {
-  path: string;
-  toolName: 'edit' | 'write';
-};
-
-const SPEC_ID = '20260321-143052-add-weather-alerts';
-
-const cleanupFunctions: Array<() => Promise<void>> = [];
-
-const createToolCall = ({
-  path,
-  toolName,
-}: CreateToolCallInput): ToolCallEvent => {
-  if (toolName === 'write') {
-    return {
-      type: 'tool_call',
-      toolCallId: 'test-call',
-      toolName,
-      input: { content: 'changed', path },
-    };
-  }
-
-  return {
-    type: 'tool_call',
-    toolCallId: 'test-call',
-    toolName,
-    input: { edits: [{ newText: 'changed', oldText: 'approved' }], path },
-  };
-};
+import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
+import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
+import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
+import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 
 afterEach(async () => {
   await piTestSessions.cleanup();
-  maestroSessionState.deactivate();
-  await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
+  await cleanupBuilderWorkflows();
 });
 
 describe('subagent extension', () => {
-  it('registers subagent tools once and blocks direct spec writes and edits', async () => {
-    const repository = await createTemporaryRepository();
-    cleanupFunctions.push(repository.cleanup);
-    const specPath = join(repository.path, '.specs', SPEC_ID, 'spec.md');
-    await mkdir(join(repository.path, '.specs', SPEC_ID), { recursive: true });
-    await writeFile(specPath, '# Approved specification\n', 'utf8');
-    await mkdir(join(repository.path, 'nested'));
+  it('given child extensions loaded from disk when builder and verifier submit handoffs then no parent session state is required', async () => {
+    const { paths, repository } = await createApprovedWorkflow();
+    const builderRun = await prepareBuilderRun({ paths, specId: SPEC_ID });
+    maestroSessionState.deactivate();
 
-    const { session } = await piTestSessions.create({
-      cwd: join(repository.path, 'nested'),
-      extensions: [childExtension],
+    const builder = await piTestSessions.create({
+      cwd: repository.path,
+      extensions: [],
+      additionalExtensionPaths: [
+        fileURLToPath(import.meta.resolve('#extensions/maestro-subagent.ts')),
+      ],
     });
 
-    maestroSessionState.activate();
-    maestroSessionState.setActiveSpecId(SPEC_ID);
+    const builderTools =
+      builder.session.extensionRunner.getAllRegisteredTools();
 
-    expect(
-      session.extensionRunner
-        .getAllRegisteredTools()
-        .map(({ definition }) => definition.name),
-    ).toEqual([
+    expect(builderTools.map(({ definition }) => definition.name)).toEqual([
       BUILDER_ESCALATION_TOOL.NAME,
       BUILDER_HANDOFF_TOOL.NAME,
       VERIFIER_HANDOFF_TOOL.NAME,
     ]);
 
-    for (const toolName of ['write', 'edit'] as const) {
-      await expect(
-        session.extensionRunner.emitToolCall(
-          createToolCall({
-            path: `.specs/${SPEC_ID}/spec.md`,
-            toolName,
-          }),
-        ),
-      ).resolves.toMatchObject({
-        block: true,
-        reason:
-          'The owner-approved spec.md cannot be changed directly during a subagent session.',
-      });
-    }
+    const builderTool = wrapRegisteredTool(
+      builderTools[1],
+      builder.session.extensionRunner,
+    );
 
+    const builderResult = await builderTool.execute('builder-handoff', {
+      specId: SPEC_ID,
+      status: BUILDER_HANDOFF_STATUSES.DONE,
+      summary: 'Implemented the approved change.',
+      acceptanceCriteria: [],
+      notes: [],
+    });
+
+    expect(builderResult.details).toMatchObject({
+      specId: SPEC_ID,
+      revision: builderRun.revision + 1,
+      phase: WORKFLOW_PHASES.READY_FOR_VERIFIER,
+    });
     await expect(
-      session.extensionRunner.emitToolCall(
-        createToolCall({
-          path: 'README.md',
-          toolName: 'write',
-        }),
-      ),
-    ).resolves.toBeUndefined();
-    await expect(
-      session.extensionRunner.emitToolCall({
-        type: 'tool_call',
-        toolCallId: 'test-call',
-        toolName: 'bash',
-        input: { command: 'printf test' },
+      readBuilderHandoff({
+        path: paths.getBuilderHandoffPath(SPEC_ID),
+        specId: SPEC_ID,
+        revision: builderRun.revision + 1,
       }),
-    ).resolves.toBeUndefined();
+    ).resolves.toMatchObject({ status: BUILDER_HANDOFF_STATUSES.DONE });
+    await repository.commit('Builder completed');
+
+    const verifierRun = await prepareVerifierRun({ paths, specId: SPEC_ID });
+
+    const verifier = await piTestSessions.create({
+      cwd: repository.path,
+      extensions: [],
+      additionalExtensionPaths: [
+        fileURLToPath(import.meta.resolve('#extensions/maestro-subagent.ts')),
+      ],
+    });
+
+    const verifierTools =
+      verifier.session.extensionRunner.getAllRegisteredTools();
+
+    const verifierTool = wrapRegisteredTool(
+      verifierTools[2],
+      verifier.session.extensionRunner,
+    );
+
+    const verifierResult = await verifierTool.execute('verifier-handoff', {
+      specId: SPEC_ID,
+      summary: 'The candidate satisfies the approved specification.',
+      acceptanceCriteria: [],
+      findings: [],
+      notes: [],
+    });
+
+    expect(verifierResult.details).toMatchObject({
+      specId: SPEC_ID,
+      revision: verifierRun.revision + 1,
+      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+    });
+    await expect(
+      readVerifierHandoff({
+        path: paths.getVerifierHandoffPath(SPEC_ID),
+        specId: SPEC_ID,
+        revision: verifierRun.revision + 1,
+      }),
+    ).resolves.toMatchObject({ findings: [] });
+    await expect(
+      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
+    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
+    await expect(getRepositoryStatus(repository.path)).resolves.toMatchObject({
+      clean: true,
+    });
+    expect(maestroSessionState.isActive()).toBe(false);
+    expect(maestroSessionState.getActiveSpecId()).toBeNull();
   });
 });
