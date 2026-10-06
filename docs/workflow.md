@@ -10,7 +10,9 @@ The owner works directly with Maestro.
 
 Maestro, using the current Git branch, prepares the spec, updates workflow state, starts the builder and verifier, and records owner decisions.
 
-Builder and verifier communicate with Maestro through repository handoffs.
+Builder and verifier runs are foreground operations, and communicate with Maestro through repository handoffs. 
+
+Pi waits for each run before the owner continues. Maestro's Pi status shows the current phase, and pi-subagents FleetView shows the live activity and transcript.
 
 ## Roles
 
@@ -60,22 +62,9 @@ The verifier works on the current branch with a fresh context.
 
 It reads the active spec and available artifacts. Historical artifacts provide context, not proof.
 
-Before the verifier starts, Maestro commits a `verifier-running` checkpoint. That checkpoint is the candidate commit. Its commit ID stays fixed for the entire verifier run.
+Before the verifier starts, Maestro commits a `verifier-running` checkpoint. That checkpoint is the candidate commit.
 
 The verifier never changes product code, it independently regenerates every probe and breakage from the candidate.
-
-
-The verifier applies and restores temporary breakages. `maestro_record_verifier_handoff` compares product files with that checkpoint commit. If the product is unchanged, the tool writes `verifier.json` and `workflow.json` and commits only those protocol files. If product changes remain, the tool returns `PRODUCT_FILES_MODIFIED` and does not write or commit the handoff.
-
-There is no numbered verifier pass and no separate verifier branch. The current artifact is always:
-
-```text
-.specs/<spec-id>/handoffs/verifier.json
-```
-
-Git preserves earlier verifier handoffs.
-
-Builder and verifier runs are foreground operations. Pi waits for each run before the owner continues. Maestro's Pi status shows the current phase, and pi-subagents FleetView shows the live activity and transcript.
 
 ## Main flow
 
@@ -132,19 +121,17 @@ Maestro stores the current phase in `.specs/<spec-id>/workflow.json` by default.
 
 | Phase | Meaning |
 |---|---|
-| `drafting-spec` | Owner and Maestro are preparing the initial spec. |
-| `ready-for-builder` | The owner approved the spec and it awaits a builder run. |
-| `builder-running` | A builder run is active. |
-| `escalation-decision` | The owner must decide how to resolve the active escalation. |
-| `builder-failed` | The builder ended the run with a failure. |
-| `ready-for-verifier` | Builder work is ready for independent verification. |
-| `verifier-running` | A verifier run is active. |
-| `findings-decision` | The owner must decide how to handle verifier findings. |
-| `candidate-ready` | The candidate passed verification or all findings were rejected with reasons. This is the last persisted Maestro phase. |
+| `drafting-spec` | Owner and Maestro are preparing the initial spec |
+| `ready-for-builder` | The owner approved the spec and it awaits a builder run |
+| `builder-running` | A builder run is active |
+| `escalation-decision` | The owner must decide how to resolve the active escalation |
+| `builder-failed` | The builder ended the run with a failure |
+| `ready-for-verifier` | Builder work is ready for independent verification |
+| `verifier-running` | A verifier run is active |
+| `findings-decision` | The owner must decide how to handle verifier findings |
+| `candidate-ready` | The candidate commit passed verification or all findings were rejected with reasons. This is the last persisted Maestro phase |
 
-A session can have one active Maestro workflow. A workflow in `candidate-ready` is complete from Maestro's point of view. Completed or abandoned workflows can remain under the spec directory.
-
-Disabling Maestro, restarting Pi, or using `/resume` clears live session state. Maestro does not resume an incomplete workflow from `workflow.json`; the owner must clean it up manually.
+Disabling Maestro, restarting Pi, or using `/resume` clears live session state. Maestro does not resume an incomplete workflow, the owner must clean it up manually.
 
 ## Spec approval and revision
 
