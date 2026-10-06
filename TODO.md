@@ -1,5 +1,7 @@
 # TODO
 
+## Findings must remain in the history, same escalations behavior
+
 ## Allow builder failure when all acceptance criteria pass
 
 ### Example
