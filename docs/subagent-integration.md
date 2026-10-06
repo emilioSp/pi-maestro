@@ -1,6 +1,8 @@
 # Subagent integration
 
-Maestro uses `pi-subagents` to run the builder and verifier as child sessions. A child session is a separate Pi session that receives one role and one task.
+Maestro uses `pi-subagents` to run the builder and verifier as child sessions. 
+
+A child session is a separate Pi session that receives one role and one task.
 
 ## Agent definitions
 
@@ -40,10 +42,12 @@ When the owner launches the builder, the integration follows these steps:
 5. `pi-subagents` resolves `maestro.builder` to `agents/builder.md`.
 6. The child receives the system prompt and the tools from that agent definition.
 
-Maestro also passes the explicit spec ID, the current repository root, the configured model, the thinking level, the timeout, and a fresh context. The task text tells the builder to read the applicable `AGENTS.md` files.
+Maestro also passes the explicit spec ID, the current repository root, the configured model, the thinking level, the timeout, and a fresh context.
 
 The verifier uses the same name mapping with `AGENTS.VERIFIER` and `maestro.verifier`.
 
 ## Subagent extension
 
-Both agent files set `subagentOnlyExtensions` to `../extensions/maestro-subagent.ts`. This field tells `pi-subagents` to load the extension only in the child session for that agent.
+Both agent files set `subagentOnlyExtensions` to `../extensions/maestro-subagent.ts`. 
+
+This field tells `pi-subagents` to load the extension only in the child session for that agent.

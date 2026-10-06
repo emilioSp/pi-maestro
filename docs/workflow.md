@@ -2,19 +2,21 @@
 
 Maestro manages one spec-driven development workflow in the current session.
 
-The approved `spec.md` is the contract between the owner, Maestro, the builder, and the verifier. It defines the intended behavior, constraints, technical decisions, and acceptance criteria. 
+The approved `spec.md` is the contract between the owner, Maestro, the builder, and the verifier. 
 
-Implementation details that don't influence the contract are decided during the work. Changes to the contract's behavior, scope, or approved decisions require an owner-approved revision.
+It defines the intended behavior, constraints, technical decisions, and acceptance criteria. 
 
-The owner works with Maestro. Builder and verifier communicate with Maestro through repository handoffs. Maestro prepares the spec, updates workflow state, starts the builder and verifier, and records owner decisions.
+The owner works directly with Maestro. 
 
-Maestro uses the current Git checkout and branch.
+Maestro, using the current Git branch, prepares the spec, updates workflow state, starts the builder and verifier, and records owner decisions.
+
+Builder and verifier communicate with Maestro through repository handoffs.
 
 ## Roles
 
 ### Owner
 
-The owner is the human in the loop. Every decision that needs human judgment returns to the owner.
+The owner is the human in the loop: every decision that needs human judgment returns to the owner.
 
 The owner has final authority over:
 
@@ -27,11 +29,7 @@ The owner has final authority over:
 - Git flow after the candidate is ready
 - Final Pull Request and merge
 
-The owner does not change product code while the workflow is running. The owner may revise `spec.md` while the workflow is blocked, as described below.
-
 ### Maestro
-
-Maestro:
 
 - Discusses the change with the owner
 - Writes and reviews the spec with the owner
@@ -42,11 +40,11 @@ Maestro:
 - Records explicit owner decisions
 - Summarizes the results and facts for a Pull Request when the candidate is ready
 
-Maestro does not know or manage a target branch.
-
 ### Builder
 
-The builder works on the current branch with a fresh context. It reads the active spec, implements the approved change, and runs every acceptance criterion.
+The builder works on the current branch with a fresh context. 
+
+It reads the active spec, implements the approved change, and runs every acceptance criterion.
 
 For each criterion, the builder runs the probe, applies the approved temporary breakage, confirms that the same probe fails, restores the implementation, and confirms that the probe passes again.
 
@@ -54,17 +52,18 @@ The builder ends a run with one of these outcomes:
 
 - `done`
 - `failed`
-- An escalation
-
-The builder uses `maestro_record_builder_handoff` or `maestro_open_escalation`, then commits the implementation, generated workflow state, and handoff together.
+- An `escalation`
 
 ### Verifier
 
-The verifier works on the current branch with a fresh context. It reads the active spec and available artifacts. Historical artifacts provide context, not proof; the verifier decides which information is still applicable to the active spec.
+The verifier works on the current branch with a fresh context. 
 
-The verifier independently regenerates every probe and breakage from the candidate. It does not repair product code and does not commit through Bash.
+It reads the active spec and available artifacts. Historical artifacts provide context, not proof.
 
-Before the verifier starts, Maestro commits a `verifier-running` checkpoint. The candidate is the parent of that checkpoint's `HEAD`.
+Before the verifier starts, Maestro commits a `verifier-running` checkpoint, making the parent of that checkpoint a `candidate` commit for the spec implementation.
+
+The verifier never changes product code, it independently regenerates every probe and breakage from the candidate.
+
 
 The verifier applies and restores temporary breakages. `maestro_record_verifier_handoff` compares product files with that parent commit. If the product is unchanged, the tool writes `verifier.json` and `workflow.json` and commits only those protocol files. If product changes remain, the tool returns `PRODUCT_FILES_MODIFIED` and does not write or commit the handoff.
 
