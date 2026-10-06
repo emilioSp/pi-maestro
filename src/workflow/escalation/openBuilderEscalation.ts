@@ -11,7 +11,6 @@ import type {
 } from '#artifacts/escalation/schema.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { pathExists } from '#utils/path-exists.ts';
-import { assertBuilderProtocolUnchanged } from '#workflow/builder/assertBuilderProtocolUnchanged.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
   WORKFLOW_EVENTS,
@@ -40,8 +39,6 @@ export const openBuilderEscalation = async ({
   specId,
   escalation,
 }: OpenBuilderEscalationInput): Promise<OpenedBuilderEscalation> => {
-  await assertBuilderProtocolUnchanged({ paths, specId });
-
   const workflowPath = paths.getWorkflowPath(specId);
   const handoffPath = paths.getBuilderHandoffPath(specId);
   const escalationsPath = paths.getEscalationsPath(specId);

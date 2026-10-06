@@ -1,9 +1,8 @@
-import { access, readFile, writeFile } from 'node:fs/promises';
-import { join, relative } from 'node:path';
+import { access, readFile } from 'node:fs/promises';
+import { relative } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
-import { runGitCommand } from '#git/command.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import {
   cleanupBuilderWorkflows,
@@ -14,10 +13,7 @@ import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
-import {
-  completeVerifierPass,
-  VERIFIER_PASS_ERRORS,
-} from '#workflow/verifier/completeVerifierPass.ts';
+import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
 import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 
 afterEach(cleanupBuilderWorkflows);
@@ -72,15 +68,8 @@ describe('verifier completion', () => {
     const completed = await completeVerifierPass({
       paths,
       specId: SPEC_ID,
-      candidateCommit: verifierRun.candidateCommit,
       handoff,
     });
-
-    expect('state' in completed).toBe(true);
-
-    if (!('state' in completed)) {
-      throw new Error('Expected verifier completion to succeed.');
-    }
 
     expect(completed.repositoryRoot).toBe(repository.path);
     expect(completed.state.phase).toBe(WORKFLOW_PHASES.CANDIDATE_READY);
@@ -97,96 +86,6 @@ describe('verifier completion', () => {
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
   });
 
-  it('rejects product changes without writing the verifier protocol', async () => {
-    const { paths, repository, verifierRun } = await prepareRunningVerifier();
-
-    await writeFile(join(repository.path, 'product-change.txt'), 'changed\n');
-    const handoffPath = paths.getVerifierHandoffPath(SPEC_ID);
-
-    await expect(
-      completeVerifierPass({
-        paths,
-        specId: SPEC_ID,
-        candidateCommit: verifierRun.candidateCommit,
-        handoff: {
-          ...approvedHandoff,
-          revision: verifierRun.revision + 1,
-        },
-      }),
-    ).resolves.toEqual({
-      error: VERIFIER_PASS_ERRORS.PRODUCT_FILES_MODIFIED,
-      message:
-        'Product files differ from the candidate commit. Restore the candidate before submitting the verifier handoff.',
-    });
-    await expect(
-      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.VERIFIER_RUNNING });
-    await expect(
-      import('node:fs/promises').then(({ access }) => access(handoffPath)),
-    ).rejects.toMatchObject({ code: 'ENOENT' });
-  });
-
-  it('given a staged product change when the verifier submits its handoff then no protocol write occurs', async () => {
-    const { paths, repository, verifierRun } = await prepareRunningVerifier();
-
-    const workflowPath = paths.getWorkflowPath(SPEC_ID);
-    const workflowBefore = await readFile(workflowPath, 'utf8');
-
-    await writeFile(join(repository.path, 'README.md'), '# Changed\n', 'utf8');
-
-    await runGitCommand({
-      arguments: ['add', '--', 'README.md'],
-      cwd: repository.path,
-    });
-
-    await expect(
-      completeVerifierPass({
-        paths,
-        specId: SPEC_ID,
-        candidateCommit: verifierRun.candidateCommit,
-        handoff: {
-          ...approvedHandoff,
-          revision: verifierRun.revision + 1,
-        },
-      }),
-    ).resolves.toMatchObject({
-      error: VERIFIER_PASS_ERRORS.PRODUCT_FILES_MODIFIED,
-    });
-
-    await expect(readFile(workflowPath, 'utf8')).resolves.toBe(workflowBefore);
-    await expect(
-      access(paths.getVerifierHandoffPath(SPEC_ID)),
-    ).rejects.toMatchObject({ code: 'ENOENT' });
-  });
-
-  it('given an unstaged product change when the verifier submits its handoff then no protocol write occurs', async () => {
-    const { paths, repository, verifierRun } = await prepareRunningVerifier();
-
-    const workflowPath = paths.getWorkflowPath(SPEC_ID);
-    const workflowBefore = await readFile(workflowPath, 'utf8');
-
-    await writeFile(join(repository.path, 'README.md'), '# Changed\n', 'utf8');
-
-    await expect(
-      completeVerifierPass({
-        paths,
-        specId: SPEC_ID,
-        candidateCommit: verifierRun.candidateCommit,
-        handoff: {
-          ...approvedHandoff,
-          revision: verifierRun.revision + 1,
-        },
-      }),
-    ).resolves.toMatchObject({
-      error: VERIFIER_PASS_ERRORS.PRODUCT_FILES_MODIFIED,
-    });
-
-    await expect(readFile(workflowPath, 'utf8')).resolves.toBe(workflowBefore);
-    await expect(
-      access(paths.getVerifierHandoffPath(SPEC_ID)),
-    ).rejects.toMatchObject({ code: 'ENOENT' });
-  });
-
   it('given an invalid handoff specId when the verifier submits it then no protocol write occurs', async () => {
     const { paths, verifierRun } = await prepareRunningVerifier();
     const workflowPath = paths.getWorkflowPath(SPEC_ID);
@@ -196,7 +95,6 @@ describe('verifier completion', () => {
       completeVerifierPass({
         paths,
         specId: SPEC_ID,
-        candidateCommit: verifierRun.candidateCommit,
         handoff: {
           ...approvedHandoff,
           revision: verifierRun.revision + 1,
@@ -212,7 +110,7 @@ describe('verifier completion', () => {
   });
 
   it('given an invalid handoff revision when the verifier submits it then no protocol write occurs', async () => {
-    const { paths, verifierRun } = await prepareRunningVerifier();
+    const { paths } = await prepareRunningVerifier();
     const workflowPath = paths.getWorkflowPath(SPEC_ID);
     const workflowBefore = await readFile(workflowPath, 'utf8');
 
@@ -220,7 +118,6 @@ describe('verifier completion', () => {
       completeVerifierPass({
         paths,
         specId: SPEC_ID,
-        candidateCommit: verifierRun.candidateCommit,
         handoff: {
           ...approvedHandoff,
           revision: 1,

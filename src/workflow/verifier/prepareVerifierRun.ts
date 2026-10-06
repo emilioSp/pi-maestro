@@ -7,7 +7,6 @@ import { rm } from 'node:fs/promises';
 import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
-import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
@@ -83,8 +82,6 @@ export const prepareVerifierRun = async ({
     repositoryRoot,
     expectedPaths,
   });
-
-  maestroSessionState.setVerifierCheckpointCommit(checkpointCommit);
 
   return {
     specId,

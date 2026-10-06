@@ -68,7 +68,6 @@ describe('finding resolution', () => {
     await completeVerifierPass({
       paths,
       specId: SPEC_ID,
-      candidateCommit: firstVerifierRun.candidateCommit,
       handoff: {
         version: VERIFIER_HANDOFF_VERSION,
         specId: SPEC_ID,
@@ -133,7 +132,6 @@ describe('finding resolution', () => {
     const secondVerifier = await completeVerifierPass({
       paths,
       specId: SPEC_ID,
-      candidateCommit: secondVerifierRun.candidateCommit,
       handoff: {
         version: VERIFIER_HANDOFF_VERSION,
         specId: SPEC_ID,
@@ -144,12 +142,6 @@ describe('finding resolution', () => {
         notes: [],
       },
     });
-
-    expect('state' in secondVerifier).toBe(true);
-
-    if (!('state' in secondVerifier)) {
-      throw new Error('Expected the second verifier pass to succeed.');
-    }
 
     await repository.commit('Verifier approved fix');
 

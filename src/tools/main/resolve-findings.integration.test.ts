@@ -85,7 +85,6 @@ const createFindingsDecisionWorkflow = async (findings: VerifierFinding[]) => {
   await completeVerifierPass({
     paths: workflow.paths,
     specId: SPEC_ID,
-    candidateCommit: verifierRun.candidateCommit,
     handoff: {
       version: VERIFIER_HANDOFF_VERSION,
       specId: SPEC_ID,

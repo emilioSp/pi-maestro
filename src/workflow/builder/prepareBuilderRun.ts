@@ -103,8 +103,6 @@ export const prepareBuilderRun = async ({
     expectedPaths,
   });
 
-  await maestroSessionState.setSpecSha256(paths.getSpecFilePath(specId));
-
   return {
     specId,
     revision: nextState.revision,

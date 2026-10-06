@@ -26,6 +26,7 @@ import { DEFAULT_CONFIG } from '#config/defaults.ts';
 type CreatePiSessionInput = {
   cwd?: string;
   extensions: ExtensionFactory[];
+  additionalExtensionPaths?: string[];
   projectTrusted?: boolean;
   maestroAgentsAvailable?: boolean;
   sessionStartEvent?: SessionStartEvent;
@@ -48,6 +49,7 @@ class PiTestSessions {
   public create = async ({
     cwd,
     extensions,
+    additionalExtensionPaths = [],
     projectTrusted = true,
     maestroAgentsAvailable = true,
     sessionStartEvent,
@@ -118,6 +120,7 @@ class PiTestSessions {
       settingsManager,
       eventBus: events,
       extensionFactories: extensions,
+      additionalExtensionPaths,
       noExtensions: true,
       noSkills: true,
       noPromptTemplates: true,

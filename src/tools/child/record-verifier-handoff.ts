@@ -13,14 +13,9 @@ import {
 import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
-import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { resolveWorkflowContext } from '#tools/child/utils/resolveWorkflowContext.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import {
-  type CompletedVerifierPass,
-  completeVerifierPass,
-  type VerifierPassRejection,
-} from '#workflow/verifier/completeVerifierPass.ts';
+import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
 
 export const VERIFIER_HANDOFF_TOOL = {
   NAME: 'maestro_record_verifier_handoff',
@@ -48,20 +43,6 @@ const VerifierHandoffToolParameters = Type.Object(
   { additionalProperties: false },
 );
 
-type VerifierPassResult = CompletedVerifierPass | VerifierPassRejection;
-
-const isVerifierPassRejection = (
-  result: VerifierPassResult,
-): result is VerifierPassRejection => 'error' in result;
-
-function assertVerifierCheckpointCommit(
-  commit: string | null,
-): asserts commit is string {
-  if (commit === null) {
-    throw new Error('Verifier handoff requires a live verifier checkpoint.');
-  }
-}
-
 export const registerRecordVerifierHandoffTool = (pi: ExtensionAPI): void => {
   pi.registerTool({
     name: VERIFIER_HANDOFF_TOOL.NAME,
@@ -80,10 +61,6 @@ export const registerRecordVerifierHandoffTool = (pi: ExtensionAPI): void => {
         paths.getWorkflowPath(specId),
       );
 
-      const candidateCommit = maestroSessionState.getVerifierCheckpointCommit();
-
-      assertVerifierCheckpointCommit(candidateCommit);
-
       const handoff = {
         version: VERIFIER_HANDOFF_VERSION,
         specId: currentState.specId,
@@ -94,20 +71,8 @@ export const registerRecordVerifierHandoffTool = (pi: ExtensionAPI): void => {
       const completed = await completeVerifierPass({
         paths,
         specId,
-        candidateCommit,
         handoff,
       });
-
-      if (isVerifierPassRejection(completed)) {
-        return {
-          content: [{ type: 'text', text: completed.message }],
-          details: {
-            error: completed.error,
-            message: completed.message,
-            specId,
-          },
-        };
-      }
 
       const workflowCheckpointCommit = await createWorkflowCheckpointCommit({
         repositoryRoot,
@@ -131,7 +96,6 @@ export const registerRecordVerifierHandoffTool = (pi: ExtensionAPI): void => {
           },
         ],
         details: {
-          candidateCommit,
           phase: completed.state.phase,
           workflowCheckpointCommit,
           revision: completed.state.revision,

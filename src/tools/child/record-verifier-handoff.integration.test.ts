@@ -1,4 +1,4 @@
-import { access, readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { relative } from 'node:path';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -6,9 +6,7 @@ import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { FINDING_SEVERITIES } from '#artifacts/verifier-handoff/schema.ts';
 import { runGitCommand } from '#git/command.ts';
 import { getParentCommit } from '#git/history/getParentCommit.ts';
-import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
-import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -67,9 +65,6 @@ describe('verifier handoff tool', () => {
 
   it('rejects a handoff outside the verifier-running phase', async () => {
     const workflow = await createApprovedWorkflow();
-    maestroSessionState.setVerifierCheckpointCommit(
-      await getHeadCommit(workflow.repository.path),
-    );
 
     const { tool } = await piTestSessions.createRegisteredTool({
       cwd: workflow.repository.path,
@@ -87,9 +82,6 @@ describe('verifier handoff tool', () => {
     const workflow = await createApprovedWorkflow();
     const statePath = workflow.paths.getWorkflowPath(SPEC_ID);
     const state = await readWorkflowState(statePath);
-    maestroSessionState.setVerifierCheckpointCommit(
-      await getHeadCommit(workflow.repository.path),
-    );
 
     await writeFile(
       statePath,
@@ -150,7 +142,6 @@ describe('verifier handoff tool', () => {
     const result = await tool.execute('test-call', createHandoffInput());
 
     expect(result.details).toMatchObject({
-      candidateCommit: verifierRun.candidateCommit,
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
       revision: verifierRun.revision + 1,
       specId: SPEC_ID,
@@ -226,162 +217,5 @@ describe('verifier handoff tool', () => {
     await expect(
       getRepositoryStatus(workflow.repository.path),
     ).resolves.toMatchObject({ clean: false, unstaged: ['README.md'] });
-  });
-
-  it('given no live verifier checkpoint when the verifier records its handoff then no protocol files are written or committed', async () => {
-    const workflow = await createApprovedWorkflow();
-    await prepareBuilderRun({ paths: workflow.paths, specId: SPEC_ID });
-    await completeBuilderPass({
-      paths: workflow.paths,
-      specId: SPEC_ID,
-      handoff: {
-        status: BUILDER_HANDOFF_STATUSES.DONE,
-        summary: 'Implemented the approved change.',
-        acceptanceCriteria: [],
-        notes: [],
-      },
-    });
-    await workflow.repository.commit('Builder completed');
-
-    const run = await prepareVerifierRun({
-      paths: workflow.paths,
-      specId: SPEC_ID,
-    });
-
-    maestroSessionState.clearVerifierCheckpointCommit();
-    const workflowPath = workflow.paths.getWorkflowPath(SPEC_ID);
-    const workflowBefore = await readFile(workflowPath, 'utf8');
-
-    const { tool } = await piTestSessions.createRegisteredTool({
-      cwd: workflow.repository.path,
-      extension: registerRecordVerifierHandoffTool,
-    });
-
-    await expect(
-      tool.execute('test-call', createHandoffInput()),
-    ).rejects.toThrow('Verifier handoff requires a live verifier checkpoint.');
-    await expect(getHeadCommit(workflow.repository.path)).resolves.toBe(
-      run.checkpointCommit,
-    );
-    await expect(readFile(workflowPath, 'utf8')).resolves.toBe(workflowBefore);
-    await expect(
-      access(workflow.paths.getVerifierHandoffPath(SPEC_ID)),
-    ).rejects.toMatchObject({ code: 'ENOENT' });
-  });
-
-  it('given product changes committed after the run starts when the verifier records its handoff then the checkpoint baseline does not move', async () => {
-    const workflow = await createApprovedWorkflow();
-    await prepareBuilderRun({ paths: workflow.paths, specId: SPEC_ID });
-    await completeBuilderPass({
-      paths: workflow.paths,
-      specId: SPEC_ID,
-      handoff: {
-        status: BUILDER_HANDOFF_STATUSES.DONE,
-        summary: 'Implemented the approved change.',
-        acceptanceCriteria: [],
-        notes: [],
-      },
-    });
-    await workflow.repository.commit('Builder completed');
-
-    const run = await prepareVerifierRun({
-      paths: workflow.paths,
-      specId: SPEC_ID,
-    });
-
-    await writeFile(
-      `${workflow.repository.path}/README.md`,
-      '# Changed product\n',
-      'utf8',
-    );
-    await workflow.repository.commit(
-      'Change product after the verifier run starts',
-    );
-    await runGitCommand({
-      arguments: ['commit', '--allow-empty', '-m', 'Advance HEAD again'],
-      cwd: workflow.repository.path,
-    });
-    const headBefore = await getHeadCommit(workflow.repository.path);
-    const workflowPath = workflow.paths.getWorkflowPath(SPEC_ID);
-    const workflowBefore = await readFile(workflowPath, 'utf8');
-
-    const { tool } = await piTestSessions.createRegisteredTool({
-      cwd: workflow.repository.path,
-      extension: registerRecordVerifierHandoffTool,
-    });
-
-    const result = await tool.execute('test-call', createHandoffInput());
-
-    expect(result.details).toMatchObject({ error: 'PRODUCT_FILES_MODIFIED' });
-    expect(maestroSessionState.getVerifierCheckpointCommit()).toBe(
-      run.checkpointCommit,
-    );
-    await expect(getHeadCommit(workflow.repository.path)).resolves.toBe(
-      headBefore,
-    );
-    await expect(readFile(workflowPath, 'utf8')).resolves.toBe(workflowBefore);
-    await expect(
-      access(workflow.paths.getVerifierHandoffPath(SPEC_ID)),
-    ).rejects.toMatchObject({ code: 'ENOENT' });
-  });
-
-  it('rejects product changes without writing or committing protocol files', async () => {
-    const workflow = await createApprovedWorkflow();
-    await prepareBuilderRun({
-      paths: workflow.paths,
-      specId: SPEC_ID,
-    });
-
-    await completeBuilderPass({
-      paths: workflow.paths,
-      specId: SPEC_ID,
-      handoff: {
-        status: BUILDER_HANDOFF_STATUSES.DONE,
-        summary: 'Implemented the approved change.',
-        acceptanceCriteria: [],
-        notes: [],
-      },
-    });
-    await workflow.repository.commit('Builder completed');
-    await prepareVerifierRun({
-      paths: workflow.paths,
-      specId: SPEC_ID,
-    });
-
-    const headBefore = await getHeadCommit(workflow.repository.path);
-
-    await writeFile(
-      `${workflow.repository.path}/README.md`,
-      '# Changed product\n',
-      'utf8',
-    );
-
-    const { tool } = await piTestSessions.createRegisteredTool({
-      cwd: workflow.repository.path,
-      extension: registerRecordVerifierHandoffTool,
-    });
-
-    const result = await tool.execute('test-call', createHandoffInput());
-
-    expect(result).toMatchObject({
-      details: {
-        error: 'PRODUCT_FILES_MODIFIED',
-      },
-    });
-    expect(result.content).toEqual([
-      {
-        type: 'text',
-        text: 'Product files differ from the candidate commit. Restore the candidate before submitting the verifier handoff.',
-      },
-    ]);
-    await expect(getHeadCommit(workflow.repository.path)).resolves.toBe(
-      headBefore,
-    );
-    await expect(
-      readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID)),
-    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.VERIFIER_RUNNING });
-    await expect(
-      access(workflow.paths.getVerifierHandoffPath(SPEC_ID)),
-    ).rejects.toMatchObject({ code: 'ENOENT' });
   });
 });

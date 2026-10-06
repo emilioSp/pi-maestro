@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -12,9 +13,10 @@ import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 afterEach(cleanupBuilderWorkflows);
 
 describe('builder escalation', () => {
-  it('records an escalation in the current checkout', async () => {
+  it('given no parent session state when the builder escalates then the workflow records an owner decision request', async () => {
     const { paths, repository } = await createApprovedWorkflow();
     await prepareBuilderRun({ paths, specId: SPEC_ID });
+    maestroSessionState.deactivate();
 
     const opened = await openBuilderEscalation({
       paths,

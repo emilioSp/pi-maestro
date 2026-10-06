@@ -1,5 +1,4 @@
-import { access, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { access } from 'node:fs/promises';
 import {
   SUBAGENT_DELEGATION_REQUEST_EVENT,
   SUBAGENT_DELEGATION_RESPONSE_EVENT,
@@ -15,9 +14,7 @@ import {
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { AGENTS } from '#config/schema.ts';
 import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
-import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
-import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -30,10 +27,7 @@ import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
-import {
-  completeVerifierPass,
-  VERIFIER_PASS_ERRORS,
-} from '#workflow/verifier/completeVerifierPass.ts';
+import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
 
 const createReadyForVerifierWorkflow = async () => {
   const workflow = await createApprovedWorkflow();
@@ -78,30 +72,27 @@ const createVerifierHandoff = ({
   notes: [],
 });
 
+type RecordVerifierHandoffInput = {
+  repositoryRoot: string;
+  paths: MaestroPaths;
+  findings?: readonly unknown[];
+};
+
 const recordVerifierHandoff = async ({
   repositoryRoot,
   paths,
   findings = [],
-}: {
-  repositoryRoot: string;
-  paths: MaestroPaths;
-  findings?: readonly unknown[];
-}): Promise<void> => {
+}: RecordVerifierHandoffInput): Promise<void> => {
   const state = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
 
-  const completed = await completeVerifierPass({
+  await completeVerifierPass({
     paths,
     specId: SPEC_ID,
-    candidateCommit: await getHeadCommit(repositoryRoot),
     handoff: createVerifierHandoff({
       revision: state.revision + 1,
       findings,
     }),
   });
-
-  if ('error' in completed) {
-    throw new Error(completed.message);
-  }
 
   await createWorkflowCheckpointCommit({
     repositoryRoot,
@@ -198,7 +189,6 @@ describe('run verifier tool', () => {
       specId: SPEC_ID,
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
     });
-    expect(maestroSessionState.getVerifierCheckpointCommit()).toBeNull();
   });
 
   it('returns findings and cleans the response listener', async () => {
@@ -252,62 +242,6 @@ describe('run verifier tool', () => {
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
   });
 
-  it('returns product changes without advancing the workflow', async () => {
-    const workflow = await createReadyForVerifierWorkflow();
-
-    const { tool, events, on } = await piTestSessions.createRegisteredTool({
-      cwd: workflow.repository.path,
-      extension: registerRunVerifierTool,
-    });
-
-    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: The run tool emits a delegation request on this channel.
-      const request = payload as SubagentDelegationRequest;
-      await writeFile(
-        join(workflow.repository.path, 'README.md'),
-        '# Changed\n',
-      );
-
-      const state = await readWorkflowState(
-        workflow.paths.getWorkflowPath(SPEC_ID),
-      );
-
-      const completed = await completeVerifierPass({
-        paths: workflow.paths,
-        specId: SPEC_ID,
-        candidateCommit: await getHeadCommit(workflow.repository.path),
-        handoff: createVerifierHandoff({ revision: state.revision + 1 }),
-      });
-
-      expect(completed).toMatchObject({
-        error: VERIFIER_PASS_ERRORS.PRODUCT_FILES_MODIFIED,
-      });
-      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: request.requestId,
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.COMPLETED,
-        result: { kind: 'text', text: 'The verifier finished.' },
-      });
-    });
-
-    const result = await tool.execute('test-call', { specId: SPEC_ID });
-
-    expect(result.details).toMatchObject({
-      outcome: VERIFIER_PASS_ERRORS.PRODUCT_FILES_MODIFIED,
-      error: VERIFIER_PASS_ERRORS.PRODUCT_FILES_MODIFIED,
-      phase: WORKFLOW_PHASES.VERIFIER_RUNNING,
-    });
-    await expect(
-      readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID)),
-    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.VERIFIER_RUNNING });
-    expect(on).toHaveBeenLastCalledWith(
-      SUBAGENT_DELEGATION_RESPONSE_EVENT,
-      expect.any(Function),
-    );
-    expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
-  });
-
   it('returns a workflow error before delegation', async () => {
     const workflow = await createApprovedWorkflow();
 
@@ -350,7 +284,6 @@ describe('run verifier tool', () => {
     ).rejects.toThrow(
       'Delegation error: The configured provider is unavailable.',
     );
-    expect(maestroSessionState.getVerifierCheckpointCommit()).toBeNull();
     await expect(
       readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.VERIFIER_RUNNING });
@@ -384,7 +317,6 @@ describe('run verifier tool', () => {
     await expect(
       timeoutTool.tool.execute('test-call', { specId: SPEC_ID }),
     ).rejects.toThrow('Delegation timeout: The verifier exceeded its timeout.');
-    expect(maestroSessionState.getVerifierCheckpointCommit()).toBeNull();
 
     const interruptionWorkflow = await createReadyForVerifierWorkflow();
 
@@ -408,7 +340,6 @@ describe('run verifier tool', () => {
     await expect(
       interruptionTool.tool.execute('test-call', { specId: SPEC_ID }),
     ).rejects.toThrow('Delegation interruption: The verifier was interrupted.');
-    expect(maestroSessionState.getVerifierCheckpointCommit()).toBeNull();
   });
 
   it('returns a protocol error when a completed response has no handoff', async () => {

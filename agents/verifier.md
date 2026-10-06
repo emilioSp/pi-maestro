@@ -106,8 +106,7 @@ All files outside the tool-owned `workflow.json` and `handoffs/verifier.json` mu
 This includes the spec, prototypes, builder handoff, and escalation files. Findings do not relax this requirement.
 
 Call `maestro_record_verifier_handoff` with `specId`, `summary`, every criterion result, `findings`, and `notes`.
-The tool checks product restoration, writes the handoff, changes the phase, and commits only its two protocol files.
-If it returns `PRODUCT_FILES_MODIFIED`, inspect the remaining differences, restore your changes, and retry. The tool does not restore files.
+The tool writes the handoff, changes the phase, and commits only its two protocol files.
 If validation rejects the payload without writing it, correct the payload without changing the facts.
 If the tool already wrote an artifact or changed phase before an error, do not resubmit or commit manually.
 Do not delete artifacts, change workflow state, or bypass the tool to force completion.

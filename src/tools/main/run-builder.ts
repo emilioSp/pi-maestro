@@ -18,6 +18,7 @@ import { AGENTS } from '#config/schema.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
+import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
 import {
   assertDelegationResponse,
   waitForDelegationResponse,
@@ -232,6 +233,7 @@ export const registerRunBuilderTool = (pi: ExtensionAPI): void => {
       const { paths, config } = await resolveToolRunContext(context.cwd);
 
       const run = await prepareBuilderRun({ paths, specId });
+      await refreshMaestroStatus(context);
 
       const request: SubagentDelegationRequest = {
         requestId: randomUUID(),
