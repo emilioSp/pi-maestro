@@ -62,15 +62,15 @@
     "lint:fix": "biome check --write . && npm run lint:anti-slop"
   },
   "dependencies": {
-    "pi-subagents": "0.76.0",
-    "typebox": "1.3.35"
+    "pi-subagents": "0.76.0"
   },
   "bundleDependencies": [
     "pi-subagents"
   ],
   "peerDependencies": {
-    "@earendil-works/pi-ai": ">=1.0.0",
-    "@earendil-works/pi-coding-agent": ">=1.0.0"
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "typebox": "*"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
@@ -79,6 +79,7 @@
     "@types/node": "26.6.4",
     "oxlint": "1.87.0",
     "oxlint-anti-slop": "0.3.3",
+    "typebox": "1.3.35",
     "typescript": "7.0.2",
     "vitest": "5.0.3"
   },
