@@ -26,7 +26,8 @@ const hasOnlyCompletedChecks = (
   acceptanceCriteria.every(
     (criterion) =>
       criterion.probeStatus === PROBE_STATUSES.PASSED &&
-      criterion.breakageStatus === BREAKAGE_STATUSES.CONFIRMED,
+      (criterion.breakageStatus === BREAKAGE_STATUSES.CONFIRMED ||
+        criterion.breakageStatus === BREAKAGE_STATUSES.NOT_REQUIRED),
   );
 
 const hasValidFailedChecks = (
@@ -74,7 +75,7 @@ export function assertBuilderHandoff(
     !hasOnlyCompletedChecks(handoff.acceptanceCriteria)
   ) {
     throw new Error(
-      'Done builder handoff requires every probe to pass and every breakage check to be confirmed.',
+      'Done builder handoff requires every probe to pass and every breakage check to be confirmed or not required.',
     );
   }
 

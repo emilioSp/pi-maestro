@@ -51,6 +51,53 @@ describe('verifier handoff validation', () => {
     ).not.toThrow();
   });
 
+  it('given mixed confirmed and not-required breakages when all probes pass then accepts no findings', () => {
+    const input = handoff();
+    input.acceptanceCriteria.push({
+      id: 'AC2',
+      probe: 'Inspect the timestamp font size.',
+      probeStatus: PROBE_STATUSES.PASSED,
+      breakageStatus: BREAKAGE_STATUSES.NOT_REQUIRED,
+    });
+
+    expect(() =>
+      assertVerifierHandoff({ handoff: input, specId, revision: 6 }),
+    ).not.toThrow();
+  });
+
+  it.each([BREAKAGE_STATUSES.NOT_RUN, BREAKAGE_STATUSES.NOT_CONFIRMED])(
+    'given a passed probe and %s breakage then requires a finding',
+    (breakageStatus) => {
+      const input = handoff();
+      input.acceptanceCriteria[0].breakageStatus = breakageStatus;
+
+      expect(() =>
+        assertVerifierHandoff({ handoff: input, specId, revision: 6 }),
+      ).toThrow('requires a finding');
+    },
+  );
+
+  it.each([PROBE_STATUSES.FAILED, PROBE_STATUSES.NOT_RUN])(
+    'given a %s probe without required breakage then requires a finding',
+    (probeStatus) => {
+      const input = handoff();
+      input.acceptanceCriteria[0] = {
+        ...input.acceptanceCriteria[0],
+        probeStatus,
+        breakageStatus: BREAKAGE_STATUSES.NOT_REQUIRED,
+      };
+
+      expect(() =>
+        assertVerifierHandoff({ handoff: input, specId, revision: 6 }),
+      ).toThrow('requires a finding');
+
+      input.findings = [finding()];
+      expect(() =>
+        assertVerifierHandoff({ handoff: input, specId, revision: 6 }),
+      ).not.toThrow();
+    },
+  );
+
   it('accepts findings linked to incomplete checks and other spec rules', () => {
     expect(() =>
       assertVerifierHandoff({

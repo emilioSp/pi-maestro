@@ -28,6 +28,7 @@ export const BREAKAGE_STATUSES = {
   CONFIRMED: 'confirmed',
   NOT_CONFIRMED: 'not-confirmed',
   NOT_RUN: 'not-run',
+  NOT_REQUIRED: 'not-required',
 } as const;
 
 export type ProbeStatus = (typeof PROBE_STATUSES)[keyof typeof PROBE_STATUSES];
