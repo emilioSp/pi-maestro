@@ -17,7 +17,8 @@ import { isValidSpecId } from '#ids/isValidSpecId.ts';
 
 const hasCompletedChecks = (criterion: BuilderAcceptanceCriterion): boolean =>
   criterion.probeStatus === PROBE_STATUSES.PASSED &&
-  criterion.breakageStatus === BREAKAGE_STATUSES.CONFIRMED;
+  (criterion.breakageStatus === BREAKAGE_STATUSES.CONFIRMED ||
+    criterion.breakageStatus === BREAKAGE_STATUSES.NOT_REQUIRED);
 
 function assertVerifierHandoffSchema(
   input: unknown,
