@@ -40,4 +40,4 @@ No architectural changes. The product is one text file.
 
 1. Probe: Read `alert.txt` as UTF-8 and compare it with `Weather alerts enabled\n`.
 2. Expected result: The contents match exactly.
-3. Breakage: Replace `enabled` with `disabled`. The contents no longer match. Restore the message before the handoff.
+3. Example: The repository has no `alert.txt`. After implementation, `alert.txt` contains exactly `Weather alerts enabled` followed by a newline.
