@@ -3,15 +3,13 @@
  * Used: When Maestro initializes for a repository.
  */
 
-import { lstat, readFile, realpath } from 'node:fs/promises';
-import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
+import { readFile, realpath } from 'node:fs/promises';
+import { isAbsolute, join, resolve } from 'node:path';
 import { assertConfiguration } from '#config/assertConfiguration.ts';
 import { CONFIG_FILE_PATH, DEFAULT_CONFIG } from '#config/defaults.ts';
 import type { MaestroConfig, PartialMaestroConfig } from '#config/schema.ts';
-import { isErrnoException } from '#utils/is-errno-exception.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { isPathStrictlyWithin } from '#utils/path-strictly-within.ts';
-import { isPathWithinOrEqual } from '#utils/path-within-or-equal.ts';
 
 const resolveConfiguration = (input: PartialMaestroConfig): MaestroConfig => {
   const resolved: MaestroConfig = {
@@ -33,43 +31,6 @@ const resolveConfiguration = (input: PartialMaestroConfig): MaestroConfig => {
   };
 
   return resolved;
-};
-
-type ExistingAncestor = {
-  path: string;
-  realPath: string;
-};
-
-const findExistingAncestor = async (
-  path: string,
-): Promise<ExistingAncestor> => {
-  let anchestor = path;
-
-  while (true) {
-    try {
-      // lstat instead of access, because access follows symlinks
-      await lstat(anchestor);
-    } catch (error) {
-      if (!isErrnoException(error) || error.code !== 'ENOENT') {
-        throw error;
-      }
-
-      const parent = dirname(anchestor);
-
-      if (parent === anchestor) {
-        throw new Error(`Cannot resolve an existing ancestor for "${path}".`);
-      }
-
-      anchestor = parent;
-      continue;
-    }
-
-    try {
-      return { path: anchestor, realPath: await realpath(anchestor) };
-    } catch {
-      throw new Error(`Cannot resolve symlink "${anchestor}".`);
-    }
-  }
 };
 
 type AssertSafeDirectoryInput = {
@@ -96,11 +57,11 @@ type ResolveSafeDirectoryInput = {
   name: string;
 };
 
-const resolveSafeDirectory = async ({
+const resolveSafeDirectory = ({
   repositoryRoot,
   directory,
   name,
-}: ResolveSafeDirectoryInput): Promise<string> => {
+}: ResolveSafeDirectoryInput): string => {
   assertSafeDirectoryInput({ value: directory, name });
 
   const requestedDirectory = resolve(repositoryRoot, directory);
@@ -118,31 +79,7 @@ const resolveSafeDirectory = async ({
     throw new Error(`${name} must stay inside the Git root.`);
   }
 
-  // The directory could not exist at the check time. We find the existing anchestor and do the check on that.
-  const ancestor = await findExistingAncestor(requestedDirectory);
-
-  if (
-    !isPathWithinOrEqual({
-      parent: repositoryRoot,
-      candidate: ancestor.realPath,
-    })
-  ) {
-    throw new Error(`${name} resolves outside the Git root through a symlink.`);
-  }
-
-  const unresolvedSuffix = relative(ancestor.path, requestedDirectory);
-  const resolvedDirectory = resolve(ancestor.realPath, unresolvedSuffix);
-
-  if (
-    !isPathStrictlyWithin({
-      parent: repositoryRoot,
-      candidate: resolvedDirectory,
-    })
-  ) {
-    throw new Error(`${name} resolves outside the Git root through a symlink.`);
-  }
-
-  return resolvedDirectory;
+  return requestedDirectory;
 };
 
 type ResolveDirectoriesInput = {
@@ -150,13 +87,11 @@ type ResolveDirectoriesInput = {
   config: MaestroConfig;
 };
 
-const resolveDirectories = async ({
-  repositoryRoot: configuredRepositoryRoot,
+const resolveDirectories = ({
+  repositoryRoot,
   config,
-}: ResolveDirectoriesInput): Promise<MaestroConfig> => {
-  const repositoryRoot = await realpath(configuredRepositoryRoot);
-
-  const specDirectory = await resolveSafeDirectory({
+}: ResolveDirectoriesInput): MaestroConfig => {
+  const specDirectory = resolveSafeDirectory({
     repositoryRoot,
     directory: config.specDirectory,
     name: 'specDirectory',
@@ -186,7 +121,7 @@ export const loadConfiguration = async (
   const targetPath = join(repositoryRoot, CONFIG_FILE_PATH);
 
   if (!(await pathExists(targetPath))) {
-    return await resolveDirectories({ repositoryRoot, config: DEFAULT_CONFIG });
+    return resolveDirectories({ repositoryRoot, config: DEFAULT_CONFIG });
   }
 
   const parsed = await readConfigurationFile(targetPath);
@@ -194,5 +129,5 @@ export const loadConfiguration = async (
   assertConfiguration(parsed);
   const config = resolveConfiguration(parsed);
 
-  return await resolveDirectories({ repositoryRoot, config });
+  return resolveDirectories({ repositoryRoot, config });
 };

@@ -6,7 +6,7 @@ Maestro reads project configuration from:
 .pi/maestro.json
 ```
 
-The file is optional. Maestro uses all default values when the file is absent.
+The file is optional, and Maestro uses all default values when it is absent.
 
 ## Default configuration
 
@@ -56,10 +56,6 @@ xhigh
 max
 ```
 
-Each object accepts only the documented fields. Unknown fields stop activation and produce an error.
-
-When a run reaches its timeout, Maestro reports it and does not treat the run as complete.
-
 ## Partial configuration
 
 Only `version` is required when the file exists. Each other field overrides its matching default.
@@ -77,19 +73,16 @@ This example keeps every default except the builder timeout.
 
 ## Schema version
 
-`version` identifies the configuration schema. It is separate from the npm package version.
-
-The current schema version is `1.0.0`. An unsupported major version stops Maestro activation. Minor and patch versions represent compatible schema changes supported by the installed Maestro release.
+`version` identifies the configuration schema. It is separate from the npm package version, and it's a mechanism for future-proof additions.
 
 ## Path rules
 
 `specDirectory` must meet these rules:
 
-- The path is relative to the Git repository root.
-- The path points below the repository root.
-- The resolved path stays inside the repository, including through symlinks.
+1. The path is relative to the Git repository root.
+2. The path points below the repository root after `.` and `..` are resolved.
 
-An invalid path stops Maestro activation. Maestro validates the path while it loads configuration, but does not create the directory then. Workflow actions create a spec directory and its artifacts only when they need them.
+It's owner responsibility to arrange the filesystem in order to support artifact writes and Git checkpoints.
 
 ## Model access
 
@@ -97,13 +90,9 @@ Maestro checks both configured models during activation. Each model must exist a
 
 A model error stops activation and identifies the affected model. Update the configuration or authenticate the provider, then run `/maestro` again.
 
-## Fixed values
-
-Agent names:
+Agent names have fixed value:
 
 ```text
 maestro.builder
 maestro.verifier
 ```
-
-Maestro does not require a branch naming pattern. The owner selects the current branch before using the workflow.
