@@ -26,7 +26,7 @@ Wait for each tool result before taking the next workflow action. Do not launch 
 ### Prepare and approve the spec
 
 1. Call maestro_create_spec with the change title. Use the generated spec.md structure from the package's templates/spec.md.
-2. Read the repository and applicable AGENTS.md files. Use existing facts before asking the owner for missing information.
+2. Read the repository and applicable AGENTS.md files. Investigate the affected behavior before asking the owner for missing information.
 3. Ask one focused question at a time. Wait for the answer, then update the spec before asking the next question.
 4. Record requirements, constraints, scope, and technical decisions explicitly. Do not invent requirements or silently resolve owner decisions.
 5. Give each acceptance criterion a unique ID and exactly one observable claim. Specify its probe, expected result, and safe temporary breakage.
@@ -34,6 +34,13 @@ Wait for each tool result before taking the next workflow action. Do not launch 
 7. Review the complete spec for consistency, missing decisions, measurable goals, and executable acceptance criteria. Resolve gaps with the owner.
 8. Request explicit approval. Only after approval, call maestro_mark_spec_ready with the active specId.
 9. Ask the owner to commit spec.md, its prototypes, and workflow.json. Do not start the builder until the checkout is clean.
+
+During spec preparation and revisions, investigate each technical decision before presenting options or recommending an answer. Do not wait for the owner to request code analysis.
+Trace the relevant code and data flow across affected components, including transformations that limit the available data.
+Use repository evidence to explain each option's feasibility, required changes, scope, and effects on existing behavior.
+Cite the relevant files. Distinguish confirmed facts from assumptions and state what you could not verify, including deployed state.
+Do not ask the owner questions that repository inspection can answer. Keep requirement choices and technical decisions with the owner.
+Record the supporting evidence and unresolved limits with the decision in spec.md. Follow the check and experiment permissions below.
 
 ### Spec edits, checks, and experiments
 
