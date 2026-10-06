@@ -1,15 +1,11 @@
 /**
- * Objective: Manage the shared in-memory activation state for one Maestro session.
- * Used: By the main and subagent extensions in the foreground Pi runtime.
+ * Objective: Manage activation and spec selection for one Maestro owner session.
+ * Used: By the main extension and owner tools, never by child sessions.
  */
-
-import { getFileSha256 } from '#utils/getFileSha256.ts';
 
 class MaestroSessionState {
   private active = false;
   private activeSpecId: string | null = null;
-  private specSha256: string | null = null;
-  private verifierCheckpointCommit: string | null = null;
 
   public isActive = (): boolean => this.active;
 
@@ -25,35 +21,12 @@ class MaestroSessionState {
     this.activeSpecId = specId;
   };
 
-  public getSpecSha256 = (): string | null => this.specSha256;
-
-  public setSpecSha256 = async (specPath: string): Promise<void> => {
-    if (this.activeSpecId === null) {
-      throw new Error('Cannot set spec SHA-256 without an active spec.');
-    }
-
-    this.specSha256 = await getFileSha256(specPath);
-  };
-
-  public getVerifierCheckpointCommit = (): string | null =>
-    this.verifierCheckpointCommit;
-
-  public setVerifierCheckpointCommit = (commit: string): void => {
-    this.verifierCheckpointCommit = commit;
-  };
-
-  public clearVerifierCheckpointCommit = (): void => {
-    this.verifierCheckpointCommit = null;
-  };
-
   public activate = (): void => {
     this.active = true;
   };
 
   public clearActiveSpecId = (): void => {
     this.activeSpecId = null;
-    this.specSha256 = null;
-    this.clearVerifierCheckpointCommit();
   };
 
   public deactivate = (): void => {
