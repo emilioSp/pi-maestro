@@ -6,7 +6,6 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
-  BREAKAGE_STATUSES,
   BUILDER_HANDOFF_STATUSES,
   BUILDER_HANDOFF_VERSION,
   type BuilderHandoff,
@@ -86,7 +85,6 @@ export const doneHandoff = (revision: number): BuilderHandoff => ({
       id: 'AC1',
       probe: 'npm test',
       probeStatus: PROBE_STATUSES.PASSED,
-      breakageStatus: BREAKAGE_STATUSES.CONFIRMED,
     },
   ],
   notes: [],
@@ -103,7 +101,6 @@ export const failedHandoff = (revision: number): BuilderHandoff => ({
       id: 'AC1',
       probe: 'npm test',
       probeStatus: PROBE_STATUSES.NOT_RUN,
-      breakageStatus: BREAKAGE_STATUSES.NOT_RUN,
     },
   ],
   failure: { reason: 'The implementation was blocked.' },
