@@ -18,7 +18,7 @@ export const BUILDER_HANDOFF_TOOL = {
   NAME: 'maestro_record_builder_handoff',
   LABEL: 'Record Builder Handoff',
   DESCRIPTION:
-    'Record the builder pass as done or failed. Put only significant discoveries that do not require an owner decision in notes. After success, commit the implementation, handoff, and workflow state together with Bash and Git.',
+    'Record the builder pass as done or failed. Put selected breakage evidence and significant discoveries that do not require an owner decision in notes. After success, commit the implementation, handoff, and workflow state together with Bash and Git.',
 } as const;
 
 const BuilderHandoffContentFields = {
