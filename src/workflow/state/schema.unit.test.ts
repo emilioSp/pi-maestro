@@ -26,7 +26,7 @@ describe('workflow state schema', () => {
 
   it.each([
     { ...validState, extra: true },
-    { ...validState, version: '2.0.0' },
+    { ...validState, version: '1.0.0' },
     { ...validState, revision: 0 },
     { ...validState, revision: 1.5 },
     { ...validState, specId: 'not-a-spec-id' },
