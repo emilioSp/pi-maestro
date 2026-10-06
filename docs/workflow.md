@@ -207,27 +207,15 @@ A spec revision is allowed only from these blocked phases:
 - `escalation-decision`
 - `findings-decision`
 
-
 The owner edits and approves the spec, then Maestro changes the phase to `ready-for-builder`.
 
 The previous escalation or finding becomes inactive. Its artifact remains in the branch as historical context. Builder and verifier decide whether historical artifacts apply to the current spec.
 
-
-## Completion and Pull Request
+## Workflow completion
 
 The workflow ends at `candidate-ready` after a verifier run with no findings, or after the owner rejects every finding with a reason.
 
-The operations that produce this phase, `maestro_record_verifier_handoff` and `maestro_resolve_findings`, own the required checks:
-
-1. Before writing the transition, they make sure that the resulting handoff matches the spec identity and workflow revision, with no active findings.
-2. They reject changes outside the expected protocol files. The verifier must also restore the product to the verified candidate.
-3. They commit only the expected protocol files and return success only when the checkout is clean.
-
-No final tool call or checkpoint is needed. `candidate-ready` is the last persisted Maestro phase.
-
-Maestro reads the artifacts and Git information to summarize the changes, verification results, rejected findings and reasons, and applicable builder notes. The summary includes the current branch and final `HEAD`. Rejected findings are owner decisions, not proof that verification passed.
-
-The summary does not change files or workflow state, create commits, or run verification again. The owner controls the Git flow, review, Pull Request, and merge. Maestro does not squash, stage, merge, create, or remove branches. It does not create worktrees.
+Maestro reads the artifacts and Git information to summarize the changes, verification results, rejected findings and reasons, and applicable builder notes.
 
 ## Stored artifacts
 
@@ -249,6 +237,5 @@ The default spec directory contains:
 ```
 
 - `builder.json` and `verifier.json` represent the current handoffs and can be overwritten by later runs. 
-- Builder handoff `notes` contain curated significant discoveries that did not require an owner decision; Maestro surfaces the applicable notes in the final workflow summary. 
-- Escalations remain in the history directory. 
+- Builder handoff `notes` contain curated significant discoveries that did not require an owner decision; Maestro surfaces the applicable notes in the final workflow summary.
 - Earlier versions of all artifacts remain in Git commits.
