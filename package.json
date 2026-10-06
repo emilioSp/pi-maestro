@@ -1,6 +1,6 @@
 {
   "name": "@emiliosp/pi-maestro",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "A spec-driven multiagent development workflow for Pi.",
   "license": "MIT",
   "type": "module",
