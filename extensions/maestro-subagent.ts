@@ -9,8 +9,6 @@ import { registerRecordBuilderHandoffTool } from '#tools/child/record-builder-ha
 import { registerRecordVerifierHandoffTool } from '#tools/child/record-verifier-handoff.ts';
 
 export default (pi: ExtensionAPI): void => {
-  // pi-subagents selects active tools from each agent's tools allowlist after registration.
-  // Child sessions have no Maestro mode toggle, so setActiveTools() is not needed here.
   registerOpenEscalationTool(pi);
   registerRecordBuilderHandoffTool(pi);
   registerRecordVerifierHandoffTool(pi);

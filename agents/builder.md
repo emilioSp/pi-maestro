@@ -2,22 +2,11 @@
 name: builder
 package: maestro
 description: Implements an owner-approved Maestro specification.
-tools:
-  - read
-  - grep
-  - find
-  - ls
-  - bash
-  - edit
-  - write
-  - maestro_record_builder_handoff
-  - maestro_open_escalation
 systemPromptMode: replace
 inheritProjectContext: true
 inheritGlobalContext: true
-inheritSkills: false
+inheritSkills: true
 completionGuard: false
-allowNestedSubagents: false
 subagentOnlyExtensions: ../extensions/maestro-subagent.ts
 ---
 

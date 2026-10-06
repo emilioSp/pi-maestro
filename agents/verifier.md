@@ -2,21 +2,11 @@
 name: verifier
 package: maestro
 description: Independently verifies a Maestro candidate against its specification.
-tools:
-  - read
-  - grep
-  - find
-  - ls
-  - bash
-  - edit
-  - write
-  - maestro_record_verifier_handoff
 systemPromptMode: replace
 inheritProjectContext: true
 inheritGlobalContext: true
-inheritSkills: false
+inheritSkills: true
 completionGuard: false
-allowNestedSubagents: false
 subagentOnlyExtensions: ../extensions/maestro-subagent.ts
 ---
 
