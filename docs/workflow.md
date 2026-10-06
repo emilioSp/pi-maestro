@@ -48,7 +48,7 @@ The builder works on the current branch with a fresh context.
 
 It reads the active spec, implements the approved change, and runs every acceptance criterion.
 
-For each criterion, the builder runs the probe, applies the approved temporary breakage, confirms that the same probe fails, restores the implementation, and confirms that the probe passes again.
+The builder checks every criterion. For the criteria the owner selects in the spec, it also introduces a temporary fault to prove that the check detects it.
 
 The builder ends a run with one of these outcomes:
 
@@ -64,7 +64,7 @@ It reads the active spec and available artifacts. Historical artifacts provide c
 
 Before the verifier starts, Maestro commits a `verifier-running` checkpoint. That checkpoint is the candidate commit.
 
-The verifier does not repair product code. It independently regenerates every probe and breakage from the candidate and restores all temporary changes before its handoff. Maestro relies on verifier instructions for restoration, not a comparison with the candidate commit.
+The verifier does not repair product code. It independently checks every criterion and repeats the fault checks the owner selected in the spec. It restores all temporary changes before reporting its results.
 
 ## Main flow
 
@@ -158,7 +158,7 @@ Maestro must preserve all pre-existing changes, including uncommitted and untrac
 
 ## Acceptance criterion simplicity principle
 
-Each acceptance criterion must prove exactly one thing.
+Each acceptance criterion describes one observable result.
 
 ```text
 Probe
@@ -170,7 +170,9 @@ Expected result
 Breakage
   How to prove that the probe detects a broken behavior.
 ```
-Builder and verifier both run the probe, apply the specified safe breakage, run the same probe again, restore the breakage, and run the probe again. They restore every temporary change before the handoff.
+
+Breakage checks are not required by default.
+The owner selects a breakage check during spec preparation when a proof, that the test detects a specific error, is needed.
 
 ## Escalations
 
@@ -247,5 +249,5 @@ The default spec directory contains:
 ```
 
 - `builder.json` and `verifier.json` represent the current handoffs and can be overwritten by later runs. 
-- Builder handoff `notes` contain curated significant discoveries that did not require an owner decision; Maestro surfaces the applicable notes in the final workflow summary.
+- Builder handoff `notes` contain evidence for selected fault checks and significant discoveries that did not require an owner decision. Maestro summarizes the relevant results at the end.
 - Earlier versions of all artifacts remain in Git commits.
