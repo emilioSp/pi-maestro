@@ -97,7 +97,7 @@ describe('builder handoff validation', () => {
 
   it.each([
     {
-      handoff: { ...doneHandoff(), version: '1.0.0' },
+      handoff: { ...doneHandoff(), version: '2.0.0' },
       message: 'Invalid builder handoff',
     },
     {
