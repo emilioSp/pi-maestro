@@ -1,5 +1,5 @@
 /**
- * Objective: Complete a verifier pass without allowing candidate changes.
+ * Objective: Complete a verifier pass with a validated handoff.
  * Used: When the verifier submits its terminal handoff.
  */
 
@@ -18,16 +18,6 @@ import {
 } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-import { hasProductChanges } from '#workflow/verifier/hasProductChanges.ts';
-
-export const VERIFIER_PASS_ERRORS = {
-  PRODUCT_FILES_MODIFIED: 'PRODUCT_FILES_MODIFIED',
-} as const;
-
-export const VERIFIER_PASS_MESSAGES = {
-  PRODUCT_FILES_MODIFIED:
-    'Product files differ from the candidate commit. Restore the candidate before submitting the verifier handoff.',
-} as const;
 
 export type CompletedVerifierPass = {
   handoff: VerifierHandoff;
@@ -35,26 +25,17 @@ export type CompletedVerifierPass = {
   repositoryRoot: string;
 };
 
-export type VerifierPassRejection = {
-  error: (typeof VERIFIER_PASS_ERRORS)[keyof typeof VERIFIER_PASS_ERRORS];
-  message: string;
-};
-
 type CompleteVerifierPassInput = {
   paths: MaestroPaths;
   specId: string;
-  candidateCommit: string;
   handoff: unknown;
 };
 
 export const completeVerifierPass = async ({
   paths,
   specId,
-  candidateCommit,
   handoff: draftHandoff,
-}: CompleteVerifierPassInput): Promise<
-  CompletedVerifierPass | VerifierPassRejection
-> => {
+}: CompleteVerifierPassInput): Promise<CompletedVerifierPass> => {
   const repositoryRoot = paths.getRepositoryRoot();
   const workflowPath = paths.getWorkflowPath(specId);
   const handoffPath = paths.getVerifierHandoffPath(specId);
@@ -74,20 +55,6 @@ export const completeVerifierPass = async ({
 
   if (await pathExists(handoffPath)) {
     throw new Error('Verifier terminal handoff already exists.');
-  }
-
-  if (
-    await hasProductChanges({
-      repositoryRoot,
-      candidateCommit,
-      workflowPath,
-      handoffPath,
-    })
-  ) {
-    return {
-      error: VERIFIER_PASS_ERRORS.PRODUCT_FILES_MODIFIED,
-      message: VERIFIER_PASS_MESSAGES.PRODUCT_FILES_MODIFIED,
-    };
   }
 
   const handoffInput = {
