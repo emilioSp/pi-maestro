@@ -97,7 +97,7 @@ describe('verifier handoff validation', () => {
 
   it.each([
     {
-      handoff: { ...handoff(), version: '1.0.0' },
+      handoff: { ...handoff(), version: '2.0.0' },
       message: 'Invalid verifier handoff',
     },
     {
