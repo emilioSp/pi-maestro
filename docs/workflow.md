@@ -64,7 +64,7 @@ It reads the active spec and available artifacts. Historical artifacts provide c
 
 Before the verifier starts, Maestro commits a `verifier-running` checkpoint. That checkpoint is the candidate commit.
 
-The verifier never changes product code, it independently regenerates every probe and breakage from the candidate.
+The verifier does not repair product code. It independently regenerates every probe and breakage from the candidate and restores all temporary changes before its handoff. Maestro relies on verifier instructions for restoration, not a comparison with the candidate commit.
 
 ## Main flow
 
