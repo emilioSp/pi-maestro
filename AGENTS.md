@@ -25,3 +25,5 @@ The package is source-only. Pi loads TypeScript directly, `src/` is published, a
 ## Documentation
 
 README.md, and all docs under /docs folder are intended for humans. Don't write them for agents. They are not.
+
+When referring to humans, use "the owner", don't use "you". 
