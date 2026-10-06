@@ -4,21 +4,12 @@
  */
 
 import { Value } from 'typebox/value';
-import {
-  BREAKAGE_STATUSES,
-  type BuilderAcceptanceCriterion,
-  PROBE_STATUSES,
-} from '#artifacts/builder-handoff/schema.ts';
+import { PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import {
   type VerifierHandoff,
   VerifierHandoffSchema,
 } from '#artifacts/verifier-handoff/schema.ts';
 import { isValidSpecId } from '#ids/isValidSpecId.ts';
-
-const hasCompletedChecks = (criterion: BuilderAcceptanceCriterion): boolean =>
-  criterion.probeStatus === PROBE_STATUSES.PASSED &&
-  (criterion.breakageStatus === BREAKAGE_STATUSES.CONFIRMED ||
-    criterion.breakageStatus === BREAKAGE_STATUSES.NOT_REQUIRED);
 
 function assertVerifierHandoffSchema(
   input: unknown,
@@ -89,7 +80,10 @@ export function assertVerifierHandoff(
   );
 
   for (const criterion of handoff.acceptanceCriteria) {
-    if (!hasCompletedChecks(criterion) && !findingCriteria.has(criterion.id)) {
+    if (
+      criterion.probeStatus !== PROBE_STATUSES.PASSED &&
+      !findingCriteria.has(criterion.id)
+    ) {
       throw new Error(
         `Verifier handoff incomplete acceptance criterion "${criterion.id}" requires a finding.`,
       );

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { assertBuilderHandoff } from '#artifacts/builder-handoff/assertBuilderHandoff.ts';
 import {
-  BREAKAGE_STATUSES,
   BUILDER_HANDOFF_STATUSES,
   BUILDER_HANDOFF_VERSION,
   type BuilderHandoff,
@@ -21,7 +20,6 @@ const doneHandoff = (): BuilderHandoff => ({
       id: 'AC1',
       probe: 'npm test -- alert',
       probeStatus: PROBE_STATUSES.PASSED,
-      breakageStatus: BREAKAGE_STATUSES.CONFIRMED,
     },
   ],
   notes: [],
@@ -38,7 +36,6 @@ const failedHandoff = (): BuilderHandoff => ({
       id: 'AC1',
       probe: 'npm test -- alert',
       probeStatus: PROBE_STATUSES.NOT_RUN,
-      breakageStatus: BREAKAGE_STATUSES.NOT_RUN,
     },
   ],
   failure: { reason: 'The required service is unavailable.' },
@@ -52,41 +49,15 @@ describe('builder handoff validation', () => {
     ).not.toThrow();
   });
 
-  it('given mixed confirmed and not-required breakages when all probes pass then accepts done', () => {
-    const handoff = doneHandoff();
-    handoff.acceptanceCriteria.push({
-      id: 'AC2',
-      probe: 'Inspect the timestamp font size.',
-      probeStatus: PROBE_STATUSES.PASSED,
-      breakageStatus: BREAKAGE_STATUSES.NOT_REQUIRED,
-    });
-
-    expect(() =>
-      assertBuilderHandoff({ handoff, specId, revision: 4 }),
-    ).not.toThrow();
-  });
-
-  it.each([BREAKAGE_STATUSES.NOT_RUN, BREAKAGE_STATUSES.NOT_CONFIRMED])(
-    'given a passed probe and %s breakage then rejects done',
-    (breakageStatus) => {
-      const handoff = doneHandoff();
-      handoff.acceptanceCriteria[0].breakageStatus = breakageStatus;
-
-      expect(() =>
-        assertBuilderHandoff({ handoff, specId, revision: 4 }),
-      ).toThrow('Done builder handoff requires every probe to pass');
-    },
-  );
-
   it.each([PROBE_STATUSES.FAILED, PROBE_STATUSES.NOT_RUN])(
-    'given a %s probe without required breakage then rejects done',
+    'given a passed probe and a second %s probe then rejects done',
     (probeStatus) => {
       const handoff = doneHandoff();
-      handoff.acceptanceCriteria[0] = {
-        ...handoff.acceptanceCriteria[0],
+      handoff.acceptanceCriteria.push({
+        id: 'AC2',
+        probe: 'npm test -- alert-restart',
         probeStatus,
-        breakageStatus: BREAKAGE_STATUSES.NOT_REQUIRED,
-      };
+      });
 
       expect(() =>
         assertBuilderHandoff({ handoff, specId, revision: 4 }),
@@ -94,12 +65,11 @@ describe('builder handoff validation', () => {
     },
   );
 
-  it('given all probes pass without required breakages then rejects failed', () => {
+  it('given all probes pass then rejects failed', () => {
     const handoff = failedHandoff();
     handoff.acceptanceCriteria[0] = {
       ...handoff.acceptanceCriteria[0],
       probeStatus: PROBE_STATUSES.PASSED,
-      breakageStatus: BREAKAGE_STATUSES.NOT_REQUIRED,
     };
 
     expect(() =>
@@ -126,6 +96,10 @@ describe('builder handoff validation', () => {
   });
 
   it.each([
+    {
+      handoff: { ...doneHandoff(), version: '1.0.0' },
+      message: 'Invalid builder handoff',
+    },
     {
       handoff: {
         ...doneHandoff(),
