@@ -77,7 +77,7 @@ Do not change product code yourself while the workflow runs. Maestro can run tem
 
 The workflow is complete when it reaches `candidate-ready`. No final tool call is needed. Changes after completion are outside the Maestro review.
 
-If an escalation or finding requires a contract change, edit and approve `spec.md`, then call `maestro_mark_spec_ready`. The workflow returns to `ready-for-builder` on the same branch. A technical builder failure stops the workflow and requires owner follow-up.
+If an escalation or finding requires a contract change, edit and approve `spec.md`, then call `maestro_mark_spec_ready`. The workflow returns to `ready-for-builder` on the same branch. Commit the revised `spec.md`, its prototypes, and `workflow.json` before asking Maestro to run the builder again. The checkout must be clean. A technical builder failure stops the workflow and requires owner follow-up.
 
 Builder and verifier runs stay in the foreground. Pi waits for each run before you continue the conversation. Maestro shows the current phase in Pi's status. Use pi-subagents FleetView or `/subagents-fleet` to inspect live activity and the transcript.
 

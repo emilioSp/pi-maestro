@@ -146,7 +146,7 @@ For the initial spec:
 
 During `drafting-spec`, Maestro can use any available tool to edit the active `spec.md` with the owner. Maestro can also create and update visual prototypes in that spec's `prototypes/` directory with any available tool. During `escalation-decision` or `findings-decision`, the same permission applies to owner-directed contract revisions of the spec and its prototypes. This permission does not apply to other workflow artifacts or product files. Maestro cannot edit the spec or its prototypes in other phases.
 
-The committed `spec.md` represents the approved contract for the builder and verifier. The spec and its prototypes are immutable during a builder or verifier pass.
+The committed `spec.md` represents the approved contract for the builder and verifier. Agents must not change the spec or its prototypes during a builder or verifier pass.
 
 During spec preparation, Maestro can run tests and checks to understand the repository. This also applies when you request a spec revision in `escalation-decision` or `findings-decision`, but not in other phases.
 
@@ -217,7 +217,7 @@ A spec revision is allowed only from these blocked phases:
 - `escalation-decision`
 - `findings-decision`
 
-The owner edits and approves the spec, then Maestro changes the phase to `ready-for-builder`.
+The owner edits and approves the spec, then Maestro calls `maestro_mark_spec_ready` to change the phase to `ready-for-builder`. The owner must commit the revised `spec.md`, its prototypes, and `workflow.json` before Maestro starts the builder again. The checkout must be clean.
 
 The previous escalation or finding becomes inactive. Its artifact remains in the branch as historical context. Builder and verifier decide whether historical artifacts apply to the current spec.
 
