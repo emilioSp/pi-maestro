@@ -15,7 +15,6 @@ import {
 import { writeBuilderHandoff } from '#artifacts/builder-handoff/writeBuilderHandoff.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { pathExists } from '#utils/path-exists.ts';
-import { assertBuilderProtocolUnchanged } from '#workflow/builder/assertBuilderProtocolUnchanged.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
   WORKFLOW_EVENTS,
@@ -75,8 +74,6 @@ export const completeBuilderPass = async ({
   specId,
   handoff: draftHandoff,
 }: CompleteBuilderPassInput): Promise<CompletedBuilderPass> => {
-  await assertBuilderProtocolUnchanged({ paths, specId });
-
   const workflowPath = paths.getWorkflowPath(specId);
   const handoffPath = paths.getBuilderHandoffPath(specId);
   const currentState = await readWorkflowState(workflowPath);
