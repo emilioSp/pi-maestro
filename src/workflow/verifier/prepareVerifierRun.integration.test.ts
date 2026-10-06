@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
-import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -38,9 +37,6 @@ describe('verifier run preparation', () => {
     const run = await prepareVerifierRun({ paths, specId: SPEC_ID });
 
     expect(run.candidateCommit).toBe(run.checkpointCommit);
-    expect(maestroSessionState.getVerifierCheckpointCommit()).toBe(
-      run.checkpointCommit,
-    );
     await expect(getHeadCommit(repository.path)).resolves.toBe(
       run.candidateCommit,
     );

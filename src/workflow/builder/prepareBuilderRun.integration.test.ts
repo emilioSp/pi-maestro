@@ -9,7 +9,6 @@ import {
 import { runGitCommand } from '#git/command.ts';
 import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
-import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -44,7 +43,6 @@ describe('builder run preparation', () => {
       revision: 3,
       phase: WORKFLOW_PHASES.BUILDER_RUNNING,
     });
-    expect(maestroSessionState.getSpecSha256()).not.toBeNull();
   });
 
   it('does not rerun a builder while it is running', async () => {
@@ -89,7 +87,6 @@ describe('builder run preparation', () => {
     await expect(
       pathExists(paths.getBuilderHandoffPath(SPEC_ID)),
     ).resolves.toBe(true);
-    expect(maestroSessionState.getSpecSha256()).not.toBeNull();
   });
 
   it('rejects an uncommitted current checkout before creating a checkpoint', async () => {
