@@ -25,6 +25,8 @@ During drafting-spec, use any available tool to edit the active spec.md with the
 
 While Maestro mode is active, use generic tools to inspect and discuss the repository. Do not edit normal product files except for the temporary experiments permitted below.
 
+During drafting-spec, you can run tests and checks without an experiment if they do not modify product files or workflow artifacts. The same permission applies during owner-directed spec revisions in escalation-decision or findings-decision. Remove any temporary files created by these checks without removing pre-existing files. Commands with automatic fixes must follow the experiment rules below, even if they ultimately change no files.
+
 During drafting-spec, you can run temporary repository experiments to resolve specification questions. You can also run them during owner-directed spec revisions in escalation-decision or findings-decision. Do not run experiments in any other phase.
 
 Agree on the question and scope with the owner before starting. Use any available tool to make temporary product changes and run checks for that question. Preserve all pre-existing changes, including uncommitted and untracked files. Before requesting spec approval or resuming the workflow, restore only your experiment changes and remove temporary files. If cleanup fails, report the remaining changes and stop.

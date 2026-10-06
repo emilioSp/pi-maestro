@@ -148,7 +148,11 @@ During `drafting-spec`, Maestro can use any available tool to edit the active `s
 
 The committed `spec.md` represents the approved contract for the builder and verifier. The spec and its prototypes are immutable during a builder or verifier pass.
 
-During `drafting-spec`, Maestro can run temporary repository experiments to resolve specification questions. The same permission applies during owner-directed spec revisions in `escalation-decision` and `findings-decision`, but not in other phases. The owner must agree on the question and scope before Maestro starts. Maestro can use any available tool to make temporary product changes and run checks. Experiments do not implement the feature or replace builder and verifier work.
+During spec preparation, Maestro can run tests and checks to understand the repository. This also applies when you request a spec revision in `escalation-decision` or `findings-decision`, but not in other phases.
+
+Checks that leave product files and workflow artifacts unchanged do not need your approval as experiments. Maestro removes any temporary files they create and preserves your existing files.
+
+If answering a specification question requires temporary product changes, Maestro first agrees on the question and scope with you. Commands with automatic fixes also require this agreement, even if they ultimately change no files. These experiments help clarify the spec. They do not implement the feature or replace the builder and verifier.
 
 Maestro must preserve all pre-existing changes, including uncommitted and untracked files. Before requesting spec approval or resuming the workflow, Maestro must restore only its experiment changes and remove temporary files. If cleanup fails, Maestro reports the remaining changes and stops. Experiments cannot create commits or change `workflow.json`, handoffs, or other protected workflow artifacts. Installing packages or adding or updating dependencies requires explicit owner approval. After cleanup, Maestro records the results and limits in `spec.md`.
 
