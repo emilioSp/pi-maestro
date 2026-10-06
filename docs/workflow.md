@@ -117,7 +117,9 @@ flowchart TD
 
 ## Workflow phases
 
-Maestro stores the current phase in `.specs/<spec-id>/workflow.json` by default.
+Each spec has a `workflow.json` file that records its progress. Maestro creates and updates this file. It stores the current phase, which tells you where the work stands. For example, `ready-for-verifier` means that the builder completed the work and the verifier can start.
+
+Maestro stores this file at `.specs/<spec-id>/workflow.json`.
 
 | Phase | Meaning |
 |---|---|
