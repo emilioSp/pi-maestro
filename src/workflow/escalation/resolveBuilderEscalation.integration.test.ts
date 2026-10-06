@@ -4,7 +4,7 @@ import {
   createApprovedWorkflow,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
-import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
+import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { openBuilderEscalation } from '#workflow/escalation/openBuilderEscalation.ts';
 import { resolveBuilderEscalation } from '#workflow/escalation/resolveBuilderEscalation.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
@@ -14,7 +14,7 @@ afterEach(cleanupBuilderWorkflows);
 describe('builder escalation resolution', () => {
   it('commits the owner decision on the current branch', async () => {
     const { paths, repository } = await createApprovedWorkflow();
-    await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+    await prepareBuilderRun({ paths, specId: SPEC_ID });
 
     const opened = await openBuilderEscalation({
       paths,

@@ -19,7 +19,7 @@ Four principles hold the workflow together:
 
 - **Owner** — You. You bring the problem, decide every escalation and every finding, review the final code, and control the Git flow after the candidate is ready. You never talk to a builder or a verifier.
 - **Maestro** — The agent you talk to. It writes the spec with you, spawns and supervises the other agents, records your decisions, and summarizes the results.
-- **Builder** — The agent that implements one spec. It never verifies its own work.
+- **Builder** — The agent that implements one spec. It never approves its own work.
 - **Verifier** — The agent that verifies if the builder implementation is technically compliant to the spec.
 
 ## Prerequisites
@@ -67,7 +67,7 @@ Follow this workflow:
 3. Review the spec with Maestro.
 4. Approve the spec.
 5. Commit the approved `spec.md` and `workflow.json` on the current branch.
-6. Ask Maestro to launch the builder.
+6. Ask Maestro to run the builder.
 7. Review builder escalations and answer them.
 8. Review verifier findings and choose an action for each finding.
 9. When the workflow reaches `candidate-ready`, read Maestro's summary of the results and Pull Request facts.

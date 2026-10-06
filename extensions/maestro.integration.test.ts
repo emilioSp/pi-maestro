@@ -43,11 +43,11 @@ import { createTemporaryRepository } from '#test/support/temp-repository.ts';
 import { BUILDER_HANDOFF_TOOL } from '#tools/child/record-builder-handoff.ts';
 import { VERIFIER_HANDOFF_TOOL } from '#tools/child/record-verifier-handoff.ts';
 import { CREATE_SPEC_TOOL } from '#tools/main/create-spec.ts';
-import { LAUNCH_BUILDER_TOOL } from '#tools/main/launch-builder.ts';
-import { LAUNCH_VERIFIER_TOOL } from '#tools/main/launch-verifier.ts';
 import { MARK_SPEC_READY_TOOL } from '#tools/main/mark-spec-ready.ts';
 import { RESOLVE_ESCALATION_TOOL } from '#tools/main/resolve-escalation.ts';
 import { RESOLVE_FINDINGS_TOOL } from '#tools/main/resolve-findings.ts';
+import { RUN_BUILDER_TOOL } from '#tools/main/run-builder.ts';
+import { RUN_VERIFIER_TOOL } from '#tools/main/run-verifier.ts';
 import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -59,9 +59,9 @@ const FOREIGN_TOOL = 'foreign_tool';
 const MAIN_TOOL_NAMES = [
   CREATE_SPEC_TOOL.NAME,
   MARK_SPEC_READY_TOOL.NAME,
-  LAUNCH_BUILDER_TOOL.NAME,
+  RUN_BUILDER_TOOL.NAME,
   RESOLVE_ESCALATION_TOOL.NAME,
-  LAUNCH_VERIFIER_TOOL.NAME,
+  RUN_VERIFIER_TOOL.NAME,
   RESOLVE_FINDINGS_TOOL.NAME,
 ];
 
@@ -463,14 +463,17 @@ describe('main Maestro extension', () => {
 
     const requests: SubagentDelegationRequest[] = [];
     const childCommits: string[] = [];
+    const runCommits: string[] = [];
 
     // Script only the AI work and completion response. Pi sessions, tools, and Git are real.
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: The registered launch tools emit delegation requests on this channel.
+      // JUSTIFICATION: The registered run tools emit delegation requests on this channel.
       const request = payload as SubagentDelegationRequest;
       requests.push(request);
 
       try {
+        runCommits.push(await getHeadCommit(repository.path));
+
         const { session: child } = await piTestSessions.create({
           cwd: request.cwd,
           extensions: [maestroSubagentExtension],
@@ -527,15 +530,15 @@ describe('main Maestro extension', () => {
       }
     });
 
-    const launchBuilderTool = session.agent.state.tools.find(
-      (tool) => tool.name === LAUNCH_BUILDER_TOOL.NAME,
+    const runBuilderTool = session.agent.state.tools.find(
+      (tool) => tool.name === RUN_BUILDER_TOOL.NAME,
     );
 
-    assertToolRegistered(launchBuilderTool);
-    const built = await launchBuilderTool.execute('test-call', { specId });
+    assertToolRegistered(runBuilderTool);
+    const built = await runBuilderTool.execute('test-call', { specId });
     await session.extensionRunner.emitToolResult({
       type: 'tool_result',
-      toolName: LAUNCH_BUILDER_TOOL.NAME,
+      toolName: RUN_BUILDER_TOOL.NAME,
       toolCallId: 'test-call',
       input: { specId },
       ...built,
@@ -549,15 +552,15 @@ describe('main Maestro extension', () => {
       handoff: { specId, revision: 4, status: BUILDER_HANDOFF_STATUSES.DONE },
     });
 
-    const launchVerifierTool = session.agent.state.tools.find(
-      (tool) => tool.name === LAUNCH_VERIFIER_TOOL.NAME,
+    const runVerifierTool = session.agent.state.tools.find(
+      (tool) => tool.name === RUN_VERIFIER_TOOL.NAME,
     );
 
-    assertToolRegistered(launchVerifierTool);
-    const verified = await launchVerifierTool.execute('test-call', { specId });
+    assertToolRegistered(runVerifierTool);
+    const verified = await runVerifierTool.execute('test-call', { specId });
     await session.extensionRunner.emitToolResult({
       type: 'tool_result',
-      toolName: LAUNCH_VERIFIER_TOOL.NAME,
+      toolName: RUN_VERIFIER_TOOL.NAME,
       toolCallId: 'test-call',
       input: { specId },
       ...verified,
@@ -568,7 +571,8 @@ describe('main Maestro extension', () => {
       specId,
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
       revision: 6,
-      candidateCommit: childCommits[0],
+      candidateCommit: runCommits[1],
+      checkpointCommit: runCommits[1],
       handoff: { specId, revision: 6, acceptanceCriteria, findings: [] },
     });
     expect(requests).toMatchObject([
@@ -713,7 +717,7 @@ describe('main Maestro extension', () => {
     },
   );
 
-  it('given a committed builder failure when the registered launch tool returns then the owner receives the failure and status updates', async () => {
+  it('given a committed builder failure when the registered run tool returns then the owner receives the failure and status updates', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { session, events, setStatus } = await piTestSessions.create({
@@ -725,7 +729,7 @@ describe('main Maestro extension', () => {
     maestroSessionState.setActiveSpecId(SPEC_ID);
     const requests: SubagentDelegationRequest[] = [];
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: This listener receives the request emitted by the registered launch tool.
+      // JUSTIFICATION: This listener receives the request emitted by the registered run tool.
       const request = payload as SubagentDelegationRequest;
       requests.push(request);
 
@@ -754,19 +758,19 @@ describe('main Maestro extension', () => {
       }
     });
 
-    const launchBuilderTool = session.agent.state.tools.find(
-      (tool) => tool.name === LAUNCH_BUILDER_TOOL.NAME,
+    const runBuilderTool = session.agent.state.tools.find(
+      (tool) => tool.name === RUN_BUILDER_TOOL.NAME,
     );
 
-    assertToolRegistered(launchBuilderTool);
+    assertToolRegistered(runBuilderTool);
 
-    const result = await launchBuilderTool.execute('test-call', {
+    const result = await runBuilderTool.execute('test-call', {
       specId: SPEC_ID,
     });
 
     await session.extensionRunner.emitToolResult({
       type: 'tool_result',
-      toolName: LAUNCH_BUILDER_TOOL.NAME,
+      toolName: RUN_BUILDER_TOOL.NAME,
       toolCallId: 'test-call',
       input: { specId: SPEC_ID },
       ...result,

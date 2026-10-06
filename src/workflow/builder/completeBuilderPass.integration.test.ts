@@ -9,7 +9,7 @@ import {
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
-import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
+import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 
@@ -18,7 +18,7 @@ afterEach(cleanupBuilderWorkflows);
 describe('builder completion', () => {
   it('rejects builder completion when the spec SHA baseline is missing', async () => {
     const { paths } = await createApprovedWorkflow();
-    await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+    await prepareBuilderRun({ paths, specId: SPEC_ID });
     maestroSessionState.deactivate();
 
     await expect(
@@ -35,9 +35,9 @@ describe('builder completion', () => {
     ).rejects.toThrow('Builder spec SHA-256 baseline is not initialized.');
   });
 
-  it('rejects builder completion when the spec changes after launch', async () => {
+  it('rejects builder completion when the spec changes after the run starts', async () => {
     const { paths } = await createApprovedWorkflow();
-    await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+    await prepareBuilderRun({ paths, specId: SPEC_ID });
     await writeFile(
       paths.getSpecFilePath(SPEC_ID),
       '# Changed specification\n',
@@ -55,12 +55,12 @@ describe('builder completion', () => {
           notes: [],
         },
       }),
-    ).rejects.toThrow('Builder changed spec.md after launch');
+    ).rejects.toThrow('Builder changed spec.md after the run starts');
   });
 
   it('rejects a changed spec even when the change uses the checkpoint message', async () => {
     const { paths, repository } = await createApprovedWorkflow();
-    await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+    await prepareBuilderRun({ paths, specId: SPEC_ID });
     await writeFile(
       paths.getSpecFilePath(SPEC_ID),
       '# Changed specification\n',
@@ -79,12 +79,12 @@ describe('builder completion', () => {
           notes: [],
         },
       }),
-    ).rejects.toThrow('Builder changed spec.md after launch');
+    ).rejects.toThrow('Builder changed spec.md after the run starts');
   });
 
   it('writes the builder handoff and state in the current checkout', async () => {
     const { paths, repository } = await createApprovedWorkflow();
-    const launch = await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+    const run = await prepareBuilderRun({ paths, specId: SPEC_ID });
 
     const handoff = {
       status: BUILDER_HANDOFF_STATUSES.DONE,
@@ -105,7 +105,7 @@ describe('builder completion', () => {
     await expect(
       readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({
-      revision: launch.revision + 1,
+      revision: run.revision + 1,
       phase: WORKFLOW_PHASES.READY_FOR_VERIFIER,
     });
     await expect(

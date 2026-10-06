@@ -10,7 +10,7 @@ import {
 } from '#test/support/builder-workflow.ts';
 import piTestSessions from '#test/support/pi-session.ts';
 import { registerResolveEscalationTool } from '#tools/main/resolve-escalation.ts';
-import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
+import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { openBuilderEscalation } from '#workflow/escalation/openBuilderEscalation.ts';
 import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -18,7 +18,7 @@ import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 
 const openEscalation = async () => {
   const workflow = await createApprovedWorkflow();
-  await prepareBuilderLaunch({ paths: workflow.paths, specId: SPEC_ID });
+  await prepareBuilderRun({ paths: workflow.paths, specId: SPEC_ID });
 
   const opened = await openBuilderEscalation({
     paths: workflow.paths,

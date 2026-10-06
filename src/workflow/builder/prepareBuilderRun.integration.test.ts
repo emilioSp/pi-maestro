@@ -17,26 +17,26 @@ import {
 } from '#test/support/builder-workflow.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
-import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
+import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 
 afterEach(cleanupBuilderWorkflows);
 
-describe('builder launch preparation', () => {
+describe('builder run preparation', () => {
   it('commits a running checkpoint on the current branch without workflow resources', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
-    const launch = await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+    const run = await prepareBuilderRun({ paths, specId: SPEC_ID });
 
-    expect(launch).toMatchObject({
+    expect(run).toMatchObject({
       specId: SPEC_ID,
       revision: 3,
       repositoryRoot: repository.path,
     });
     await expect(getCurrentBranch(repository.path)).resolves.toBe('main');
     await expect(getHeadCommit(repository.path)).resolves.toBe(
-      launch.checkpointCommit,
+      run.checkpointCommit,
     );
     await expect(
       readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
@@ -47,20 +47,18 @@ describe('builder launch preparation', () => {
     expect(maestroSessionState.getSpecSha256()).not.toBeNull();
   });
 
-  it('does not relaunch a builder while it is running', async () => {
+  it('does not rerun a builder while it is running', async () => {
     const { paths } = await createApprovedWorkflow();
-    await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+    await prepareBuilderRun({ paths, specId: SPEC_ID });
 
-    await expect(
-      prepareBuilderLaunch({ paths, specId: SPEC_ID }),
-    ).rejects.toThrow(
-      'Builder launch is not valid from phase "builder-running".',
+    await expect(prepareBuilderRun({ paths, specId: SPEC_ID })).rejects.toThrow(
+      'Builder run is not valid from phase "builder-running".',
     );
   });
 
-  it('stops after a builder failure and does not launch again', async () => {
+  it('stops after a builder failure and does not run again', async () => {
     const { paths, repository } = await createApprovedWorkflow();
-    await prepareBuilderLaunch({ paths, specId: SPEC_ID });
+    await prepareBuilderRun({ paths, specId: SPEC_ID });
 
     await completeBuilderPass({
       paths,
@@ -82,10 +80,8 @@ describe('builder launch preparation', () => {
     });
     await repository.commit('Builder failed');
 
-    await expect(
-      prepareBuilderLaunch({ paths, specId: SPEC_ID }),
-    ).rejects.toThrow(
-      'Builder launch is not valid from phase "builder-failed".',
+    await expect(prepareBuilderRun({ paths, specId: SPEC_ID })).rejects.toThrow(
+      'Builder run is not valid from phase "builder-failed".',
     );
     await expect(
       readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
@@ -101,9 +97,9 @@ describe('builder launch preparation', () => {
       commitApproval: false,
     });
 
-    await expect(
-      prepareBuilderLaunch({ paths, specId: SPEC_ID }),
-    ).rejects.toThrow('clean current checkout');
+    await expect(prepareBuilderRun({ paths, specId: SPEC_ID })).rejects.toThrow(
+      'clean current checkout',
+    );
     await expect(getCurrentBranch(repository.path)).resolves.toBe('main');
   });
 
@@ -115,9 +111,9 @@ describe('builder launch preparation', () => {
       'utf8',
     );
 
-    await expect(
-      prepareBuilderLaunch({ paths, specId: SPEC_ID }),
-    ).rejects.toThrow('clean current checkout');
+    await expect(prepareBuilderRun({ paths, specId: SPEC_ID })).rejects.toThrow(
+      'clean current checkout',
+    );
   });
 
   it('rejects staged product changes', async () => {
@@ -129,8 +125,8 @@ describe('builder launch preparation', () => {
       cwd: repository.path,
     });
 
-    await expect(
-      prepareBuilderLaunch({ paths, specId: SPEC_ID }),
-    ).rejects.toThrow('clean current checkout');
+    await expect(prepareBuilderRun({ paths, specId: SPEC_ID })).rejects.toThrow(
+      'clean current checkout',
+    );
   });
 });

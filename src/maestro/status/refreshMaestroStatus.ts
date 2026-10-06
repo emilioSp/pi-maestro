@@ -6,7 +6,7 @@
 import type { ExtensionContext } from '@earendil-works/pi-coding-agent';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { formatMaestroStatus } from '#maestro/status/formatMaestroStatus.ts';
-import { resolveToolLaunchContext } from '#tools/utils/resolveToolLaunchContext.ts';
+import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 
 export const MAESTRO_STATUS_KEY = 'maestro';
@@ -32,7 +32,7 @@ export const refreshMaestroStatus = async (
   }
 
   try {
-    const { paths } = await resolveToolLaunchContext(context.cwd);
+    const { paths } = await resolveToolRunContext(context.cwd);
 
     const state = await readWorkflowState(paths.getWorkflowPath(specId));
 

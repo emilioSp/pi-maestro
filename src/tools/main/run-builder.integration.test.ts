@@ -18,7 +18,7 @@ import {
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import piTestSessions from '#test/support/pi-session.ts';
-import { registerLaunchBuilderTool } from '#tools/main/launch-builder.ts';
+import { registerRunBuilderTool } from '#tools/main/run-builder.ts';
 import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { openBuilderEscalation } from '#workflow/escalation/openBuilderEscalation.ts';
@@ -30,10 +30,10 @@ afterEach(async () => {
   await cleanupBuilderWorkflows();
 });
 
-describe('launch builder tool', () => {
+describe('run builder tool', () => {
   it('registers a closed spec-only input schema', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
-      extension: registerLaunchBuilderTool,
+      extension: registerRunBuilderTool,
     });
 
     expect(Value.Check(tool.parameters, { specId: SPEC_ID })).toBe(true);
@@ -46,17 +46,17 @@ describe('launch builder tool', () => {
     ).toBe(false);
   });
 
-  it('launches the builder in the current checkout and returns a committed done result', async () => {
+  it('runs the builder in the current checkout and returns a committed done result', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { tool, events, emit, on } =
       await piTestSessions.createRegisteredTool({
         cwd: repository.path,
-        extension: registerLaunchBuilderTool,
+        extension: registerRunBuilderTool,
       });
 
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: The launch tool emits a delegation request on this channel.
+      // JUSTIFICATION: The run tool emits a delegation request on this channel.
       const request = payload as SubagentDelegationRequest;
       events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
         requestId: 'other-request',
@@ -124,16 +124,16 @@ describe('launch builder tool', () => {
     });
   });
 
-  it('returns a committed failed handoff and does not relaunch it', async () => {
+  it('returns a committed failed handoff and does not rerun it', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { tool, events, emit } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
-      extension: registerLaunchBuilderTool,
+      extension: registerRunBuilderTool,
     });
 
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: The launch tool emits a delegation request on this channel.
+      // JUSTIFICATION: The run tool emits a delegation request on this channel.
       const request = payload as SubagentDelegationRequest;
       await completeBuilderPass({
         paths,
@@ -172,9 +172,7 @@ describe('launch builder tool', () => {
 
     await expect(
       tool.execute('test-call', { specId: SPEC_ID }),
-    ).rejects.toThrow(
-      'Builder launch is not valid from phase "builder-failed".',
-    );
+    ).rejects.toThrow('Builder run is not valid from phase "builder-failed".');
     expect(
       emit.mock.calls.filter(
         ([channel]) => channel === SUBAGENT_DELEGATION_REQUEST_EVENT,
@@ -187,11 +185,11 @@ describe('launch builder tool', () => {
 
     const { tool, events } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
-      extension: registerLaunchBuilderTool,
+      extension: registerRunBuilderTool,
     });
 
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: The launch tool emits a delegation request on this channel.
+      // JUSTIFICATION: The run tool emits a delegation request on this channel.
       const request = payload as SubagentDelegationRequest;
 
       const opened = await openBuilderEscalation({
@@ -240,7 +238,7 @@ describe('launch builder tool', () => {
 
     const { tool, emit, on } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
-      extension: registerLaunchBuilderTool,
+      extension: registerRunBuilderTool,
     });
 
     await expect(
@@ -255,11 +253,11 @@ describe('launch builder tool', () => {
 
     const { tool, events, on } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
-      extension: registerLaunchBuilderTool,
+      extension: registerRunBuilderTool,
     });
 
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-      // JUSTIFICATION: The launch tool emits a delegation request on this channel.
+      // JUSTIFICATION: The run tool emits a delegation request on this channel.
       const request = payload as SubagentDelegationRequest;
       events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
         requestId: request.requestId,
@@ -285,12 +283,12 @@ describe('launch builder tool', () => {
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
   });
 
-  it('given request emission fails when launching then reports the error and removes the response listener', async () => {
+  it('given request emission fails when running then reports the error and removes the response listener', async () => {
     const { repository } = await createApprovedWorkflow();
 
     const { tool, emit, on } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
-      extension: registerLaunchBuilderTool,
+      extension: registerRunBuilderTool,
     });
 
     emit.mockImplementationOnce(() => {
@@ -312,11 +310,11 @@ describe('launch builder tool', () => {
 
     const { tool, events } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
-      extension: registerLaunchBuilderTool,
+      extension: registerRunBuilderTool,
     });
 
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-      // JUSTIFICATION: The launch tool emits a delegation request on this channel.
+      // JUSTIFICATION: The run tool emits a delegation request on this channel.
       const request = payload as SubagentDelegationRequest;
       events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
         requestId: request.requestId,
@@ -340,11 +338,11 @@ describe('launch builder tool', () => {
 
     const { tool, events } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
-      extension: registerLaunchBuilderTool,
+      extension: registerRunBuilderTool,
     });
 
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-      // JUSTIFICATION: The launch tool emits a delegation request on this channel.
+      // JUSTIFICATION: The run tool emits a delegation request on this channel.
       const request = payload as SubagentDelegationRequest;
       events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
         requestId: request.requestId,
@@ -368,11 +366,11 @@ describe('launch builder tool', () => {
 
     const { tool, events } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
-      extension: registerLaunchBuilderTool,
+      extension: registerRunBuilderTool,
     });
 
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-      // JUSTIFICATION: The launch tool emits a delegation request on this channel.
+      // JUSTIFICATION: The run tool emits a delegation request on this channel.
       const request = payload as SubagentDelegationRequest;
       events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
         requestId: request.requestId,

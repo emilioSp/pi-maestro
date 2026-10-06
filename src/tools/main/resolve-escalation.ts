@@ -10,14 +10,14 @@ import {
   EscalationResolutionSchema,
 } from '#artifacts/escalation/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
-import { resolveToolLaunchContext } from '#tools/utils/resolveToolLaunchContext.ts';
+import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 import { resolveBuilderEscalation } from '#workflow/escalation/resolveBuilderEscalation.ts';
 
 export const RESOLVE_ESCALATION_TOOL = {
   NAME: 'maestro_resolve_escalation',
   LABEL: 'Resolve Escalation',
   DESCRIPTION:
-    'Record the explicit owner decision for the current builder escalation when the approved contract remains valid. Commit the resolution and workflow transition on the current branch, then return ready-for-builder without launching the builder. If the contract must change, edit spec.md and use maestro_mark_spec_ready instead.',
+    'Record the explicit owner decision for the current builder escalation when the approved contract remains valid. Commit the resolution and workflow transition on the current branch, then return ready-for-builder without running the builder. If the contract must change, edit spec.md and use maestro_mark_spec_ready instead.',
 } as const;
 
 const ResolveEscalationToolParameters = Type.Object(
@@ -37,7 +37,7 @@ export const registerResolveEscalationTool = (pi: ExtensionAPI): void => {
     parameters: ResolveEscalationToolParameters,
     async execute(_toolCallId, params, _signal, _onUpdate, context) {
       const { specId, escalationId, ...resolution } = params;
-      const { paths } = await resolveToolLaunchContext(context.cwd);
+      const { paths } = await resolveToolRunContext(context.cwd);
 
       const resolved = await resolveBuilderEscalation({
         paths,
@@ -50,7 +50,7 @@ export const registerResolveEscalationTool = (pi: ExtensionAPI): void => {
         content: [
           {
             type: 'text',
-            text: `Escalation ${resolved.escalation.id} resolved. Spec ${resolved.state.specId} is ready-for-builder. Launch the builder separately.`,
+            text: `Escalation ${resolved.escalation.id} resolved. Spec ${resolved.state.specId} is ready-for-builder. Run the builder separately.`,
           },
         ],
         details: {

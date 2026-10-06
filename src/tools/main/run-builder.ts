@@ -1,6 +1,6 @@
 /**
- * Objective: Launch and validate one foreground builder pass for the owner session.
- * Used: When the owner invokes the launch-builder tool.
+ * Objective: Run and validate one foreground builder pass for the owner session.
+ * Used: When the owner invokes the run-builder tool.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -22,20 +22,20 @@ import {
   assertDelegationResponse,
   waitForDelegationResponse,
 } from '#tools/utils/pi-subagent-delegation.ts';
-import { resolveToolLaunchContext } from '#tools/utils/resolveToolLaunchContext.ts';
-import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
+import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
+import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
 
-export const LAUNCH_BUILDER_TOOL = {
-  NAME: 'maestro_launch_builder',
-  LABEL: 'Launch Builder',
+export const RUN_BUILDER_TOOL = {
+  NAME: 'maestro_run_builder',
+  LABEL: 'Run Builder',
   DESCRIPTION:
-    'Launch the builder in the current checkout for an owner-approved spec. The builder runs in the foreground and cannot be retried after a committed failure.',
+    'Run the builder in the current checkout for an owner-approved spec. The builder runs in the foreground and cannot be retried after a committed failure.',
 } as const;
 
-const LaunchBuilderToolParameters = Type.Object(
+const RunBuilderToolParameters = Type.Object(
   {
     specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
   },
@@ -44,7 +44,7 @@ const LaunchBuilderToolParameters = Type.Object(
 
 const MILLISECONDS_PER_MINUTE = 60_000;
 
-type BuilderLaunchResult =
+type BuilderRunResult =
   | {
       outcome: typeof BUILDER_HANDOFF_STATUSES.DONE;
       specId: string;
@@ -75,7 +75,7 @@ type ReadCommittedBuilderResultInput = {
 const readCommittedBuilderResult = async ({
   paths,
   specId,
-}: ReadCommittedBuilderResultInput): Promise<BuilderLaunchResult> => {
+}: ReadCommittedBuilderResultInput): Promise<BuilderRunResult> => {
   try {
     const repositoryStatus = await getRepositoryStatus(
       paths.getRepositoryRoot(),
@@ -95,7 +95,7 @@ const readCommittedBuilderResult = async ({
       );
     }
 
-    return await buildLaunchResult({ paths, specId, state });
+    return await buildRunResult({ paths, specId, state });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
 
@@ -117,7 +117,7 @@ const readTerminalBuilderResult = async ({
   specId,
   revision,
   phase,
-}: ReadTerminalBuilderResultInput): Promise<BuilderLaunchResult> => {
+}: ReadTerminalBuilderResultInput): Promise<BuilderRunResult> => {
   const handoff = await readBuilderHandoff({
     path: paths.getBuilderHandoffPath(specId),
     specId,
@@ -154,17 +154,17 @@ const readTerminalBuilderResult = async ({
   };
 };
 
-type BuildLaunchResultInput = {
+type BuildRunResultInput = {
   paths: MaestroPaths;
   specId: string;
   state: WorkflowState;
 };
 
-const buildLaunchResult = async ({
+const buildRunResult = async ({
   paths,
   specId,
   state,
-}: BuildLaunchResultInput): Promise<BuilderLaunchResult> => {
+}: BuildRunResultInput): Promise<BuilderRunResult> => {
   if (
     state.phase === WORKFLOW_PHASES.READY_FOR_VERIFIER ||
     state.phase === WORKFLOW_PHASES.BUILDER_FAILED
@@ -210,7 +210,7 @@ const buildLaunchResult = async ({
   );
 };
 
-const formatBuilderResult = (result: BuilderLaunchResult): string => {
+const formatBuilderResult = (result: BuilderRunResult): string => {
   if (result.outcome === BUILDER_HANDOFF_STATUSES.DONE) {
     return `Builder completed spec ${result.specId}. The workflow is ready-for-verifier.`;
   }
@@ -222,16 +222,16 @@ const formatBuilderResult = (result: BuilderLaunchResult): string => {
   return `Builder opened escalation ${result.escalation.id} for spec ${result.specId}. The workflow is waiting for an owner decision.`;
 };
 
-export const registerLaunchBuilderTool = (pi: ExtensionAPI): void => {
+export const registerRunBuilderTool = (pi: ExtensionAPI): void => {
   pi.registerTool({
-    name: LAUNCH_BUILDER_TOOL.NAME,
-    label: LAUNCH_BUILDER_TOOL.LABEL,
-    description: LAUNCH_BUILDER_TOOL.DESCRIPTION,
-    parameters: LaunchBuilderToolParameters,
+    name: RUN_BUILDER_TOOL.NAME,
+    label: RUN_BUILDER_TOOL.LABEL,
+    description: RUN_BUILDER_TOOL.DESCRIPTION,
+    parameters: RunBuilderToolParameters,
     async execute(toolCallId, { specId }, _signal, _onUpdate, context) {
-      const { paths, config } = await resolveToolLaunchContext(context.cwd);
+      const { paths, config } = await resolveToolRunContext(context.cwd);
 
-      const launch = await prepareBuilderLaunch({ paths, specId });
+      const run = await prepareBuilderRun({ paths, specId });
 
       const request: SubagentDelegationRequest = {
         requestId: randomUUID(),
@@ -240,9 +240,9 @@ export const registerLaunchBuilderTool = (pi: ExtensionAPI): void => {
         // pi-subagents loads this name from agents/builder.md through package.json.
         // See docs/subagent-integration.md.
         agent: AGENTS.BUILDER,
-        task: `Implement specId "${specId}" in the current checkout "${launch.repositoryRoot}". Read all applicable AGENTS.md files before working.`,
+        task: `Implement specId "${specId}" in the current checkout "${run.repositoryRoot}". Read all applicable AGENTS.md files before working.`,
         context: 'fresh',
-        cwd: launch.repositoryRoot,
+        cwd: run.repositoryRoot,
         model: config.builder.model,
         thinking: config.builder.thinking,
         timeoutMs: config.builder.timeoutMinutes * MILLISECONDS_PER_MINUTE,

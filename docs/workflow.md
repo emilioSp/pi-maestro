@@ -2,19 +2,23 @@
 
 Maestro manages one spec-driven development workflow in the current session.
 
-The approved `spec.md` is the contract between the owner, Maestro, the builder, and the verifier. It defines the intended behavior, constraints, technical decisions, and acceptance criteria. 
+The approved `spec.md` is the contract between the owner, Maestro, the builder, and the verifier. 
 
-Implementation details that don't influence the contract are decided during the work. Changes to the contract's behavior, scope, or approved decisions require an owner-approved revision.
+It defines the intended behavior, constraints, technical decisions, and acceptance criteria. 
 
-The owner works with Maestro. Builder and verifier communicate with Maestro through repository handoffs. Maestro prepares the spec, updates workflow state, starts the builder and verifier, and records owner decisions.
+The owner works directly with Maestro. 
 
-Maestro uses the current Git checkout and branch.
+Maestro, using the current Git branch, prepares the spec, updates workflow state, starts the builder and verifier, and records owner decisions.
+
+Builder and verifier runs are foreground operations, and communicate with Maestro through repository handoffs. 
+
+Pi waits for each run before the owner continues. Maestro's Pi status shows the current phase, and pi-subagents FleetView shows the live activity and transcript.
 
 ## Roles
 
 ### Owner
 
-The owner is the human in the loop. Every decision that needs human judgment returns to the owner.
+The owner is the human in the loop: every decision that needs human judgment returns to the owner.
 
 The owner has final authority over:
 
@@ -27,11 +31,7 @@ The owner has final authority over:
 - Git flow after the candidate is ready
 - Final Pull Request and merge
 
-The owner does not change product code while the workflow is running. The owner may revise `spec.md` while the workflow is blocked, as described below.
-
 ### Maestro
-
-Maestro:
 
 - Discusses the change with the owner
 - Writes and reviews the spec with the owner
@@ -42,11 +42,11 @@ Maestro:
 - Records explicit owner decisions
 - Summarizes the results and facts for a Pull Request when the candidate is ready
 
-Maestro does not know or manage a target branch.
-
 ### Builder
 
-The builder works on the current branch with a fresh context. It reads the active spec, implements the approved change, and runs every acceptance criterion.
+The builder works on the current branch with a fresh context. 
+
+It reads the active spec, implements the approved change, and runs every acceptance criterion.
 
 For each criterion, the builder runs the probe, applies the approved temporary breakage, confirms that the same probe fails, restores the implementation, and confirms that the probe passes again.
 
@@ -54,29 +54,17 @@ The builder ends a run with one of these outcomes:
 
 - `done`
 - `failed`
-- An escalation
-
-The builder uses `maestro_record_builder_handoff` or `maestro_open_escalation`, then commits the implementation, generated workflow state, and handoff together.
+- An `escalation`
 
 ### Verifier
 
-The verifier works on the current branch with a fresh context. It reads the active spec and available artifacts. Historical artifacts provide context, not proof; the verifier decides which information is still applicable to the active spec.
+The verifier works on the current branch with a fresh context. 
 
-The verifier independently regenerates every probe and breakage from the candidate. It does not repair product code and does not commit through Bash.
+It reads the active spec and available artifacts. Historical artifacts provide context, not proof.
 
-Before the verifier starts, Maestro commits a `verifier-running` checkpoint. The candidate is the parent of that checkpoint's `HEAD`.
+Before the verifier starts, Maestro commits a `verifier-running` checkpoint. That checkpoint is the candidate commit.
 
-The verifier applies and restores temporary breakages. `maestro_record_verifier_handoff` compares product files with that parent commit. If the product is unchanged, the tool writes `verifier.json` and `workflow.json` and commits only those protocol files. If product changes remain, the tool returns `PRODUCT_FILES_MODIFIED` and does not write or commit the handoff.
-
-There is no numbered verifier pass and no separate verifier branch. The current artifact is always:
-
-```text
-.specs/<spec-id>/handoffs/verifier.json
-```
-
-Git preserves earlier verifier handoffs.
-
-Builder and verifier runs are foreground operations. Pi waits for each run before the owner continues. Maestro's Pi status shows the current phase, and pi-subagents FleetView shows the live activity and transcript.
+The verifier never changes product code, it independently regenerates every probe and breakage from the candidate.
 
 ## Main flow
 
@@ -97,7 +85,7 @@ flowchart TD
 
     buildOutcome -->|Escalation| escalation[Builder records an escalation and stops]
     escalation --> ownerAnswer[Owner decides]
-    ownerAnswer --> escalationOutcome{Does the contract change?}
+    ownerAnswer --> escalationOutcome{Does the spec change?}
     escalationOutcome -->|No| recordContinue[Maestro records the resolution]
     recordContinue --> build
     escalationOutcome -->|Yes| reviseSpec[Owner revises and approves spec.md]
@@ -129,27 +117,25 @@ flowchart TD
 
 ## Workflow phases
 
-Maestro stores the current phase in `.specs/<spec-id>/workflow.json` by default.
+Each spec has a `workflow.json` file that records its progress. Maestro creates and updates this file. It stores the current phase, which tells you where the work stands. For example, `ready-for-verifier` means that the builder completed the work and the verifier can start.
+
+Maestro stores this file at `.specs/<spec-id>/workflow.json`.
 
 | Phase | Meaning |
 |---|---|
-| `drafting-spec` | Owner and Maestro are preparing the initial spec. |
-| `ready-for-builder` | The owner approved the spec and it awaits a builder run. |
-| `builder-running` | A builder run is active. |
-| `escalation-decision` | The owner must decide how to resolve the active escalation. |
-| `builder-failed` | The builder ended the run with a failure. |
-| `ready-for-verifier` | Builder work is ready for independent verification. |
-| `verifier-running` | A verifier run is active. |
-| `findings-decision` | The owner must decide how to handle verifier findings. |
-| `candidate-ready` | The candidate passed verification or all findings were rejected with reasons. This is the last persisted Maestro phase. |
+| `drafting-spec` | Owner and Maestro are preparing the initial spec |
+| `ready-for-builder` | The owner approved the spec and it awaits a builder run |
+| `builder-running` | A builder run is active |
+| `escalation-decision` | The owner must decide how to resolve the active escalation |
+| `builder-failed` | The builder ended the run with a failure |
+| `ready-for-verifier` | Builder work is ready for independent verification |
+| `verifier-running` | A verifier run is active |
+| `findings-decision` | The owner must decide how to handle verifier findings |
+| `candidate-ready` | The candidate commit passed verification or all findings were rejected with reasons. This is the last persisted Maestro phase |
 
-A session can have one active Maestro workflow. A workflow in `candidate-ready` is complete from Maestro's point of view. Completed or abandoned workflows can remain under the spec directory.
+Disabling Maestro, restarting Pi, or using `/resume` clears live session state. Maestro does not resume an incomplete workflow, the owner must clean it up manually.
 
-Disabling Maestro, restarting Pi, or using `/resume` clears live session state. Maestro does not resume an incomplete workflow from `workflow.json`; the owner must clean it up manually.
-
-## Spec approval and revision
-
-Maestro treats `spec.md` as opaque Markdown. It checks the workflow phase and file existence, but does not parse the spec or compare its content with an earlier version.
+## Spec approval
 
 For the initial spec:
 
@@ -158,22 +144,7 @@ For the initial spec:
 3. `maestro_mark_spec_ready` changes the phase to `ready-for-builder`.
 4. The owner commits `spec.md` and `workflow.json` on the current branch.
 
-The committed `spec.md` and `workflow.json` are the approved contract for the builder and verifier. The contract is immutable during a builder or verifier pass. When a discovery shows that the contract must change, the owner makes an explicit revision and approval before the next pass.
-
-A contract revision is allowed only from these blocked phases:
-
-- `escalation-decision`
-- `findings-decision`
-
-`builder-failed` is a sink state. Maestro reports the technical error and stops the workflow; it does not retry the builder or revise the spec from that state.
-
-The owner edits and approves `spec.md`, then calls `maestro_mark_spec_ready` directly from the blocked phase. The tool changes the phase to `ready-for-builder`. There is no separate revision phase and no new `specId`.
-
-The previous escalation or finding becomes inactive. Its artifact remains in the branch as historical context. Builder and verifier decide whether historical artifacts apply to the current spec.
-
-The workflow does not store a separate spec version. The active contract is the current `spec.md`; Git preserves earlier versions and approvals.
-
-Immediately before each builder launch, Maestro calculates the SHA-256 of the current `spec.md` and stores it only in live session state. Builder handoff and escalation tools compare the current file with that baseline. A spec revision receives its new baseline only after the owner approves it. Restart, `/resume`, and deactivation discard the live baseline.
+The committed `spec.md` represents the approved contract for the builder and verifier. The spec is immutable during a builder or verifier pass.
 
 ## Acceptance criterion simplicity principle
 
@@ -189,23 +160,29 @@ Expected result
 Breakage
   How to prove that the probe detects a broken behavior.
 ```
-
-Each distinct error behavior required by the spec must have its own acceptance criterion. Equivalent inputs that produce the same behavior can share one criterion.
-
-Builder and verifier both run the probe, apply the specified safe breakage, run the same probe again, restore the breakage, and run the probe again. They must restore every temporary change before the handoff.
+Builder and verifier both run the probe, apply the specified safe breakage, run the same probe again, restore the breakage, and run the probe again. They restore every temporary change before the handoff.
 
 ## Escalations
 
 An escalation is the way Maestro brings a significant implementation discovery to the owner's attention and asks for a decision. It is not necessarily a technical failure, an error, or a blocker.
 
-An escalation is relevant when the work presents meaningful alternatives with different consequences. Examples include a conflict between the approved contract and the repository, behavior that the contract does not define, a material architectural alternative, a possible scope change, or a decision that affects verification or reversibility.
+An escalation is relevant when the work presents meaningful alternatives with different consequences. 
 
-Each escalation presents a question, context and evidence, available options, consequences, next steps, and an optional recommendation. While an escalation is unresolved, the workflow is paused in `escalation-decision` and the owner must decide how to proceed.
+Examples:
+- conflict between the approved spec and the repository.
+- behavior that the spec does not define.
+- a material architectural alternative.
+- a possible scope change.
+- a decision that affects verification or reversibility.
+
+Each escalation presents a question, context and evidence, available options, consequences, next steps, and an optional recommendation. 
+
+While an escalation is unresolved, the workflow is paused in `escalation-decision` and the owner must decide how to proceed.
 
 The owner can choose one of two paths:
 
-- Continue with the current contract. Maestro records the decision and returns the workflow to `ready-for-builder` for another builder run.
-- Change the approved contract. The owner revises and approves `spec.md`, then calls `maestro_mark_spec_ready`. The workflow returns to `ready-for-builder` on the same branch and with the same `specId`.
+- Continue with the current spec. Maestro records the decision and returns the workflow to `ready-for-builder` for another builder run.
+- Change the approved spec. The owner revises and approves the spec, then the workflow returns to `ready-for-builder`.
 
 Each escalation remains in the workflow history as references.
 
@@ -216,26 +193,29 @@ A finding records a technical issue found by the verifier. Every finding blocks 
 | Decision | Result |
 |---|---|
 | `reject` | Requires and records the owner’s reason. When every finding is rejected, the candidate becomes ready. |
-| `fix-code` | Keeps the current spec and starts another builder run. |
-| Spec must change | The owner revises `spec.md` from `findings-decision`; previous findings become historical. |
+| `fix-code` | Keeps the current spec and returns the workflow to `ready-for-builder`. |
+| Spec must change | The owner revises the spec from `findings-decision`; previous findings become historical. |
 
-When decisions are mixed, any `fix-code` decision starts another builder run. If the approved contract must change, the owner uses the same spec revision flow instead of resolving obsolete findings.
+When decisions are mixed between `reject` and `fix-code`, any `fix-code` decision returns the workflow to `ready-for-builder`.
 
-## Completion and Pull Request
+If a finding requires a spec change, thw owner must approve a revised spec and run the builder again.
+
+## Spec revision
+
+A spec revision is allowed only from these blocked phases:
+
+- `escalation-decision`
+- `findings-decision`
+
+The owner edits and approves the spec, then Maestro changes the phase to `ready-for-builder`.
+
+The previous escalation or finding becomes inactive. Its artifact remains in the branch as historical context. Builder and verifier decide whether historical artifacts apply to the current spec.
+
+## Workflow completion
 
 The workflow ends at `candidate-ready` after a verifier run with no findings, or after the owner rejects every finding with a reason.
 
-The operations that produce this phase, `maestro_record_verifier_handoff` and `maestro_resolve_findings`, own the required checks:
-
-1. Before writing the transition, they make sure that the resulting handoff matches the spec identity and workflow revision, with no active findings.
-2. They reject changes outside the expected protocol files. The verifier must also restore the product to the verified candidate.
-3. They commit only the expected protocol files and return success only when the checkout is clean.
-
-No final tool call or checkpoint is needed. `candidate-ready` is the last persisted Maestro phase.
-
-Maestro reads the artifacts and Git information to summarize the changes, verification results, rejected findings and reasons, and applicable builder notes. The summary includes the current branch and final `HEAD`. Rejected findings are owner decisions, not proof that verification passed.
-
-The summary does not change files or workflow state, create commits, or run verification again. The owner controls the Git flow, review, Pull Request, and merge. Maestro does not squash, stage, merge, create, or remove branches. It does not create worktrees.
+Maestro reads the artifacts and Git information to summarize the changes, verification results, rejected findings and reasons, and applicable builder notes.
 
 ## Stored artifacts
 
@@ -257,6 +237,5 @@ The default spec directory contains:
 ```
 
 - `builder.json` and `verifier.json` represent the current handoffs and can be overwritten by later runs. 
-- Builder handoff `notes` contain curated significant discoveries that did not require an owner decision; Maestro surfaces the applicable notes in the final workflow summary. 
-- Escalations remain in the history directory. 
+- Builder handoff `notes` contain curated significant discoveries that did not require an owner decision; Maestro surfaces the applicable notes in the final workflow summary.
 - Earlier versions of all artifacts remain in Git commits.
