@@ -2,10 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  BREAKAGE_STATUSES,
-  PROBE_STATUSES,
-} from '#artifacts/builder-handoff/schema.ts';
+import { PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { rejectVerifierFinding } from '#artifacts/verifier-handoff/rejectVerifierFinding.ts';
 import {
   FINDING_SEVERITIES,
@@ -35,7 +32,6 @@ const handoff = (): VerifierHandoff => ({
       id: 'AC1',
       probe: 'npm test -- alert',
       probeStatus: PROBE_STATUSES.PASSED,
-      breakageStatus: BREAKAGE_STATUSES.CONFIRMED,
     },
   ],
   findings: [
