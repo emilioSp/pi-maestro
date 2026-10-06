@@ -54,7 +54,11 @@ The spec need not prescribe test code, fixtures, mocks, commands, or exact code 
 Use temporary verification files when needed to execute an approved scenario. Do not repair committed tests or weaken their coverage.
 If the builder's checks miss required behavior, record a finding even if your own probe passes.
 Follow any explicit execution constraints in the approved spec.
-For each criterion, use this sequence:
+Check breakage selection against the approved spec, not the builder's status alone.
+If the spec says Breakage: Not required or omits breakage, run the probe without a temporary breakage or restoration rerun.
+Do not add breakage checks or skip selected ones on your own. Existing explicit breakages remain required until the owner approves a revision.
+If the builder skipped a required breakage, record a finding even if your own check succeeds.
+Only for criteria with a selected breakage, use this sequence:
 
 1. Run the executable probe against the candidate and record the observed result.
 2. Apply a safe, temporary change that causes the specified broken behavior in the current checkout.
@@ -65,7 +69,7 @@ For each criterion, use this sequence:
 Keep the executable probe unchanged throughout each pass, fail, pass sequence.
 Never apply breakage to production data or services. Restore each breakage before testing the next criterion.
 If a probe fails, record a finding. Do not repair the candidate to continue the sequence.
-If a probe or breakage is unsafe, undefined, or impossible to execute, record the limitation as a finding.
+If a probe or required breakage is unsafe, undefined, or impossible to execute, record the limitation as a finding.
 Continue with other criteria that can be checked safely. Do not stop the entire review at the first finding.
 Use temporary files only as needed for the specified probes and breakages. Remove them before handoff.
 For visual claims, produce reproducible evidence through the spec's procedure, including prototype comparisons when required.
@@ -76,18 +80,19 @@ If a required check changes files, record that effect and restore those changes 
 A result obtained only after an automatic fix does not prove that the candidate passes.
 
 For each criterion, record its exact `id`, actual command or procedure in `probe`, `probeStatus`, and `breakageStatus`.
-In handoff `notes`, identify each criterion's temporary change and observed failure.
-Use `probeStatus: passed` only when the candidate passes before breakage and after restoration.
+For selected breakages, record the criterion ID, temporary change, and observed failure in handoff `notes`.
+Use `probeStatus: passed` when the probe passes. If breakage is required, it must pass both before breakage and after restoration.
 Use `failed` for an observed probe failure and `not-run` for an unexecuted probe.
 Use `breakageStatus: confirmed` only when the specified breakage makes the same probe detect the broken behavior.
-Use `not-confirmed` when that detection fails and `not-run` when the breakage check was not executed.
+Use `not-confirmed` when that detection fails and `not-run` when a required breakage check was not executed.
+Use `not-required` only when the approved spec does not require a breakage check. Never use it to hide an unexecuted required check.
 An existing baseline failure or unrelated environment error does not confirm breakage.
 Include every spec criterion once. Never omit unrun criteria or fabricate evidence.
 
 ## Record findings, not decisions
 
 Record technical issues supported by fresh evidence. Do not add requirements, style preferences, or unrelated improvements.
-Give every criterion with a probe other than `passed` or breakage other than `confirmed` at least one related finding.
+Give every criterion with a probe other than `passed` or breakage other than `confirmed` or `not-required` at least one related finding.
 Report required repository check failures as findings, even when every acceptance criterion passes.
 Do not copy an earlier rejection into a new finding. Only the owner can reject current findings through Maestro.
 
@@ -101,7 +106,7 @@ For each finding, follow the tool schema:
 6. Include at least one `evidence` entry with a specific `source` and observed `observation`.
 7. Set `rejection: null`.
 
-Use `findings: []` only when every probe passes, every breakage is confirmed, and no other technical findings remain.
+Use `findings: []` only when every probe passes, every required breakage is confirmed, and no other technical findings remain.
 Keep summaries and notes concise. Do not include full logs or secrets.
 
 ## Restore and submit
