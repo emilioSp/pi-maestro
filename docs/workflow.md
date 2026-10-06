@@ -135,9 +135,7 @@ Maestro stores this file at `.specs/<spec-id>/workflow.json`.
 
 Disabling Maestro, restarting Pi, or using `/resume` clears live session state. Maestro does not resume an incomplete workflow, the owner must clean it up manually.
 
-## Spec approval and revision
-
-Maestro treats `spec.md` as opaque Markdown. It checks the workflow phase and file existence, but does not parse the spec or compare its content with an earlier version.
+## Spec approval
 
 For the initial spec:
 
@@ -146,22 +144,7 @@ For the initial spec:
 3. `maestro_mark_spec_ready` changes the phase to `ready-for-builder`.
 4. The owner commits `spec.md` and `workflow.json` on the current branch.
 
-The committed `spec.md` and `workflow.json` are the approved contract for the builder and verifier. The contract is immutable during a builder or verifier pass. When a discovery shows that the contract must change, the owner makes an explicit revision and approval before the next pass.
-
-A contract revision is allowed only from these blocked phases:
-
-- `escalation-decision`
-- `findings-decision`
-
-`builder-failed` is a sink state. Maestro reports the technical error and stops the workflow; it does not retry the builder or revise the spec from that state.
-
-The owner edits and approves `spec.md`, then calls `maestro_mark_spec_ready` directly from the blocked phase. The tool changes the phase to `ready-for-builder`. There is no separate revision phase and no new `specId`.
-
-The previous escalation or finding becomes inactive. Its artifact remains in the branch as historical context. Builder and verifier decide whether historical artifacts apply to the current spec.
-
-The workflow does not store a separate spec version. The active contract is the current `spec.md`; Git preserves earlier versions and approvals.
-
-Immediately before each builder run, Maestro calculates the SHA-256 of the current `spec.md` and stores it only in live session state. Builder handoff and escalation tools compare the current file with that baseline. A spec revision receives its new baseline only after the owner approves it. Restart, `/resume`, and deactivation discard the live baseline.
+The committed `spec.md` represents the approved contract for the builder and verifier. The spec is immutable during a builder or verifier pass.
 
 ## Acceptance criterion simplicity principle
 
@@ -177,23 +160,29 @@ Expected result
 Breakage
   How to prove that the probe detects a broken behavior.
 ```
-
-Each distinct error behavior required by the spec must have its own acceptance criterion. Equivalent inputs that produce the same behavior can share one criterion.
-
-Builder and verifier both run the probe, apply the specified safe breakage, run the same probe again, restore the breakage, and run the probe again. They must restore every temporary change before the handoff.
+Builder and verifier both run the probe, apply the specified safe breakage, run the same probe again, restore the breakage, and run the probe again. They restore every temporary change before the handoff.
 
 ## Escalations
 
 An escalation is the way Maestro brings a significant implementation discovery to the owner's attention and asks for a decision. It is not necessarily a technical failure, an error, or a blocker.
 
-An escalation is relevant when the work presents meaningful alternatives with different consequences. Examples include a conflict between the approved contract and the repository, behavior that the contract does not define, a material architectural alternative, a possible scope change, or a decision that affects verification or reversibility.
+An escalation is relevant when the work presents meaningful alternatives with different consequences. 
 
-Each escalation presents a question, context and evidence, available options, consequences, next steps, and an optional recommendation. While an escalation is unresolved, the workflow is paused in `escalation-decision` and the owner must decide how to proceed.
+Examples:
+- conflict between the approved contract and the repository.
+- behavior that the contract does not define.
+- a material architectural alternative.
+- a possible scope change.
+- a decision that affects verification or reversibility.
+
+Each escalation presents a question, context and evidence, available options, consequences, next steps, and an optional recommendation. 
+
+While an escalation is unresolved, the workflow is paused in `escalation-decision` and the owner must decide how to proceed.
 
 The owner can choose one of two paths:
 
 - Continue with the current contract. Maestro records the decision and returns the workflow to `ready-for-builder` for another builder run.
-- Change the approved contract. The owner revises and approves `spec.md`, then calls `maestro_mark_spec_ready`. The workflow returns to `ready-for-builder` on the same branch and with the same `specId`.
+- Change the approved contract. The owner revises and approves the spec, then the workflow returns to `ready-for-builder`.
 
 Each escalation remains in the workflow history as references.
 
@@ -205,9 +194,24 @@ A finding records a technical issue found by the verifier. Every finding blocks 
 |---|---|
 | `reject` | Requires and records the owner’s reason. When every finding is rejected, the candidate becomes ready. |
 | `fix-code` | Keeps the current spec and returns the workflow to `ready-for-builder`. |
-| Spec must change | The owner revises `spec.md` from `findings-decision`; previous findings become historical. |
+| Spec must change | The owner revises the spec from `findings-decision`; previous findings become historical. |
 
-When decisions are mixed, any `fix-code` decision returns the workflow to `ready-for-builder`. Run the builder separately. If the approved contract must change, the owner uses the same spec revision flow instead of resolving obsolete findings.
+When decisions are mixed between `reject` and `fix-code`, any `fix-code` decision returns the workflow to `ready-for-builder`.
+
+If the spec must change, the owner uses the same spec revision flow instead of resolving obsolete findings.
+
+## Spec revision
+
+A spec revision is allowed only from these blocked phases:
+
+- `escalation-decision`
+- `findings-decision`
+
+
+The owner edits and approves the spec, then Maestro changes the phase to `ready-for-builder`.
+
+The previous escalation or finding becomes inactive. Its artifact remains in the branch as historical context. Builder and verifier decide whether historical artifacts apply to the current spec.
+
 
 ## Completion and Pull Request
 
