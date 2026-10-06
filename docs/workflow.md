@@ -85,7 +85,7 @@ flowchart TD
 
     buildOutcome -->|Escalation| escalation[Builder records an escalation and stops]
     escalation --> ownerAnswer[Owner decides]
-    ownerAnswer --> escalationOutcome{Does the contract change?}
+    ownerAnswer --> escalationOutcome{Does the spec change?}
     escalationOutcome -->|No| recordContinue[Maestro records the resolution]
     recordContinue --> build
     escalationOutcome -->|Yes| reviseSpec[Owner revises and approves spec.md]
@@ -169,8 +169,8 @@ An escalation is the way Maestro brings a significant implementation discovery t
 An escalation is relevant when the work presents meaningful alternatives with different consequences. 
 
 Examples:
-- conflict between the approved contract and the repository.
-- behavior that the contract does not define.
+- conflict between the approved spec and the repository.
+- behavior that the spec does not define.
 - a material architectural alternative.
 - a possible scope change.
 - a decision that affects verification or reversibility.
@@ -181,8 +181,8 @@ While an escalation is unresolved, the workflow is paused in `escalation-decisio
 
 The owner can choose one of two paths:
 
-- Continue with the current contract. Maestro records the decision and returns the workflow to `ready-for-builder` for another builder run.
-- Change the approved contract. The owner revises and approves the spec, then the workflow returns to `ready-for-builder`.
+- Continue with the current spec. Maestro records the decision and returns the workflow to `ready-for-builder` for another builder run.
+- Change the approved spec. The owner revises and approves the spec, then the workflow returns to `ready-for-builder`.
 
 Each escalation remains in the workflow history as references.
 
@@ -198,7 +198,7 @@ A finding records a technical issue found by the verifier. Every finding blocks 
 
 When decisions are mixed between `reject` and `fix-code`, any `fix-code` decision returns the workflow to `ready-for-builder`.
 
-If the spec must change, the owner uses the same spec revision flow instead of resolving obsolete findings.
+If a finding requires a spec change, thw owner must approve a revised spec and run the builder again.
 
 ## Spec revision
 
