@@ -52,17 +52,14 @@ Leave local implementation choices, test code, fixtures, mocks, and commands to 
 1. Probe: <starting conditions and action or observation, without prescribing test implementation>
 2. Expected result: <observable and measurable outcome>
 3. Example: <specific starting conditions, concrete input or action, and exact expected result for this probe, not a restatement of the claim>
-4. Breakage: Not required. <Only when selected with the owner: describe the wrong behavior that a safe temporary change must cause and the probe must detect.>
 
 <!--
 Example:
 Probe: Save a change to an item's title, then reopen the item.
 Expected result: The saved title is still present.
 Example: An item's title is "Draft". Change it to "Ready", save, and reopen the item. The title is "Ready".
-Breakage (if selected): Discard the title change instead of saving it.
 
-Breakage checks are not required by default. Select them with the owner only when proving error detection adds value.
-The builder and verifier each run every probe. For selected breakages only, they also run the same probe during breakage and after restoration.
-The builder chooses executable checks and safe temporary changes. The verifier checks their coverage independently.
+The builder and verifier each run every probe.
+The builder chooses executable checks. The verifier checks their coverage independently.
 Keep execution evidence in handoffs, not in this spec.
 -->

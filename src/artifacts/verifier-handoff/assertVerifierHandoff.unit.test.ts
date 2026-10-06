@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  BREAKAGE_STATUSES,
-  PROBE_STATUSES,
-} from '#artifacts/builder-handoff/schema.ts';
+import { PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
 import {
   FINDING_SEVERITIES,
@@ -22,7 +19,6 @@ const handoff = (): VerifierHandoff => ({
       id: 'AC1',
       probe: 'npm test -- alert',
       probeStatus: PROBE_STATUSES.PASSED,
-      breakageStatus: BREAKAGE_STATUSES.CONFIRMED,
     },
   ],
   findings: [],
@@ -51,47 +47,21 @@ describe('verifier handoff validation', () => {
     ).not.toThrow();
   });
 
-  it('given mixed confirmed and not-required breakages when all probes pass then accepts no findings', () => {
-    const input = handoff();
-    input.acceptanceCriteria.push({
-      id: 'AC2',
-      probe: 'Inspect the timestamp font size.',
-      probeStatus: PROBE_STATUSES.PASSED,
-      breakageStatus: BREAKAGE_STATUSES.NOT_REQUIRED,
-    });
-
-    expect(() =>
-      assertVerifierHandoff({ handoff: input, specId, revision: 6 }),
-    ).not.toThrow();
-  });
-
-  it.each([BREAKAGE_STATUSES.NOT_RUN, BREAKAGE_STATUSES.NOT_CONFIRMED])(
-    'given a passed probe and %s breakage then requires a finding',
-    (breakageStatus) => {
-      const input = handoff();
-      input.acceptanceCriteria[0].breakageStatus = breakageStatus;
-
-      expect(() =>
-        assertVerifierHandoff({ handoff: input, specId, revision: 6 }),
-      ).toThrow('requires a finding');
-    },
-  );
-
   it.each([PROBE_STATUSES.FAILED, PROBE_STATUSES.NOT_RUN])(
-    'given a %s probe without required breakage then requires a finding',
+    'given a passed probe and a second %s probe then requires a related finding',
     (probeStatus) => {
       const input = handoff();
-      input.acceptanceCriteria[0] = {
-        ...input.acceptanceCriteria[0],
+      input.acceptanceCriteria.push({
+        id: 'AC2',
+        probe: 'npm test -- alert-restart',
         probeStatus,
-        breakageStatus: BREAKAGE_STATUSES.NOT_REQUIRED,
-      };
+      });
 
       expect(() =>
         assertVerifierHandoff({ handoff: input, specId, revision: 6 }),
       ).toThrow('requires a finding');
 
-      input.findings = [finding()];
+      input.findings = [{ ...finding(), acceptanceCriterion: 'AC2' }];
       expect(() =>
         assertVerifierHandoff({ handoff: input, specId, revision: 6 }),
       ).not.toThrow();
@@ -106,7 +76,7 @@ describe('verifier handoff validation', () => {
           acceptanceCriteria: [
             {
               ...handoff().acceptanceCriteria[0],
-              breakageStatus: BREAKAGE_STATUSES.NOT_CONFIRMED,
+              probeStatus: PROBE_STATUSES.FAILED,
             },
           ],
           findings: [
@@ -126,6 +96,10 @@ describe('verifier handoff validation', () => {
   });
 
   it.each([
+    {
+      handoff: { ...handoff(), version: '2.0.0' },
+      message: 'Invalid verifier handoff',
+    },
     {
       handoff: {
         ...handoff(),

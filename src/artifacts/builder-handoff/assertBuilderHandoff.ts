@@ -5,7 +5,6 @@
 
 import { Value } from 'typebox/value';
 import {
-  BREAKAGE_STATUSES,
   BUILDER_HANDOFF_STATUSES,
   type BuilderAcceptanceCriterion,
   type BuilderHandoff,
@@ -20,21 +19,17 @@ const hasUniqueAcceptanceCriterionIds = (
   new Set(acceptanceCriteria.map((criterion) => criterion.id)).size ===
   acceptanceCriteria.length;
 
-const hasOnlyCompletedChecks = (
+const hasOnlyPassedProbes = (
   acceptanceCriteria: BuilderAcceptanceCriterion[],
 ): boolean =>
   acceptanceCriteria.every(
-    (criterion) =>
-      criterion.probeStatus === PROBE_STATUSES.PASSED &&
-      (criterion.breakageStatus === BREAKAGE_STATUSES.CONFIRMED ||
-        criterion.breakageStatus === BREAKAGE_STATUSES.NOT_REQUIRED),
+    (criterion) => criterion.probeStatus === PROBE_STATUSES.PASSED,
   );
 
 const hasValidFailedChecks = (
   acceptanceCriteria: BuilderAcceptanceCriterion[],
 ): boolean =>
-  acceptanceCriteria.length === 0 ||
-  !hasOnlyCompletedChecks(acceptanceCriteria);
+  acceptanceCriteria.length === 0 || !hasOnlyPassedProbes(acceptanceCriteria);
 
 function assertBuilderHandoffSchema(
   input: unknown,
@@ -72,11 +67,9 @@ export function assertBuilderHandoff(
 
   if (
     handoff.status === BUILDER_HANDOFF_STATUSES.DONE &&
-    !hasOnlyCompletedChecks(handoff.acceptanceCriteria)
+    !hasOnlyPassedProbes(handoff.acceptanceCriteria)
   ) {
-    throw new Error(
-      'Done builder handoff requires every probe to pass and every breakage check to be confirmed or not required.',
-    );
+    throw new Error('Done builder handoff requires every probe to pass.');
   }
 
   if (

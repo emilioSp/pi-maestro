@@ -12,7 +12,7 @@ Four principles hold the workflow together:
 
 - The approved spec is the contract for the builder and verifier.
 - No agent approves its own work.
-- Every acceptance criterion is checked independently. You select which criteria also need a temporary fault to prove error detection.
+- Every acceptance criterion is checked independently.
 - An agent never decides for the owner, and never guesses.
 
 ## The roles

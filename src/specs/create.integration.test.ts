@@ -5,7 +5,6 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 import { createSpec } from '#specs/create.ts';
-import { loadSpecTemplate } from '#specs/template.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
   WORKFLOW_PHASES,
@@ -42,11 +41,6 @@ afterEach(async () => {
 });
 
 describe('spec template and creation', () => {
-  it('loads the four-section template', async () => {
-    const template = await loadSpecTemplate();
-    expect(template.match(/^## \d+\./gm)).toHaveLength(4);
-  });
-
   it('creates a drafting spec in the configured directory', async () => {
     const { paths } = await createWorkspace();
 

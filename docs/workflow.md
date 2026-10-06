@@ -46,9 +46,7 @@ The owner has final authority over:
 
 The builder works on the current branch with a fresh context. 
 
-It reads the active spec, implements the approved change, and runs every acceptance criterion.
-
-The builder checks every criterion. For the criteria the owner selects in the spec, it also introduces a temporary fault to prove that the check detects it.
+It reads the active spec, implements the approved change, and runs every probe against its expected result.
 
 The builder ends a run with one of these outcomes:
 
@@ -64,7 +62,7 @@ It reads the active spec and available artifacts. Historical artifacts provide c
 
 Before the verifier starts, Maestro commits a `verifier-running` checkpoint. That checkpoint is the candidate commit.
 
-The verifier does not repair product code. It independently checks every criterion and repeats the fault checks the owner selected in the spec. It restores all temporary changes before reporting its results.
+The verifier does not repair product code. It independently runs every probe against its expected result. It restores all temporary changes before reporting its results.
 
 ## Main flow
 
@@ -167,12 +165,11 @@ Probe
 Expected result
   What the probe must observe.
 
-Breakage
-  How to prove that the probe detects a broken behavior.
+Example
+  Specific starting conditions, input or action, and the exact expected result.
 ```
 
-Breakage checks are not required by default.
-The owner selects a breakage check during spec preparation when a proof, that the test detects a specific error, is needed.
+The builder and verifier each run every probe and compare the observed result with the expected result.
 
 ## Escalations
 
@@ -249,5 +246,5 @@ The default spec directory contains:
 ```
 
 - `builder.json` and `verifier.json` represent the current handoffs and can be overwritten by later runs. 
-- Builder handoff `notes` contain evidence for selected fault checks and significant discoveries that did not require an owner decision. Maestro summarizes the relevant results at the end.
+- Builder handoff `notes` contain significant discoveries that did not require an owner decision. Maestro summarizes the relevant results at the end.
 - Earlier versions of all artifacts remain in Git commits.

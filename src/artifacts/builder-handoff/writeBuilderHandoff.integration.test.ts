@@ -4,7 +4,6 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import {
-  BREAKAGE_STATUSES,
   BUILDER_HANDOFF_STATUSES,
   BUILDER_HANDOFF_VERSION,
   type BuilderHandoff,
@@ -34,7 +33,6 @@ const handoff = (revision: number): BuilderHandoff => ({
       id: 'AC1',
       probe: 'npm test -- alert',
       probeStatus: PROBE_STATUSES.PASSED,
-      breakageStatus: BREAKAGE_STATUSES.CONFIRMED,
     },
   ],
   notes: [],

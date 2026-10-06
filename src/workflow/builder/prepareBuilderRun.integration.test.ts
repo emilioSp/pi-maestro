@@ -2,7 +2,6 @@ import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-  BREAKAGE_STATUSES,
   BUILDER_HANDOFF_STATUSES,
   PROBE_STATUSES,
 } from '#artifacts/builder-handoff/schema.ts';
@@ -69,7 +68,6 @@ describe('builder run preparation', () => {
             id: 'AC1',
             probe: 'npm test',
             probeStatus: PROBE_STATUSES.NOT_RUN,
-            breakageStatus: BREAKAGE_STATUSES.NOT_RUN,
           },
         ],
         failure: { reason: 'The implementation was blocked.' },

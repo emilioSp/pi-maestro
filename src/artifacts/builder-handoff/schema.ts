@@ -24,28 +24,15 @@ export const PROBE_STATUSES = {
   NOT_RUN: 'not-run',
 } as const;
 
-export const BREAKAGE_STATUSES = {
-  CONFIRMED: 'confirmed',
-  NOT_CONFIRMED: 'not-confirmed',
-  NOT_RUN: 'not-run',
-  NOT_REQUIRED: 'not-required',
-} as const;
-
 export type ProbeStatus = (typeof PROBE_STATUSES)[keyof typeof PROBE_STATUSES];
 
-export type BreakageStatus =
-  (typeof BREAKAGE_STATUSES)[keyof typeof BREAKAGE_STATUSES];
-
 const ProbeStatusSchema = StringEnum(Object.values(PROBE_STATUSES));
-
-const BreakageStatusSchema = StringEnum(Object.values(BREAKAGE_STATUSES));
 
 export const BuilderAcceptanceCriterionSchema = Type.Object(
   {
     id: Type.String({ minLength: 1 }),
     probe: Type.String({ minLength: 1 }),
     probeStatus: ProbeStatusSchema,
-    breakageStatus: BreakageStatusSchema,
   },
   { additionalProperties: false },
 );

@@ -18,7 +18,6 @@ import {
 import { Type } from 'typebox';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-  BREAKAGE_STATUSES,
   BUILDER_HANDOFF_STATUSES,
   PROBE_STATUSES,
 } from '#artifacts/builder-handoff/schema.ts';
@@ -448,7 +447,6 @@ describe('main Maestro extension', () => {
         id: 'AC1',
         probe: 'Read alert.txt and compare it with Weather alerts enabled\\n.',
         probeStatus: PROBE_STATUSES.PASSED,
-        breakageStatus: BREAKAGE_STATUSES.CONFIRMED,
       },
     ];
 
@@ -505,8 +503,7 @@ describe('main Maestro extension', () => {
         assertToolRegistered(tool);
         await tool.execute(request.requestId, {
           specId,
-          summary:
-            'The weather alert message passed the probe and breakage checks.',
+          summary: 'The weather alert message passed the probe.',
           acceptanceCriteria,
           notes: [],
           ...(request.agent === AGENTS.BUILDER

@@ -136,7 +136,7 @@ describe('verifier handoff tool', () => {
 
     const productPath = `${workflow.repository.path}/README.md`;
     const originalProduct = await readFile(productPath, 'utf8');
-    await writeFile(productPath, '# Temporary breakage\n', 'utf8');
+    await writeFile(productPath, '# Temporary verification change\n', 'utf8');
     await writeFile(productPath, originalProduct, 'utf8');
 
     const result = await tool.execute('test-call', createHandoffInput());

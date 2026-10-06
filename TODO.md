@@ -6,13 +6,13 @@
 
 ### Example
 
-All acceptance criteria in the approved spec pass, including any required breakage checks. A separate mandatory repository check, such as lint, fails. The builder cannot fix that failure within the pass, and no owner decision is needed.
+All acceptance criteria in the approved spec pass. A separate mandatory repository check, such as lint, fails. The builder cannot fix that failure within the pass, and no owner decision is needed.
 
 The builder cannot report `done` because a required check fails. It must report `failed` while preserving the successful acceptance results.
 
 ### Restriction
 
-`src/artifacts/builder-handoff/assertBuilderHandoff.ts` rejects a `failed` handoff when its nonempty acceptance criterion list contains only `probeStatus: passed` and `breakageStatus: confirmed` or `not-required`.
+`src/artifacts/builder-handoff/assertBuilderHandoff.ts` rejects a `failed` handoff when its nonempty acceptance criterion list contains only `probeStatus: passed`.
 
 The tool reports: `Failed builder handoff cannot mark every acceptance check as completed.`
 
