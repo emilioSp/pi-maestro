@@ -142,9 +142,15 @@ For the initial spec:
 1. Maestro creates `spec.md` and `workflow.json` in `drafting-spec`.
 2. The owner reviews and approves the spec.
 3. `maestro_mark_spec_ready` changes the phase to `ready-for-builder`.
-4. The owner commits `spec.md` and `workflow.json` on the current branch.
+4. The owner commits `spec.md`, its prototypes, and `workflow.json` on the current branch.
 
-The committed `spec.md` represents the approved contract for the builder and verifier. The spec is immutable during a builder or verifier pass.
+During `drafting-spec`, Maestro can use any available tool to edit the active `spec.md` with the owner. Maestro can also create and update visual prototypes in that spec's `prototypes/` directory with any available tool. During `escalation-decision` or `findings-decision`, the same permission applies to owner-directed contract revisions of the spec and its prototypes. This permission does not apply to other workflow artifacts or product files. Maestro cannot edit the spec or its prototypes in other phases.
+
+The committed `spec.md` represents the approved contract for the builder and verifier. The spec and its prototypes are immutable during a builder or verifier pass.
+
+During `drafting-spec`, Maestro can run temporary repository experiments to resolve specification questions. The same permission applies during owner-directed spec revisions in `escalation-decision` and `findings-decision`, but not in other phases. The owner must agree on the question and scope before Maestro starts. Maestro can use any available tool to make temporary product changes and run checks. Experiments do not implement the feature or replace builder and verifier work.
+
+Maestro must preserve all pre-existing changes, including uncommitted and untracked files. Before requesting spec approval or resuming the workflow, Maestro must restore only its experiment changes and remove temporary files. If cleanup fails, Maestro reports the remaining changes and stops. Experiments cannot create commits or change `workflow.json`, handoffs, or other protected workflow artifacts. Installing packages or adding or updating dependencies requires explicit owner approval. After cleanup, Maestro records the results and limits in `spec.md`.
 
 ## Acceptance criterion simplicity principle
 

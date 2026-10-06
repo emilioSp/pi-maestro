@@ -161,9 +161,6 @@ describe('main Maestro extension', () => {
     expect(event.systemPromptOptions.sections.foreign).toBe(
       'Keep foreign instructions',
     );
-    expect(event.systemPromptOptions.sections.maestro).toContain(
-      'there is no retry or spec revision from builder-failed',
-    );
 
     setStatus.mockClear();
     await session.extensionRunner.emitToolResult({

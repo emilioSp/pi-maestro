@@ -66,14 +66,16 @@ Follow this workflow:
 2. Describe the change.
 3. Review the spec with Maestro.
 4. Approve the spec.
-5. Commit the approved `spec.md` and `workflow.json` on the current branch.
+5. Commit the approved `spec.md`, its prototypes, and `workflow.json` on the current branch.
 6. Ask Maestro to run the builder.
 7. Review builder escalations and answer them.
 8. Review verifier findings and choose an action for each finding.
 9. When the workflow reaches `candidate-ready`, read Maestro's summary of the results and Pull Request facts.
 10. Review or change the candidate as needed. 
 
-Do not change product code while the workflow runs. The workflow is complete when it reaches `candidate-ready`. No final tool call is needed. Changes after completion are outside the Maestro review.
+Do not change product code yourself while the workflow runs. Maestro can run temporary experiments with your agreement during spec preparation and permitted revisions. See [Workflow](docs/workflow.md#spec-approval) for the experiment rules.
+
+The workflow is complete when it reaches `candidate-ready`. No final tool call is needed. Changes after completion are outside the Maestro review.
 
 If an escalation or finding requires a contract change, edit and approve `spec.md`, then call `maestro_mark_spec_ready`. The workflow returns to `ready-for-builder` on the same branch. A technical builder failure stops the workflow and requires owner follow-up.
 
