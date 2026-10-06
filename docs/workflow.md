@@ -154,7 +154,7 @@ Checks that leave product files and workflow artifacts unchanged do not need you
 
 If answering a specification question requires temporary product changes, Maestro first agrees on the question and scope with you. Commands with automatic fixes also require this agreement, even if they ultimately change no files. These experiments help clarify the spec. They do not implement the feature or replace the builder and verifier.
 
-Maestro must preserve all pre-existing changes, including uncommitted and untracked files. Before requesting spec approval or resuming the workflow, Maestro must restore only its experiment changes and remove temporary files. If cleanup fails, Maestro reports the remaining changes and stops. Experiments cannot create commits or change `workflow.json`, handoffs, or other protected workflow artifacts. Installing packages or adding or updating dependencies requires explicit owner approval. After cleanup, Maestro records the results and limits in `spec.md`.
+Maestro must preserve all pre-existing changes, including uncommitted and untracked files. Before requesting spec approval or resuming the workflow, Maestro must restore only its experiment changes and remove temporary files. If cleanup fails, Maestro reports the remaining changes and stops. Experiments cannot create commits or change `workflow.json`, handoffs, or other protected workflow artifacts. Installing packages or adding or updating dependencies requires explicit owner approval. After cleanup, Maestro records only conclusions and limits that affect the contract in `spec.md`.
 
 ## Acceptance criterion simplicity principle
 

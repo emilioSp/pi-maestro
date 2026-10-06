@@ -2,102 +2,65 @@
 
 > After owner approval, this specification is the contract for the builder and verifier.
 
+<!--
+Write for the owner, not only for agents. Keep detail proportional to the change.
+State each requirement once. Refer to it from acceptance criteria instead of repeating it.
+Use the topics below as guidance, not a checklist to fill. Omit empty subsections and these instructions.
+Leave local implementation choices, test code, fixtures, mocks, and commands to the builder.
+-->
+
 ## 1. Context, goals, and scope
 
-<Describe the current situation, who or what is affected, and the problem or opportunity without describing the implementation.>
-
-### Measurable goals
-
-- <Observable outcome that must become possible.>
-- <Metric or verifiable condition that defines success.>
+<Briefly describe the problem, who is affected, and the intended outcome.>
 
 ### Out of scope
 
-- <Related behavior, integration, migration, or component that must not be implemented.>
-- <Existing behavior that remains unchanged and is not being redesigned.>
-
-Write `No additional out-of-scope items.` when none are known.
+<Name related changes that are explicitly excluded.>
 
 ## 2. Requirements and constraints
 
-### Functional requirements
+<Describe required behavior and measurable limits. Include performance, reliability, accessibility, or other quality requirements only when relevant.>
 
-- <Behavior the system must provide.>
-- <Actor or system action and its required outcome.>
-
-Write `No new functional behavior.` when the change is purely technical.
-
-### Non-functional requirements
-
-- <Measurable performance, reliability, security, accessibility, privacy, or compatibility requirement.>
-
-Write `No additional non-functional requirements.` when none apply.
-
-### Constraints
-
-- <Non-negotiable technical, business, legal, security, operational, or compatibility boundary.>
-- <Existing behavior or contract that must remain unchanged.>
-
-Write `No additional constraints.` when none are known.
+<Include non-negotiable boundaries and existing behavior that this change must preserve. Do not copy repository or agent instructions.>
 
 ### Edge cases and error handling
 
-| Case | Expected behavior | State and recovery |
-|---|---|---|
-| <Boundary or error condition> | <Observable system behavior> | <Preserved state, rollback, retry, or recovery behavior> |
-| <Unavailable dependency> | <Error presented to the caller or user> | <Partial state handling and retry behavior> |
-| <Repeated or concurrent operation> | <Idempotent, serialized, or conflict behavior> | <Resulting authoritative state> |
+<Describe boundary conditions, failures, and required recovery behavior not already covered above. Cover each required case in the acceptance criteria.>
 
-Every required edge case must be covered by an acceptance criterion.
+## 3. Technical decisions and prototypes
 
-Write `No additional edge cases.` only when none apply.
+<Record only approved architectural decisions or technical constraints that affect scope or behavior. Explain their reasons briefly. Leave routine implementation choices to the builder.>
 
-## 3. Technical design
+<For each relevant topic below, add a short subsection. Omit topics that do not apply.>
 
-<Describe the approved technical decisions that affect the repository architecture. Do not list every file or local implementation detail.>
+1. Components and data flow: changed responsibilities, data contracts, and important boundaries. No file inventory or function-level design.
+2. API specification: changed operations, permissions, inputs, outputs, errors, side effects, and delivery guarantees.
+3. Prototype and user interaction: link prototypes and identify approved states and interactions. Distinguish illustrative content from requirements.
+4. External integrations: affected services, failure behavior, and retries.
+5. Security and privacy: access rules, sensitive data, retention, and trust boundaries.
+6. Compatibility and migration: compatibility limits, migration, rollout, and rollback requirements.
+7. Monitoring and observability: required signals, alerts, and ownership.
 
-Include only relevant optional subsections. Write `No architectural changes. Follow the existing repository patterns.` when none apply.
-
-### Components and data flow
-
-<Describe affected components, responsibilities, data models, state changes, and important boundaries.>
-
-### API specification
-
-Write `Not applicable.` when no API contract changes.
-
-For each operation, define the protocol and operation, caller permissions, input, successful output, errors and side effects, and delivery or consistency rules.
-
-### Prototype and user interaction
-
-Write `Not applicable.` when there is no visual or interactive behavior.
-
-- `prototypes/<surface-name>.<html|png|jpg|jpeg>`: <surface and states represented by the prototype>
-
-<Describe user triggers, state transitions, validation, feedback, accessibility, and recovery behavior.>
-
-### External integrations
-
-<Describe affected services, SDKs, events, queues, webhooks, failure boundaries, and retry behavior.>
-
-### Security and privacy
-
-<Describe authentication, authorization, trust boundaries, sensitive-data handling, retention, encryption, and redaction.>
-
-### Compatibility and migration
-
-<Describe backward compatibility, migration, rollout, rollback, and coexistence with older versions.>
-
-### Monitoring and observability
-
-Write `Not applicable.` when no operational signal changes.
-
-<Describe required signals, triggers, diagnostic information, alerts, thresholds, ownership, and sensitive data that must not be recorded.>
+<Include only evidence and unresolved limits that affect an owner decision. Do not include investigation logs or general verification disclaimers.>
 
 ## 4. Acceptance criteria
 
+<Give each criterion a unique ID and one observable claim. A probe is the scenario used to check that claim. Describe it in plain language.>
+
 ### AC1: <short observable claim>
 
-- **Probe**: <exact command, API call, or reproducible procedure>
-- **Expected result**: <observable and measurable result>
-- **Breakage**: <specific temporary implementation change that must make the probe fail>
+1. Probe: <starting conditions and action or observation, without prescribing test implementation>
+2. Expected result: <observable and measurable outcome>
+3. Breakage: <wrong behavior that a safe temporary change must cause and the probe must detect>
+
+<!--
+Example:
+Probe: Use measurements where the minimum occurs twice. Inspect the displayed date.
+Expected result: The date belongs to the first occurrence.
+Breakage: Show the last occurrence instead of the first.
+
+The builder chooses executable checks and safe temporary changes for these scenarios.
+The verifier checks their coverage independently and repeats the proof.
+Keep the same probe before breakage, during breakage, and after restoration.
+Keep execution evidence in handoffs, not in this spec.
+-->

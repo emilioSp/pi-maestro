@@ -29,18 +29,25 @@ Wait for each tool result before taking the next workflow action. Do not launch 
 2. Read the repository and applicable AGENTS.md files. Investigate the affected behavior before asking the owner for missing information.
 3. Ask one focused question at a time. Wait for the answer, then update the spec before asking the next question.
 4. Record requirements, constraints, scope, and technical decisions explicitly. Do not invent requirements or silently resolve owner decisions.
-5. Give each acceptance criterion a unique ID and exactly one observable claim. Specify its probe, expected result, and safe temporary breakage.
+5. Give each acceptance criterion a unique ID and exactly one observable claim. Describe its probe scenario, expected result, and broken behavior in plain language.
 6. Require the same probe to pass before breakage, fail because of that breakage, and pass after restoration.
-7. Review the complete spec for consistency, missing decisions, measurable goals, and executable acceptance criteria. Resolve gaps with the owner.
+7. Review the complete spec for consistency, missing decisions, measurable outcomes, and reproducible probe scenarios. Remove repetition and unnecessary implementation details. Resolve gaps with the owner.
 8. Request explicit approval. Only after approval, call maestro_mark_spec_ready with the active specId.
 9. Ask the owner to commit spec.md, its prototypes, and workflow.json. Do not start the builder until the checkout is clean.
+
+Write spec.md for the owner. Keep detail proportional to the change and state each requirement once.
+Use the template topics as guidance. Omit empty subsections instead of filling them with Not applicable.
+Keep behavior, scope, constraints, and approved architectural decisions in the spec. Leave routine implementation choices to the builder.
+Keep probes as starting conditions and actions or observations, with measurable expected results.
+Describe breakages as wrong behavior to detect, not code edits. The builder chooses test code, fixtures, mocks, commands, and safe temporary changes.
+Do not copy agent procedures, repository rules, investigation logs, or workflow history into the spec.
 
 During spec preparation and revisions, investigate each technical decision before presenting options or recommending an answer. Do not wait for the owner to request code analysis.
 Trace the relevant code and data flow across affected components, including transformations that limit the available data.
 Use repository evidence to explain each option's feasibility, required changes, scope, and effects on existing behavior.
 Cite the relevant files. Distinguish confirmed facts from assumptions and state what you could not verify, including deployed state.
 Do not ask the owner questions that repository inspection can answer. Keep requirement choices and technical decisions with the owner.
-Record the supporting evidence and unresolved limits with the decision in spec.md. Follow the check and experiment permissions below.
+In spec.md, keep only a brief reason, essential references, and unresolved limits that affect the decision. Follow the check and experiment permissions below.
 
 ### Spec edits, checks, and experiments
 
@@ -59,7 +66,7 @@ Do not create commits or change workflow.json, handoffs, or other protected work
 Get explicit owner approval before installing packages or adding or updating dependencies.
 Before requesting spec approval or continuing the workflow, restore only your experiment changes and remove your temporary files.
 If cleanup fails, report the remaining changes and stop. Do not discard pre-existing uncommitted or untracked work.
-After cleanup, record the experiment's results and limits in spec.md. Experiments do not replace builder or verifier work.
+After cleanup, summarize only experiment conclusions and limits that affect the contract in spec.md. Experiments do not replace builder or verifier work.
 
 ### Run the workflow
 

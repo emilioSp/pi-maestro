@@ -48,15 +48,21 @@ Do not run `git commit` or change the candidate to make verification succeed.
 ## Regenerate every proof
 
 Verify every acceptance criterion from the candidate, including criteria checked in earlier runs.
-Do not trust the builder's results or silently change the approved behavior, probes, expected results, or breakages.
+Do not trust the builder's results or silently change the approved behavior, probe scenarios, expected results, or broken behavior.
+Read executable probes and breakage details from the candidate and builder handoff. Independently check that they cover the approved scenarios.
+The spec need not prescribe test code, fixtures, mocks, commands, or exact code edits. Missing execution details alone are not a contract gap.
+Use temporary verification files when needed to execute an approved scenario. Do not repair committed tests or weaken their coverage.
+If the builder's checks miss required behavior, record a finding even if your own probe passes.
+Follow any explicit execution constraints in the approved spec.
 For each criterion, use this sequence:
 
-1. Run the specified probe against the candidate and record the observed result.
-2. Apply the specified safe, temporary breakage in the current checkout.
+1. Run the executable probe against the candidate and record the observed result.
+2. Apply a safe, temporary change that causes the specified broken behavior in the current checkout.
 3. Run the same probe and record whether it detects the specified broken behavior.
 4. Restore the candidate, including temporary files and staged changes.
 5. Run the same probe again and record the observed result after restoration.
 
+Keep the executable probe unchanged throughout each pass, fail, pass sequence.
 Never apply breakage to production data or services. Restore each breakage before testing the next criterion.
 If a probe fails, record a finding. Do not repair the candidate to continue the sequence.
 If a probe or breakage is unsafe, undefined, or impossible to execute, record the limitation as a finding.
@@ -70,6 +76,7 @@ If a required check changes files, record that effect and restore those changes 
 A result obtained only after an automatic fix does not prove that the candidate passes.
 
 For each criterion, record its exact `id`, actual command or procedure in `probe`, `probeStatus`, and `breakageStatus`.
+In handoff `notes`, identify each criterion's temporary change and observed failure.
 Use `probeStatus: passed` only when the candidate passes before breakage and after restoration.
 Use `failed` for an observed probe failure and `not-run` for an unexecuted probe.
 Use `breakageStatus: confirmed` only when the specified breakage makes the same probe detect the broken behavior.

@@ -65,22 +65,27 @@ Record significant discoveries without an owner decision in handoff `notes`. Do 
 ## Prove every acceptance criterion
 
 Run the full proof for every criterion, including on repair passes. Previous evidence does not replace this pass's results.
+The spec defines probe scenarios, expected results, and broken behavior to detect.
+Choose test code, fixtures, mocks, and commands that cover each approved scenario. Choose safe temporary changes that cause its specified broken behavior.
+These execution details are your responsibility, not missing owner decisions. Follow any explicit execution constraints in the approved spec.
 For each criterion, use this sequence:
 
-1. Run the specified probe against the implementation and observe the expected result.
-2. Apply only the specified safe, temporary breakage in the current checkout.
+1. Run the executable probe against the implementation and observe the expected result.
+2. Apply the chosen safe, temporary breakage in the current checkout.
 3. Run the same probe and confirm that the breakage causes the expected behavior to fail.
 4. Restore the implementation to its pre-breakage state. Remove temporary files and undo temporary staging changes.
 5. Run the same probe again and confirm that the expected result returns.
 
 Never apply breakage to production data or services. Restore each breakage before testing the next criterion.
-Do not change approved probes, expected results, breakages, or design decisions to obtain passing results.
+Do not change approved probe scenarios, expected results, broken behavior, or design decisions to obtain passing results.
+Keep the executable probe unchanged throughout each pass, fail, pass sequence.
 If the implementation fails, repair it within the contract and repeat the proof for affected criteria.
 If the contract needs clarification or revision, escalate instead of inventing a replacement probe or breakage.
 For visual claims, use the specified reproducible procedure and compare with prototypes when required.
 Run applicable repository checks. If subsequent changes invalidate earlier evidence, rerun the affected checks and proofs.
 
 For each criterion, record its exact `id`, actual command or procedure in `probe`, `probeStatus`, and `breakageStatus`.
+In handoff `notes`, identify each criterion's temporary change and observed failure so the verifier can reproduce the breakage.
 Use `probeStatus: passed` only when the implementation passes before breakage and after restoration.
 Use `failed` for an observed probe failure and `not-run` for an unexecuted probe.
 Use `breakageStatus: confirmed` only when the specified breakage makes the same probe detect the broken behavior.
