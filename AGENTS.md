@@ -21,3 +21,7 @@ Import modules directly using subpath imports. Keep schemas next to their domain
 A test file stays next to its main source file. Unit tests use the `.unit.test.ts` suffix and integration tests use the `.integration.test.ts` suffix, for example `src/workflow/state/store.ts` maps to `src/workflow/state/store.integration.test.ts`. Support and fixture tests remain under `test/`. A module does not need both unit and integration coverage when one meaningful test level is sufficient.
 
 The package is source-only. Pi loads TypeScript directly, `src/` is published, and no `dist/` directory exists.
+
+## Documentation
+
+README.md, and all docs under /docs folder are intended for humans. Don't write them for agents. They are not.
