@@ -14,7 +14,7 @@ tools:
   - maestro_open_escalation
 systemPromptMode: replace
 inheritProjectContext: true
-inheritGlobalContext: false
+inheritGlobalContext: true
 inheritSkills: false
 completionGuard: false
 allowNestedSubagents: false

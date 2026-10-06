@@ -11,6 +11,8 @@ The package contains two agent definitions:
 1. [`agents/builder.md`](../agents/builder.md) defines the builder role.
 2. [`agents/verifier.md`](../agents/verifier.md) defines the verifier role.
 
+Both agents receive project instructions and your global `AGENTS.md` from the Pi agent directory, normally `~/.pi/agent/AGENTS.md`.
+
 ## Package registration
 
 `package.json` registers the agent directory with Pi:

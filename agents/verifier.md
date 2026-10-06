@@ -13,7 +13,7 @@ tools:
   - maestro_record_verifier_handoff
 systemPromptMode: replace
 inheritProjectContext: true
-inheritGlobalContext: false
+inheritGlobalContext: true
 inheritSkills: false
 completionGuard: false
 allowNestedSubagents: false
