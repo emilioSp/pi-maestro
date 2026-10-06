@@ -28,13 +28,13 @@ import {
 import piTestSessions from '#test/support/pi-session.ts';
 import { registerResolveFindingsTool } from '#tools/main/resolve-findings.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
-import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
+import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { FINDING_DECISIONS } from '#workflow/findings/resolveFindings.ts';
 import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
-import { prepareVerifierLaunch } from '#workflow/verifier/prepareVerifierLaunch.ts';
+import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 
 type FindingResolutionDetails = {
   specId: string;
@@ -64,7 +64,7 @@ const createFinding = (id: string): VerifierFinding => ({
 const createFindingsDecisionWorkflow = async (findings: VerifierFinding[]) => {
   const workflow = await createApprovedWorkflow();
 
-  await prepareBuilderLaunch({ paths: workflow.paths, specId: SPEC_ID });
+  await prepareBuilderRun({ paths: workflow.paths, specId: SPEC_ID });
   await completeBuilderPass({
     paths: workflow.paths,
     specId: SPEC_ID,
@@ -77,7 +77,7 @@ const createFindingsDecisionWorkflow = async (findings: VerifierFinding[]) => {
   });
   await workflow.repository.commit('Builder completed');
 
-  const verifierLaunch = await prepareVerifierLaunch({
+  const verifierRun = await prepareVerifierRun({
     paths: workflow.paths,
     specId: SPEC_ID,
   });
@@ -85,11 +85,11 @@ const createFindingsDecisionWorkflow = async (findings: VerifierFinding[]) => {
   await completeVerifierPass({
     paths: workflow.paths,
     specId: SPEC_ID,
-    candidateCommit: verifierLaunch.candidateCommit,
+    candidateCommit: verifierRun.candidateCommit,
     handoff: {
       version: VERIFIER_HANDOFF_VERSION,
       specId: SPEC_ID,
-      revision: verifierLaunch.revision + 1,
+      revision: verifierRun.revision + 1,
       summary: 'The candidate has findings.',
       acceptanceCriteria: [],
       findings,

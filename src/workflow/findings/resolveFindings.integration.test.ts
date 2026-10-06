@@ -13,14 +13,14 @@ import {
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
-import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
+import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import {
   FINDING_DECISIONS,
   resolveFindings,
 } from '#workflow/findings/resolveFindings.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
-import { prepareVerifierLaunch } from '#workflow/verifier/prepareVerifierLaunch.ts';
+import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 
 afterEach(cleanupBuilderWorkflows);
 
@@ -28,7 +28,7 @@ describe('finding resolution', () => {
   it('runs the code-fix cycle on the same checkout and branch', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
-    const firstBuilderLaunch = await prepareBuilderLaunch({
+    const firstBuilderRun = await prepareBuilderRun({
       paths,
       specId: SPEC_ID,
     });
@@ -45,7 +45,7 @@ describe('finding resolution', () => {
     });
     await repository.commit('Builder completed');
 
-    const firstVerifierLaunch = await prepareVerifierLaunch({
+    const firstVerifierRun = await prepareVerifierRun({
       paths,
       specId: SPEC_ID,
     });
@@ -68,11 +68,11 @@ describe('finding resolution', () => {
     await completeVerifierPass({
       paths,
       specId: SPEC_ID,
-      candidateCommit: firstVerifierLaunch.candidateCommit,
+      candidateCommit: firstVerifierRun.candidateCommit,
       handoff: {
         version: VERIFIER_HANDOFF_VERSION,
         specId: SPEC_ID,
-        revision: firstVerifierLaunch.revision + 1,
+        revision: firstVerifierRun.revision + 1,
         summary: 'The candidate has one finding.',
         acceptanceCriteria: [],
         findings: [finding],
@@ -92,13 +92,13 @@ describe('finding resolution', () => {
       ],
     });
 
-    expect(firstBuilderLaunch.specId).toBe(SPEC_ID);
-    expect(firstVerifierLaunch.specId).toBe(SPEC_ID);
+    expect(firstBuilderRun.specId).toBe(SPEC_ID);
+    expect(firstVerifierRun.specId).toBe(SPEC_ID);
     expect(resolved.repositoryRoot).toBe(repository.path);
     expect(resolved.state.phase).toBe(WORKFLOW_PHASES.READY_FOR_BUILDER);
     expect(resolved.findings[0].rejection).toBeNull();
 
-    const secondBuilderLaunch = await prepareBuilderLaunch({
+    const secondBuilderRun = await prepareBuilderRun({
       paths,
       specId: SPEC_ID,
     });
@@ -115,26 +115,29 @@ describe('finding resolution', () => {
     });
     await repository.commit('Builder fixed finding');
 
-    const secondCandidateCommit = await getHeadCommit(repository.path);
-
-    const secondVerifierLaunch = await prepareVerifierLaunch({
+    const secondVerifierRun = await prepareVerifierRun({
       paths,
       specId: SPEC_ID,
     });
 
-    expect(secondBuilderLaunch.specId).toBe(SPEC_ID);
-    expect(secondVerifierLaunch.specId).toBe(SPEC_ID);
-    expect(secondVerifierLaunch.candidateCommit).toBe(secondCandidateCommit);
-    expect(secondVerifierLaunch.repositoryRoot).toBe(repository.path);
+    expect(secondBuilderRun.specId).toBe(SPEC_ID);
+    expect(secondVerifierRun.specId).toBe(SPEC_ID);
+    expect(secondVerifierRun.candidateCommit).toBe(
+      secondVerifierRun.checkpointCommit,
+    );
+    await expect(getHeadCommit(repository.path)).resolves.toBe(
+      secondVerifierRun.candidateCommit,
+    );
+    expect(secondVerifierRun.repositoryRoot).toBe(repository.path);
 
     const secondVerifier = await completeVerifierPass({
       paths,
       specId: SPEC_ID,
-      candidateCommit: secondVerifierLaunch.candidateCommit,
+      candidateCommit: secondVerifierRun.candidateCommit,
       handoff: {
         version: VERIFIER_HANDOFF_VERSION,
         specId: SPEC_ID,
-        revision: secondVerifierLaunch.revision + 1,
+        revision: secondVerifierRun.revision + 1,
         summary: 'The corrected candidate is approved.',
         acceptanceCriteria: [],
         findings: [],

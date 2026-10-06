@@ -1,6 +1,6 @@
 /**
  * Objective: Coordinate foreground pi-subagents delegation responses.
- * Used: By Pi tools that launch pi-subagents agents.
+ * Used: By Pi tools that run pi-subagents agents.
  */
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';

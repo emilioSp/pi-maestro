@@ -60,12 +60,12 @@ The verifier works on the current branch with a fresh context.
 
 It reads the active spec and available artifacts. Historical artifacts provide context, not proof.
 
-Before the verifier starts, Maestro commits a `verifier-running` checkpoint, making the parent of that checkpoint a `candidate` commit for the spec implementation.
+Before the verifier starts, Maestro commits a `verifier-running` checkpoint. That checkpoint is the candidate commit. Its commit ID stays fixed for the entire verifier run.
 
 The verifier never changes product code, it independently regenerates every probe and breakage from the candidate.
 
 
-The verifier applies and restores temporary breakages. `maestro_record_verifier_handoff` compares product files with that parent commit. If the product is unchanged, the tool writes `verifier.json` and `workflow.json` and commits only those protocol files. If product changes remain, the tool returns `PRODUCT_FILES_MODIFIED` and does not write or commit the handoff.
+The verifier applies and restores temporary breakages. `maestro_record_verifier_handoff` compares product files with that checkpoint commit. If the product is unchanged, the tool writes `verifier.json` and `workflow.json` and commits only those protocol files. If product changes remain, the tool returns `PRODUCT_FILES_MODIFIED` and does not write or commit the handoff.
 
 There is no numbered verifier pass and no separate verifier branch. The current artifact is always:
 
@@ -172,7 +172,7 @@ The previous escalation or finding becomes inactive. Its artifact remains in the
 
 The workflow does not store a separate spec version. The active contract is the current `spec.md`; Git preserves earlier versions and approvals.
 
-Immediately before each builder launch, Maestro calculates the SHA-256 of the current `spec.md` and stores it only in live session state. Builder handoff and escalation tools compare the current file with that baseline. A spec revision receives its new baseline only after the owner approves it. Restart, `/resume`, and deactivation discard the live baseline.
+Immediately before each builder run, Maestro calculates the SHA-256 of the current `spec.md` and stores it only in live session state. Builder handoff and escalation tools compare the current file with that baseline. A spec revision receives its new baseline only after the owner approves it. Restart, `/resume`, and deactivation discard the live baseline.
 
 ## Acceptance criterion simplicity principle
 
@@ -215,10 +215,10 @@ A finding records a technical issue found by the verifier. Every finding blocks 
 | Decision | Result |
 |---|---|
 | `reject` | Requires and records the owner’s reason. When every finding is rejected, the candidate becomes ready. |
-| `fix-code` | Keeps the current spec and starts another builder run. |
+| `fix-code` | Keeps the current spec and returns the workflow to `ready-for-builder`. |
 | Spec must change | The owner revises `spec.md` from `findings-decision`; previous findings become historical. |
 
-When decisions are mixed, any `fix-code` decision starts another builder run. If the approved contract must change, the owner uses the same spec revision flow instead of resolving obsolete findings.
+When decisions are mixed, any `fix-code` decision returns the workflow to `ready-for-builder`. Run the builder separately. If the approved contract must change, the owner uses the same spec revision flow instead of resolving obsolete findings.
 
 ## Completion and Pull Request
 

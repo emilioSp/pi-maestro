@@ -31,20 +31,21 @@ The `pi.subagents.agents` field tells `pi-subagents` to scan `./agents` for agen
 
 The `package` and `name` fields in each file form the runtime name that delegation uses.
 
-## Launch flow
+## Run flow
 
-When the owner launches the builder, the integration follows these steps:
+When the owner runs the builder, the integration follows these steps:
 
-1. The owner calls `maestro_launch_builder`.
-2. `src/tools/main/launch-builder.ts` prepares the workflow and emits a delegation request.
+1. The owner calls `maestro_run_builder`.
+2. `src/tools/main/run-builder.ts` prepares the workflow and emits a delegation request.
 3. The request sets `agent: AGENTS.BUILDER`.
 4. `AGENTS.BUILDER` has the value `maestro.builder` in `src/config/schema.ts`.
 5. `pi-subagents` resolves `maestro.builder` to `agents/builder.md`.
 6. The child receives the system prompt and the tools from that agent definition.
+7. Maestro waits for the child to finish, checks its result, and returns it to the owner.
 
 Maestro also passes the explicit spec ID, the current repository root, the configured model, the thinking level, the timeout, and a fresh context.
 
-The verifier uses the same name mapping with `AGENTS.VERIFIER` and `maestro.verifier`.
+`maestro_run_verifier` in `src/tools/main/run-verifier.ts` uses the same flow with `AGENTS.VERIFIER` and `maestro.verifier`. Both tools run in the foreground and wait for a result.
 
 ## Subagent extension
 

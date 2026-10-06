@@ -23,13 +23,12 @@ export const WORKFLOW_PHASES = {
 
 export const WORKFLOW_EVENTS = {
   MARK_SPEC_READY: 'mark-spec-ready',
-  LAUNCH_BUILDER: 'launch-builder',
+  RUN_BUILDER: 'run-builder',
   OPEN_ESCALATION: 'open-escalation',
   RESOLVE_ESCALATION: 'resolve-escalation',
   BUILDER_FAILED: 'builder-failed',
   BUILDER_DONE: 'builder-done',
-  LAUNCH_VERIFIER: 'launch-verifier',
-  RETRY_VERIFIER: 'retry-verifier',
+  RUN_VERIFIER: 'run-verifier',
   VERIFIER_FOUND_FINDINGS: 'verifier-found-findings',
   VERIFIER_APPROVED: 'verifier-approved',
   REJECT_FINDINGS: 'reject-findings',

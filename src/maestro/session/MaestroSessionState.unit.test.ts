@@ -33,16 +33,20 @@ describe('Maestro session state', () => {
     expect(maestroSessionState.isActive()).toBe(false);
     expect(maestroSessionState.getActiveSpecId()).toBeNull();
     expect(maestroSessionState.getSpecSha256()).toBeNull();
+    expect(maestroSessionState.getVerifierCheckpointCommit()).toBeNull();
   });
 
-  it('keeps the active spec and SHA only in live state', async () => {
+  it('given live spec and verifier baselines when the active spec clears then both baselines clear', async () => {
     const state = maestroSessionState;
     const specPath = await createSpecFile('specification\n');
 
     state.activate();
     state.setActiveSpecId(SPEC_ID);
     await state.setSpecSha256(specPath);
+    const checkpointCommit = 'a'.repeat(40);
+    state.setVerifierCheckpointCommit(checkpointCommit);
 
+    expect(state.getVerifierCheckpointCommit()).toBe(checkpointCommit);
     expect(state.isActive()).toBe(true);
     expect(state.getActiveSpecId()).toBe(SPEC_ID);
     expect(state.getSpecSha256()).toBe(
@@ -53,6 +57,7 @@ describe('Maestro session state', () => {
 
     expect(state.getActiveSpecId()).toBeNull();
     expect(state.getSpecSha256()).toBeNull();
+    expect(state.getVerifierCheckpointCommit()).toBeNull();
   });
 
   it('replaces the SHA baseline when the active spec is retried', async () => {
@@ -89,17 +94,19 @@ describe('Maestro session state', () => {
     );
   });
 
-  it('deactivates the session and clears the live SHA', async () => {
+  it('given live spec and verifier baselines when the session deactivates then both baselines clear', async () => {
     const state = maestroSessionState;
     const specPath = await createSpecFile('specification\n');
 
     state.activate();
     state.setActiveSpecId(SPEC_ID);
     await state.setSpecSha256(specPath);
+    state.setVerifierCheckpointCommit('a'.repeat(40));
     state.deactivate();
 
     expect(state.isActive()).toBe(false);
     expect(state.getActiveSpecId()).toBeNull();
     expect(state.getSpecSha256()).toBeNull();
+    expect(state.getVerifierCheckpointCommit()).toBeNull();
   });
 });

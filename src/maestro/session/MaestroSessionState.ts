@@ -9,6 +9,7 @@ class MaestroSessionState {
   private active = false;
   private activeSpecId: string | null = null;
   private specSha256: string | null = null;
+  private verifierCheckpointCommit: string | null = null;
 
   public isActive = (): boolean => this.active;
 
@@ -34,6 +35,17 @@ class MaestroSessionState {
     this.specSha256 = await getFileSha256(specPath);
   };
 
+  public getVerifierCheckpointCommit = (): string | null =>
+    this.verifierCheckpointCommit;
+
+  public setVerifierCheckpointCommit = (commit: string): void => {
+    this.verifierCheckpointCommit = commit;
+  };
+
+  public clearVerifierCheckpointCommit = (): void => {
+    this.verifierCheckpointCommit = null;
+  };
+
   public activate = (): void => {
     this.active = true;
   };
@@ -41,6 +53,7 @@ class MaestroSessionState {
   public clearActiveSpecId = (): void => {
     this.activeSpecId = null;
     this.specSha256 = null;
+    this.clearVerifierCheckpointCommit();
   };
 
   public deactivate = (): void => {

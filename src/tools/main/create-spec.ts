@@ -7,7 +7,7 @@ import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { createSpec } from '#specs/create.ts';
-import { resolveToolLaunchContext } from '#tools/utils/resolveToolLaunchContext.ts';
+import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 
 export const CREATE_SPEC_TOOL = {
   NAME: 'maestro_create_spec',
@@ -30,7 +30,7 @@ export const registerCreateSpecTool = (pi: ExtensionAPI): void => {
     description: CREATE_SPEC_TOOL.DESCRIPTION,
     parameters: CreateSpecToolParameters,
     async execute(_toolCallId, { title }, _signal, _onUpdate, context) {
-      const { paths } = await resolveToolLaunchContext(context.cwd);
+      const { paths } = await resolveToolRunContext(context.cwd);
 
       const created = await createSpec({
         paths,

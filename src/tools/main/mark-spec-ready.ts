@@ -7,14 +7,14 @@ import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
-import { resolveToolLaunchContext } from '#tools/utils/resolveToolLaunchContext.ts';
+import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
 
 export const MARK_SPEC_READY_TOOL = {
   NAME: 'maestro_mark_spec_ready',
   LABEL: 'Mark Spec Ready',
   DESCRIPTION:
-    'Approve the current spec.md after explicit owner approval and move the workflow to ready-for-builder. The owner must commit spec.md and workflow.json before launching the builder.',
+    'Approve the current spec.md after explicit owner approval and move the workflow to ready-for-builder. The owner must commit spec.md and workflow.json before running the builder.',
 } as const;
 
 const MarkSpecReadyToolParameters = Type.Object(
@@ -31,7 +31,7 @@ export const registerMarkSpecReadyTool = (pi: ExtensionAPI): void => {
     description: MARK_SPEC_READY_TOOL.DESCRIPTION,
     parameters: MarkSpecReadyToolParameters,
     async execute(_toolCallId, { specId }, _signal, _onUpdate, context) {
-      const { paths } = await resolveToolLaunchContext(context.cwd);
+      const { paths } = await resolveToolRunContext(context.cwd);
 
       const state = await markSpecReady({
         paths,
@@ -43,7 +43,7 @@ export const registerMarkSpecReadyTool = (pi: ExtensionAPI): void => {
         content: [
           {
             type: 'text',
-            text: `Spec ${state.specId} is approved at workflow revision ${state.revision} and ready-for-builder. Commit spec.md and workflow.json before launching the builder.`,
+            text: `Spec ${state.specId} is approved at workflow revision ${state.revision} and ready-for-builder. Commit spec.md and workflow.json before running the builder.`,
           },
         ],
         details: state,

@@ -1,21 +1,20 @@
 /**
- * Objective: Prepare a committed verifier launch checkpoint in the current checkout.
+ * Objective: Prepare a committed verifier run checkpoint in the current checkout.
  * Used: When Maestro starts a verifier pass.
  */
 
 import { rm } from 'node:fs/promises';
 import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
-import { getParentCommit } from '#git/history/getParentCommit.ts';
-import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 
-export type VerifierLaunch = {
+export type VerifierRun = {
   specId: string;
   repositoryRoot: string;
   candidateCommit: string;
@@ -23,15 +22,15 @@ export type VerifierLaunch = {
   revision: number;
 };
 
-type PrepareVerifierLaunchInput = {
+type PrepareVerifierRunInput = {
   paths: MaestroPaths;
   specId: string;
 };
 
-export const prepareVerifierLaunch = async ({
+export const prepareVerifierRun = async ({
   paths,
   specId,
-}: PrepareVerifierLaunchInput): Promise<VerifierLaunch> => {
+}: PrepareVerifierRunInput): Promise<VerifierRun> => {
   const repositoryRoot = paths.getRepositoryRoot();
   const workflowPath = paths.getWorkflowPath(specId);
   const handoffPath = paths.getVerifierHandoffPath(specId);
@@ -45,7 +44,7 @@ export const prepareVerifierLaunch = async ({
 
   if (currentState.phase !== WORKFLOW_PHASES.READY_FOR_VERIFIER) {
     throw new Error(
-      `Verifier launch requires ready-for-verifier state, found "${currentState.phase}".`,
+      `Verifier run requires ready-for-verifier state, found "${currentState.phase}".`,
     );
   }
 
@@ -53,13 +52,13 @@ export const prepareVerifierLaunch = async ({
 
   if (!status.clean) {
     throw new Error(
-      'Verifier launch requires a committed ready-for-verifier candidate.',
+      'Verifier run requires a committed ready-for-verifier candidate.',
     );
   }
 
   const nextState = transitionWorkflow({
     state: currentState,
-    event: WORKFLOW_EVENTS.LAUNCH_VERIFIER,
+    event: WORKFLOW_EVENTS.RUN_VERIFIER,
   });
 
   const handoffExists = await pathExists(handoffPath);
@@ -80,28 +79,17 @@ export const prepareVerifierLaunch = async ({
     expectedPaths.push(handoffPath);
   }
 
-  const previousHead = await getHeadCommit(repositoryRoot);
-
   const checkpointCommit = await createWorkflowCheckpointCommit({
     repositoryRoot,
     expectedPaths,
   });
 
-  const candidateCommit = await getParentCommit({
-    repositoryRoot,
-    commit: checkpointCommit,
-  });
-
-  if (candidateCommit !== previousHead) {
-    throw new Error(
-      'Verifier candidate changed while creating its checkpoint.',
-    );
-  }
+  maestroSessionState.setVerifierCheckpointCommit(checkpointCommit);
 
   return {
     specId,
     repositoryRoot,
-    candidateCommit,
+    candidateCommit: checkpointCommit,
     checkpointCommit,
     revision: nextState.revision,
   };

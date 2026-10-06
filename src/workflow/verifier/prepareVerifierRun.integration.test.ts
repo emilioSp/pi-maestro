@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -9,18 +10,18 @@ import {
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
-import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
+import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
-import { prepareVerifierLaunch } from '#workflow/verifier/prepareVerifierLaunch.ts';
+import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 
 afterEach(cleanupBuilderWorkflows);
 
-describe('verifier launch preparation', () => {
-  it('uses the current HEAD as the candidate and commits the running checkpoint', async () => {
+describe('verifier run preparation', () => {
+  it('given completed builder work when verification starts then the running checkpoint is the fixed candidate', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
-    const builderLaunch = await prepareBuilderLaunch({
+    const builderRun = await prepareBuilderRun({
       paths,
       specId: SPEC_ID,
     });
@@ -28,17 +29,23 @@ describe('verifier launch preparation', () => {
     await completeBuilderPass({
       paths,
       specId: SPEC_ID,
-      handoff: doneHandoff(builderLaunch.revision + 1),
+      handoff: doneHandoff(builderRun.revision + 1),
     });
     await repository.commit('Builder completed');
 
     const candidateBefore = await getHeadCommit(repository.path);
 
-    const launch = await prepareVerifierLaunch({ paths, specId: SPEC_ID });
+    const run = await prepareVerifierRun({ paths, specId: SPEC_ID });
 
-    expect(launch.candidateCommit).toBe(candidateBefore);
-    expect(launch.repositoryRoot).toBe(repository.path);
-    expect(launch.checkpointCommit).not.toBe(candidateBefore);
+    expect(run.candidateCommit).toBe(run.checkpointCommit);
+    expect(maestroSessionState.getVerifierCheckpointCommit()).toBe(
+      run.checkpointCommit,
+    );
+    await expect(getHeadCommit(repository.path)).resolves.toBe(
+      run.candidateCommit,
+    );
+    expect(run.repositoryRoot).toBe(repository.path);
+    expect(run.checkpointCommit).not.toBe(candidateBefore);
     await expect(getCurrentBranch(repository.path)).resolves.toBe('main');
     await expect(getRepositoryStatus(repository.path)).resolves.toMatchObject({
       clean: true,

@@ -13,14 +13,6 @@ import {
   registerCreateSpecTool,
 } from '#tools/main/create-spec.ts';
 import {
-  LAUNCH_BUILDER_TOOL,
-  registerLaunchBuilderTool,
-} from '#tools/main/launch-builder.ts';
-import {
-  LAUNCH_VERIFIER_TOOL,
-  registerLaunchVerifierTool,
-} from '#tools/main/launch-verifier.ts';
-import {
   MARK_SPEC_READY_TOOL,
   registerMarkSpecReadyTool,
 } from '#tools/main/mark-spec-ready.ts';
@@ -32,22 +24,30 @@ import {
   RESOLVE_FINDINGS_TOOL,
   registerResolveFindingsTool,
 } from '#tools/main/resolve-findings.ts';
+import {
+  RUN_BUILDER_TOOL,
+  registerRunBuilderTool,
+} from '#tools/main/run-builder.ts';
+import {
+  RUN_VERIFIER_TOOL,
+  registerRunVerifierTool,
+} from '#tools/main/run-verifier.ts';
 
 const MAIN_TOOL_NAMES: readonly string[] = [
   CREATE_SPEC_TOOL.NAME,
   MARK_SPEC_READY_TOOL.NAME,
-  LAUNCH_BUILDER_TOOL.NAME,
+  RUN_BUILDER_TOOL.NAME,
   RESOLVE_ESCALATION_TOOL.NAME,
-  LAUNCH_VERIFIER_TOOL.NAME,
+  RUN_VERIFIER_TOOL.NAME,
   RESOLVE_FINDINGS_TOOL.NAME,
 ];
 
 export default (pi: ExtensionAPI): void => {
   registerCreateSpecTool(pi);
   registerMarkSpecReadyTool(pi);
-  registerLaunchBuilderTool(pi);
+  registerRunBuilderTool(pi);
   registerResolveEscalationTool(pi);
-  registerLaunchVerifierTool(pi);
+  registerRunVerifierTool(pi);
   registerResolveFindingsTool(pi);
 
   const syncMainTools = (): void => {

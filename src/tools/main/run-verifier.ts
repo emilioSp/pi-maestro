@@ -1,6 +1,6 @@
 /**
- * Objective: Launch and validate one foreground verifier pass for the owner session.
- * Used: When the owner invokes the launch-verifier tool.
+ * Objective: Run and validate one foreground verifier pass for the owner session.
+ * Used: When the owner invokes the run-verifier tool.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -13,11 +13,12 @@ import { AGENTS } from '#config/schema.ts';
 import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import {
   assertDelegationResponse,
   waitForDelegationResponse,
 } from '#tools/utils/pi-subagent-delegation.ts';
-import { resolveToolLaunchContext } from '#tools/utils/resolveToolLaunchContext.ts';
+import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
@@ -27,18 +28,18 @@ import {
 } from '#workflow/verifier/completeVerifierPass.ts';
 import { hasProductChanges } from '#workflow/verifier/hasProductChanges.ts';
 import {
-  prepareVerifierLaunch,
-  type VerifierLaunch,
-} from '#workflow/verifier/prepareVerifierLaunch.ts';
+  prepareVerifierRun,
+  type VerifierRun,
+} from '#workflow/verifier/prepareVerifierRun.ts';
 
-export const LAUNCH_VERIFIER_TOOL = {
-  NAME: 'maestro_launch_verifier',
-  LABEL: 'Launch Verifier',
+export const RUN_VERIFIER_TOOL = {
+  NAME: 'maestro_run_verifier',
+  LABEL: 'Run Verifier',
   DESCRIPTION:
-    'Launch the verifier in the current checkout for a completed builder candidate. The verifier runs in the foreground.',
+    'Run the verifier in the current checkout for a completed builder candidate. The verifier runs in the foreground.',
 } as const;
 
-const LaunchVerifierToolParameters = Type.Object(
+const RunVerifierToolParameters = Type.Object(
   {
     specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
   },
@@ -78,7 +79,7 @@ type ProductChangesResult = {
   checkpointCommit: string;
 };
 
-type VerifierLaunchResult =
+type VerifierRunResult =
   | CandidateReadyResult
   | FindingsResult
   | ProductChangesResult;
@@ -86,7 +87,7 @@ type VerifierLaunchResult =
 type ReadTerminalVerifierResultInput = {
   paths: MaestroPaths;
   specId: string;
-  launch: VerifierLaunch;
+  run: VerifierRun;
   state: WorkflowState;
   productChanges: boolean;
 };
@@ -94,7 +95,7 @@ type ReadTerminalVerifierResultInput = {
 const readTerminalVerifierResult = async ({
   paths,
   specId,
-  launch,
+  run,
   state,
   productChanges,
 }: ReadTerminalVerifierResultInput): Promise<
@@ -115,7 +116,7 @@ const readTerminalVerifierResult = async ({
     );
   }
 
-  const repositoryStatus = await getRepositoryStatus(launch.repositoryRoot);
+  const repositoryStatus = await getRepositoryStatus(run.repositoryRoot);
 
   if (!repositoryStatus.clean) {
     throw new Error(
@@ -143,8 +144,8 @@ const readTerminalVerifierResult = async ({
   const details = {
     specId,
     revision: state.revision,
-    candidateCommit: launch.candidateCommit,
-    checkpointCommit: launch.checkpointCommit,
+    candidateCommit: run.candidateCommit,
+    checkpointCommit: run.checkpointCommit,
     handoff,
   };
 
@@ -158,14 +159,14 @@ const readTerminalVerifierResult = async ({
 type ReadVerifierResultInput = {
   paths: MaestroPaths;
   specId: string;
-  launch: VerifierLaunch;
+  run: VerifierRun;
 };
 
 const readVerifierResult = async ({
   paths,
   specId,
-  launch,
-}: ReadVerifierResultInput): Promise<VerifierLaunchResult> => {
+  run,
+}: ReadVerifierResultInput): Promise<VerifierRunResult> => {
   try {
     const state = await readWorkflowState(paths.getWorkflowPath(specId));
 
@@ -176,8 +177,8 @@ const readVerifierResult = async ({
     }
 
     const productChanges = await hasProductChanges({
-      repositoryRoot: launch.repositoryRoot,
-      candidateCommit: launch.candidateCommit,
+      repositoryRoot: run.repositoryRoot,
+      candidateCommit: run.candidateCommit,
       workflowPath: paths.getWorkflowPath(specId),
       handoffPath: paths.getVerifierHandoffPath(specId),
     });
@@ -191,8 +192,8 @@ const readVerifierResult = async ({
           specId,
           revision: state.revision,
           phase: state.phase,
-          candidateCommit: launch.candidateCommit,
-          checkpointCommit: launch.checkpointCommit,
+          candidateCommit: run.candidateCommit,
+          checkpointCommit: run.checkpointCommit,
         };
       }
 
@@ -204,7 +205,7 @@ const readVerifierResult = async ({
     return await readTerminalVerifierResult({
       paths,
       specId,
-      launch,
+      run,
       state,
       productChanges,
     });
@@ -215,7 +216,7 @@ const readVerifierResult = async ({
   }
 };
 
-const formatVerifierResult = (result: VerifierLaunchResult): string => {
+const formatVerifierResult = (result: VerifierRunResult): string => {
   if (result.outcome === WORKFLOW_PHASES.CANDIDATE_READY) {
     return `Verifier completed spec ${result.specId}. The workflow is candidate-ready.`;
   }
@@ -227,44 +228,48 @@ const formatVerifierResult = (result: VerifierLaunchResult): string => {
   return `${result.message} The workflow remains verifier-running.`;
 };
 
-export const registerLaunchVerifierTool = (pi: ExtensionAPI): void => {
+export const registerRunVerifierTool = (pi: ExtensionAPI): void => {
   pi.registerTool({
-    name: LAUNCH_VERIFIER_TOOL.NAME,
-    label: LAUNCH_VERIFIER_TOOL.LABEL,
-    description: LAUNCH_VERIFIER_TOOL.DESCRIPTION,
-    parameters: LaunchVerifierToolParameters,
+    name: RUN_VERIFIER_TOOL.NAME,
+    label: RUN_VERIFIER_TOOL.LABEL,
+    description: RUN_VERIFIER_TOOL.DESCRIPTION,
+    parameters: RunVerifierToolParameters,
     async execute(toolCallId, { specId }, _signal, _onUpdate, context) {
-      const { paths, config } = await resolveToolLaunchContext(context.cwd);
+      const { paths, config } = await resolveToolRunContext(context.cwd);
 
-      const launch = await prepareVerifierLaunch({ paths, specId });
+      const run = await prepareVerifierRun({ paths, specId });
 
-      const request: SubagentDelegationRequest = {
-        requestId: randomUUID(),
-        ownerRunId: toolCallId,
-        nodeId: WORKFLOW_ROLES.VERIFIER,
-        // pi-subagents loads this name from agents/verifier.md through package.json.
-        agent: AGENTS.VERIFIER,
-        task: `Verify specId "${specId}" in the current checkout "${launch.repositoryRoot}". Read all applicable AGENTS.md files before working.`,
-        context: 'fresh',
-        cwd: launch.repositoryRoot,
-        model: config.verifier.model,
-        thinking: config.verifier.thinking,
-        timeoutMs: config.verifier.timeoutMinutes * MILLISECONDS_PER_MINUTE,
-        result: { kind: 'text' },
-      };
+      try {
+        const request: SubagentDelegationRequest = {
+          requestId: randomUUID(),
+          ownerRunId: toolCallId,
+          nodeId: WORKFLOW_ROLES.VERIFIER,
+          // pi-subagents loads this name from agents/verifier.md through package.json.
+          agent: AGENTS.VERIFIER,
+          task: `Verify specId "${specId}" at candidate checkpoint "${run.candidateCommit}" in the current checkout "${run.repositoryRoot}". Read all applicable AGENTS.md files before working.`,
+          context: 'fresh',
+          cwd: run.repositoryRoot,
+          model: config.verifier.model,
+          thinking: config.verifier.thinking,
+          timeoutMs: config.verifier.timeoutMinutes * MILLISECONDS_PER_MINUTE,
+          result: { kind: 'text' },
+        };
 
-      const response = await waitForDelegationResponse({
-        piEventsBus: pi.events,
-        request,
-      });
+        const response = await waitForDelegationResponse({
+          piEventsBus: pi.events,
+          request,
+        });
 
-      assertDelegationResponse(response);
-      const result = await readVerifierResult({ paths, specId, launch });
+        assertDelegationResponse(response);
+        const result = await readVerifierResult({ paths, specId, run });
 
-      return {
-        content: [{ type: 'text', text: formatVerifierResult(result) }],
-        details: result,
-      };
+        return {
+          content: [{ type: 'text', text: formatVerifierResult(result) }],
+          details: result,
+        };
+      } finally {
+        maestroSessionState.clearVerifierCheckpointCommit();
+      }
     },
   });
 };

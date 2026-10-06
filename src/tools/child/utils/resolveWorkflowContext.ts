@@ -4,7 +4,7 @@
  */
 
 import { isValidSpecId } from '#ids/isValidSpecId.ts';
-import { resolveToolLaunchContext } from '#tools/utils/resolveToolLaunchContext.ts';
+import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 
 export type ResolveWorkflowContextInput = {
   cwd: string;
@@ -19,7 +19,7 @@ export const resolveWorkflowContext = async ({
     throw new Error(`Invalid spec ID: "${specId}".`);
   }
 
-  const { paths, repositoryRoot } = await resolveToolLaunchContext(cwd);
+  const { paths, repositoryRoot } = await resolveToolRunContext(cwd);
 
   return { paths, specId, repositoryRoot };
 };

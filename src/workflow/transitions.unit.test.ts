@@ -35,7 +35,7 @@ describe('workflow transitions', () => {
     },
     {
       phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
-      event: WORKFLOW_EVENTS.LAUNCH_BUILDER,
+      event: WORKFLOW_EVENTS.RUN_BUILDER,
       expectedPhase: WORKFLOW_PHASES.BUILDER_RUNNING,
     },
     {
@@ -60,12 +60,7 @@ describe('workflow transitions', () => {
     },
     {
       phase: WORKFLOW_PHASES.READY_FOR_VERIFIER,
-      event: WORKFLOW_EVENTS.LAUNCH_VERIFIER,
-      expectedPhase: WORKFLOW_PHASES.VERIFIER_RUNNING,
-    },
-    {
-      phase: WORKFLOW_PHASES.VERIFIER_RUNNING,
-      event: WORKFLOW_EVENTS.RETRY_VERIFIER,
+      event: WORKFLOW_EVENTS.RUN_VERIFIER,
       expectedPhase: WORKFLOW_PHASES.VERIFIER_RUNNING,
     },
     {
@@ -101,9 +96,9 @@ describe('workflow transitions', () => {
   it('follows the normal workflow path', () => {
     const events: WorkflowEvent[] = [
       WORKFLOW_EVENTS.MARK_SPEC_READY,
-      WORKFLOW_EVENTS.LAUNCH_BUILDER,
+      WORKFLOW_EVENTS.RUN_BUILDER,
       WORKFLOW_EVENTS.BUILDER_DONE,
-      WORKFLOW_EVENTS.LAUNCH_VERIFIER,
+      WORKFLOW_EVENTS.RUN_VERIFIER,
       WORKFLOW_EVENTS.VERIFIER_APPROVED,
     ];
 
@@ -145,7 +140,7 @@ describe('workflow transitions', () => {
 
     transitionWorkflow({
       state: current,
-      event: WORKFLOW_EVENTS.LAUNCH_BUILDER,
+      event: WORKFLOW_EVENTS.RUN_BUILDER,
     });
 
     expect(current).toEqual(state(WORKFLOW_PHASES.READY_FOR_BUILDER, 4));

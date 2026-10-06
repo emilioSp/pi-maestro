@@ -8,15 +8,15 @@ import type { MaestroConfig } from '#config/schema.ts';
 import { findRepositoryRoot } from '#git/repository/findRepositoryRoot.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 
-export type ToolLaunchContext = {
+export type ToolRunContext = {
   repositoryRoot: string;
   config: MaestroConfig;
   paths: MaestroPaths;
 };
 
-export const resolveToolLaunchContext = async (
+export const resolveToolRunContext = async (
   cwd: string,
-): Promise<ToolLaunchContext> => {
+): Promise<ToolRunContext> => {
   const repositoryRoot = await findRepositoryRoot(cwd);
   const config = await loadConfiguration(repositoryRoot);
 

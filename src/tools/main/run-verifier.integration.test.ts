@@ -15,19 +15,19 @@ import {
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { AGENTS } from '#config/schema.ts';
 import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
-import { getParentCommit } from '#git/history/getParentCommit.ts';
 import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import piTestSessions from '#test/support/pi-session.ts';
-import { registerLaunchVerifierTool } from '#tools/main/launch-verifier.ts';
+import { registerRunVerifierTool } from '#tools/main/run-verifier.ts';
 import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
-import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
+import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import {
@@ -38,7 +38,7 @@ import {
 const createReadyForVerifierWorkflow = async () => {
   const workflow = await createApprovedWorkflow();
 
-  const builderLaunch = await prepareBuilderLaunch({
+  const builderRun = await prepareBuilderRun({
     paths: workflow.paths,
     specId: SPEC_ID,
   });
@@ -54,17 +54,11 @@ const createReadyForVerifierWorkflow = async () => {
     },
   });
   await workflow.repository.commit(
-    `Builder completed at revision ${builderLaunch.revision + 1}`,
+    `Builder completed at revision ${builderRun.revision + 1}`,
   );
 
   return workflow;
 };
-
-const getCurrentCandidate = async (repositoryRoot: string): Promise<string> =>
-  getParentCommit({
-    repositoryRoot,
-    commit: await getHeadCommit(repositoryRoot),
-  });
 
 type VerifierHandoffInput = {
   revision: number;
@@ -98,7 +92,7 @@ const recordVerifierHandoff = async ({
   const completed = await completeVerifierPass({
     paths,
     specId: SPEC_ID,
-    candidateCommit: await getCurrentCandidate(repositoryRoot),
+    candidateCommit: await getHeadCommit(repositoryRoot),
     handoff: createVerifierHandoff({
       revision: state.revision + 1,
       findings,
@@ -123,10 +117,10 @@ afterEach(async () => {
   await cleanupBuilderWorkflows();
 });
 
-describe('launch verifier tool', () => {
+describe('run verifier tool', () => {
   it('registers a closed spec-only input schema', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
-      extension: registerLaunchVerifierTool,
+      extension: registerRunVerifierTool,
     });
 
     expect(Value.Check(tool.parameters, { specId: SPEC_ID })).toBe(true);
@@ -141,17 +135,17 @@ describe('launch verifier tool', () => {
     ).toBe(false);
   });
 
-  it('launches the verifier in the current checkout with explicit spec identity', async () => {
+  it('runs the verifier in the current checkout with explicit spec identity', async () => {
     const workflow = await createReadyForVerifierWorkflow();
 
     const { tool, events, emit, on } =
       await piTestSessions.createRegisteredTool({
         cwd: workflow.repository.path,
-        extension: registerLaunchVerifierTool,
+        extension: registerRunVerifierTool,
       });
 
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: The launch tool emits a delegation request on this channel.
+      // JUSTIFICATION: The run tool emits a delegation request on this channel.
       const request = payload as SubagentDelegationRequest;
       events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
         requestId: 'other-request',
@@ -204,6 +198,7 @@ describe('launch verifier tool', () => {
       specId: SPEC_ID,
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
     });
+    expect(maestroSessionState.getVerifierCheckpointCommit()).toBeNull();
   });
 
   it('returns findings and cleans the response listener', async () => {
@@ -211,11 +206,11 @@ describe('launch verifier tool', () => {
 
     const { tool, events, on } = await piTestSessions.createRegisteredTool({
       cwd: workflow.repository.path,
-      extension: registerLaunchVerifierTool,
+      extension: registerRunVerifierTool,
     });
 
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: The launch tool emits a delegation request on this channel.
+      // JUSTIFICATION: The run tool emits a delegation request on this channel.
       const request = payload as SubagentDelegationRequest;
       await recordVerifierHandoff({
         repositoryRoot: workflow.repository.path,
@@ -262,11 +257,11 @@ describe('launch verifier tool', () => {
 
     const { tool, events, on } = await piTestSessions.createRegisteredTool({
       cwd: workflow.repository.path,
-      extension: registerLaunchVerifierTool,
+      extension: registerRunVerifierTool,
     });
 
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: The launch tool emits a delegation request on this channel.
+      // JUSTIFICATION: The run tool emits a delegation request on this channel.
       const request = payload as SubagentDelegationRequest;
       await writeFile(
         join(workflow.repository.path, 'README.md'),
@@ -280,7 +275,7 @@ describe('launch verifier tool', () => {
       const completed = await completeVerifierPass({
         paths: workflow.paths,
         specId: SPEC_ID,
-        candidateCommit: await getCurrentCandidate(workflow.repository.path),
+        candidateCommit: await getHeadCommit(workflow.repository.path),
         handoff: createVerifierHandoff({ revision: state.revision + 1 }),
       });
 
@@ -318,13 +313,13 @@ describe('launch verifier tool', () => {
 
     const { tool, emit, on } = await piTestSessions.createRegisteredTool({
       cwd: workflow.repository.path,
-      extension: registerLaunchVerifierTool,
+      extension: registerRunVerifierTool,
     });
 
     await expect(
       tool.execute('test-call', { specId: SPEC_ID }),
     ).rejects.toThrow(
-      'Verifier launch requires ready-for-verifier state, found "ready-for-builder".',
+      'Verifier run requires ready-for-verifier state, found "ready-for-builder".',
     );
     expect(emit).not.toHaveBeenCalled();
     expect(on).not.toHaveBeenCalled();
@@ -335,11 +330,11 @@ describe('launch verifier tool', () => {
 
     const { tool, events, on } = await piTestSessions.createRegisteredTool({
       cwd: workflow.repository.path,
-      extension: registerLaunchVerifierTool,
+      extension: registerRunVerifierTool,
     });
 
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-      // JUSTIFICATION: The launch tool emits a delegation request on this channel.
+      // JUSTIFICATION: The run tool emits a delegation request on this channel.
       const request = payload as SubagentDelegationRequest;
       events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
         requestId: request.requestId,
@@ -355,6 +350,7 @@ describe('launch verifier tool', () => {
     ).rejects.toThrow(
       'Delegation error: The configured provider is unavailable.',
     );
+    expect(maestroSessionState.getVerifierCheckpointCommit()).toBeNull();
     await expect(
       readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.VERIFIER_RUNNING });
@@ -370,11 +366,11 @@ describe('launch verifier tool', () => {
 
     const timeoutTool = await piTestSessions.createRegisteredTool({
       cwd: timeoutWorkflow.repository.path,
-      extension: registerLaunchVerifierTool,
+      extension: registerRunVerifierTool,
     });
 
     timeoutTool.events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-      // JUSTIFICATION: The launch tool emits a delegation request on this channel.
+      // JUSTIFICATION: The run tool emits a delegation request on this channel.
       const request = payload as SubagentDelegationRequest;
       timeoutTool.events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
         requestId: request.requestId,
@@ -388,16 +384,17 @@ describe('launch verifier tool', () => {
     await expect(
       timeoutTool.tool.execute('test-call', { specId: SPEC_ID }),
     ).rejects.toThrow('Delegation timeout: The verifier exceeded its timeout.');
+    expect(maestroSessionState.getVerifierCheckpointCommit()).toBeNull();
 
     const interruptionWorkflow = await createReadyForVerifierWorkflow();
 
     const interruptionTool = await piTestSessions.createRegisteredTool({
       cwd: interruptionWorkflow.repository.path,
-      extension: registerLaunchVerifierTool,
+      extension: registerRunVerifierTool,
     });
 
     interruptionTool.events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-      // JUSTIFICATION: The launch tool emits a delegation request on this channel.
+      // JUSTIFICATION: The run tool emits a delegation request on this channel.
       const request = payload as SubagentDelegationRequest;
       interruptionTool.events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
         requestId: request.requestId,
@@ -411,6 +408,7 @@ describe('launch verifier tool', () => {
     await expect(
       interruptionTool.tool.execute('test-call', { specId: SPEC_ID }),
     ).rejects.toThrow('Delegation interruption: The verifier was interrupted.');
+    expect(maestroSessionState.getVerifierCheckpointCommit()).toBeNull();
   });
 
   it('returns a protocol error when a completed response has no handoff', async () => {
@@ -418,11 +416,11 @@ describe('launch verifier tool', () => {
 
     const { tool, events, on } = await piTestSessions.createRegisteredTool({
       cwd: workflow.repository.path,
-      extension: registerLaunchVerifierTool,
+      extension: registerRunVerifierTool,
     });
 
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-      // JUSTIFICATION: The launch tool emits a delegation request on this channel.
+      // JUSTIFICATION: The run tool emits a delegation request on this channel.
       const request = payload as SubagentDelegationRequest;
       events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
         requestId: request.requestId,

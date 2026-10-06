@@ -11,14 +11,14 @@ import {
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
-import { prepareBuilderLaunch } from '#workflow/builder/prepareBuilderLauncher.ts';
+import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import {
   completeVerifierPass,
   VERIFIER_PASS_ERRORS,
 } from '#workflow/verifier/completeVerifierPass.ts';
-import { prepareVerifierLaunch } from '#workflow/verifier/prepareVerifierLaunch.ts';
+import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 
 afterEach(cleanupBuilderWorkflows);
 
@@ -35,7 +35,7 @@ const approvedHandoff = {
 const prepareRunningVerifier = async () => {
   const workflow = await createApprovedWorkflow();
 
-  const builderLaunch = await prepareBuilderLaunch({
+  const builderRun = await prepareBuilderRun({
     paths: workflow.paths,
     specId: SPEC_ID,
   });
@@ -52,28 +52,27 @@ const prepareRunningVerifier = async () => {
   });
   await workflow.repository.commit('Builder completed');
 
-  const verifierLaunch = await prepareVerifierLaunch({
+  const verifierRun = await prepareVerifierRun({
     paths: workflow.paths,
     specId: SPEC_ID,
   });
 
-  return { ...workflow, builderLaunch, verifierLaunch };
+  return { ...workflow, builderRun, verifierRun };
 };
 
 describe('verifier completion', () => {
   it('writes one verifier handoff on the current checkout', async () => {
-    const { paths, repository, verifierLaunch } =
-      await prepareRunningVerifier();
+    const { paths, repository, verifierRun } = await prepareRunningVerifier();
 
     const handoff = {
       ...approvedHandoff,
-      revision: verifierLaunch.revision + 1,
+      revision: verifierRun.revision + 1,
     };
 
     const completed = await completeVerifierPass({
       paths,
       specId: SPEC_ID,
-      candidateCommit: verifierLaunch.candidateCommit,
+      candidateCommit: verifierRun.candidateCommit,
       handoff,
     });
 
@@ -99,8 +98,7 @@ describe('verifier completion', () => {
   });
 
   it('rejects product changes without writing the verifier protocol', async () => {
-    const { paths, repository, verifierLaunch } =
-      await prepareRunningVerifier();
+    const { paths, repository, verifierRun } = await prepareRunningVerifier();
 
     await writeFile(join(repository.path, 'product-change.txt'), 'changed\n');
     const handoffPath = paths.getVerifierHandoffPath(SPEC_ID);
@@ -109,10 +107,10 @@ describe('verifier completion', () => {
       completeVerifierPass({
         paths,
         specId: SPEC_ID,
-        candidateCommit: verifierLaunch.candidateCommit,
+        candidateCommit: verifierRun.candidateCommit,
         handoff: {
           ...approvedHandoff,
-          revision: verifierLaunch.revision + 1,
+          revision: verifierRun.revision + 1,
         },
       }),
     ).resolves.toEqual({
@@ -129,8 +127,7 @@ describe('verifier completion', () => {
   });
 
   it('given a staged product change when the verifier submits its handoff then no protocol write occurs', async () => {
-    const { paths, repository, verifierLaunch } =
-      await prepareRunningVerifier();
+    const { paths, repository, verifierRun } = await prepareRunningVerifier();
 
     const workflowPath = paths.getWorkflowPath(SPEC_ID);
     const workflowBefore = await readFile(workflowPath, 'utf8');
@@ -146,10 +143,10 @@ describe('verifier completion', () => {
       completeVerifierPass({
         paths,
         specId: SPEC_ID,
-        candidateCommit: verifierLaunch.candidateCommit,
+        candidateCommit: verifierRun.candidateCommit,
         handoff: {
           ...approvedHandoff,
-          revision: verifierLaunch.revision + 1,
+          revision: verifierRun.revision + 1,
         },
       }),
     ).resolves.toMatchObject({
@@ -163,8 +160,7 @@ describe('verifier completion', () => {
   });
 
   it('given an unstaged product change when the verifier submits its handoff then no protocol write occurs', async () => {
-    const { paths, repository, verifierLaunch } =
-      await prepareRunningVerifier();
+    const { paths, repository, verifierRun } = await prepareRunningVerifier();
 
     const workflowPath = paths.getWorkflowPath(SPEC_ID);
     const workflowBefore = await readFile(workflowPath, 'utf8');
@@ -175,10 +171,10 @@ describe('verifier completion', () => {
       completeVerifierPass({
         paths,
         specId: SPEC_ID,
-        candidateCommit: verifierLaunch.candidateCommit,
+        candidateCommit: verifierRun.candidateCommit,
         handoff: {
           ...approvedHandoff,
-          revision: verifierLaunch.revision + 1,
+          revision: verifierRun.revision + 1,
         },
       }),
     ).resolves.toMatchObject({
@@ -192,7 +188,7 @@ describe('verifier completion', () => {
   });
 
   it('given an invalid handoff specId when the verifier submits it then no protocol write occurs', async () => {
-    const { paths, verifierLaunch } = await prepareRunningVerifier();
+    const { paths, verifierRun } = await prepareRunningVerifier();
     const workflowPath = paths.getWorkflowPath(SPEC_ID);
     const workflowBefore = await readFile(workflowPath, 'utf8');
 
@@ -200,10 +196,10 @@ describe('verifier completion', () => {
       completeVerifierPass({
         paths,
         specId: SPEC_ID,
-        candidateCommit: verifierLaunch.candidateCommit,
+        candidateCommit: verifierRun.candidateCommit,
         handoff: {
           ...approvedHandoff,
-          revision: verifierLaunch.revision + 1,
+          revision: verifierRun.revision + 1,
           specId: '20260321-143052-other-spec',
         },
       }),
@@ -216,7 +212,7 @@ describe('verifier completion', () => {
   });
 
   it('given an invalid handoff revision when the verifier submits it then no protocol write occurs', async () => {
-    const { paths, verifierLaunch } = await prepareRunningVerifier();
+    const { paths, verifierRun } = await prepareRunningVerifier();
     const workflowPath = paths.getWorkflowPath(SPEC_ID);
     const workflowBefore = await readFile(workflowPath, 'utf8');
 
@@ -224,7 +220,7 @@ describe('verifier completion', () => {
       completeVerifierPass({
         paths,
         specId: SPEC_ID,
-        candidateCommit: verifierLaunch.candidateCommit,
+        candidateCommit: verifierRun.candidateCommit,
         handoff: {
           ...approvedHandoff,
           revision: 1,

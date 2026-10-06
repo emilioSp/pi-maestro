@@ -7,7 +7,7 @@ import { StringEnum } from '@earendil-works/pi-ai';
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
-import { resolveToolLaunchContext } from '#tools/utils/resolveToolLaunchContext.ts';
+import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 import {
   FINDING_DECISIONS,
   resolveFindings,
@@ -73,7 +73,7 @@ const formatResolution = (details: FindingResolutionDetails): string => {
   const requiringFix = formatFindingIds(details.findingsRequiringFixIds);
 
   if (details.phase === WORKFLOW_PHASES.READY_FOR_BUILDER) {
-    return `Recorded rejections for ${rejected}. Findings requiring code fixes: ${requiringFix}. The workflow is ready-for-builder. Launch the builder separately.`;
+    return `Recorded rejections for ${rejected}. Findings requiring code fixes: ${requiringFix}. The workflow is ready-for-builder. Run the builder separately.`;
   }
 
   return `Recorded rejections for ${rejected}. Findings requiring code fixes: ${requiringFix}. The workflow is candidate-ready.`;
@@ -92,7 +92,7 @@ export const registerResolveFindingsTool = (pi: ExtensionAPI): void => {
       _onUpdate,
       context,
     ) {
-      const { paths } = await resolveToolLaunchContext(context.cwd);
+      const { paths } = await resolveToolRunContext(context.cwd);
 
       const resolved = await resolveFindings({
         paths,
