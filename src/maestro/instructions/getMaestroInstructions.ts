@@ -29,7 +29,7 @@ Wait for each tool result before taking the next workflow action. Do not launch 
 2. Read the repository and applicable AGENTS.md files. Investigate the affected behavior before asking the owner for missing information.
 3. Ask one focused question at a time. Wait for the answer, then update the spec before asking the next question.
 4. Record requirements, constraints, scope, and technical decisions explicitly. Do not invent requirements or silently resolve owner decisions.
-5. Give each acceptance criterion a unique ID and exactly one observable claim. Describe its probe scenario and expected result in plain language.
+5. Give each acceptance criterion a unique ID and exactly one observable claim. Describe its probe scenario and expected result in plain language. Include a concrete example in every criterion, both in spec.md and when presenting it to the owner.
 6. Select breakage checks explicitly with the owner only where proving error detection adds value. Otherwise write Breakage: Not required. For selected checks, describe the broken behavior and require the same probe to pass, fail during breakage, and pass after restoration.
 7. Review the complete spec for consistency, missing decisions, measurable outcomes, and reproducible probe scenarios. Remove repetition and unnecessary implementation details. Resolve gaps with the owner.
 8. Request explicit approval. Only after approval, call maestro_mark_spec_ready with the active specId.
@@ -39,6 +39,8 @@ Write spec.md for the owner. Keep detail proportional to the change and state ea
 Use the template topics as guidance. Omit empty subsections instead of filling them with Not applicable.
 Keep behavior, scope, constraints, and approved architectural decisions in the spec. Leave routine implementation choices to the builder.
 Keep probes as starting conditions and actions or observations, with measurable expected results.
+Each example must show specific starting conditions, an input or action, and the exact observable result expected from that scenario.
+Use concrete values or states, not a restatement of the claim. Keep examples within the criterion's scope and approved behavior.
 Every probe remains mandatory for builder and verifier. Breakage checks are not required by default; do not add them to every criterion automatically.
 Describe selected breakages as wrong behavior to detect, not code edits. The builder chooses test code, fixtures, mocks, commands, and safe temporary changes.
 Do not copy agent procedures, repository rules, investigation logs, or workflow history into the spec.
