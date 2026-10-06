@@ -1,6 +1,6 @@
 /**
  * Objective: Refresh Pi status from the live Maestro session and its current workflow.
- * Used: After activation or a main tool result, and before an owner turn.
+ * Used: After activation, before child delegation, after main tool results, and before owner turns.
  */
 
 import type { ExtensionContext } from '@earendil-works/pi-coding-agent';

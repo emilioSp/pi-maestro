@@ -363,7 +363,7 @@ describe('main Maestro extension', () => {
     );
   });
 
-  it('given an approved spec on the current branch when builder and verifier finish then Maestro reaches candidate-ready without a final checkpoint', async () => {
+  it('given an approved spec when builder and verifier run then status follows running and completed phases without a final checkpoint', async () => {
     const repository = await createTemporaryRepository();
     cleanupFunctions.push(repository.cleanup);
     await runGitCommand({
@@ -463,6 +463,23 @@ describe('main Maestro extension', () => {
       requests.push(request);
 
       try {
+        const runningPhase =
+          request.agent === AGENTS.BUILDER
+            ? WORKFLOW_PHASES.BUILDER_RUNNING
+            : WORKFLOW_PHASES.VERIFIER_RUNNING;
+
+        const runningLabel =
+          request.agent === AGENTS.BUILDER
+            ? 'Builder running'
+            : 'Verifier running';
+
+        await expect(readWorkflowState(workflowPath)).resolves.toMatchObject({
+          phase: runningPhase,
+        });
+        expect(setStatus).toHaveBeenLastCalledWith(
+          MAESTRO_STATUS_KEY,
+          `Maestro active · ${specId} · ${runningLabel}`,
+        );
         runCommits.push(await getHeadCommit(repository.path));
 
         const { session: child } = await piTestSessions.create({
@@ -542,6 +559,10 @@ describe('main Maestro extension', () => {
       revision: 4,
       handoff: { specId, revision: 4, status: BUILDER_HANDOFF_STATUSES.DONE },
     });
+    expect(setStatus).toHaveBeenLastCalledWith(
+      MAESTRO_STATUS_KEY,
+      `Maestro active · ${specId} · Ready for verifier`,
+    );
 
     const runVerifierTool = session.agent.state.tools.find(
       (tool) => tool.name === RUN_VERIFIER_TOOL.NAME,
