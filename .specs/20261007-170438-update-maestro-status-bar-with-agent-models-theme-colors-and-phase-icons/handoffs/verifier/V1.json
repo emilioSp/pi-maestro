@@ -1,0 +1,74 @@
+{
+  "version": "1.0.0",
+  "specId": "20261007-170438-update-maestro-status-bar-with-agent-models-theme-colors-and-phase-icons",
+  "summary": "All 12 criterion probes matched expected behavior. Repository checks passed with 140 unit tests and 107 integration tests. Two independent real-Pi-session probes also passed. No technical findings.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npm run check and npm exec -- vitest run test/verifier-status-probe.integration.test.ts --reporter=verbose: compare every phase through real status refresh against independently specified Unicode code points, one space, and exact existing labels.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "npm run check and temporary verifier integration probe: activate with explicit gpt-6.1-sol xhigh/high settings and a version-only configuration omitting both agents; compare one info notice against exact three-line text and resolved defaults.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "Temporary verifier integration probe: serialize real Pi SessionManager entries before activation and after each activation/deactivation/reactivation under explicit and omitted settings; entries remain identical.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Temporary verifier integration probe: spy on real Pi agent.streamFunction during activation and reactivation for explicit and omitted settings; zero requests observed.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Temporary verifier integration probe: run /maestro three times in each session; assert cumulative notification counts exactly 1, 1, 2 and verify both notices have identical approved text.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "npm run check: formatter ID cases verify the exact long example and hyphen/digit counting. Temporary verifier integration probe creates the exact example ID and observes 20261007-170438-update-mae... in real status refreshes.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "npm run check: existing formatter test suite verifies 20250101-000000-fix and 20250101-000000-status-fix display unchanged without ellipsis.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "npm run check: formatter role assertions and real dark/light no-spec/every-phase refresh tests. Temporary verifier integration probe independently compares full ANSI-formatted status in all nine phases under both active Pi themes; builder-running visibleWidth equals 67.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC9",
+      "probe": "npm run check: startup, resume, and deactivation integration cases assert setStatus('maestro', undefined). Temporary verifier integration probe independently confirms absent status on startup.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC10",
+      "probe": "npm run check and temporary verifier integration probe: successful activation without selection produces exactly Maestro active · No active spec after stripping terminal sequences, without icon or agent details.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC11",
+      "probe": "Temporary verifier integration probe: after activation with explicit and omitted settings, submit Summarize the project; capture the next real Pi streamFunction context offline and assert prompt presence and absence of Builder (/Verifier ( notice lines.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC12",
+      "probe": "npm run check: existing create-spec workflow case checks full saved identity and paths. Temporary verifier integration probe creates the exact example using Temporal.Instant 2026-10-07T17:04:38Z; workflow specId, selected identity, and directory remain full while status alone is shortened.",
+      "probeStatus": "passed"
+    }
+  ],
+  "findings": [],
+  "notes": [
+    "Confirmed the specified live project and verifier-running workflow; reviewed spec, B1 handoff, applicable instructions, candidate changes, and executable coverage. No prototypes or earlier handoffs were present.",
+    "Inspected check scripts before execution. npm run lint and npm exec -- oxlint passed without fixes; npm run check made no changes to pre-existing files.",
+    "Temporary independent probes used real offline Pi sessions, SessionManager history entries, and an observed model stream boundary. No network requests or dependency installation were needed.",
+    "Removed the temporary verifier test and external backup. All 161 pre-existing project files matched their original bytes before handoff."
+  ]
+}

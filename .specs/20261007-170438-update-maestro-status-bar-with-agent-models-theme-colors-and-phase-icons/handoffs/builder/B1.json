@@ -1,0 +1,72 @@
+{
+  "version": "1.0.0",
+  "specId": "20261007-170438-update-maestro-status-bar-with-agent-models-theme-colors-and-phase-icons",
+  "status": "done",
+  "summary": "Implemented themed status segments, all approved phase icons, display-only spec ID shortening, and a three-line UI-only activation notice with resolved agent settings. npm run check passed: 140 unit tests and 107 integration tests.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npm run check: existing formatMaestroStatus phase cases compare all nine approved icons and unchanged labels, including U+1F6E0 U+FE0F for builder-running.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "npm run check: Maestro integration tests activate with omitted settings and explicit gpt-6.1-sol xhigh/high settings; assert one info notice, resolved defaults, provider removal, and exact three-line text.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "npm run check: existing successful-activation integration test compares real Pi SessionManager entries before activation and after activation/reactivation; entries remain unchanged.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "npm run check: existing successful-activation integration test spies on Pi agent.streamFunction; activation and reactivation produce zero model requests.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "npm run check: existing successful-activation integration test runs /maestro three times and asserts cumulative notice counts 1, 1, and 2.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "npm run check: formatter cases assert the exact long example ID displays as 20261007-170438-update-mae...; an additional case confirms hyphens and digits count toward the title limit.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "npm run check: formatter cases assert 20250101-000000-fix and 20250101-000000-status-fix remain unchanged without a cut marker.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "npm run check: formatter cases assert exact segment roles; real Pi integration refreshes no-spec status and every phase under dark and light themes and compares active theme ANSI formatting. Builder-running visibleWidth is 67 columns.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC9",
+      "probe": "npm run check: existing startup, resume, and deactivation integration tests assert the maestro status is cleared with undefined; inactive formatter test also passes.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC10",
+      "probe": "npm run check: existing no-workflow formatter and activation integration expectations compare themed Maestro active · No active spec without icons or agent settings.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC11",
+      "probe": "npm run check: after successful activation/reactivation, submit Summarize the project in a real Pi session with an offline stream spy; inspect the next model request context, confirm the prompt is present and Builder (/Verifier ( notice lines are absent.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC12",
+      "probe": "npm run check: existing create-spec workflow integration creates a title exceeding 10 characters, checks the shortened status, and asserts the full ID remains in session selection, saved workflow state, spec directory, and subsequent handoff identities. Formatter cases also confirm input identity is unchanged.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "No prototypes or earlier handoffs were present for this spec. Existing tests were updated; new scenarios cover ID boundaries, explicit activation settings, and active theme integration.",
+    "Pi integration probes use real offline sessions and an observed model stream boundary. No network model requests or dependency changes were required. Test fixtures and sessions were cleaned up."
+  ]
+}
