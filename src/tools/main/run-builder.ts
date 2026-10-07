@@ -39,10 +39,7 @@ const RunBuilderToolParameters = Type.Object(
   {
     specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
   },
-  {
-    additionalProperties: false,
-    patternProperties: { '^revision$': Type.Unknown() },
-  },
+  { additionalProperties: false },
 );
 
 const MILLISECONDS_PER_MINUTE = 60_000;
@@ -217,7 +214,7 @@ export const registerRunBuilderTool = (pi: ExtensionAPI): void => {
         // pi-subagents loads this name from agents/builder.md through package.json.
         // See docs/subagent-integration.md.
         agent: AGENTS.BUILDER,
-        task: `Implement specId "${specId}" in the project directory "${run.projectRoot}". Read all applicable AGENTS.md files before working.`,
+        task: `Implement specId "${specId}" in the project directory "${run.projectRoot}".`,
         context: 'fresh',
         cwd: run.projectRoot,
         model: config.builder.model,
