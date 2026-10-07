@@ -25,7 +25,11 @@ export const refreshMaestroStatus = async (
   if (specId === null) {
     context.ui.setStatus(
       MAESTRO_STATUS_KEY,
-      formatMaestroStatus({ active: true, workflow: null }),
+      formatMaestroStatus({
+        active: true,
+        workflow: null,
+        theme: context.ui.theme,
+      }),
     );
 
     return;
@@ -38,7 +42,11 @@ export const refreshMaestroStatus = async (
 
     context.ui.setStatus(
       MAESTRO_STATUS_KEY,
-      formatMaestroStatus({ active: true, workflow: { state } }),
+      formatMaestroStatus({
+        active: true,
+        workflow: { state },
+        theme: context.ui.theme,
+      }),
     );
   } catch (error) {
     context.ui.setStatus(MAESTRO_STATUS_KEY, undefined);
