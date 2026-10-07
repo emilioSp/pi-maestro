@@ -26,10 +26,7 @@ const ResolveEscalationToolParameters = Type.Object(
     escalationId: Type.String({ pattern: ESCALATION_ID_PATTERN.source }),
     ...EscalationResolutionSchema.properties,
   },
-  {
-    additionalProperties: false,
-    patternProperties: { '^revision$': Type.Unknown() },
-  },
+  { additionalProperties: false },
 );
 
 export const registerResolveEscalationTool = (pi: ExtensionAPI): void => {

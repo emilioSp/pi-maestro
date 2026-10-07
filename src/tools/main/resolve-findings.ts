@@ -54,10 +54,7 @@ const ResolveFindingsToolParameters = Type.Object(
     specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
     decisions: Type.Array(FindingDecisionSchema, { minItems: 1 }),
   },
-  {
-    additionalProperties: false,
-    patternProperties: { '^revision$': Type.Unknown() },
-  },
+  { additionalProperties: false },
 );
 
 type FindingResolutionDetails = {

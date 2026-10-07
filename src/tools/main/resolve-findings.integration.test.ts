@@ -213,7 +213,7 @@ describe('resolve findings tool', () => {
       {
         id: 'F1',
         decision: {
-          decision: 'reject',
+          decision: FINDING_DECISIONS.REJECT,
           reason: 'The owner accepts this behavior.',
         },
       },
@@ -269,14 +269,14 @@ describe('resolve findings tool', () => {
       {
         id: 'F1',
         decision: {
-          decision: 'reject',
+          decision: FINDING_DECISIONS.REJECT,
           reason: 'The owner accepts the observed behavior.',
         },
       },
       {
         id: 'F2',
         decision: {
-          decision: 'reject',
+          decision: FINDING_DECISIONS.REJECT,
           reason: 'The finding is outside the approved scope.',
         },
       },
@@ -347,7 +347,7 @@ describe('resolve findings tool', () => {
 
     const handoffPath = paths.getVerifierHandoffPath({
       specId: SPEC_ID,
-      handoffNumber: 1,
+      handoffPassNumber: 1,
     });
 
     const handoff = await readCurrentHandoff(paths);
@@ -391,7 +391,7 @@ describe('resolve findings tool', () => {
 
     const handoffPath = paths.getVerifierHandoffPath({
       specId: SPEC_ID,
-      handoffNumber: 1,
+      handoffPassNumber: 1,
     });
 
     const stateBefore = await readFile(statePath, 'utf8');
@@ -443,7 +443,7 @@ describe('resolve findings tool', () => {
       readVerifierHandoff({
         path: paths.getVerifierHandoffPath({
           specId: SPEC_ID,
-          handoffNumber: 1,
+          handoffPassNumber: 1,
         }),
         specId: SPEC_ID,
       }),
