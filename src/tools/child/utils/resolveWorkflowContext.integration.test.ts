@@ -13,7 +13,7 @@ afterEach(async () => {
 });
 
 describe('workflow context', () => {
-  it('uses the canonical child working directory without searching ancestors', async () => {
+  it('uses the canonical child working directory', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     const childDirectory = join(repository.path, 'nested', 'child');
