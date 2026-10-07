@@ -4,7 +4,6 @@
  */
 
 import { mkdir } from 'node:fs/promises';
-import { dirname } from 'node:path';
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
 import type { VerifierHandoff } from '#artifacts/verifier-handoff/schema.ts';
 import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
@@ -38,7 +37,6 @@ export const completeVerifierPass = async ({
 }: CompleteVerifierPassInput): Promise<CompletedVerifierPass> => {
   const projectRoot = paths.getProjectRoot();
   const workflowPath = paths.getWorkflowPath(specId);
-  const handoffPath = await paths.getNextVerifierHandoffPath(specId);
   const currentState = await readWorkflowState(workflowPath);
 
   if (currentState.specId !== specId) {
@@ -69,7 +67,9 @@ export const completeVerifierPass = async ({
         : WORKFLOW_EVENTS.VERIFIER_APPROVED,
   });
 
-  await mkdir(dirname(handoffPath), { recursive: true });
+  await mkdir(paths.getVerifierHandoffsPath(specId), { recursive: true });
+  const handoffPath = await paths.getNextVerifierHandoffPath(specId);
+
   await writeVerifierHandoff({
     path: handoffPath,
     handoff,

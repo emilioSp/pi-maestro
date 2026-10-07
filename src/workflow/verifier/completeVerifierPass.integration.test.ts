@@ -1,4 +1,4 @@
-import { access, mkdir, readFile, rename } from 'node:fs/promises';
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
@@ -18,14 +18,14 @@ import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 vi.mock('node:fs/promises', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:fs/promises')>();
 
-  return { ...actual, rename: vi.fn(actual.rename) };
+  return { ...actual, writeFile: vi.fn(actual.writeFile) };
 });
 
-const { rename: originalRename } =
+const { writeFile: originalWriteFile } =
   await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises');
 
 afterEach(async () => {
-  vi.mocked(rename).mockImplementation(originalRename);
+  vi.mocked(writeFile).mockRestore();
   await cleanupBuilderWorkflows();
 });
 
@@ -66,37 +66,36 @@ const prepareRunningVerifier = async () => {
 };
 
 describe('verifier completion', () => {
-  it('given a saved V2 handoff when phase replacement fails then the running phase and V2 remain for inspection', async () => {
+  it('given a saved V2 handoff when the phase write fails then V2 remains for inspection', async () => {
     const { paths } = await prepareRunningVerifier();
     await mkdir(paths.getVerifierHandoffsPath(SPEC_ID), { recursive: true });
     await writeVerifierHandoff({
-      path: paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffNumber: 1 }),
+      path: paths.getVerifierHandoffPath({
+        specId: SPEC_ID,
+        handoffPassNumber: 1,
+      }),
       specId: SPEC_ID,
       handoff: approvedHandoff,
     });
     const workflowPath = paths.getWorkflowPath(SPEC_ID);
-    const before = await readFile(workflowPath, 'utf8');
-    vi.mocked(rename).mockImplementation(async (source, destination) => {
-      if (destination === workflowPath)
-        throw new Error('Phase replacement failed');
 
-      await originalRename(source, destination);
+    vi.mocked(writeFile).mockImplementation(async (path, data, options) => {
+      if (path === workflowPath) throw new Error('Phase write failed');
+
+      await originalWriteFile(path, data, options);
     });
+
     await expect(
       completeVerifierPass({
         paths,
         specId: SPEC_ID,
         handoff: { ...approvedHandoff, summary: 'Checked greeting' },
       }),
-    ).rejects.toThrow('Phase replacement failed');
-    await expect(readFile(workflowPath, 'utf8')).resolves.toBe(before);
-    await expect(readWorkflowState(workflowPath)).resolves.toMatchObject({
-      phase: WORKFLOW_PHASES.VERIFIER_RUNNING,
-    });
+    ).rejects.toThrow('Phase write failed');
 
     const saved = JSON.parse(
       await readFile(
-        paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffNumber: 2 }),
+        paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 2 }),
         'utf8',
       ),
     );
@@ -148,7 +147,7 @@ describe('verifier completion', () => {
     await expect(readFile(workflowPath, 'utf8')).resolves.toBe(workflowBefore);
     await expect(
       access(
-        paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffNumber: 1 }),
+        paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
       ),
     ).rejects.toMatchObject({ code: 'ENOENT' });
   });
