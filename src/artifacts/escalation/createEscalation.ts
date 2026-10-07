@@ -11,7 +11,7 @@ import {
   type Escalation,
   type NewEscalation,
 } from '#artifacts/escalation/schema.ts';
-import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
+import { writeJson } from '#utils/write-json.ts';
 
 type CreateEscalationInput = {
   directory: string;
@@ -46,7 +46,7 @@ export const createEscalation = async ({
 
   assertEscalation(newEscalation);
   const path = join(directory, `${id}.json`);
-  await writeJsonAtomically({ path, data: newEscalation });
+  await writeJson({ path, data: newEscalation });
 
   return { path, escalation: newEscalation };
 };

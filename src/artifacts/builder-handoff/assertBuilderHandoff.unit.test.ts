@@ -41,15 +41,6 @@ const failedHandoff = (): BuilderHandoff => ({
 });
 
 describe('builder handoff validation', () => {
-  it('ignores an unused revision field while validating the artifact', () => {
-    expect(() =>
-      assertBuilderHandoff({
-        handoff: { ...doneHandoff(), revision: 'ignored' },
-        specId,
-      }),
-    ).not.toThrow();
-  });
-
   it('accepts a done handoff with completed checks', () => {
     expect(() =>
       assertBuilderHandoff({ handoff: doneHandoff(), specId }),

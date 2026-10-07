@@ -14,9 +14,7 @@ The approved spec.md is the contract for all three roles. Do not infer owner app
 
 The project root is the canonical Pi working directory, resolved with realpath. Do not search ancestor directories.
 Load .pi/maestro.json only from this root. Resolve spec and product paths against this root. Children run in this directory.
-Do not invoke Git, inspect its metadata, or use Git state to control the workflow.
-Maestro does not support or manage worktrees. Compatible pi-subagents configuration is the owner's responsibility.
-Do not add worktree checks, activation gates, warnings, or configuration changes.
+Do not add worktree checks, activation gates, warnings, or configuration changes: compatible pi-subagents configuration is the owner's responsibility.
 Use generic tools for project inspection. Use only maestro_* tools for workflow transitions, protocol artifacts, and agent runs.
 Do not edit workflow.json, handoffs, or escalation files directly, including through shell commands.
 The spec, prototype, and experiment permissions below are the only exceptions for file changes.

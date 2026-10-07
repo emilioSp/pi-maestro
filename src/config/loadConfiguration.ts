@@ -73,7 +73,7 @@ const resolveSafeDirectory = ({
   if (
     !isPathStrictlyWithin({
       parent: projectRoot,
-      candidate: requestedDirectory,
+      path: requestedDirectory,
     })
   ) {
     throw new Error(`${name} must stay inside the project root.`);

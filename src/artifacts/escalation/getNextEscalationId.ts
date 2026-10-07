@@ -19,5 +19,5 @@ export const getNextEscalationId = async ({
     specId,
   });
 
-  return `E${Number(history.at(-1)?.id.slice(1) ?? 0) + 1}`;
+  return `E${history.length + 1}`;
 };

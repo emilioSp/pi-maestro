@@ -40,15 +40,6 @@ const finding = (): VerifierHandoff['findings'][number] => ({
 });
 
 describe('verifier handoff validation', () => {
-  it('ignores an unused revision field while validating the artifact', () => {
-    expect(() =>
-      assertVerifierHandoff({
-        handoff: { ...handoff(), revision: 'ignored' },
-        specId,
-      }),
-    ).not.toThrow();
-  });
-
   it('accepts an empty finding list with completed checks', () => {
     expect(() =>
       assertVerifierHandoff({ handoff: handoff(), specId }),

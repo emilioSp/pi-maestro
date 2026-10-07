@@ -34,12 +34,6 @@ const escalation = (): Escalation => ({
 });
 
 describe('escalation schema', () => {
-  it('ignores an unused revision field while validating the artifact', () => {
-    expect(() =>
-      assertEscalation({ ...escalation(), revision: 'ignored' }),
-    ).not.toThrow();
-  });
-
   it('accepts a valid unresolved escalation', () => {
     expect(() => assertEscalation(escalation())).not.toThrow();
   });

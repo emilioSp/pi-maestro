@@ -38,12 +38,7 @@ function assertBuilderHandoffSchema(
     throw new Error('Builder handoff must be a JSON object.');
   }
 
-  const [error] = Value.Errors(
-    BuilderHandoffSchema,
-    Object.fromEntries(
-      Object.entries(input).filter(([key]) => key !== 'revision'),
-    ),
-  );
+  const [error] = Value.Errors(BuilderHandoffSchema, input);
 
   if (error !== undefined) {
     throw new Error(`Invalid builder handoff: ${error.message}.`);

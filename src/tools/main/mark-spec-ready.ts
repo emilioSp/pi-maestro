@@ -21,10 +21,7 @@ const MarkSpecReadyToolParameters = Type.Object(
   {
     specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
   },
-  {
-    additionalProperties: false,
-    patternProperties: { '^revision$': Type.Unknown() },
-  },
+  { additionalProperties: false },
 );
 
 export const registerMarkSpecReadyTool = (pi: ExtensionAPI): void => {

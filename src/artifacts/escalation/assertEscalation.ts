@@ -23,12 +23,7 @@ function assertEscalationSchema(input: unknown): asserts input is Escalation {
     throw new Error('Escalation must be a JSON object.');
   }
 
-  const [error] = Value.Errors(
-    EscalationSchema,
-    Object.fromEntries(
-      Object.entries(input).filter(([key]) => key !== 'revision'),
-    ),
-  );
+  const [error] = Value.Errors(EscalationSchema, input);
 
   if (error !== undefined) {
     throw new Error(`Invalid escalation: ${error.message}.`);

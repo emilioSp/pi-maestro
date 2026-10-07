@@ -18,12 +18,7 @@ function assertVerifierHandoffSchema(
     throw new Error('Verifier handoff must be a JSON object.');
   }
 
-  const [error] = Value.Errors(
-    VerifierHandoffSchema,
-    Object.fromEntries(
-      Object.entries(input).filter(([key]) => key !== 'revision'),
-    ),
-  );
+  const [error] = Value.Errors(VerifierHandoffSchema, input);
 
   if (error !== undefined) {
     throw new Error(`Invalid verifier handoff: ${error.message}.`);
