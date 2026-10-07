@@ -30,7 +30,7 @@ const expectInside = ({ root, path }: { root: string; path: string }): void => {
 };
 
 describe('Maestro paths', () => {
-  it('given handoffs numbered 9 and 10 for both roles then the active handoffs are numbered 10', async () => {
+  it('given handoffs numbered 1 through 10 for both roles then the active handoffs are 10 and the next are 11', async () => {
     const project = await createTemporaryProject();
     temporaryPaths.push(project.path);
 
@@ -45,9 +45,16 @@ describe('Maestro paths', () => {
     await mkdir(paths.getBuilderHandoffsPath(SPEC_ID), { recursive: true });
     await mkdir(paths.getVerifierHandoffsPath(SPEC_ID), { recursive: true });
 
-    for (const handoffNumber of [9, 10]) {
+    for (
+      let handoffPassNumber = 1;
+      handoffPassNumber <= 10;
+      handoffPassNumber += 1
+    ) {
       await writeBuilderHandoff({
-        path: paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffNumber }),
+        path: paths.getBuilderHandoffPath({
+          specId: SPEC_ID,
+          handoffPassNumber,
+        }),
         specId: SPEC_ID,
         handoff: {
           version: BUILDER_HANDOFF_VERSION,
@@ -59,7 +66,10 @@ describe('Maestro paths', () => {
         },
       });
       await writeVerifierHandoff({
-        path: paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffNumber }),
+        path: paths.getVerifierHandoffPath({
+          specId: SPEC_ID,
+          handoffPassNumber,
+        }),
         specId: SPEC_ID,
         handoff: {
           version: VERIFIER_HANDOFF_VERSION,
@@ -73,16 +83,16 @@ describe('Maestro paths', () => {
     }
 
     await expect(paths.getActiveBuilderHandoffPath(SPEC_ID)).resolves.toBe(
-      paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffNumber: 10 }),
+      paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber: 10 }),
     );
     await expect(paths.getActiveVerifierHandoffPath(SPEC_ID)).resolves.toBe(
-      paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffNumber: 10 }),
+      paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 10 }),
     );
     await expect(paths.getNextBuilderHandoffPath(SPEC_ID)).resolves.toBe(
-      paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffNumber: 11 }),
+      paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber: 11 }),
     );
     await expect(paths.getNextVerifierHandoffPath(SPEC_ID)).resolves.toBe(
-      paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffNumber: 11 }),
+      paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 11 }),
     );
   });
 
@@ -112,7 +122,7 @@ describe('Maestro paths', () => {
       join(repository.path, 'custom/specs', SPEC_ID, 'workflow.json'),
     );
     expect(
-      paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffNumber: 1 }),
+      paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
     ).toBe(
       join(
         repository.path,
@@ -152,8 +162,8 @@ describe('Maestro paths', () => {
       paths.getSpecFilePath(SPEC_ID),
       paths.getWorkflowPath(SPEC_ID),
       paths.getHandoffsPath(SPEC_ID),
-      paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffNumber: 1 }),
-      paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffNumber: 1 }),
+      paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
+      paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
       paths.getEscalationsPath(SPEC_ID),
       paths.getEscalationPath({ specId: SPEC_ID, escalationNumber: 1 }),
       paths.getPrototypesPath(SPEC_ID),
