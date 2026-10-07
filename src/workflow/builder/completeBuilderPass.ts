@@ -4,7 +4,6 @@
  */
 
 import { mkdir } from 'node:fs/promises';
-import { dirname } from 'node:path';
 import { assertBuilderHandoff } from '#artifacts/builder-handoff/assertBuilderHandoff.ts';
 import {
   BUILDER_HANDOFF_STATUSES,
@@ -73,7 +72,6 @@ export const completeBuilderPass = async ({
   handoff: draftHandoff,
 }: CompleteBuilderPassInput): Promise<CompletedBuilderPass> => {
   const workflowPath = paths.getWorkflowPath(specId);
-  const handoffPath = await paths.getNextBuilderHandoffPath(specId);
   const currentState = await readWorkflowState(workflowPath);
 
   if (currentState.specId !== specId) {
@@ -104,7 +102,8 @@ export const completeBuilderPass = async ({
         : WORKFLOW_EVENTS.BUILDER_FAILED,
   });
 
-  await mkdir(dirname(handoffPath), { recursive: true });
+  await mkdir(paths.getBuilderHandoffsPath(specId), { recursive: true });
+  const handoffPath = await paths.getNextBuilderHandoffPath(specId);
 
   await writeBuilderHandoff({
     path: handoffPath,

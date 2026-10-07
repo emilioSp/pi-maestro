@@ -7,17 +7,21 @@ import { readdir } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
 import type { MaestroConfig } from '#config/schema.ts';
 import { isValidSpecId } from '#ids/isValidSpecId.ts';
-import { isErrnoException } from '#utils/is-errno-exception.ts';
 import { isPathStrictlyWithin } from '#utils/path-strictly-within.ts';
 
 const PATHS = {
   SPEC_FILE: 'spec.md',
-  WORKFLOW: 'workflow.json',
-  HANDOFFS: 'handoffs',
-  BUILDER_HANDOFFS: 'handoffs/builder',
-  VERIFIER_HANDOFFS: 'handoffs/verifier',
-  ESCALATIONS: 'handoffs/escalations',
-  PROTOTYPES: 'prototypes',
+  WORKFLOW_FILE: 'workflow.json',
+  HANDOFFS_PATH: 'handoffs',
+  BUILDER_HANDOFFS_PATH: 'handoffs/builder',
+  VERIFIER_HANDOFFS_PATH: 'handoffs/verifier',
+  ESCALATIONS_PATH: 'handoffs/escalations',
+  PROTOTYPES_PATH: 'prototypes',
+} as const;
+
+const AGENTS_PREFIX = {
+  BUILDER: 'B',
+  VERIFIER: 'V',
 } as const;
 
 function assertSpecId(specId: string): void {
@@ -46,37 +50,6 @@ function assertSafeRelativePrototypePath(value: string): void {
   }
 }
 
-type ReadHandoffNumbersInput = {
-  directory: string;
-  prefix: string;
-};
-
-const readHandoffNumbers = async ({
-  directory,
-  prefix,
-}: ReadHandoffNumbersInput): Promise<number[]> => {
-  try {
-    const entries = await readdir(directory, { withFileTypes: true });
-    const pattern = new RegExp(`^${prefix}([1-9]\\d*)\\.json$`);
-
-    return entries
-      .map((entry) => {
-        const match = pattern.exec(entry.name);
-
-        if (!entry.isFile() || match === null)
-          throw new Error('Handoff history contains an invalid entry.');
-        const number = Number(match[1]);
-        assertArtifactNumber(number);
-
-        return number;
-      })
-      .sort((left, right) => left - right);
-  } catch (error) {
-    if (isErrnoException(error) && error.code === 'ENOENT') return [];
-    throw error;
-  }
-};
-
 export type MaestroPathsInput = {
   projectRoot: string;
   config: MaestroConfig;
@@ -89,7 +62,7 @@ type EscalationPathInput = {
 
 type HandoffPathInput = {
   specId: string;
-  handoffNumber: number;
+  handoffPassNumber: number;
 };
 
 type PrototypePathInput = {
@@ -107,7 +80,7 @@ export class MaestroPaths {
     if (
       !isPathStrictlyWithin({
         parent: projectRoot,
-        candidate: config.specDirectory,
+        path: config.specDirectory,
       })
     ) {
       throw new Error('Generated Maestro path leaves the project root.');
@@ -150,7 +123,7 @@ export class MaestroPaths {
       this.projectRoot,
       this.specDirectoryFromRoot,
       specId,
-      PATHS.WORKFLOW,
+      PATHS.WORKFLOW_FILE,
     );
   }
 
@@ -161,91 +134,82 @@ export class MaestroPaths {
       this.projectRoot,
       this.specDirectoryFromRoot,
       specId,
-      PATHS.HANDOFFS,
+      PATHS.HANDOFFS_PATH,
     );
   }
 
   public getBuilderHandoffsPath(specId: string): string {
-    return resolve(this.getSpecPath(specId), PATHS.BUILDER_HANDOFFS);
+    return resolve(this.getSpecPath(specId), PATHS.BUILDER_HANDOFFS_PATH);
   }
 
   public getVerifierHandoffsPath(specId: string): string {
-    return resolve(this.getSpecPath(specId), PATHS.VERIFIER_HANDOFFS);
+    return resolve(this.getSpecPath(specId), PATHS.VERIFIER_HANDOFFS_PATH);
   }
 
   public getBuilderHandoffPath({
     specId,
-    handoffNumber,
+    handoffPassNumber,
   }: HandoffPathInput): string {
-    assertArtifactNumber(handoffNumber);
+    assertArtifactNumber(handoffPassNumber);
 
     return resolve(
       this.getBuilderHandoffsPath(specId),
-      `B${handoffNumber}.json`,
+      `${AGENTS_PREFIX.BUILDER}${handoffPassNumber}.json`,
     );
   }
 
   public getVerifierHandoffPath({
     specId,
-    handoffNumber,
+    handoffPassNumber,
   }: HandoffPathInput): string {
-    assertArtifactNumber(handoffNumber);
+    assertArtifactNumber(handoffPassNumber);
 
     return resolve(
       this.getVerifierHandoffsPath(specId),
-      `V${handoffNumber}.json`,
+      `${AGENTS_PREFIX.VERIFIER}${handoffPassNumber}.json`,
     );
   }
 
   public async getActiveBuilderHandoffPath(specId: string): Promise<string> {
-    const numbers = await readHandoffNumbers({
-      directory: this.getBuilderHandoffsPath(specId),
-      prefix: 'B',
-    });
+    const handoffPassNumber = (
+      await readdir(this.getBuilderHandoffsPath(specId))
+    ).length;
 
-    const handoffNumber = numbers.at(-1);
+    if (handoffPassNumber === 0) throw new Error('Builder handoff is missing.');
 
-    if (handoffNumber === undefined)
-      throw new Error('Builder handoff is missing.');
-
-    return this.getBuilderHandoffPath({ specId, handoffNumber });
+    return this.getBuilderHandoffPath({ specId, handoffPassNumber });
   }
 
   public async getActiveVerifierHandoffPath(specId: string): Promise<string> {
-    const numbers = await readHandoffNumbers({
-      directory: this.getVerifierHandoffsPath(specId),
-      prefix: 'V',
-    });
+    const handoffPassNumber = (
+      await readdir(this.getVerifierHandoffsPath(specId))
+    ).length;
 
-    const handoffNumber = numbers.at(-1);
-
-    if (handoffNumber === undefined)
+    if (handoffPassNumber === 0)
       throw new Error('Verifier handoff is missing.');
 
-    return this.getVerifierHandoffPath({ specId, handoffNumber });
+    return this.getVerifierHandoffPath({ specId, handoffPassNumber });
   }
 
   public async getNextBuilderHandoffPath(specId: string): Promise<string> {
-    const numbers = await readHandoffNumbers({
-      directory: this.getBuilderHandoffsPath(specId),
-      prefix: 'B',
-    });
+    const handoffPassNumber = (
+      await readdir(this.getBuilderHandoffsPath(specId))
+    ).length;
 
     return this.getBuilderHandoffPath({
       specId,
-      handoffNumber: (numbers.at(-1) ?? 0) + 1,
+      handoffPassNumber: handoffPassNumber + 1,
     });
   }
 
   public async getNextVerifierHandoffPath(specId: string): Promise<string> {
-    const numbers = await readHandoffNumbers({
-      directory: this.getVerifierHandoffsPath(specId),
-      prefix: 'V',
-    });
+    const handoffPassNumber = (
+      await readdir(this.getVerifierHandoffsPath(specId))
+    ).length;
 
     return this.getVerifierHandoffPath({
       specId,
-      handoffNumber: (numbers.at(-1) ?? 0) + 1,
+      handoffPassNumber: handoffPassNumber + 1,
     });
   }
 
@@ -256,7 +220,7 @@ export class MaestroPaths {
       this.projectRoot,
       this.specDirectoryFromRoot,
       specId,
-      PATHS.ESCALATIONS,
+      PATHS.ESCALATIONS_PATH,
     );
   }
 
@@ -271,7 +235,7 @@ export class MaestroPaths {
       this.projectRoot,
       this.specDirectoryFromRoot,
       specId,
-      `${PATHS.ESCALATIONS}/E${escalationNumber}.json`,
+      `${PATHS.ESCALATIONS_PATH}/E${escalationNumber}.json`,
     );
   }
 
@@ -282,7 +246,7 @@ export class MaestroPaths {
       this.projectRoot,
       this.specDirectoryFromRoot,
       specId,
-      PATHS.PROTOTYPES,
+      PATHS.PROTOTYPES_PATH,
     );
   }
 
@@ -295,7 +259,7 @@ export class MaestroPaths {
     const prototypesPath = this.getPrototypesPath(specId);
     const target = resolve(prototypesPath, relativePath);
 
-    if (!isPathStrictlyWithin({ parent: prototypesPath, candidate: target })) {
+    if (!isPathStrictlyWithin({ parent: prototypesPath, path: target })) {
       throw new Error(
         'Prototype path must stay inside the prototypes directory.',
       );
