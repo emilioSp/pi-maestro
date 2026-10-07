@@ -29,10 +29,7 @@ const BuilderEscalationToolParameters = Type.Object(
     recommendation: Type.Union([EscalationRecommendationSchema, Type.Null()]),
     notes: Type.Array(Type.String()),
   },
-  {
-    additionalProperties: false,
-    patternProperties: { '^revision$': Type.Unknown() },
-  },
+  { additionalProperties: false },
 );
 
 export const registerOpenEscalationTool = (pi: ExtensionAPI): void => {
