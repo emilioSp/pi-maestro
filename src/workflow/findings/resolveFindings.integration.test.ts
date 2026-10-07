@@ -123,10 +123,10 @@ describe('finding resolution', () => {
 
     expect(secondVerifier.state.phase).toBe(WORKFLOW_PHASES.CANDIDATE_READY);
     expect(secondBuilder.handoffPath).toBe(
-      paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffNumber: 2 }),
+      paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber: 2 }),
     );
     expect(secondVerifier.handoffPath).toBe(
-      paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffNumber: 2 }),
+      paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 2 }),
     );
     await expect(readFile(firstBuilder.handoffPath, 'utf8')).resolves.toBe(
       builderBefore,
