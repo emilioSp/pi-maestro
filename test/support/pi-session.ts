@@ -14,6 +14,7 @@ import {
   DefaultResourceLoader,
   type ExtensionError,
   type ExtensionFactory,
+  initTheme,
   ModelRuntime,
   SessionManager,
   type SessionStartEvent,
@@ -54,6 +55,7 @@ class PiTestSessions {
     maestroAgentsAvailable = true,
     sessionStartEvent,
   }: CreatePiSessionInput) => {
+    initTheme('dark', false);
     const directory = await mkdtemp(join(tmpdir(), 'pi-maestro-session-'));
     const errors: ExtensionError[] = [];
     const resource: PiSessionResource = { directory, errors };
