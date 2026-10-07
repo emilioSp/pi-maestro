@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
   "specId": "20261007-101403-file-system-driven-maestro-workflow",
-  "revision": 2,
-  "phase": "ready-for-builder"
+  "revision": 3,
+  "phase": "builder-running"
 }
