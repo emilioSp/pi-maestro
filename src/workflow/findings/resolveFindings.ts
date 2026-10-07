@@ -11,7 +11,7 @@ import type {
 } from '#artifacts/verifier-handoff/schema.ts';
 import { FINDING_DECISIONS } from '#artifacts/verifier-handoff/schema.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
-import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
+import { writeJson } from '#utils/write-json.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
   WORKFLOW_EVENTS,
@@ -198,7 +198,7 @@ export const resolveFindings = async ({
   });
 
   const handoffPath = await paths.getActiveVerifierHandoffPath(specId);
-  await writeJsonAtomically({ path: handoffPath, data: workflow.handoff });
+  await writeJson({ path: handoffPath, data: workflow.handoff });
   await writeWorkflowState({
     path: paths.getWorkflowPath(specId),
     state: workflow.state,
