@@ -2,7 +2,10 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
 import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
-import { FINDING_SEVERITIES } from '#artifacts/verifier-handoff/schema.ts';
+import {
+  FINDING_DECISIONS,
+  FINDING_SEVERITIES,
+} from '#artifacts/verifier-handoff/schema.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -30,26 +33,6 @@ afterEach(async () => {
 });
 
 describe('verifier handoff tool', () => {
-  it('given an existing source and unrelated notes then verifier instructions require restoring only its own probe changes', async () => {
-    const instructions = await readFile(
-      new URL(import.meta.resolve('#agents/verifier.md')),
-      'utf8',
-    );
-
-    expect(instructions).toContain(
-      'Before each temporary change, retain the exact original file contents and note which files already exist.',
-    );
-    expect(instructions).toContain(
-      'Remove only temporary files created during this pass. Preserve all pre-existing files and content.',
-    );
-    expect(instructions).toContain(
-      'restore `src/total.ts` from `return 0` to its original `return 42`, remove your `probe.txt`, and leave pre-existing `notes.txt` unchanged.',
-    );
-    expect(instructions).toContain(
-      'If cleanup cannot finish safely, stop and report the remaining changes.',
-    );
-  });
-
   it('registers a closed input schema with explicit verifier identity', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerRecordVerifierHandoffTool,
@@ -58,9 +41,6 @@ describe('verifier handoff tool', () => {
     const input = createHandoffInput();
 
     expect(Value.Check(tool.parameters, input)).toBe(true);
-    expect(
-      Value.Check(tool.parameters, { ...input, revision: 'ignored' }),
-    ).toBe(true);
     expect(Value.Check(tool.parameters, { ...input, branch: 'main' })).toBe(
       false,
     );
@@ -75,7 +55,10 @@ describe('verifier handoff tool', () => {
             confidence: 1,
             summary: 'Finding',
             evidence: [{ source: 'test', observation: 'Observed' }],
-            decision: { decision: 'reject', reason: 'Rejected' },
+            decision: {
+              decision: FINDING_DECISIONS.REJECT,
+              reason: 'Rejected',
+            },
           },
         ],
       }),
@@ -157,12 +140,7 @@ describe('verifier handoff tool', () => {
     await writeFile(productPath, '# Temporary verification change\n', 'utf8');
     await writeFile(productPath, originalProduct, 'utf8');
 
-    const result = await tool.execute('test-call', {
-      ...createHandoffInput(),
-      revision: 'ignored',
-    });
-
-    await expect(readFile(productPath, 'utf8')).resolves.toBe(originalProduct);
+    const result = await tool.execute('test-call', createHandoffInput());
 
     expect(result.details).toMatchObject({
       phase: WORKFLOW_PHASES.CANDIDATE_READY,

@@ -40,10 +40,7 @@ const VerifierHandoffToolParameters = Type.Object(
     findings: Type.Array(VerifierFindingSubmissionSchema),
     notes: Type.Array(Type.String()),
   },
-  {
-    additionalProperties: false,
-    patternProperties: { '^revision$': Type.Unknown() },
-  },
+  { additionalProperties: false },
 );
 
 export const registerRecordVerifierHandoffTool = (pi: ExtensionAPI): void => {

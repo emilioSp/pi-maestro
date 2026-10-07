@@ -34,10 +34,7 @@ const BuilderHandoffToolParameters = Type.Union([
       status: Type.Literal(BUILDER_HANDOFF_STATUSES.DONE),
       ...BuilderHandoffContentFields,
     },
-    {
-      additionalProperties: false,
-      patternProperties: { '^revision$': Type.Unknown() },
-    },
+    { additionalProperties: false },
   ),
   Type.Object(
     {
@@ -46,10 +43,7 @@ const BuilderHandoffToolParameters = Type.Union([
       ...BuilderHandoffContentFields,
       failure: BuilderHandoffFailureSchema,
     },
-    {
-      additionalProperties: false,
-      patternProperties: { '^revision$': Type.Unknown() },
-    },
+    { additionalProperties: false },
   ),
 ]);
 
