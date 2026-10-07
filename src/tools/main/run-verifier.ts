@@ -34,10 +34,7 @@ const RunVerifierToolParameters = Type.Object(
   {
     specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
   },
-  {
-    additionalProperties: false,
-    patternProperties: { '^revision$': Type.Unknown() },
-  },
+  { additionalProperties: false },
 );
 
 const MILLISECONDS_PER_MINUTE = 60_000;
@@ -170,7 +167,7 @@ export const registerRunVerifierTool = (pi: ExtensionAPI): void => {
         nodeId: WORKFLOW_ROLES.VERIFIER,
         // pi-subagents loads this name from agents/verifier.md through package.json.
         agent: AGENTS.VERIFIER,
-        task: `Verify specId "${specId}" in the live project directory "${run.projectRoot}". Read all applicable AGENTS.md files before working.`,
+        task: `Verify specId "${specId}" in the live project directory "${run.projectRoot}"`,
         context: 'fresh',
         cwd: run.projectRoot,
         model: config.verifier.model,
