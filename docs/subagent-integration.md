@@ -1,56 +1,34 @@
 # Subagent integration
 
-Maestro uses `pi-subagents` to run the builder and verifier as child sessions. 
+Maestro uses `pi-subagents` to run the builder and verifier as child sessions. A child session is a separate Pi session for one role. The owner stays in the main Maestro conversation.
 
-A child session is a separate Pi session that receives one role and one task.
+## Roles and context
 
-## Agent definitions
+The package supplies both roles and the tools that save their results:
 
-The package contains two agent definitions:
+| Role | Agent name | Definition |
+|---|---|---|
+| Builder | `maestro.builder` | [`agents/builder.md`](../agents/builder.md) |
+| Verifier | `maestro.verifier` | [`agents/verifier.md`](../agents/verifier.md) |
 
-1. [`agents/builder.md`](../agents/builder.md) defines the builder role.
-2. [`agents/verifier.md`](../agents/verifier.md) defines the verifier role.
+Each run starts with a fresh conversation, not the main session's conversation history. Both agents inherit project instructions, the owner's global `AGENTS.md`, and available skills. The global file normally lives at `~/.pi/agent/AGENTS.md`.
 
-Both agents receive project instructions and your global `AGENTS.md` from the Pi agent directory, normally `~/.pi/agent/AGENTS.md`.
+Maestro supplies the spec ID, project directory, model, thinking level, and timeout. The agents read the approved spec and saved artifacts to understand the work. Earlier artifacts provide context, not proof.
 
-## Package registration
+The owner does not call builder or verifier tools directly. Maestro starts the builder after `GREEN FLAG` approval and the verifier after successful builder completion.
 
-`package.json` registers the agent directory with Pi:
+## Following a run
 
-```json
-{
-  "pi": {
-    "subagents": {
-      "agents": [
-        "./agents"
-      ]
-    }
-  }
-}
-```
+Runs stay in the foreground and occur one at a time. Pi waits for each run to finish before Maestro continues. Maestro does not run the builder and verifier in parallel or in the background.
 
-The `pi.subagents.agents` field tells `pi-subagents` to scan `./agents` for agent definitions. 
+Maestro's Pi status shows the workflow phase. `pi-subagents` FleetView shows agent activity, and `/subagents-fleet` opens its inspector for details and transcripts.
 
-The `package` and `name` fields in each file form the runtime name that delegation uses.
+Each child saves its result through Maestro tools before returning.
 
-## Run flow
+If a run fails or returns without a valid saved result, Maestro reports the error and stops. Manual follow-up is described in [Failures and interruptions](workflow.md#failures-and-interruptions).
 
-When the owner runs the builder, the integration follows these steps:
+## External configuration
 
-1. The owner calls `maestro_run_builder`.
-2. `src/tools/main/run-builder.ts` prepares the workflow and emits a delegation request.
-3. The request sets `agent: AGENTS.BUILDER`.
-4. `AGENTS.BUILDER` has the value `maestro.builder` in `src/config/schema.ts`.
-5. `pi-subagents` resolves `maestro.builder` to `agents/builder.md`.
-6. The child receives the system prompt and the tools from that agent definition.
-7. Maestro waits for the child to finish, checks its result, and returns it to the owner.
+The `pi-subagents` extension must be installed and enabled in Pi. Builder and verifier model choices, thinking levels, and timeouts come from [Maestro configuration](configuration.md). Other `pi-subagents` configuration remains the owner's responsibility.
 
-Maestro also passes the explicit spec ID, the current repository root, the configured model, the thinking level, the timeout, and a fresh context.
-
-`maestro_run_verifier` in `src/tools/main/run-verifier.ts` uses the same flow with `AGENTS.VERIFIER` and `maestro.verifier`. Both tools run in the foreground and wait for a result.
-
-## Subagent extension
-
-Both agent files set `subagentOnlyExtensions` to `../extensions/maestro-subagent.ts`. 
-
-This field tells `pi-subagents` to load the extension only in the child session for that agent.
+Maestro does not invoke Git to manage its workflow. `pi-subagents` can use Git internally.
