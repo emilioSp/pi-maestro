@@ -9,7 +9,7 @@ import type {
   Escalation,
   EscalationResolution,
 } from '#artifacts/escalation/schema.ts';
-import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
+import { writeJson } from '#utils/write-json.ts';
 
 type ResolveEscalationInput = {
   path: string;
@@ -37,7 +37,7 @@ export const resolveEscalation = async ({
   };
 
   assertEscalation(resolvedEscalation);
-  await writeJsonAtomically({ path, data: resolvedEscalation });
+  await writeJson({ path, data: resolvedEscalation });
 
   return resolvedEscalation;
 };
