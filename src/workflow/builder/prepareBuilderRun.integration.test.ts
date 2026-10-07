@@ -72,7 +72,7 @@ describe('builder run preparation', () => {
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_FAILED });
     await expect(
       pathExists(
-        paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffNumber: 1 }),
+        paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
       ),
     ).resolves.toBe(true);
   });

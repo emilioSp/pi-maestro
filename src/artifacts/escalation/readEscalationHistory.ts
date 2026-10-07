@@ -37,10 +37,6 @@ export const readEscalationHistory = async ({
       specId,
     });
 
-    if (`${escalation.id}.json` !== file) {
-      throw new Error(`Escalation ID does not match its file name: "${file}".`);
-    }
-
     escalations.push(escalation);
   }
 
