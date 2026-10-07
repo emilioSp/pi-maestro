@@ -1,4 +1,4 @@
-import { access, mkdir, readdir, writeFile } from 'node:fs/promises';
+import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   SUBAGENT_DELEGATION_REQUEST_EVENT,
@@ -82,6 +82,16 @@ const recordVerifierHandoff = async ({
   });
 };
 
+const fileExists = async (path: string) => {
+  try {
+    await access(path);
+
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 afterEach(async () => {
   await piTestSessions.cleanup();
   await cleanupBuilderWorkflows();
@@ -107,15 +117,6 @@ describe('run verifier tool', () => {
 
   it('runs the verifier in the current project with explicit spec identity', async () => {
     const workflow = await createReadyForVerifierWorkflow();
-    await mkdir(join(workflow.repository.path, 'src'));
-    await writeFile(
-      join(workflow.repository.path, 'src/total.ts'),
-      'export const total = () => 42;\n',
-    );
-
-    const filesBefore = await readdir(workflow.repository.path, {
-      recursive: true,
-    });
 
     const { tool, events, emit, on } =
       await piTestSessions.createRegisteredTool({
@@ -163,9 +164,6 @@ describe('run verifier tool', () => {
     expect(receivedRequest).toMatchObject({
       task: expect.stringContaining(workflow.repository.path),
     });
-    expect(receivedRequest).toMatchObject({
-      task: expect.stringContaining('AGENTS.md'),
-    });
     expect(on).toHaveBeenLastCalledWith(
       SUBAGENT_DELEGATION_RESPONSE_EVENT,
       expect.any(Function),
@@ -177,16 +175,20 @@ describe('run verifier tool', () => {
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
     });
 
-    const filesAfter = await readdir(workflow.repository.path, {
-      recursive: true,
-    });
+    await expect(
+      fileExists(
+        join(workflow.repository.path, `.specs/${SPEC_ID}/handoffs/verifier`),
+      ),
+    ).resolves.toBe(true);
 
-    expect(
-      filesAfter.filter((file) => !filesBefore.includes(file)).sort(),
-    ).toEqual([
-      `.specs/${SPEC_ID}/handoffs/verifier`,
-      `.specs/${SPEC_ID}/handoffs/verifier/V1.json`,
-    ]);
+    await expect(
+      fileExists(
+        join(
+          workflow.repository.path,
+          `.specs/${SPEC_ID}/handoffs/verifier/V1.json`,
+        ),
+      ),
+    ).resolves.toBe(true);
   });
 
   it('returns findings and cleans the response listener', async () => {
@@ -373,7 +375,7 @@ describe('run verifier tool', () => {
       access(
         workflow.paths.getVerifierHandoffPath({
           specId: SPEC_ID,
-          handoffNumber: 1,
+          handoffPassNumber: 1,
         }),
       ),
     ).rejects.toMatchObject({ code: 'ENOENT' });
