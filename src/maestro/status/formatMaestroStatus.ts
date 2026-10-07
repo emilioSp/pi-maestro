@@ -34,24 +34,17 @@ export const WORKFLOW_PHASE_ICONS = {
   [WORKFLOW_PHASES.CANDIDATE_READY]: '✅',
 } as const;
 
-const getPhaseColor = (phase: WorkflowPhase): ThemeColor => {
-  if (
-    phase === WORKFLOW_PHASES.ESCALATION_DECISION ||
-    phase === WORKFLOW_PHASES.FINDINGS_DECISION
-  ) {
-    return 'warning';
-  }
-
-  if (phase === WORKFLOW_PHASES.BUILDER_FAILED) {
-    return 'error';
-  }
-
-  if (phase === WORKFLOW_PHASES.CANDIDATE_READY) {
-    return 'success';
-  }
-
-  return 'accent';
-};
+export const WORKFLOW_PHASE_COLORS = {
+  [WORKFLOW_PHASES.DRAFTING_SPEC]: 'accent',
+  [WORKFLOW_PHASES.READY_FOR_BUILDER]: 'accent',
+  [WORKFLOW_PHASES.BUILDER_RUNNING]: 'accent',
+  [WORKFLOW_PHASES.ESCALATION_DECISION]: 'warning',
+  [WORKFLOW_PHASES.BUILDER_FAILED]: 'error',
+  [WORKFLOW_PHASES.READY_FOR_VERIFIER]: 'accent',
+  [WORKFLOW_PHASES.VERIFIER_RUNNING]: 'accent',
+  [WORKFLOW_PHASES.FINDINGS_DECISION]: 'warning',
+  [WORKFLOW_PHASES.CANDIDATE_READY]: 'success',
+} as const satisfies Record<WorkflowPhase, ThemeColor>;
 
 const shortenSpecId = (specId: string): string => {
   const title = specId.slice(16);
@@ -94,7 +87,10 @@ export const formatMaestroStatus = ({
     `Maestro active · ${shortenSpecId(specId)} · `,
   );
 
-  const label = theme.fg(getPhaseColor(phase), WORKFLOW_PHASE_LABELS[phase]);
+  const label = theme.fg(
+    WORKFLOW_PHASE_COLORS[phase],
+    WORKFLOW_PHASE_LABELS[phase],
+  );
 
   return `${prefix}${WORKFLOW_PHASE_ICONS[phase]} ${label}`;
 };

@@ -96,11 +96,11 @@ export default (pi: ExtensionAPI): void => {
             context.ui.theme.fg('muted', 'Maestro active'),
             context.ui.theme.fg(
               'accent',
-              `Builder (${config.builder.model.split('/')[1]} ${config.builder.thinking})`,
+              `Builder (${config.builder.model} ${config.builder.thinking})`,
             ),
             context.ui.theme.fg(
               'accent',
-              `Verifier (${config.verifier.model.split('/')[1]} ${config.verifier.thinking})`,
+              `Verifier (${config.verifier.model} ${config.verifier.thinking})`,
             ),
           ].join('\n'),
           'info',
