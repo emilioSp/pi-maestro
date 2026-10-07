@@ -1,5 +1,7 @@
 # TODO
 
+AGENT DO NOT READ HERE. THIS IS FOR ME
+
 ## Findings must remain in the history, same escalations behavior
 
 ## Allow builder failure when all acceptance criteria pass
@@ -23,3 +25,5 @@ This prevents the builder from recording an honest failure in this case. The bui
 Allow `status: failed` even when every acceptance criterion passes. Keep `failure.reason` mandatory and preserve the actual criterion results.
 
 Update the validator and its tests to cover this case. Remove the corresponding limitation from `agents/builder.md` after the correction. Keep the existing completion requirements for `status: done`.
+
+### Renumbered the criteria from AC1 to AC13, with no gaps. Their content is unchanged.
