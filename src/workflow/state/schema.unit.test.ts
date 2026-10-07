@@ -14,12 +14,6 @@ const validState = {
 };
 
 describe('workflow state schema', () => {
-  it('ignores an unused revision field while validating the artifact', () => {
-    expect(() =>
-      assertWorkflowState({ ...validState, revision: 'ignored' }),
-    ).not.toThrow();
-  });
-
   it('is closed and accepts every workflow phase', () => {
     expect(WorkflowStateSchema.type).toBe('object');
     expect(ObjectOptions(WorkflowStateSchema).additionalProperties).toBe(false);

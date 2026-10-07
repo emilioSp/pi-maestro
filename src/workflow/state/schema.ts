@@ -71,12 +71,7 @@ function assertWorkflowStateSchema(
     throw new Error('Workflow state must be a JSON object.');
   }
 
-  const [error] = Value.Errors(
-    WorkflowStateSchema,
-    Object.fromEntries(
-      Object.entries(input).filter(([key]) => key !== 'revision'),
-    ),
-  );
+  const [error] = Value.Errors(WorkflowStateSchema, input);
 
   if (error !== undefined) {
     throw new Error(`Invalid workflow state: ${error.message}.`);
