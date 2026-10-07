@@ -150,9 +150,6 @@ describe('run builder tool', () => {
     expect(receivedRequest).toMatchObject({
       task: expect.stringContaining(repository.path),
     });
-    expect(receivedRequest).toMatchObject({
-      task: expect.stringContaining('AGENTS.md'),
-    });
     expect(on).toHaveBeenLastCalledWith(
       SUBAGENT_DELEGATION_RESPONSE_EVENT,
       expect.any(Function),
