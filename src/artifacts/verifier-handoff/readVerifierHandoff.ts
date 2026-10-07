@@ -10,18 +10,15 @@ import { readJsonFile } from '#utils/read-json.ts';
 type ReadVerifierHandoffInput = {
   path: string;
   specId: string;
-  revision: number;
 };
 
 export const readVerifierHandoff = async ({
   path,
   specId,
-  revision,
 }: ReadVerifierHandoffInput): Promise<VerifierHandoff> => {
   const input = {
     handoff: await readJsonFile({ path, description: 'Verifier handoff' }),
     specId,
-    revision,
   };
 
   assertVerifierHandoff(input);

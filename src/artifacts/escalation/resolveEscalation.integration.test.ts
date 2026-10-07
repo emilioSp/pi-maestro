@@ -56,7 +56,6 @@ describe('escalation resolution', () => {
     const created = await createEscalation({
       directory,
       specId,
-      revision: 3,
       escalation: newEscalation(),
     });
 
@@ -65,13 +64,11 @@ describe('escalation resolution', () => {
     const resolved = await resolveEscalation({
       path: created.path,
       specId,
-      revision: 4,
       resolution: resolution(),
     });
 
     expect(resolved).toEqual({
       ...created.escalation,
-      revision: 4,
       resolution: resolution(),
     });
     expect(await readFile(created.path, 'utf8')).not.toBe(before);
@@ -79,7 +76,6 @@ describe('escalation resolution', () => {
       resolveEscalation({
         path: created.path,
         specId,
-        revision: 5,
         resolution: resolution(),
       }),
     ).rejects.toThrow('already resolved');

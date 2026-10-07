@@ -1,4 +1,5 @@
 import { access } from 'node:fs/promises';
+import { join } from 'node:path';
 import {
   SUBAGENT_DELEGATION_REQUEST_EVENT,
   SUBAGENT_DELEGATION_RESPONSE_EVENT,
@@ -13,7 +14,6 @@ import {
 } from '#artifacts/verifier-handoff/schema.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { AGENTS } from '#config/schema.ts';
-import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import {
   cleanupBuilderWorkflows,
@@ -32,7 +32,7 @@ import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts
 const createReadyForVerifierWorkflow = async () => {
   const workflow = await createApprovedWorkflow();
 
-  const builderRun = await prepareBuilderRun({
+  await prepareBuilderRun({
     paths: workflow.paths,
     specId: SPEC_ID,
   });
@@ -47,25 +47,17 @@ const createReadyForVerifierWorkflow = async () => {
       notes: [],
     },
   });
-  await workflow.repository.commit(
-    `Builder completed at revision ${builderRun.revision + 1}`,
-  );
 
   return workflow;
 };
 
 type VerifierHandoffInput = {
-  revision: number;
   findings?: readonly unknown[];
 };
 
-const createVerifierHandoff = ({
-  revision,
-  findings = [],
-}: VerifierHandoffInput) => ({
+const createVerifierHandoff = ({ findings = [] }: VerifierHandoffInput) => ({
   version: VERIFIER_HANDOFF_VERSION,
   specId: SPEC_ID,
-  revision,
   summary: 'The candidate was independently verified.',
   acceptanceCriteria: [],
   findings,
@@ -73,34 +65,31 @@ const createVerifierHandoff = ({
 });
 
 type RecordVerifierHandoffInput = {
-  repositoryRoot: string;
   paths: MaestroPaths;
   findings?: readonly unknown[];
 };
 
 const recordVerifierHandoff = async ({
-  repositoryRoot,
   paths,
   findings = [],
 }: RecordVerifierHandoffInput): Promise<void> => {
-  const state = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
-
   await completeVerifierPass({
     paths,
     specId: SPEC_ID,
     handoff: createVerifierHandoff({
-      revision: state.revision + 1,
       findings,
     }),
   });
+};
 
-  await createWorkflowCheckpointCommit({
-    repositoryRoot,
-    expectedPaths: [
-      paths.getWorkflowPath(SPEC_ID),
-      paths.getVerifierHandoffPath(SPEC_ID),
-    ],
-  });
+const fileExists = async (path: string) => {
+  try {
+    await access(path);
+
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 afterEach(async () => {
@@ -126,7 +115,7 @@ describe('run verifier tool', () => {
     ).toBe(false);
   });
 
-  it('runs the verifier in the current checkout with explicit spec identity', async () => {
+  it('runs the verifier in the current project with explicit spec identity', async () => {
     const workflow = await createReadyForVerifierWorkflow();
 
     const { tool, events, emit, on } =
@@ -147,7 +136,6 @@ describe('run verifier tool', () => {
       });
 
       await recordVerifierHandoff({
-        repositoryRoot: workflow.repository.path,
         paths: workflow.paths,
       });
       events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
@@ -176,9 +164,6 @@ describe('run verifier tool', () => {
     expect(receivedRequest).toMatchObject({
       task: expect.stringContaining(workflow.repository.path),
     });
-    expect(receivedRequest).toMatchObject({
-      task: expect.stringContaining('AGENTS.md'),
-    });
     expect(on).toHaveBeenLastCalledWith(
       SUBAGENT_DELEGATION_RESPONSE_EVENT,
       expect.any(Function),
@@ -189,6 +174,21 @@ describe('run verifier tool', () => {
       specId: SPEC_ID,
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
     });
+
+    await expect(
+      fileExists(
+        join(workflow.repository.path, `.specs/${SPEC_ID}/handoffs/verifier`),
+      ),
+    ).resolves.toBe(true);
+
+    await expect(
+      fileExists(
+        join(
+          workflow.repository.path,
+          `.specs/${SPEC_ID}/handoffs/verifier/V1.json`,
+        ),
+      ),
+    ).resolves.toBe(true);
   });
 
   it('returns findings and cleans the response listener', async () => {
@@ -203,7 +203,6 @@ describe('run verifier tool', () => {
       // JUSTIFICATION: The run tool emits a delegation request on this channel.
       const request = payload as SubagentDelegationRequest;
       await recordVerifierHandoff({
-        repositoryRoot: workflow.repository.path,
         paths: workflow.paths,
         findings: [
           {
@@ -215,7 +214,7 @@ describe('run verifier tool', () => {
             evidence: [
               { source: 'test', observation: 'The problem was observed.' },
             ],
-            rejection: null,
+            decision: null,
           },
         ],
       });
@@ -373,7 +372,12 @@ describe('run verifier tool', () => {
     );
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
     await expect(
-      access(workflow.paths.getVerifierHandoffPath(SPEC_ID)),
+      access(
+        workflow.paths.getVerifierHandoffPath({
+          specId: SPEC_ID,
+          handoffPassNumber: 1,
+        }),
+      ),
     ).rejects.toMatchObject({ code: 'ENOENT' });
   });
 });

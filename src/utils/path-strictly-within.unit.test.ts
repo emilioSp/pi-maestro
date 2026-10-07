@@ -3,23 +3,21 @@ import { isPathStrictlyWithin } from '#utils/path-strictly-within.ts';
 
 describe('isPathStrictlyWithin', () => {
   it('accepts descendants but not the parent or an equivalent path', () => {
-    expect(
-      isPathStrictlyWithin({ parent: '/repo', candidate: '/repo/spec' }),
-    ).toBe(true);
-    expect(isPathStrictlyWithin({ parent: '/repo', candidate: '/repo' })).toBe(
+    expect(isPathStrictlyWithin({ parent: '/repo', path: '/repo/spec' })).toBe(
+      true,
+    );
+    expect(isPathStrictlyWithin({ parent: '/repo', path: '/repo' })).toBe(
       false,
     );
     expect(
-      isPathStrictlyWithin({ parent: '/repo', candidate: '/repo/spec/..' }),
+      isPathStrictlyWithin({ parent: '/repo', path: '/repo/spec/..' }),
     ).toBe(false);
   });
 
   it('rejects siblings and paths above the parent', () => {
-    expect(isPathStrictlyWithin({ parent: '/repo', candidate: '/repo2' })).toBe(
+    expect(isPathStrictlyWithin({ parent: '/repo', path: '/repo2' })).toBe(
       false,
     );
-    expect(isPathStrictlyWithin({ parent: '/repo', candidate: '/' })).toBe(
-      false,
-    );
+    expect(isPathStrictlyWithin({ parent: '/repo', path: '/' })).toBe(false);
   });
 });

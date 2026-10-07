@@ -6,35 +6,38 @@ Pi extension for a spec-driven multiagent development workflow.
 
 ## The idea
 
-One spec describes one small reversible change. An agent builds it. A second, independent agent regenerates each acceptance criterion from scratch. The owner performs the final review. 
+A specification (spec) describes one reversible change. The builder implements it. An independent verifier checks every acceptance criterion. The owner performs the final review.
 
 Four principles hold the workflow together:
 
-- The approved spec is the contract for the builder and verifier.
-- No agent approves its own work.
-- Every acceptance criterion is checked independently.
-- An agent never decides for the owner, and never guesses.
+1. The approved spec is the contract for the builder and verifier.
+2. No agent approves its own work.
+3. Every acceptance criterion is checked independently.
+4. The owner decides requirements, scope, and unresolved questions.
 
 ## The roles
 
-- **Owner** — You. You bring the problem, decide every escalation and every finding, review the final code, and control the Git flow after the candidate is ready. You never talk to a builder or a verifier.
-- **Maestro** — The agent you talk to. It writes the spec with you, spawns and supervises the other agents, records your decisions, and summarizes the results.
-- **Builder** — The agent that implements one spec. It never approves its own work.
-- **Verifier** — The agent that verifies if the builder implementation is technically compliant to the spec.
+| Role | Responsibility |
+|---|---|
+| Owner | Brings the problem, approves the spec, decides questions and findings, and reviews the final code. |
+| Maestro | Works directly with the owner, prepares the spec, runs the other agents, records decisions, and summarizes results. |
+| Builder | Implements the approved spec and checks each acceptance criterion. |
+| Verifier | Independently checks the project files against the spec and reports technical issues. |
+
+An escalation asks the owner to decide an implementation question. A finding records a technical issue reported by the verifier. The owner discusses both with Maestro, not directly with the builder or verifier.
 
 ## Prerequisites
 
-- macOS
-- Node.js 26 or later
-- Git
-- Pi 1.0.0 or later
-- `pi-subagents` 0.68.0 or later, installed and enabled in Pi
-- Access to the configured builder and verifier models
-- A trusted Git repository
+1. macOS.
+2. Node.js 26 or later.
+3. Pi 1.0.0 or later.
+4. `pi-subagents` installed and enabled in Pi.
+5. Access to the configured builder and verifier models.
+6. A project directory that Pi trusts.
 
 ## Installation
 
-Install `pi-subagents` and Maestro:
+The owner installs `pi-subagents` and Maestro with these commands:
 
 ```bash
 pi install npm:pi-subagents
@@ -43,9 +46,7 @@ pi install npm:@emiliosp/pi-maestro
 
 ## Usage
 
-Maestro uses the current Git checkout and branch. It does not create, switch, name, or validate branches. It does not create worktrees. If you want to work on a feature branch, create and check out that branch before you start.
-
-Start Pi from the repository:
+The owner starts Pi from the project directory:
 
 ```bash
 cd /path/to/project
@@ -58,37 +59,33 @@ Activate Maestro:
 /maestro
 ```
 
-The same command disables Maestro. Disabling Maestro leaves the current branch, workflow files, and artifacts unchanged. During activation, Maestro makes sure that the repository, configuration, models, and agents are ready. If an item fails, Maestro stays disabled and reports the problem.
+During activation, Maestro checks project trust, configuration, models, and agent availability. If a check fails, Maestro stays disabled and reports the problem.
 
-Follow this workflow:
+The owner follows this workflow:
 
-1. Activate Maestro with `/maestro`.
-2. Describe the change.
-3. Review the spec with Maestro.
-4. Approve the spec.
-5. Commit the approved `spec.md`, its prototypes, and `workflow.json` on the current branch.
-6. Ask Maestro to run the builder.
-7. Review builder escalations and answer them.
-8. Review verifier findings and choose an action for each finding.
-9. When the workflow reaches `candidate-ready`, read Maestro's summary of the results and Pull Request facts.
-10. Review or change the candidate as needed. 
+1. Describes one change to Maestro.
+2. Reviews the spec, including its acceptance criteria and concrete examples.
+3. Replies `GREEN FLAG` when Maestro asks for approval. Maestro records the approval and starts the builder.
+4. Reviews builder escalations and decides how to proceed.
+5. Reviews verifier findings and chooses an action for every finding.
+6. Reads Maestro's summary at `candidate-ready` and performs the final review.
 
-Do not change product code yourself while the workflow runs. Maestro can run temporary experiments with your agreement during spec preparation and permitted revisions. See [Workflow](docs/workflow.md#spec-approval) for the experiment rules.
+Maestro starts the verifier after a successful builder run. Both agents run in the foreground: Pi waits for each run to finish. Maestro shows the current phase in Pi's status. `pi-subagents` FleetView and `/subagents-fleet` show agent activity and transcripts.
 
-The workflow is complete when it reaches `candidate-ready`. No final tool call is needed. Changes after completion are outside the Maestro review.
+The owner must not edit product files while the workflow runs. Maestro can perform temporary experiments with owner agreement during spec preparation and permitted revisions. See [Workflow](docs/workflow.md#spec-approval).
 
-If an escalation or finding requires a contract change, edit and approve `spec.md`, then call `maestro_mark_spec_ready`. The workflow returns to `ready-for-builder` on the same branch. Commit the revised `spec.md`, its prototypes, and `workflow.json` before asking Maestro to run the builder again. The checkout must be clean. A technical builder failure stops the workflow and requires owner follow-up.
+If a contract change is needed during an escalation or finding decision, the owner reviews the revised spec and replies `GREEN FLAG` again. Maestro then starts another builder run. A recorded builder failure stops the workflow and requires manual owner follow-up.
 
-Builder and verifier runs stay in the foreground. Pi waits for each run before you continue the conversation. Maestro shows the current phase in Pi's status. Use pi-subagents FleetView or `/subagents-fleet` to inspect live activity and the transcript.
+The workflow ends at `candidate-ready`. Rejected findings retain their reasons. Later changes are outside the completed verification. The owner controls any later Git use, pull request, and merge.
 
-Restarting Pi, disabling Maestro, or using `/resume` clears live session state. Maestro does not recover an incomplete workflow. 
+The same `/maestro` command disables Maestro and leaves project files unchanged. Disabling Maestro, restarting Pi, or using `/resume` clears live session state. Saved files do not automatically restore or resume an incomplete workflow. The owner handles it manually.
 
 ## Configuration
 
-Maestro uses default values when `.pi/maestro.json` is absent. Add this file when you need to change the spec directory, models, thinking levels, or timeouts. See [Configuration](docs/configuration.md).
+Maestro uses default values when `.pi/maestro.json` is absent from the project root. The owner can add this file to change the spec directory, models, thinking levels, or timeouts. See [Configuration](docs/configuration.md).
 
 ## Documentation
 
-- [Workflow](docs/workflow.md)
-- [Configuration](docs/configuration.md)
-- [Subagent integration](docs/subagent-integration.md)
+1. [Workflow](docs/workflow.md).
+2. [Configuration](docs/configuration.md).
+3. [Subagent integration](docs/subagent-integration.md).

@@ -4,7 +4,6 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
-import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import {
   cleanupBuilderWorkflows,
@@ -28,7 +27,7 @@ afterEach(async () => {
 describe('subagent extension', () => {
   it('given child extensions loaded from disk when builder and verifier submit handoffs then no parent session state is required', async () => {
     const { paths, repository } = await createApprovedWorkflow();
-    const builderRun = await prepareBuilderRun({ paths, specId: SPEC_ID });
+    await prepareBuilderRun({ paths, specId: SPEC_ID });
     maestroSessionState.deactivate();
 
     const builder = await piTestSessions.create({
@@ -63,19 +62,19 @@ describe('subagent extension', () => {
 
     expect(builderResult.details).toMatchObject({
       specId: SPEC_ID,
-      revision: builderRun.revision + 1,
       phase: WORKFLOW_PHASES.READY_FOR_VERIFIER,
     });
     await expect(
       readBuilderHandoff({
-        path: paths.getBuilderHandoffPath(SPEC_ID),
+        path: paths.getBuilderHandoffPath({
+          specId: SPEC_ID,
+          handoffPassNumber: 1,
+        }),
         specId: SPEC_ID,
-        revision: builderRun.revision + 1,
       }),
     ).resolves.toMatchObject({ status: BUILDER_HANDOFF_STATUSES.DONE });
-    await repository.commit('Builder completed');
 
-    const verifierRun = await prepareVerifierRun({ paths, specId: SPEC_ID });
+    await prepareVerifierRun({ paths, specId: SPEC_ID });
 
     const verifier = await piTestSessions.create({
       cwd: repository.path,
@@ -103,22 +102,20 @@ describe('subagent extension', () => {
 
     expect(verifierResult.details).toMatchObject({
       specId: SPEC_ID,
-      revision: verifierRun.revision + 1,
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
     });
     await expect(
       readVerifierHandoff({
-        path: paths.getVerifierHandoffPath(SPEC_ID),
+        path: paths.getVerifierHandoffPath({
+          specId: SPEC_ID,
+          handoffPassNumber: 1,
+        }),
         specId: SPEC_ID,
-        revision: verifierRun.revision + 1,
       }),
     ).resolves.toMatchObject({ findings: [] });
     await expect(
       readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
-    await expect(getRepositoryStatus(repository.path)).resolves.toMatchObject({
-      clean: true,
-    });
     expect(maestroSessionState.isActive()).toBe(false);
     expect(maestroSessionState.getActiveSpecId()).toBeNull();
   });

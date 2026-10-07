@@ -34,7 +34,6 @@ describe('readWorkflowState', () => {
     const state: WorkflowState = {
       version: WORKFLOW_STATE_VERSION,
       specId: '20260321-143052-add-weather-alerts',
-      revision: 1,
       phase: WORKFLOW_PHASES.DRAFTING_SPEC,
     };
 
@@ -57,7 +56,6 @@ describe('readWorkflowState', () => {
       JSON.stringify({
         version: WORKFLOW_STATE_VERSION,
         specId: '20260321-143052-add-weather-alerts',
-        revision: 1,
         phase: WORKFLOW_PHASES.DRAFTING_SPEC,
         extra: true,
       }),

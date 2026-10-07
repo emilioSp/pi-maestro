@@ -2,7 +2,6 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
 import { readEscalation } from '#artifacts/escalation/readEscalation.ts';
-import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -91,7 +90,7 @@ describe('resolve escalation tool', () => {
     ).toBe(false);
   });
 
-  it('records the explicit decision and commits ready-for-builder on the current branch', async () => {
+  it('records the explicit decision and saves ready-for-builder', async () => {
     const { paths, repository, opened } = await openEscalation();
     const specBefore = await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8');
 
@@ -117,19 +116,10 @@ describe('resolve escalation tool', () => {
     expect(result.details).toMatchObject({
       specId: SPEC_ID,
       escalationId: opened.escalation.id,
-      revision: opened.state.revision + 1,
       phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
-      repositoryRoot: repository.path,
+      projectRoot: repository.path,
     });
 
-    // JUSTIFICATION: The adapter returns the checkpoint commit in its structured details.
-    const details = result.details as {
-      checkpointCommit: string;
-    };
-
-    await expect(getHeadCommit(repository.path)).resolves.toBe(
-      details.checkpointCommit,
-    );
     await expect(
       readFile(paths.getSpecFilePath(SPEC_ID), 'utf8'),
     ).resolves.toBe(specBefore);
@@ -137,11 +127,9 @@ describe('resolve escalation tool', () => {
       readEscalation({
         path: opened.escalationPath,
         specId: SPEC_ID,
-        currentRevision: opened.state.revision + 1,
       }),
     ).resolves.toMatchObject({
       ...opened.escalation,
-      revision: opened.state.revision + 1,
       resolution: {
         selectedOptionId: 'option-a',
         decision: 'Use option A.',
@@ -169,7 +157,6 @@ describe('resolve escalation tool', () => {
       readEscalation({
         path: opened.escalationPath,
         specId: SPEC_ID,
-        currentRevision: state.revision,
       }),
     ).resolves.toMatchObject({
       ...opened.escalation,
@@ -198,14 +185,12 @@ describe('resolve escalation tool', () => {
     await expect(
       readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({
-      revision: opened.state.revision,
       phase: WORKFLOW_PHASES.ESCALATION_DECISION,
     });
     await expect(
       readEscalation({
         path: opened.escalationPath,
         specId: SPEC_ID,
-        currentRevision: opened.state.revision,
       }),
     ).resolves.toMatchObject({ resolution: null });
   });

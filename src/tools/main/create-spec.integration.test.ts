@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import type { CreatedSpec } from '#specs/create.ts';
 import piTestSessions from '#test/support/pi-session.ts';
-import { createTemporaryRepository } from '#test/support/temp-repository.ts';
+import { createTemporaryProject } from '#test/support/temp-repository.ts';
 import { registerCreateSpecTool } from '#tools/main/create-spec.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
@@ -39,7 +39,7 @@ describe('create spec tool', () => {
   });
 
   it('creates a drafting spec and returns its paths and state', async () => {
-    const repository = await createTemporaryRepository();
+    const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     maestroSessionState.activate();
 
@@ -70,22 +70,12 @@ describe('create spec tool', () => {
     await expect(readWorkflowState(details.workflowPath)).resolves.toEqual({
       version: WORKFLOW_STATE_VERSION,
       specId: details.specId,
-      revision: 1,
       phase: WORKFLOW_PHASES.DRAFTING_SPEC,
     });
-
-    const workflowState = await readWorkflowState(details.workflowPath);
-
-    expect(Object.keys(workflowState).sort()).toEqual([
-      'phase',
-      'revision',
-      'specId',
-      'version',
-    ]);
   });
 
   it('returns the domain error when another workflow is active', async () => {
-    const repository = await createTemporaryRepository();
+    const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId('20260321-143052-current-workflow');

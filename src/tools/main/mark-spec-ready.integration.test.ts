@@ -6,7 +6,7 @@ import { MaestroPaths } from '#MaestroPaths.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { createSpec } from '#specs/create.ts';
 import piTestSessions from '#test/support/pi-session.ts';
-import { createTemporaryRepository } from '#test/support/temp-repository.ts';
+import { createTemporaryProject } from '#test/support/temp-repository.ts';
 import { registerMarkSpecReadyTool } from '#tools/main/mark-spec-ready.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
@@ -18,7 +18,6 @@ import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 
 type CreateWorkflowInput = {
   phase?: WorkflowPhase;
-  revision?: number;
 };
 
 const INSTANT = Temporal.Instant.from('2026-03-21T14:30:52Z');
@@ -31,15 +30,14 @@ const cleanupFunctions: Array<() => Promise<void>> = [];
 
 const createWorkflow = async ({
   phase = WORKFLOW_PHASES.DRAFTING_SPEC,
-  revision = 1,
 }: CreateWorkflowInput = {}) => {
-  const repository = await createTemporaryRepository();
+  const repository = await createTemporaryProject();
   cleanupFunctions.push(repository.cleanup);
 
   const config = await loadConfiguration(repository.path);
 
   const paths = new MaestroPaths({
-    repositoryRoot: repository.path,
+    projectRoot: repository.path,
     config,
   });
 
@@ -50,11 +48,10 @@ const createWorkflow = async ({
     instant: INSTANT,
   });
 
-  if (phase !== WORKFLOW_PHASES.DRAFTING_SPEC || revision !== 1) {
+  if (phase !== WORKFLOW_PHASES.DRAFTING_SPEC) {
     await writeWorkflowState({
       path: created.workflowPath,
-      state: { ...created.state, phase, revision },
-      currentRevision: created.state.revision,
+      state: { ...created.state, phase },
     });
   }
 
@@ -87,7 +84,7 @@ describe('mark spec ready tool', () => {
   });
 
   it('approves the current spec from drafting without comparing its content', async () => {
-    const { created, repository } = await createWorkflow({ revision: 7 });
+    const { created, repository } = await createWorkflow();
     const approvedContent = '# Changed after the original draft\n';
     await writeFile(created.specFilePath, approvedContent, 'utf8');
 
@@ -107,7 +104,6 @@ describe('mark spec ready tool', () => {
     expect(result.details).toEqual({
       version: WORKFLOW_STATE_VERSION,
       specId: SPEC_ID,
-      revision: 8,
       phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
     });
     await expect(readFile(created.specFilePath, 'utf8')).resolves.toBe(
@@ -124,7 +120,6 @@ describe('mark spec ready tool', () => {
   ])('approves an authorized revision from %s', async (phase) => {
     const { created, repository } = await createWorkflow({
       phase,
-      revision: 2,
     });
 
     const { tool } = await piTestSessions.createRegisteredTool({
@@ -137,7 +132,6 @@ describe('mark spec ready tool', () => {
     expect(result.details).toEqual({
       version: WORKFLOW_STATE_VERSION,
       specId: SPEC_ID,
-      revision: 3,
       phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
     });
     await expect(readWorkflowState(created.workflowPath)).resolves.toEqual(
@@ -155,7 +149,6 @@ describe('mark spec ready tool', () => {
   ])('rejects approval from %s', async (phase) => {
     const { created, repository } = await createWorkflow({
       phase,
-      revision: 2,
     });
 
     const { tool } = await piTestSessions.createRegisteredTool({
@@ -170,7 +163,7 @@ describe('mark spec ready tool', () => {
     );
     await expect(
       readWorkflowState(created.workflowPath),
-    ).resolves.toMatchObject({ revision: 2, phase });
+    ).resolves.toMatchObject({ phase });
   });
 
   it('returns a domain error when the requested spec is not active', async () => {

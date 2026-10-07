@@ -1,5 +1,5 @@
 /**
- * Objective: Register the builder escalation tool for the current checkout.
+ * Objective: Register the builder escalation tool for the current project.
  * Used: When the builder finds a significant discovery that requires an owner decision.
  */
 
@@ -17,7 +17,7 @@ export const BUILDER_ESCALATION_TOOL = {
   NAME: 'maestro_open_escalation',
   LABEL: 'Open Builder Escalation',
   DESCRIPTION:
-    'Ask the owner to choose between options for a significant discovery or unresolved decision. An escalation is not limited to a technical failure or blocker. After success, commit the escalation, workflow state, and current work together with Bash and Git, then stop. Do not wait for the owner.',
+    'Ask the owner to choose between options for a significant discovery or unresolved decision. An escalation is not limited to a technical failure or blocker. After success, stop. The tool saves the escalation and workflow phase. Do not wait for the owner.',
 } as const;
 
 const BuilderEscalationToolParameters = Type.Object(
@@ -56,14 +56,13 @@ export const registerOpenEscalationTool = (pi: ExtensionAPI): void => {
         content: [
           {
             type: 'text',
-            text: `Escalation ${opened.escalation.id} recorded. Commit your current work, the escalation, and workflow state together with Bash and Git, then stop. Do not wait for the owner.`,
+            text: `Escalation ${opened.escalation.id} recorded. The escalation and workflow phase are saved. Stop now. Do not wait for the owner.`,
           },
         ],
         details: {
           specId: opened.escalation.specId,
           escalationId: opened.escalation.id,
           escalationPath: opened.escalationPath,
-          revision: opened.escalation.revision,
           phase: opened.state.phase,
         },
       };

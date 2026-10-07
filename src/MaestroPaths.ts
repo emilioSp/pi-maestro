@@ -1,8 +1,9 @@
 /**
- * Objective: Build validated paths for one Maestro workflow in the current checkout.
- * Used: Whenever Maestro reads or writes repository workflow artifacts.
+ * Objective: Build validated paths for one Maestro workflow in the current project.
+ * Used: Whenever Maestro reads or writes project workflow artifacts.
  */
 
+import { readdir } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
 import type { MaestroConfig } from '#config/schema.ts';
 import { isValidSpecId } from '#ids/isValidSpecId.ts';
@@ -10,12 +11,17 @@ import { isPathStrictlyWithin } from '#utils/path-strictly-within.ts';
 
 const PATHS = {
   SPEC_FILE: 'spec.md',
-  WORKFLOW: 'workflow.json',
-  HANDOFFS: 'handoffs',
-  BUILDER_HANDOFF: 'handoffs/builder.json',
-  VERIFIER_HANDOFF: 'handoffs/verifier.json',
-  ESCALATIONS: 'handoffs/escalations',
-  PROTOTYPES: 'prototypes',
+  WORKFLOW_FILE: 'workflow.json',
+  HANDOFFS_PATH: 'handoffs',
+  BUILDER_HANDOFFS_PATH: 'handoffs/builder',
+  VERIFIER_HANDOFFS_PATH: 'handoffs/verifier',
+  ESCALATIONS_PATH: 'handoffs/escalations',
+  PROTOTYPES_PATH: 'prototypes',
+} as const;
+
+const AGENTS_PREFIX = {
+  BUILDER: 'B',
+  VERIFIER: 'V',
 } as const;
 
 function assertSpecId(specId: string): void {
@@ -26,9 +32,9 @@ function assertSpecId(specId: string): void {
   }
 }
 
-function assertEscalationNumber(escalationNumber: number): void {
-  if (!Number.isSafeInteger(escalationNumber) || escalationNumber < 1) {
-    throw new Error('Escalation number must be a positive integer.');
+function assertArtifactNumber(artifactNumber: number): void {
+  if (!Number.isSafeInteger(artifactNumber) || artifactNumber < 1) {
+    throw new Error('Artifact number must be a positive integer.');
   }
 }
 
@@ -45,7 +51,7 @@ function assertSafeRelativePrototypePath(value: string): void {
 }
 
 export type MaestroPathsInput = {
-  repositoryRoot: string;
+  projectRoot: string;
   config: MaestroConfig;
 };
 
@@ -54,34 +60,39 @@ type EscalationPathInput = {
   escalationNumber: number;
 };
 
+type HandoffPathInput = {
+  specId: string;
+  handoffPassNumber: number;
+};
+
 type PrototypePathInput = {
   specId: string;
   relativePath: string;
 };
 
 export class MaestroPaths {
-  private readonly repositoryRoot: string;
+  private readonly projectRoot: string;
   private readonly specDirectory: string;
 
   private readonly specDirectoryFromRoot: string;
 
-  public constructor({ repositoryRoot, config }: MaestroPathsInput) {
+  public constructor({ projectRoot, config }: MaestroPathsInput) {
     if (
       !isPathStrictlyWithin({
-        parent: repositoryRoot,
-        candidate: config.specDirectory,
+        parent: projectRoot,
+        path: config.specDirectory,
       })
     ) {
-      throw new Error('Generated Maestro path leaves the Git root.');
+      throw new Error('Generated Maestro path leaves the project root.');
     }
 
-    this.repositoryRoot = repositoryRoot;
+    this.projectRoot = projectRoot;
     this.specDirectory = config.specDirectory;
-    this.specDirectoryFromRoot = relative(repositoryRoot, config.specDirectory);
+    this.specDirectoryFromRoot = relative(projectRoot, config.specDirectory);
   }
 
-  public getRepositoryRoot(): string {
-    return this.repositoryRoot;
+  public getProjectRoot(): string {
+    return this.projectRoot;
   }
 
   public getSpecDirectory(): string {
@@ -91,14 +102,14 @@ export class MaestroPaths {
   public getSpecPath(specId: string): string {
     assertSpecId(specId);
 
-    return resolve(this.repositoryRoot, this.specDirectoryFromRoot, specId);
+    return resolve(this.projectRoot, this.specDirectoryFromRoot, specId);
   }
 
   public getSpecFilePath(specId: string): string {
     assertSpecId(specId);
 
     return resolve(
-      this.repositoryRoot,
+      this.projectRoot,
       this.specDirectoryFromRoot,
       specId,
       PATHS.SPEC_FILE,
@@ -109,10 +120,10 @@ export class MaestroPaths {
     assertSpecId(specId);
 
     return resolve(
-      this.repositoryRoot,
+      this.projectRoot,
       this.specDirectoryFromRoot,
       specId,
-      PATHS.WORKFLOW,
+      PATHS.WORKFLOW_FILE,
     );
   }
 
@@ -120,43 +131,96 @@ export class MaestroPaths {
     assertSpecId(specId);
 
     return resolve(
-      this.repositoryRoot,
+      this.projectRoot,
       this.specDirectoryFromRoot,
       specId,
-      PATHS.HANDOFFS,
+      PATHS.HANDOFFS_PATH,
     );
   }
 
-  public getBuilderHandoffPath(specId: string): string {
-    assertSpecId(specId);
+  public getBuilderHandoffsPath(specId: string): string {
+    return resolve(this.getSpecPath(specId), PATHS.BUILDER_HANDOFFS_PATH);
+  }
+
+  public getVerifierHandoffsPath(specId: string): string {
+    return resolve(this.getSpecPath(specId), PATHS.VERIFIER_HANDOFFS_PATH);
+  }
+
+  public getBuilderHandoffPath({
+    specId,
+    handoffPassNumber,
+  }: HandoffPathInput): string {
+    assertArtifactNumber(handoffPassNumber);
 
     return resolve(
-      this.repositoryRoot,
-      this.specDirectoryFromRoot,
-      specId,
-      PATHS.BUILDER_HANDOFF,
+      this.getBuilderHandoffsPath(specId),
+      `${AGENTS_PREFIX.BUILDER}${handoffPassNumber}.json`,
     );
   }
 
-  public getVerifierHandoffPath(specId: string): string {
-    assertSpecId(specId);
+  public getVerifierHandoffPath({
+    specId,
+    handoffPassNumber,
+  }: HandoffPathInput): string {
+    assertArtifactNumber(handoffPassNumber);
 
     return resolve(
-      this.repositoryRoot,
-      this.specDirectoryFromRoot,
-      specId,
-      PATHS.VERIFIER_HANDOFF,
+      this.getVerifierHandoffsPath(specId),
+      `${AGENTS_PREFIX.VERIFIER}${handoffPassNumber}.json`,
     );
+  }
+
+  public async getActiveBuilderHandoffPath(specId: string): Promise<string> {
+    const handoffPassNumber = (
+      await readdir(this.getBuilderHandoffsPath(specId))
+    ).length;
+
+    if (handoffPassNumber === 0) throw new Error('Builder handoff is missing.');
+
+    return this.getBuilderHandoffPath({ specId, handoffPassNumber });
+  }
+
+  public async getActiveVerifierHandoffPath(specId: string): Promise<string> {
+    const handoffPassNumber = (
+      await readdir(this.getVerifierHandoffsPath(specId))
+    ).length;
+
+    if (handoffPassNumber === 0)
+      throw new Error('Verifier handoff is missing.');
+
+    return this.getVerifierHandoffPath({ specId, handoffPassNumber });
+  }
+
+  public async getNextBuilderHandoffPath(specId: string): Promise<string> {
+    const handoffPassNumber = (
+      await readdir(this.getBuilderHandoffsPath(specId))
+    ).length;
+
+    return this.getBuilderHandoffPath({
+      specId,
+      handoffPassNumber: handoffPassNumber + 1,
+    });
+  }
+
+  public async getNextVerifierHandoffPath(specId: string): Promise<string> {
+    const handoffPassNumber = (
+      await readdir(this.getVerifierHandoffsPath(specId))
+    ).length;
+
+    return this.getVerifierHandoffPath({
+      specId,
+      handoffPassNumber: handoffPassNumber + 1,
+    });
   }
 
   public getEscalationsPath(specId: string): string {
     assertSpecId(specId);
 
     return resolve(
-      this.repositoryRoot,
+      this.projectRoot,
       this.specDirectoryFromRoot,
       specId,
-      PATHS.ESCALATIONS,
+      PATHS.ESCALATIONS_PATH,
     );
   }
 
@@ -164,14 +228,14 @@ export class MaestroPaths {
     specId,
     escalationNumber,
   }: EscalationPathInput): string {
-    assertEscalationNumber(escalationNumber);
+    assertArtifactNumber(escalationNumber);
     assertSpecId(specId);
 
     return resolve(
-      this.repositoryRoot,
+      this.projectRoot,
       this.specDirectoryFromRoot,
       specId,
-      `${PATHS.ESCALATIONS}/E${escalationNumber}.json`,
+      `${PATHS.ESCALATIONS_PATH}/E${escalationNumber}.json`,
     );
   }
 
@@ -179,10 +243,10 @@ export class MaestroPaths {
     assertSpecId(specId);
 
     return resolve(
-      this.repositoryRoot,
+      this.projectRoot,
       this.specDirectoryFromRoot,
       specId,
-      PATHS.PROTOTYPES,
+      PATHS.PROTOTYPES_PATH,
     );
   }
 
@@ -195,7 +259,7 @@ export class MaestroPaths {
     const prototypesPath = this.getPrototypesPath(specId);
     const target = resolve(prototypesPath, relativePath);
 
-    if (!isPathStrictlyWithin({ parent: prototypesPath, candidate: target })) {
+    if (!isPathStrictlyWithin({ parent: prototypesPath, path: target })) {
       throw new Error(
         'Prototype path must stay inside the prototypes directory.',
       );

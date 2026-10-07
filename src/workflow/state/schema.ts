@@ -51,7 +51,6 @@ export const WorkflowStateSchema = Type.Object(
   {
     version: Type.Literal(WORKFLOW_STATE_VERSION),
     specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
-    revision: Type.Integer({ minimum: 1 }),
     phase: WorkflowPhaseSchema,
   },
   { additionalProperties: false },

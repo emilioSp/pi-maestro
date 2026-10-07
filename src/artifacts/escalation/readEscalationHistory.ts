@@ -13,13 +13,11 @@ const ESCALATION_FILE_PATTERN = /^E([1-9]\d*)\.json$/;
 type ReadEscalationHistoryInput = {
   directory: string;
   specId: string;
-  currentRevision: number;
 };
 
 export const readEscalationHistory = async ({
   directory,
   specId,
-  currentRevision,
 }: ReadEscalationHistoryInput): Promise<Escalation[]> => {
   const files = await readdir(directory);
 
@@ -37,7 +35,6 @@ export const readEscalationHistory = async ({
     const escalation = await readEscalation({
       path: join(directory, file),
       specId,
-      currentRevision,
     });
 
     escalations.push(escalation);

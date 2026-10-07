@@ -1,5 +1,5 @@
 /**
- * Objective: Register the builder handoff tool for the current checkout.
+ * Objective: Register the builder handoff tool for the current project.
  * Used: When the builder reports a done or failed result.
  */
 
@@ -18,7 +18,7 @@ export const BUILDER_HANDOFF_TOOL = {
   NAME: 'maestro_record_builder_handoff',
   LABEL: 'Record Builder Handoff',
   DESCRIPTION:
-    'Record the builder pass as done or failed. Put significant discoveries that do not require an owner decision in notes. After success, commit the implementation, handoff, and workflow state together with Bash and Git.',
+    'Record the builder pass as done or failed. Put significant discoveries that do not require an owner decision in notes. After success, stop. The tool saves a numbered builder handoff and the workflow phase.',
 } as const;
 
 const BuilderHandoffContentFields = {
@@ -71,12 +71,12 @@ export const registerRecordBuilderHandoffTool = (pi: ExtensionAPI): void => {
         content: [
           {
             type: 'text',
-            text: `Builder handoff recorded as ${completed.handoff.status}. Commit your implementation, workflow state, and builder handoff together with Bash and Git, then stop.`,
+            text: `Builder handoff recorded as ${completed.handoff.status}. The handoff and workflow phase are saved. Stop now.`,
           },
         ],
         details: {
           specId: completed.handoff.specId,
-          revision: completed.handoff.revision,
+          handoffPath: completed.handoffPath,
           phase: completed.state.phase,
         },
       };

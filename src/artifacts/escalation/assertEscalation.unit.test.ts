@@ -8,7 +8,6 @@ import {
 const escalation = (): Escalation => ({
   version: ESCALATION_VERSION,
   specId: '20260321-143052-add-weather-alerts',
-  revision: 3,
   id: 'E1',
   question: 'Which persistence strategy should be used?',
   context: 'The approved behavior has two valid implementations.',

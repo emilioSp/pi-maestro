@@ -1,9 +1,8 @@
-import { access, readFile } from 'node:fs/promises';
-import { relative } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
-import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
+import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -16,12 +15,23 @@ import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
 import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 
-afterEach(cleanupBuilderWorkflows);
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs/promises')>();
+
+  return { ...actual, writeFile: vi.fn(actual.writeFile) };
+});
+
+const { writeFile: originalWriteFile } =
+  await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises');
+
+afterEach(async () => {
+  vi.mocked(writeFile).mockRestore();
+  await cleanupBuilderWorkflows();
+});
 
 const approvedHandoff = {
   version: VERIFIER_HANDOFF_VERSION,
   specId: SPEC_ID,
-  revision: 6,
   summary: 'The candidate satisfies the approved specification.',
   acceptanceCriteria: [],
   findings: [],
@@ -46,7 +56,6 @@ const prepareRunningVerifier = async () => {
       notes: [],
     },
   });
-  await workflow.repository.commit('Builder completed');
 
   const verifierRun = await prepareVerifierRun({
     paths: workflow.paths,
@@ -57,12 +66,52 @@ const prepareRunningVerifier = async () => {
 };
 
 describe('verifier completion', () => {
-  it('writes one verifier handoff on the current checkout', async () => {
-    const { paths, repository, verifierRun } = await prepareRunningVerifier();
+  it('given a saved V2 handoff when the phase write fails then V2 remains for inspection', async () => {
+    const { paths } = await prepareRunningVerifier();
+    await mkdir(paths.getVerifierHandoffsPath(SPEC_ID), { recursive: true });
+    await writeVerifierHandoff({
+      path: paths.getVerifierHandoffPath({
+        specId: SPEC_ID,
+        handoffPassNumber: 1,
+      }),
+      specId: SPEC_ID,
+      handoff: approvedHandoff,
+    });
+    const workflowPath = paths.getWorkflowPath(SPEC_ID);
+
+    vi.mocked(writeFile).mockImplementation(async (path, data, options) => {
+      if (path === workflowPath) throw new Error('Phase write failed');
+
+      await originalWriteFile(path, data, options);
+    });
+
+    await expect(
+      completeVerifierPass({
+        paths,
+        specId: SPEC_ID,
+        handoff: { ...approvedHandoff, summary: 'Checked greeting' },
+      }),
+    ).rejects.toThrow('Phase write failed');
+
+    const saved = JSON.parse(
+      await readFile(
+        paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 2 }),
+        'utf8',
+      ),
+    );
+
+    expect(saved).toMatchObject({
+      version: '1.0.0',
+      specId: SPEC_ID,
+      summary: 'Checked greeting',
+    });
+  });
+
+  it('writes one verifier handoff on the current project', async () => {
+    const { paths, repository } = await prepareRunningVerifier();
 
     const handoff = {
       ...approvedHandoff,
-      revision: verifierRun.revision + 1,
     };
 
     const completed = await completeVerifierPass({
@@ -71,45 +120,15 @@ describe('verifier completion', () => {
       handoff,
     });
 
-    expect(completed.repositoryRoot).toBe(repository.path);
+    expect(completed.projectRoot).toBe(repository.path);
     expect(completed.state.phase).toBe(WORKFLOW_PHASES.CANDIDATE_READY);
-    await expect(getRepositoryStatus(repository.path)).resolves.toMatchObject({
-      staged: [],
-      unstaged: [relative(repository.path, paths.getWorkflowPath(SPEC_ID))],
-      untracked: [
-        relative(repository.path, paths.getVerifierHandoffPath(SPEC_ID)),
-      ],
-    });
-    await repository.commit('Verifier completed');
+
     await expect(
       readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
   });
 
   it('given an invalid handoff specId when the verifier submits it then no protocol write occurs', async () => {
-    const { paths, verifierRun } = await prepareRunningVerifier();
-    const workflowPath = paths.getWorkflowPath(SPEC_ID);
-    const workflowBefore = await readFile(workflowPath, 'utf8');
-
-    await expect(
-      completeVerifierPass({
-        paths,
-        specId: SPEC_ID,
-        handoff: {
-          ...approvedHandoff,
-          revision: verifierRun.revision + 1,
-          specId: '20260321-143052-other-spec',
-        },
-      }),
-    ).rejects.toThrow('Verifier handoff spec ID mismatch');
-
-    await expect(readFile(workflowPath, 'utf8')).resolves.toBe(workflowBefore);
-    await expect(
-      access(paths.getVerifierHandoffPath(SPEC_ID)),
-    ).rejects.toMatchObject({ code: 'ENOENT' });
-  });
-
-  it('given an invalid handoff revision when the verifier submits it then no protocol write occurs', async () => {
     const { paths } = await prepareRunningVerifier();
     const workflowPath = paths.getWorkflowPath(SPEC_ID);
     const workflowBefore = await readFile(workflowPath, 'utf8');
@@ -120,14 +139,16 @@ describe('verifier completion', () => {
         specId: SPEC_ID,
         handoff: {
           ...approvedHandoff,
-          revision: 1,
+          specId: '20260321-143052-other-spec',
         },
       }),
-    ).rejects.toThrow('Verifier handoff revision mismatch');
+    ).rejects.toThrow('Verifier handoff spec ID mismatch');
 
     await expect(readFile(workflowPath, 'utf8')).resolves.toBe(workflowBefore);
     await expect(
-      access(paths.getVerifierHandoffPath(SPEC_ID)),
+      access(
+        paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
+      ),
     ).rejects.toMatchObject({ code: 'ENOENT' });
   });
 });

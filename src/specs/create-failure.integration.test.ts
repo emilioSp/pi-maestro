@@ -25,17 +25,17 @@ afterEach(async () => {
 
 describe('partial spec creation failure', () => {
   it('leaves the partial directory and blocks a retry', async () => {
-    const repositoryRoot = await mkdtemp(
+    const projectRoot = await mkdtemp(
       join(tmpdir(), 'pi-maestro-spec-failure-'),
     );
 
-    temporaryDirectories.push(repositoryRoot);
+    temporaryDirectories.push(projectRoot);
 
     const paths = new MaestroPaths({
-      repositoryRoot,
+      projectRoot,
       config: {
         ...DEFAULT_CONFIG,
-        specDirectory: join(repositoryRoot, '.specs'),
+        specDirectory: join(projectRoot, '.specs'),
       },
     });
 

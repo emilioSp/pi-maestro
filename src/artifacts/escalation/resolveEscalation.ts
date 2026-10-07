@@ -9,45 +9,35 @@ import type {
   Escalation,
   EscalationResolution,
 } from '#artifacts/escalation/schema.ts';
-import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
+import { writeJson } from '#utils/write-json.ts';
 
 type ResolveEscalationInput = {
   path: string;
   specId: string;
-  revision: number;
   resolution: EscalationResolution;
 };
 
 export const resolveEscalation = async ({
   path,
   specId,
-  revision,
   resolution,
 }: ResolveEscalationInput): Promise<Escalation> => {
   const current = await readEscalation({
     path,
     specId,
-    currentRevision: revision,
   });
 
   if (current.resolution !== null) {
     throw new Error(`Escalation "${current.id}" is already resolved.`);
   }
 
-  if (revision <= current.revision) {
-    throw new Error(
-      `Escalation resolution revision must be greater than ${current.revision}.`,
-    );
-  }
-
   const resolvedEscalation = {
     ...current,
-    revision,
     resolution,
   };
 
   assertEscalation(resolvedEscalation);
-  await writeJsonAtomically({ path, data: resolvedEscalation });
+  await writeJson({ path, data: resolvedEscalation });
 
   return resolvedEscalation;
 };

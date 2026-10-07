@@ -18,18 +18,18 @@ const SPEC_ID = '20260321-143052-add-weather-alerts';
 const temporaryDirectories: string[] = [];
 
 const createWorkspace = async (specDirectory: string = 'custom-specs') => {
-  const repositoryRoot = await mkdtemp(join(tmpdir(), 'pi-maestro-spec-'));
-  temporaryDirectories.push(repositoryRoot);
+  const projectRoot = await mkdtemp(join(tmpdir(), 'pi-maestro-spec-'));
+  temporaryDirectories.push(projectRoot);
 
   const paths = new MaestroPaths({
-    repositoryRoot,
+    projectRoot,
     config: {
       ...DEFAULT_CONFIG,
-      specDirectory: join(repositoryRoot, specDirectory),
+      specDirectory: join(projectRoot, specDirectory),
     },
   });
 
-  return { repositoryRoot, paths };
+  return { projectRoot, paths };
 };
 
 afterEach(async () => {
@@ -59,7 +59,6 @@ describe('spec template and creation', () => {
     await expect(readWorkflowState(created.workflowPath)).resolves.toEqual({
       version: WORKFLOW_STATE_VERSION,
       specId: SPEC_ID,
-      revision: 1,
       phase: WORKFLOW_PHASES.DRAFTING_SPEC,
     });
     expect((await stat(paths.getEscalationsPath(SPEC_ID))).isDirectory()).toBe(

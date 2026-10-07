@@ -10,7 +10,6 @@ import {
 const validState = {
   version: WORKFLOW_STATE_VERSION,
   specId: '20260321-143052-add-weather-alerts',
-  revision: 1,
   phase: WORKFLOW_PHASES.DRAFTING_SPEC,
 };
 
@@ -27,8 +26,6 @@ describe('workflow state schema', () => {
   it.each([
     { ...validState, extra: true },
     { ...validState, version: '2.0.0' },
-    { ...validState, revision: 0 },
-    { ...validState, revision: 1.5 },
     { ...validState, specId: 'not-a-spec-id' },
     { ...validState, phase: 'unknown' },
   ])('rejects an invalid state %#', (state) => {

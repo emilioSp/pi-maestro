@@ -12,7 +12,7 @@ import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 afterEach(cleanupBuilderWorkflows);
 
 describe('builder escalation resolution', () => {
-  it('commits the owner decision on the current branch', async () => {
+  it('saves the owner decision', async () => {
     const { paths, repository } = await createApprovedWorkflow();
     await prepareBuilderRun({ paths, specId: SPEC_ID });
 
@@ -46,8 +46,7 @@ describe('builder escalation resolution', () => {
       },
     });
 
-    expect(resolved.repositoryRoot).toBe(repository.path);
-    expect(resolved.checkpointCommit).toBeTruthy();
+    expect(resolved.projectRoot).toBe(repository.path);
     expect(resolved.state.phase).toBe(WORKFLOW_PHASES.READY_FOR_BUILDER);
   });
 });

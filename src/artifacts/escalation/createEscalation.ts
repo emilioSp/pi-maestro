@@ -11,19 +11,17 @@ import {
   type Escalation,
   type NewEscalation,
 } from '#artifacts/escalation/schema.ts';
-import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
+import { writeJson } from '#utils/write-json.ts';
 
 type CreateEscalationInput = {
   directory: string;
   specId: string;
-  revision: number;
   escalation: NewEscalation;
 };
 
 export const createEscalation = async ({
   directory,
   specId,
-  revision,
   escalation,
 }: CreateEscalationInput): Promise<{
   path: string;
@@ -32,21 +30,23 @@ export const createEscalation = async ({
   const id = await getNextEscalationId({
     directory,
     specId,
-    currentRevision: revision,
   });
 
   const newEscalation = {
-    ...escalation,
+    question: escalation.question,
+    context: escalation.context,
+    options: escalation.options,
+    recommendation: escalation.recommendation,
+    notes: escalation.notes,
     version: ESCALATION_VERSION,
     specId,
-    revision,
     id,
     resolution: null,
   };
 
   assertEscalation(newEscalation);
   const path = join(directory, `${id}.json`);
-  await writeJsonAtomically({ path, data: newEscalation });
+  await writeJson({ path, data: newEscalation });
 
   return { path, escalation: newEscalation };
 };

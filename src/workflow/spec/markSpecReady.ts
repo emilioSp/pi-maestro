@@ -54,7 +54,6 @@ export const markSpecReady = async ({
   await writeWorkflowState({
     path: workflowPath,
     state,
-    currentRevision: current.revision,
   });
 
   return state;

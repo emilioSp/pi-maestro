@@ -12,7 +12,6 @@ const specId = '20260321-143052-add-weather-alerts';
 const doneHandoff = (): BuilderHandoff => ({
   version: BUILDER_HANDOFF_VERSION,
   specId,
-  revision: 4,
   status: BUILDER_HANDOFF_STATUSES.DONE,
   summary: 'Implemented the approved change.',
   acceptanceCriteria: [
@@ -28,7 +27,6 @@ const doneHandoff = (): BuilderHandoff => ({
 const failedHandoff = (): BuilderHandoff => ({
   version: BUILDER_HANDOFF_VERSION,
   specId,
-  revision: 4,
   status: BUILDER_HANDOFF_STATUSES.FAILED,
   summary: 'The migration could not be completed.',
   acceptanceCriteria: [
@@ -45,7 +43,7 @@ const failedHandoff = (): BuilderHandoff => ({
 describe('builder handoff validation', () => {
   it('accepts a done handoff with completed checks', () => {
     expect(() =>
-      assertBuilderHandoff({ handoff: doneHandoff(), specId, revision: 4 }),
+      assertBuilderHandoff({ handoff: doneHandoff(), specId }),
     ).not.toThrow();
   });
 
@@ -59,9 +57,9 @@ describe('builder handoff validation', () => {
         probeStatus,
       });
 
-      expect(() =>
-        assertBuilderHandoff({ handoff, specId, revision: 4 }),
-      ).toThrow('Done builder handoff requires every probe to pass');
+      expect(() => assertBuilderHandoff({ handoff, specId })).toThrow(
+        'Done builder handoff requires every probe to pass',
+      );
     },
   );
 
@@ -72,16 +70,14 @@ describe('builder handoff validation', () => {
       probeStatus: PROBE_STATUSES.PASSED,
     };
 
-    expect(() =>
-      assertBuilderHandoff({ handoff, specId, revision: 4 }),
-    ).toThrow(
+    expect(() => assertBuilderHandoff({ handoff, specId })).toThrow(
       'Failed builder handoff cannot mark every acceptance check as completed',
     );
   });
 
   it('accepts a failed handoff with explicit partial checks', () => {
     expect(() =>
-      assertBuilderHandoff({ handoff: failedHandoff(), specId, revision: 4 }),
+      assertBuilderHandoff({ handoff: failedHandoff(), specId }),
     ).not.toThrow();
   });
 
@@ -90,7 +86,6 @@ describe('builder handoff validation', () => {
       assertBuilderHandoff({
         handoff: { ...failedHandoff(), acceptanceCriteria: [] },
         specId,
-        revision: 4,
       }),
     ).not.toThrow();
   });
@@ -171,9 +166,7 @@ describe('builder handoff validation', () => {
       message: 'Invalid builder handoff',
     },
   ])('rejects invalid handoff data %#', ({ handoff, message }) => {
-    expect(() =>
-      assertBuilderHandoff({ handoff, specId, revision: 4 }),
-    ).toThrow(message);
+    expect(() => assertBuilderHandoff({ handoff, specId })).toThrow(message);
   });
 
   it('rejects a structurally valid spec ID with an invalid UTC date', () => {
@@ -184,22 +177,16 @@ describe('builder handoff validation', () => {
           specId: '20260230-143052-add-weather-alerts',
         },
         specId,
-        revision: 4,
       }),
     ).toThrow('Invalid builder handoff spec ID');
   });
 
-  it('requires the expected spec ID and revision', () => {
+  it('requires the expected spec ID', () => {
     expect(() =>
       assertBuilderHandoff({
         handoff: doneHandoff(),
         specId: '20260321-143052-other-change',
-        revision: 4,
       }),
     ).toThrow('Builder handoff spec ID mismatch');
-
-    expect(() =>
-      assertBuilderHandoff({ handoff: doneHandoff(), specId, revision: 5 }),
-    ).toThrow('Builder handoff revision mismatch');
   });
 });

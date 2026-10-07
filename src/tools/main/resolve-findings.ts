@@ -6,19 +6,17 @@
 import { StringEnum } from '@earendil-works/pi-ai';
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
+import { FINDING_DECISIONS } from '#artifacts/verifier-handoff/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
-import {
-  FINDING_DECISIONS,
-  resolveFindings,
-} from '#workflow/findings/resolveFindings.ts';
+import { resolveFindings } from '#workflow/findings/resolveFindings.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 
 export const RESOLVE_FINDINGS_TOOL = {
   NAME: 'maestro_resolve_findings',
   LABEL: 'Resolve Findings',
   DESCRIPTION:
-    'Record the explicit owner decision for every current verifier finding when the approved contract remains valid. Commit the resolution and workflow transition on the current branch. If the contract must change, edit spec.md and use maestro_mark_spec_ready instead.',
+    'Record the explicit owner decision for every current verifier finding when the approved contract remains valid. Save the resolution and workflow transition. If the contract must change, edit spec.md and use maestro_mark_spec_ready instead.',
 } as const;
 
 const FindingDecisionFields = {
@@ -31,7 +29,9 @@ const RejectFindingDecisionSchema = Type.Object(
     decision: StringEnum([FINDING_DECISIONS.REJECT] as const),
     reason: Type.String({ minLength: 1 }),
   },
-  { additionalProperties: false },
+  {
+    additionalProperties: false,
+  },
 );
 
 const FixCodeFindingDecisionSchema = Type.Object(
@@ -39,7 +39,9 @@ const FixCodeFindingDecisionSchema = Type.Object(
     ...FindingDecisionFields,
     decision: StringEnum([FINDING_DECISIONS.FIX_CODE] as const),
   },
-  { additionalProperties: false },
+  {
+    additionalProperties: false,
+  },
 );
 
 const FindingDecisionSchema = Type.Union([
@@ -57,10 +59,8 @@ const ResolveFindingsToolParameters = Type.Object(
 
 type FindingResolutionDetails = {
   specId: string;
-  revision: number;
   phase: string;
-  repositoryRoot: string;
-  checkpointCommit: string;
+  projectRoot: string;
   rejectedFindingIds: string[];
   findingsRequiringFixIds: string[];
 };
@@ -102,15 +102,17 @@ export const registerResolveFindingsTool = (pi: ExtensionAPI): void => {
 
       const details: FindingResolutionDetails = {
         specId: resolved.state.specId,
-        revision: resolved.state.revision,
         phase: resolved.state.phase,
-        repositoryRoot: resolved.repositoryRoot,
-        checkpointCommit: resolved.checkpointCommit,
+        projectRoot: resolved.projectRoot,
         rejectedFindingIds: resolved.findings
-          .filter(({ rejection }) => rejection !== null)
+          .filter(
+            ({ decision }) => decision?.decision === FINDING_DECISIONS.REJECT,
+          )
           .map(({ id }) => id),
         findingsRequiringFixIds: resolved.findings
-          .filter(({ rejection }) => rejection === null)
+          .filter(
+            ({ decision }) => decision?.decision === FINDING_DECISIONS.FIX_CODE,
+          )
           .map(({ id }) => id),
       };
 

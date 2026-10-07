@@ -4,12 +4,10 @@
  */
 
 import { mkdir } from 'node:fs/promises';
-import { dirname } from 'node:path';
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
 import type { VerifierHandoff } from '#artifacts/verifier-handoff/schema.ts';
 import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
-import { pathExists } from '#utils/path-exists.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
   WORKFLOW_EVENTS,
@@ -22,7 +20,8 @@ import { transitionWorkflow } from '#workflow/transitions.ts';
 export type CompletedVerifierPass = {
   handoff: VerifierHandoff;
   state: WorkflowState;
-  repositoryRoot: string;
+  projectRoot: string;
+  handoffPath: string;
 };
 
 type CompleteVerifierPassInput = {
@@ -36,9 +35,8 @@ export const completeVerifierPass = async ({
   specId,
   handoff: draftHandoff,
 }: CompleteVerifierPassInput): Promise<CompletedVerifierPass> => {
-  const repositoryRoot = paths.getRepositoryRoot();
+  const projectRoot = paths.getProjectRoot();
   const workflowPath = paths.getWorkflowPath(specId);
-  const handoffPath = paths.getVerifierHandoffPath(specId);
   const currentState = await readWorkflowState(workflowPath);
 
   if (currentState.specId !== specId) {
@@ -53,14 +51,9 @@ export const completeVerifierPass = async ({
     );
   }
 
-  if (await pathExists(handoffPath)) {
-    throw new Error('Verifier terminal handoff already exists.');
-  }
-
   const handoffInput = {
     handoff: draftHandoff,
     specId,
-    revision: currentState.revision + 1,
   };
 
   assertVerifierHandoff(handoffInput);
@@ -74,22 +67,23 @@ export const completeVerifierPass = async ({
         : WORKFLOW_EVENTS.VERIFIER_APPROVED,
   });
 
-  await mkdir(dirname(handoffPath), { recursive: true });
+  await mkdir(paths.getVerifierHandoffsPath(specId), { recursive: true });
+  const handoffPath = await paths.getNextVerifierHandoffPath(specId);
+
   await writeVerifierHandoff({
     path: handoffPath,
     handoff,
     specId,
-    revision: nextState.revision,
   });
   await writeWorkflowState({
     path: workflowPath,
     state: nextState,
-    currentRevision: currentState.revision,
   });
 
   return {
     handoff,
+    handoffPath,
     state: nextState,
-    repositoryRoot,
+    projectRoot,
   };
 };

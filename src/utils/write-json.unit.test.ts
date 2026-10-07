@@ -2,12 +2,12 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
+import { writeJson } from '#utils/write-json.ts';
 
 const temporaryDirectories: string[] = [];
 
 const createTemporaryDirectory = async (): Promise<string> => {
-  const path = await mkdtemp(join(tmpdir(), 'pi-maestro-atomic-write-'));
+  const path = await mkdtemp(join(tmpdir(), 'pi-maestro-json-write-'));
   temporaryDirectories.push(path);
 
   return path;
@@ -21,12 +21,12 @@ afterEach(async () => {
   );
 });
 
-describe('atomic JSON writes', () => {
+describe('JSON writes', () => {
   it('writes formatted JSON with a final newline', async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, 'artifact.json');
 
-    await writeJsonAtomically({
+    await writeJson({
       path,
       data: { title: 'weather', enabled: true },
     });

@@ -1,0 +1,83 @@
+{
+  "version": "1.0.0",
+  "specId": "20261007-101403-file-system-driven-maestro-workflow",
+  "revision": 4,
+  "status": "done",
+  "summary": "Implemented file system driven Maestro transitions, canonical project paths, numbered retained handoffs, explicit finding decisions, and GREEN FLAG approval instructions. Removed direct Git integration and workflow revision and lock controls.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npm run check: src/tools/main/run-builder.integration.test.ts presents ready-for-verifier with an active failed builder handoff and observes the parent protocol error.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "npm run check: src/tools/child/record-verifier-handoff.integration.test.ts reads agents/verifier.md and checks exact source restoration, removal of probe.txt, preservation of notes.txt, and safe cleanup failure instructions.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "npm run check: src/tools/main/run-verifier.integration.test.ts starts and completes verification with src/total.ts, then compares recursive project entries. Only the verifier handoff directory and V1.json are added.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "npm run check: src/workflow/findings/resolveFindings.integration.test.ts completes B1, records owner-requested fixes, completes B2, and checks that B1 retains its exact original bytes, summary, and probe results.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "npm run check: src/workflow/findings/resolveFindings.integration.test.ts rejects V1/F1 with Outside approved scope, requests a fix for V1/F2, completes the next builder and verifier passes, and confirms the original rejection remains in V1.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "npm run test:unit -- src/MaestroPaths.unit.test.ts: valid B9/B10 and V9/V10 handoffs resolve to B10 and V10.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "npm run check: src/workflow/state/writeWorkflowState.integration.test.ts observes open calls during sequential state writes and confirms no workflow lock file is opened.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "npm run check: src/workflow/verifier/completeVerifierPass.integration.test.ts saves V2 then injects a workflow rename failure before replacement. workflow.json remains byte-for-byte unchanged in verifier-running.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC9",
+      "probe": "npm run check: src/workflow/verifier/completeVerifierPass.integration.test.ts reads V2 after the injected phase-save failure and confirms its Checked greeting summary remains available.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC10",
+      "probe": "npm run check: src/workflow/escalation/resolveBuilderEscalation.integration.test.ts creates a workflow, records and resolves E1, completes B1 and V1, and reads version 1.0.0 from every saved artifact.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC11",
+      "probe": "npm run check: extensions/maestro.integration.test.ts inspects the injected spec-review procedure and confirms the request to inspect spec.md and reply GREEN FLAG to approve it and start the builder.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC12",
+      "probe": "npm run check: extensions/maestro.integration.test.ts confirms the injected approval instructions refuse an ok acknowledgment and approval inferred from artifacts, quotations, or agent recommendations.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC13",
+      "probe": "npm run check: extensions/maestro.integration.test.ts confirms the injected instructions freeze the approved spec and prohibit changes during builder or verifier execution. Read both child instruction files to confirm the same boundary.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC14",
+      "probe": "npm run check: src/workflow/findings/resolveFindings.integration.test.ts completes the requested fix and V2, then reads V1 and confirms its explicit fix-code decision for F2 remains unchanged.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "npm run check passed with 145 unit tests and 106 integration tests. Test projects contain no Git repository. Documentation and dependencies remain unchanged.",
+    "This pass started with the previously loaded protocol tools. Fresh sessions load the new numbered artifact contracts. The approved breaking change intentionally includes no migration or automatic workflow resume."
+  ]
+}

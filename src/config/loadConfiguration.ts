@@ -1,6 +1,6 @@
 /**
- * Objective: Load and validate repository configuration.
- * Used: When Maestro initializes for a repository.
+ * Objective: Load and validate project configuration.
+ * Used: When Maestro initializes for a project.
  */
 
 import { readFile, realpath } from 'node:fs/promises';
@@ -47,52 +47,52 @@ function assertSafeDirectoryInput({
   }
 
   if (isAbsolute(value)) {
-    throw new Error(`${name} must be relative to the Git root.`);
+    throw new Error(`${name} must be relative to the project root.`);
   }
 }
 
 type ResolveSafeDirectoryInput = {
-  repositoryRoot: string;
+  projectRoot: string;
   directory: string;
   name: string;
 };
 
 const resolveSafeDirectory = ({
-  repositoryRoot,
+  projectRoot,
   directory,
   name,
 }: ResolveSafeDirectoryInput): string => {
   assertSafeDirectoryInput({ value: directory, name });
 
-  const requestedDirectory = resolve(repositoryRoot, directory);
+  const requestedDirectory = resolve(projectRoot, directory);
 
-  if (requestedDirectory === repositoryRoot) {
-    throw new Error(`${name} must not be the Git root.`);
+  if (requestedDirectory === projectRoot) {
+    throw new Error(`${name} must not be the project root.`);
   }
 
   if (
     !isPathStrictlyWithin({
-      parent: repositoryRoot,
-      candidate: requestedDirectory,
+      parent: projectRoot,
+      path: requestedDirectory,
     })
   ) {
-    throw new Error(`${name} must stay inside the Git root.`);
+    throw new Error(`${name} must stay inside the project root.`);
   }
 
   return requestedDirectory;
 };
 
 type ResolveDirectoriesInput = {
-  repositoryRoot: string;
+  projectRoot: string;
   config: MaestroConfig;
 };
 
 const resolveDirectories = ({
-  repositoryRoot,
+  projectRoot,
   config,
 }: ResolveDirectoriesInput): MaestroConfig => {
   const specDirectory = resolveSafeDirectory({
-    repositoryRoot,
+    projectRoot,
     directory: config.specDirectory,
     name: 'specDirectory',
   });
@@ -117,11 +117,11 @@ const readConfigurationFile = async (path: string): Promise<unknown> => {
 export const loadConfiguration = async (
   cwd: string = process.cwd(),
 ): Promise<MaestroConfig> => {
-  const repositoryRoot = await realpath(cwd);
-  const targetPath = join(repositoryRoot, CONFIG_FILE_PATH);
+  const projectRoot = await realpath(cwd);
+  const targetPath = join(projectRoot, CONFIG_FILE_PATH);
 
   if (!(await pathExists(targetPath))) {
-    return resolveDirectories({ repositoryRoot, config: DEFAULT_CONFIG });
+    return resolveDirectories({ projectRoot, config: DEFAULT_CONFIG });
   }
 
   const parsed = await readConfigurationFile(targetPath);
@@ -129,5 +129,5 @@ export const loadConfiguration = async (
   assertConfiguration(parsed);
   const config = resolveConfiguration(parsed);
 
-  return resolveDirectories({ repositoryRoot, config });
+  return resolveDirectories({ projectRoot, config });
 };
