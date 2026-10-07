@@ -68,7 +68,7 @@ describe('subagent extension', () => {
       readBuilderHandoff({
         path: paths.getBuilderHandoffPath({
           specId: SPEC_ID,
-          handoffNumber: 1,
+          handoffPassNumber: 1,
         }),
         specId: SPEC_ID,
       }),
@@ -108,7 +108,7 @@ describe('subagent extension', () => {
       readVerifierHandoff({
         path: paths.getVerifierHandoffPath({
           specId: SPEC_ID,
-          handoffNumber: 1,
+          handoffPassNumber: 1,
         }),
         specId: SPEC_ID,
       }),
