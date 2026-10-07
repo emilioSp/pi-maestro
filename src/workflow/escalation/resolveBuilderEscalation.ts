@@ -1,5 +1,5 @@
 /**
- * Objective: Resolve the current builder escalation and checkpoint the decision.
+ * Objective: Resolve the current builder escalation and save the decision.
  * Used: When the owner keeps the approved contract and makes a decision.
  */
 
@@ -9,7 +9,6 @@ import type {
   Escalation,
   EscalationResolution,
 } from '#artifacts/escalation/schema.ts';
-import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
@@ -23,8 +22,7 @@ import { transitionWorkflow } from '#workflow/transitions.ts';
 export type ResolvedBuilderEscalation = {
   escalation: Escalation;
   state: WorkflowState;
-  repositoryRoot: string;
-  checkpointCommit: string;
+  projectRoot: string;
 };
 
 type AssertCurrentEscalationInput<CurrentEscalation = Escalation | undefined> =
@@ -70,6 +68,12 @@ export const resolveBuilderEscalation = async ({
   const escalationsPath = paths.getEscalationsPath(specId);
   const currentState = await readWorkflowState(workflowPath);
 
+  if (currentState.specId !== specId) {
+    throw new Error(
+      `Workflow spec ID mismatch: expected "${specId}", found "${currentState.specId}".`,
+    );
+  }
+
   if (currentState.phase !== WORKFLOW_PHASES.ESCALATION_DECISION) {
     throw new Error(
       `Escalation resolution requires escalation-decision state, found "${currentState.phase}".`,
@@ -79,7 +83,6 @@ export const resolveBuilderEscalation = async ({
   const history = await readEscalationHistory({
     directory: escalationsPath,
     specId,
-    currentRevision: currentState.revision,
   });
 
   const escalationInput = { currentEscalation: history.at(-1), escalationId };
@@ -99,25 +102,17 @@ export const resolveBuilderEscalation = async ({
   const resolvedEscalation = await resolveEscalation({
     path: escalationPath,
     specId,
-    revision: nextState.revision,
     resolution,
   });
 
   await writeWorkflowState({
     path: workflowPath,
     state: nextState,
-    currentRevision: currentState.revision,
-  });
-
-  const checkpointCommit = await createWorkflowCheckpointCommit({
-    repositoryRoot: paths.getRepositoryRoot(),
-    expectedPaths: [workflowPath, escalationPath],
   });
 
   return {
     escalation: resolvedEscalation,
     state: nextState,
-    repositoryRoot: paths.getRepositoryRoot(),
-    checkpointCommit,
+    projectRoot: paths.getProjectRoot(),
   };
 };

@@ -25,8 +25,7 @@ const createTemporaryDirectory = async (): Promise<string> => {
 const handoff = (): VerifierHandoff => ({
   version: VERIFIER_HANDOFF_VERSION,
   specId,
-  revision: 6,
-  summary: 'Regenerated the checks from the candidate commit.',
+  summary: 'Regenerated the checks from the live project.',
   acceptanceCriteria: [
     {
       id: 'AC1',
@@ -47,7 +46,7 @@ const handoff = (): VerifierHandoff => ({
           observation: 'The message has no final punctuation.',
         },
       ],
-      rejection: null,
+      decision: null,
     },
   ],
   notes: [],
@@ -64,28 +63,26 @@ afterEach(async () => {
 describe('verifier handoff writes', () => {
   it('writes and reads a valid verifier handoff', async () => {
     const directory = await createTemporaryDirectory();
-    const path = join(directory, 'verifier.json');
+    const path = join(directory, 'V1.json');
 
     await writeVerifierHandoff({
       path,
       handoff: handoff(),
       specId,
-      revision: 6,
     });
 
-    await expect(
-      readVerifierHandoff({ path, specId, revision: 6 }),
-    ).resolves.toEqual(handoff());
+    await expect(readVerifierHandoff({ path, specId })).resolves.toEqual(
+      handoff(),
+    );
   });
 
   it('rejects verifier-supplied rejections without replacing the handoff', async () => {
     const directory = await createTemporaryDirectory();
-    const path = join(directory, 'verifier.json');
+    const path = join(directory, 'V1.json');
     await writeVerifierHandoff({
       path,
       handoff: handoff(),
       specId,
-      revision: 6,
     });
     const before = await readFile(path, 'utf8');
 
@@ -95,13 +92,17 @@ describe('verifier handoff writes', () => {
         handoff: {
           ...handoff(),
           findings: [
-            { ...handoff().findings[0], rejection: { reason: 'Ignore it.' } },
+            {
+              ...handoff().findings[0],
+              decision: { decision: 'reject', reason: 'Ignore it.' },
+            },
           ],
         },
         specId,
-        revision: 6,
       }),
-    ).rejects.toThrow('New verifier handoff findings must have no rejection');
+    ).rejects.toThrow(
+      'New verifier handoff findings must have no owner decision',
+    );
     await expect(readFile(path, 'utf8')).resolves.toBe(before);
   });
 });

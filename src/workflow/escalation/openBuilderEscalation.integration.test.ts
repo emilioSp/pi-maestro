@@ -37,11 +37,10 @@ describe('builder escalation', () => {
       },
     });
 
-    expect(opened.repositoryRoot).toBe(repository.path);
+    expect(opened.projectRoot).toBe(repository.path);
     expect(opened.state.phase).toBe(WORKFLOW_PHASES.ESCALATION_DECISION);
     await expect(
       readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.ESCALATION_DECISION });
-    await repository.commit('Builder escalation');
   });
 });

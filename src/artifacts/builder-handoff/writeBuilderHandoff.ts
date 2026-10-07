@@ -10,15 +10,13 @@ type WriteBuilderHandoffInput = {
   path: string;
   handoff: unknown;
   specId: string;
-  revision: number;
 };
 
 export const writeBuilderHandoff = async ({
   path,
   handoff,
   specId,
-  revision,
 }: WriteBuilderHandoffInput): Promise<void> => {
-  assertBuilderHandoff({ handoff, specId, revision });
+  assertBuilderHandoff({ handoff, specId });
   await writeJsonAtomically({ path, data: handoff });
 };

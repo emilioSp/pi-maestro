@@ -1,82 +1,26 @@
 /**
- * Objective: Atomically write a validated workflow state at a new revision.
- * Used: When Maestro persists a workflow transition.
+ * Objective: Atomically write a validated workflow state.
+ * Used: When Maestro persists a sequential workflow transition.
  */
 
-import { type FileHandle, open, rm } from 'node:fs/promises';
-import { isErrnoException } from '#utils/is-errno-exception.ts';
-import { pathExists } from '#utils/path-exists.ts';
 import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
-import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
   assertWorkflowState,
   type WorkflowState,
 } from '#workflow/state/schema.ts';
 
-const acquireWorkflowLock = async (path: string): Promise<FileHandle> => {
-  try {
-    return await open(path, 'wx', 0o600);
-  } catch (error) {
-    if (isErrnoException(error) && error.code === 'EEXIST') {
-      throw new Error('Another workflow state update is in progress.', {
-        cause: error,
-      });
-    }
-
-    throw error;
-  }
-};
-
 type WriteWorkflowStateInput = {
   path: string;
   state: WorkflowState;
-  currentRevision: number;
 };
 
 export const writeWorkflowState = async ({
   path,
   state,
-  currentRevision,
 }: WriteWorkflowStateInput): Promise<void> => {
   assertWorkflowState(state);
-
-  if (!Number.isSafeInteger(currentRevision) || currentRevision < 0) {
-    throw new Error(
-      'Expected workflow revision must be a non-negative integer.',
-    );
-  }
-
-  if (state.revision <= currentRevision) {
-    throw new Error(
-      `Workflow revision must be higher than expected revision ${currentRevision}.`,
-    );
-  }
-
-  const lockPath = `${path}.lock`;
-  const lock = await acquireWorkflowLock(lockPath);
-
-  try {
-    const exists = await pathExists(path);
-
-    if (!exists && currentRevision !== 0) {
-      throw new Error(
-        `Stale workflow revision: expected ${currentRevision}, but no state exists.`,
-      );
-    }
-
-    if (exists) {
-      const current = await readWorkflowState(path);
-
-      if (current.revision !== currentRevision) {
-        throw new Error(
-          `Stale workflow revision: expected ${currentRevision}, found ${current.revision}.`,
-        );
-      }
-    }
-
-    await writeJsonAtomically({ path, data: state });
-  } finally {
-    await lock.close();
-    await rm(lockPath, { force: true });
-  }
+  await writeJsonAtomically({
+    path,
+    data: { version: state.version, specId: state.specId, phase: state.phase },
+  });
 };

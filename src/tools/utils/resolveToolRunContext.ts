@@ -1,15 +1,15 @@
 /**
- * Objective: Resolve the repository context shared by Pi tools.
- * Used: Whenever a Pi tool needs the current checkout, configuration, and paths.
+ * Objective: Resolve the project context shared by Pi tools.
+ * Used: Whenever a Pi tool needs the project directory, configuration, and paths.
  */
 
+import { realpath } from 'node:fs/promises';
 import { loadConfiguration } from '#config/loadConfiguration.ts';
 import type { MaestroConfig } from '#config/schema.ts';
-import { findRepositoryRoot } from '#git/repository/findRepositoryRoot.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 
 export type ToolRunContext = {
-  repositoryRoot: string;
+  projectRoot: string;
   config: MaestroConfig;
   paths: MaestroPaths;
 };
@@ -17,12 +17,12 @@ export type ToolRunContext = {
 export const resolveToolRunContext = async (
   cwd: string,
 ): Promise<ToolRunContext> => {
-  const repositoryRoot = await findRepositoryRoot(cwd);
-  const config = await loadConfiguration(repositoryRoot);
+  const projectRoot = await realpath(cwd);
+  const config = await loadConfiguration(projectRoot);
 
   return {
-    repositoryRoot,
+    projectRoot,
     config,
-    paths: new MaestroPaths({ repositoryRoot, config }),
+    paths: new MaestroPaths({ projectRoot, config }),
   };
 };

@@ -9,10 +9,9 @@ import {
 } from '#workflow/state/schema.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 
-const state = (phase: WorkflowPhase, revision = 1): WorkflowState => ({
+const state = (phase: WorkflowPhase): WorkflowState => ({
   version: WORKFLOW_STATE_VERSION,
   specId: '20260321-143052-add-weather-alerts',
-  revision,
   phase,
 });
 
@@ -84,10 +83,9 @@ describe('workflow transitions', () => {
       expectedPhase: WORKFLOW_PHASES.READY_FOR_BUILDER,
     },
   ])(
-    'given $phase when $event occurs then the phase is $expectedPhase and the revision increases',
+    'given $phase when $event occurs then the phase is $expectedPhase',
     ({ phase, event, expectedPhase }) => {
       expect(transitionWorkflow({ state: state(phase), event })).toMatchObject({
-        revision: 2,
         phase: expectedPhase,
       });
     },
@@ -108,7 +106,6 @@ describe('workflow transitions', () => {
     );
 
     expect(finalState).toMatchObject({
-      revision: 6,
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
     });
   });
@@ -117,7 +114,7 @@ describe('workflow transitions', () => {
     for (const event of Object.values(WORKFLOW_EVENTS)) {
       expect(() =>
         transitionWorkflow({
-          state: state(WORKFLOW_PHASES.BUILDER_FAILED, 3),
+          state: state(WORKFLOW_PHASES.BUILDER_FAILED),
           event,
         }),
       ).toThrow('is not allowed from phase');
@@ -136,13 +133,13 @@ describe('workflow transitions', () => {
   });
 
   it('does not mutate the input state', () => {
-    const current = state(WORKFLOW_PHASES.READY_FOR_BUILDER, 4);
+    const current = state(WORKFLOW_PHASES.READY_FOR_BUILDER);
 
     transitionWorkflow({
       state: current,
       event: WORKFLOW_EVENTS.RUN_BUILDER,
     });
 
-    expect(current).toEqual(state(WORKFLOW_PHASES.READY_FOR_BUILDER, 4));
+    expect(current).toEqual(state(WORKFLOW_PHASES.READY_FOR_BUILDER));
   });
 });

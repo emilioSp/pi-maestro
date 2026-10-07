@@ -56,7 +56,6 @@ export const EscalationSchema = Type.Object(
   {
     version: Type.Literal(ESCALATION_VERSION),
     specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
-    revision: Type.Integer({ minimum: 1 }),
     id: Type.String({ pattern: ESCALATION_ID_PATTERN.source }),
     ...NewEscalationFields,
     recommendation: Type.Union([EscalationRecommendationSchema, Type.Null()]),

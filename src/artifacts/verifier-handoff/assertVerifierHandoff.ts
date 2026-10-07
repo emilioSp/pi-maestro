@@ -1,5 +1,5 @@
 /**
- * Objective: Check verifier handoff content, spec ID, and revision.
+ * Objective: Check verifier handoff content and spec ID.
  * Used: When Maestro handles verifier handoff artifacts.
  */
 
@@ -18,7 +18,12 @@ function assertVerifierHandoffSchema(
     throw new Error('Verifier handoff must be a JSON object.');
   }
 
-  const [error] = Value.Errors(VerifierHandoffSchema, input);
+  const [error] = Value.Errors(
+    VerifierHandoffSchema,
+    Object.fromEntries(
+      Object.entries(input).filter(([key]) => key !== 'revision'),
+    ),
+  );
 
   if (error !== undefined) {
     throw new Error(`Invalid verifier handoff: ${error.message}.`);
@@ -28,14 +33,13 @@ function assertVerifierHandoffSchema(
 type AssertVerifierHandoffInput<Handoff = unknown> = {
   handoff: Handoff;
   specId: string;
-  revision: number;
 };
 
 export function assertVerifierHandoff(
   input: AssertVerifierHandoffInput,
 ): asserts input is AssertVerifierHandoffInput<VerifierHandoff> {
   assertVerifierHandoffSchema(input.handoff);
-  const { handoff, specId, revision } = input;
+  const { handoff, specId } = input;
 
   if (!isValidSpecId(handoff.specId)) {
     throw new Error(`Invalid verifier handoff spec ID: "${handoff.specId}".`);
@@ -93,12 +97,6 @@ export function assertVerifierHandoff(
   if (handoff.specId !== specId) {
     throw new Error(
       `Verifier handoff spec ID mismatch: expected "${specId}", found "${handoff.specId}".`,
-    );
-  }
-
-  if (handoff.revision !== revision) {
-    throw new Error(
-      `Verifier handoff revision mismatch: expected ${revision}, found ${handoff.revision}.`,
     );
   }
 }

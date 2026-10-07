@@ -32,10 +32,25 @@ const FindingEvidenceSchema = Type.Object(
   { additionalProperties: false },
 );
 
-const FindingRejectionSchema = Type.Object(
-  { reason: Type.String({ minLength: 1 }) },
-  { additionalProperties: false },
-);
+export const FINDING_DECISIONS = {
+  REJECT: 'reject',
+  FIX_CODE: 'fix-code',
+} as const;
+
+const FindingDecisionSchema = Type.Union([
+  Type.Null(),
+  Type.Object(
+    {
+      decision: Type.Literal(FINDING_DECISIONS.REJECT),
+      reason: Type.String({ minLength: 1 }),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    { decision: Type.Literal(FINDING_DECISIONS.FIX_CODE) },
+    { additionalProperties: false },
+  ),
+]);
 
 export const VerifierFindingSchema = Type.Object(
   {
@@ -48,7 +63,7 @@ export const VerifierFindingSchema = Type.Object(
     confidence: Type.Number({ minimum: 0, maximum: 1 }),
     summary: Type.String({ minLength: 1 }),
     evidence: Type.Array(FindingEvidenceSchema, { minItems: 1 }),
-    rejection: Type.Union([FindingRejectionSchema, Type.Null()]),
+    decision: FindingDecisionSchema,
   },
   { additionalProperties: false },
 );
@@ -57,7 +72,6 @@ export const VerifierHandoffSchema = Type.Object(
   {
     version: Type.Literal(VERIFIER_HANDOFF_VERSION),
     specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
-    revision: Type.Integer({ minimum: 1 }),
     summary: Type.String({ minLength: 1 }),
     acceptanceCriteria: Type.Array(BuilderAcceptanceCriterionSchema),
     findings: Type.Array(VerifierFindingSchema),

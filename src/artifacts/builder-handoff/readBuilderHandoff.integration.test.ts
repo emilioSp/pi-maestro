@@ -21,12 +21,11 @@ const createTemporaryDirectory = async (): Promise<string> => {
   return path;
 };
 
-const handoff = (revision: number): BuilderHandoff => ({
+const handoff = (summary: string): BuilderHandoff => ({
   version: BUILDER_HANDOFF_VERSION,
   specId,
-  revision,
   status: BUILDER_HANDOFF_STATUSES.DONE,
-  summary: `Implemented revision ${revision}.`,
+  summary,
   acceptanceCriteria: [
     {
       id: 'AC1',
@@ -48,25 +47,32 @@ afterEach(async () => {
 describe('builder handoff reads', () => {
   it('rejects malformed, invalid, and mismatched handoffs on read', async () => {
     const directory = await createTemporaryDirectory();
-    const path = join(directory, 'builder.json');
+    const path = join(directory, 'B1.json');
 
     await writeFile(path, '{broken', 'utf8');
-    await expect(
-      readBuilderHandoff({ path, specId, revision: 4 }),
-    ).rejects.toThrow('Builder handoff contains malformed JSON');
+    await expect(readBuilderHandoff({ path, specId })).rejects.toThrow(
+      'Builder handoff contains malformed JSON',
+    );
 
     await writeFile(
       path,
-      JSON.stringify({ ...handoff(4), extra: true }),
+      JSON.stringify({ ...handoff('Implemented greeting'), extra: true }),
       'utf8',
     );
-    await expect(
-      readBuilderHandoff({ path, specId, revision: 4 }),
-    ).rejects.toThrow('Invalid builder handoff');
+    await expect(readBuilderHandoff({ path, specId })).rejects.toThrow(
+      'Invalid builder handoff',
+    );
 
-    await writeFile(path, JSON.stringify(handoff(4)), 'utf8');
-    await expect(
-      readBuilderHandoff({ path, specId, revision: 5 }),
-    ).rejects.toThrow('Builder handoff revision mismatch');
+    await writeFile(
+      path,
+      JSON.stringify({
+        ...handoff('Implemented greeting'),
+        specId: '20260321-143052-other-change',
+      }),
+      'utf8',
+    );
+    await expect(readBuilderHandoff({ path, specId })).rejects.toThrow(
+      'Builder handoff spec ID mismatch',
+    );
   });
 });

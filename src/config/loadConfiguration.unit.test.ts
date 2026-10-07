@@ -103,15 +103,15 @@ describe('configuration loading', () => {
   it.each([
     {
       specDirectory: '../outside',
-      message: 'specDirectory must stay inside the Git root.',
+      message: 'specDirectory must stay inside the project root.',
     },
     {
       specDirectory: '/absolute-specs',
-      message: 'specDirectory must be relative to the Git root.',
+      message: 'specDirectory must be relative to the project root.',
     },
     {
       specDirectory: '.',
-      message: 'specDirectory must not be the Git root.',
+      message: 'specDirectory must not be the project root.',
     },
     {
       specDirectory: 'specs\0',

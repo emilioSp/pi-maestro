@@ -17,7 +17,7 @@ export const RESOLVE_ESCALATION_TOOL = {
   NAME: 'maestro_resolve_escalation',
   LABEL: 'Resolve Escalation',
   DESCRIPTION:
-    'Record the explicit owner decision for the current builder escalation when the approved contract remains valid. Commit the resolution and workflow transition on the current branch, then return ready-for-builder without running the builder. If the contract must change, edit spec.md and use maestro_mark_spec_ready instead.',
+    'Record the explicit owner decision for the current builder escalation when the approved contract remains valid. Save the resolution and workflow transition, then return ready-for-builder without running the builder. If the contract must change, edit spec.md and use maestro_mark_spec_ready instead.',
 } as const;
 
 const ResolveEscalationToolParameters = Type.Object(
@@ -26,7 +26,10 @@ const ResolveEscalationToolParameters = Type.Object(
     escalationId: Type.String({ pattern: ESCALATION_ID_PATTERN.source }),
     ...EscalationResolutionSchema.properties,
   },
-  { additionalProperties: false },
+  {
+    additionalProperties: false,
+    patternProperties: { '^revision$': Type.Unknown() },
+  },
 );
 
 export const registerResolveEscalationTool = (pi: ExtensionAPI): void => {
@@ -56,10 +59,8 @@ export const registerResolveEscalationTool = (pi: ExtensionAPI): void => {
         details: {
           specId: resolved.state.specId,
           escalationId: resolved.escalation.id,
-          revision: resolved.state.revision,
           phase: resolved.state.phase,
-          repositoryRoot: resolved.repositoryRoot,
-          checkpointCommit: resolved.checkpointCommit,
+          projectRoot: resolved.projectRoot,
         },
       };
     },

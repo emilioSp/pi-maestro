@@ -8,10 +8,9 @@ import {
   DEFAULT_SPEC_DIRECTORY,
 } from '#config/defaults.ts';
 import { AGENTS } from '#config/schema.ts';
-import { runGitCommand } from '#git/command.ts';
 import { assertEnvironment } from '#maestro/checks/assertEnvironment.ts';
 import piTestSessions from '#test/support/pi-session.ts';
-import { createTemporaryRepository } from '#test/support/temp-repository.ts';
+import { createTemporaryProject } from '#test/support/temp-repository.ts';
 
 const cleanupFunctions: Array<() => Promise<void>> = [];
 
@@ -21,16 +20,8 @@ afterEach(async () => {
 });
 
 describe('assertEnvironment', () => {
-  it('given no Git repository when the environment is checked then the Git error is reported', async () => {
-    const { session } = await piTestSessions.create({ extensions: [] });
-
-    await expect(
-      assertEnvironment(session.extensionRunner.createContext()),
-    ).rejects.toThrow('Git repository check failed:');
-  });
-
   it('given an untrusted project when the environment is checked then activation is rejected', async () => {
-    const repository = await createTemporaryRepository();
+    const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 
     const { session } = await piTestSessions.create({
@@ -45,7 +36,7 @@ describe('assertEnvironment', () => {
   });
 
   it('given missing Maestro agents when the environment is checked then the agent error is reported', async () => {
-    const repository = await createTemporaryRepository();
+    const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 
     const { session } = await piTestSessions.create({
@@ -62,7 +53,7 @@ describe('assertEnvironment', () => {
   });
 
   it('given invalid configuration when the environment is checked then the configuration error is reported', async () => {
-    const repository = await createTemporaryRepository();
+    const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await mkdir(join(repository.path, CONFIG_DIRECTORY_NAME));
     await writeFile(
@@ -81,7 +72,7 @@ describe('assertEnvironment', () => {
   });
 
   it('given an unavailable configured model when the environment is checked then its exact name is reported', async () => {
-    const repository = await createTemporaryRepository();
+    const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await mkdir(join(repository.path, CONFIG_DIRECTORY_NAME));
     await writeFile(
@@ -104,25 +95,15 @@ describe('assertEnvironment', () => {
     );
   });
 
-  it('given a dirty repository and absent spec directory when checks pass then no files or Git state change', async () => {
-    const repository = await createTemporaryRepository();
+  it('given a dirty repository and absent spec directory when checks pass then no files change', async () => {
+    const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await writeFile(join(repository.path, 'README.md'), '# Original\n');
-    await repository.commit('Initial content');
+
     await writeFile(
       join(repository.path, 'README.md'),
       '# Uncommitted change\n',
     );
-
-    const status = await runGitCommand({
-      cwd: repository.path,
-      arguments: ['status', '--porcelain'],
-    });
-
-    const head = await runGitCommand({
-      cwd: repository.path,
-      arguments: ['rev-parse', 'HEAD'],
-    });
 
     const { session } = await piTestSessions.create({
       cwd: repository.path,
@@ -133,18 +114,6 @@ describe('assertEnvironment', () => {
       assertEnvironment(session.extensionRunner.createContext()),
     ).resolves.toBeUndefined();
 
-    expect(
-      await runGitCommand({
-        cwd: repository.path,
-        arguments: ['status', '--porcelain'],
-      }),
-    ).toEqual(status);
-    expect(
-      await runGitCommand({
-        cwd: repository.path,
-        arguments: ['rev-parse', 'HEAD'],
-      }),
-    ).toEqual(head);
     expect(await readFile(join(repository.path, 'README.md'), 'utf8')).toBe(
       '# Uncommitted change\n',
     );

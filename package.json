@@ -38,7 +38,6 @@
   ],
   "imports": {
     "#config/*": "./src/config/*",
-    "#git/*": "./src/git/*",
     "#specs/*": "./src/specs/*",
     "#artifacts/*": "./src/artifacts/*",
     "#workflow/*": "./src/workflow/*",

@@ -92,8 +92,8 @@ export const transitionWorkflow = ({
   }
 
   return {
-    ...current,
-    revision: current.revision + 1,
+    version: current.version,
+    specId: current.specId,
     phase: transition.to,
   };
 };

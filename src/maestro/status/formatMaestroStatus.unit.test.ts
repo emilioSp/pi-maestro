@@ -31,7 +31,6 @@ const createWorkflow = (phase: WorkflowPhase) => {
   const state: WorkflowState = {
     version: WORKFLOW_STATE_VERSION,
     specId: SPEC_ID,
-    revision: 1,
     phase,
   };
 

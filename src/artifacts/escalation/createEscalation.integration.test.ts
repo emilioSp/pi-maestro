@@ -56,14 +56,12 @@ describe('escalation creation', () => {
     const first = await createEscalation({
       directory,
       specId,
-      revision: 3,
       escalation: newEscalation(),
     });
 
     const second = await createEscalation({
       directory,
       specId,
-      revision: 4,
       escalation: newEscalation(),
     });
 
@@ -72,9 +70,9 @@ describe('escalation creation', () => {
     await expect(readFile(first.path, 'utf8')).resolves.toBe(
       `${JSON.stringify(first.escalation, null, 2)}\n`,
     );
-    await expect(
-      getNextEscalationId({ directory, specId, currentRevision: 4 }),
-    ).resolves.toBe('E3');
+    await expect(getNextEscalationId({ directory, specId })).resolves.toBe(
+      'E3',
+    );
   });
 
   it('writes new escalations as unresolved documents', async () => {
@@ -88,7 +86,6 @@ describe('escalation creation', () => {
     const { escalation } = await createEscalation({
       directory,
       specId,
-      revision: 3,
       escalation: escalationInput,
     });
 

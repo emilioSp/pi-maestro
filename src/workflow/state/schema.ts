@@ -51,7 +51,6 @@ export const WorkflowStateSchema = Type.Object(
   {
     version: Type.Literal(WORKFLOW_STATE_VERSION),
     specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
-    revision: Type.Integer({ minimum: 1 }),
     phase: WorkflowPhaseSchema,
   },
   { additionalProperties: false },
@@ -72,7 +71,12 @@ function assertWorkflowStateSchema(
     throw new Error('Workflow state must be a JSON object.');
   }
 
-  const [error] = Value.Errors(WorkflowStateSchema, input);
+  const [error] = Value.Errors(
+    WorkflowStateSchema,
+    Object.fromEntries(
+      Object.entries(input).filter(([key]) => key !== 'revision'),
+    ),
+  );
 
   if (error !== undefined) {
     throw new Error(`Invalid workflow state: ${error.message}.`);

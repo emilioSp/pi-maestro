@@ -23,6 +23,7 @@ import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { openBuilderEscalation } from '#workflow/escalation/openBuilderEscalation.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
+import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 
 afterEach(async () => {
   await piTestSessions.cleanup();
@@ -30,6 +31,48 @@ afterEach(async () => {
 });
 
 describe('run builder tool', () => {
+  it('given ready-for-verifier and a failed active builder handoff then the parent reports a protocol error', async () => {
+    const { paths, repository } = await createApprovedWorkflow();
+
+    const { tool, events } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerRunBuilderTool,
+    });
+
+    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
+      // JUSTIFICATION: The run tool emits a delegation request on this channel.
+      const request = payload as SubagentDelegationRequest;
+      await completeBuilderPass({
+        paths,
+        specId: SPEC_ID,
+        handoff: {
+          status: BUILDER_HANDOFF_STATUSES.FAILED,
+          summary: 'Builder failed',
+          acceptanceCriteria: [],
+          failure: { reason: 'Blocked' },
+          notes: [],
+        },
+      });
+      const state = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
+      await writeWorkflowState({
+        path: paths.getWorkflowPath(SPEC_ID),
+        state: { ...state, phase: WORKFLOW_PHASES.READY_FOR_VERIFIER },
+      });
+      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
+        requestId: request.requestId,
+        ownerRunId: request.ownerRunId,
+        nodeId: request.nodeId,
+        status: DELEGATION_STATUSES.COMPLETED,
+        result: { kind: 'text', text: 'Done' },
+      });
+    });
+    await expect(
+      tool.execute('test-call', { specId: SPEC_ID }),
+    ).rejects.toThrow(
+      'Builder protocol error: Builder handoff status does not match workflow phase "ready-for-verifier".',
+    );
+  });
+
   it('registers a closed spec-only input schema', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerRunBuilderTool,
@@ -45,7 +88,7 @@ describe('run builder tool', () => {
     ).toBe(false);
   });
 
-  it('runs the builder in the current checkout and returns a committed done result', async () => {
+  it('runs the builder in the current project and returns a saved done result', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { tool, events, emit, on } =
@@ -81,7 +124,7 @@ describe('run builder tool', () => {
           notes: [],
         },
       });
-      await repository.commit('Builder done');
+
       events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
@@ -122,7 +165,7 @@ describe('run builder tool', () => {
     });
   });
 
-  it('returns a committed failed handoff and does not rerun it', async () => {
+  it('returns a saved failed handoff and does not rerun it', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { tool, events, emit } = await piTestSessions.createRegisteredTool({
@@ -150,7 +193,7 @@ describe('run builder tool', () => {
           notes: [],
         },
       });
-      await repository.commit('Builder failed');
+
       events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
@@ -177,7 +220,7 @@ describe('run builder tool', () => {
     ).toHaveLength(1);
   });
 
-  it('returns a committed escalation result', async () => {
+  it('returns a saved escalation result', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { tool, events } = await piTestSessions.createRegisteredTool({
@@ -209,7 +252,7 @@ describe('run builder tool', () => {
       });
 
       expect(opened.state.phase).toBe(WORKFLOW_PHASES.ESCALATION_DECISION);
-      await repository.commit('Builder escalation');
+
       events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
         requestId: request.requestId,
         ownerRunId: request.ownerRunId,
@@ -226,23 +269,6 @@ describe('run builder tool', () => {
       phase: WORKFLOW_PHASES.ESCALATION_DECISION,
       escalation: { id: 'E1' },
     });
-  });
-
-  it('returns the workflow error before delegation when the checkout is dirty', async () => {
-    const { repository } = await createApprovedWorkflow({
-      commitApproval: false,
-    });
-
-    const { tool, emit, on } = await piTestSessions.createRegisteredTool({
-      cwd: repository.path,
-      extension: registerRunBuilderTool,
-    });
-
-    await expect(
-      tool.execute('test-call', { specId: SPEC_ID }),
-    ).rejects.toThrow('clean current checkout');
-    expect(emit).not.toHaveBeenCalled();
-    expect(on).not.toHaveBeenCalled();
   });
 
   it('returns a delegation error without advancing the workflow', async () => {

@@ -61,7 +61,6 @@ export const createSpec = async ({
   const state = {
     version: WORKFLOW_STATE_VERSION,
     specId,
-    revision: 1,
     phase: WORKFLOW_PHASES.DRAFTING_SPEC,
   } as const;
 
@@ -78,7 +77,6 @@ export const createSpec = async ({
     await writeWorkflowState({
       path: workflowPath,
       state,
-      currentRevision: 0,
     });
   } catch (error) {
     if (!created && isErrnoException(error) && error.code === 'EEXIST') {

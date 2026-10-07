@@ -1,35 +1,32 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, open, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
   WORKFLOW_PHASES,
   WORKFLOW_STATE_VERSION,
+  type WorkflowPhase,
   type WorkflowState,
 } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs/promises')>();
+
+  return { ...actual, open: vi.fn(actual.open) };
+});
+
 const temporaryDirectories: string[] = [];
 
-const createTemporaryDirectory = async (): Promise<string> => {
-  const path = await mkdtemp(join(tmpdir(), 'pi-maestro-workflow-state-'));
-  temporaryDirectories.push(path);
-
-  return path;
-};
-
-const state = (revision: number): WorkflowState => ({
+const state = (phase: WorkflowPhase): WorkflowState => ({
   version: WORKFLOW_STATE_VERSION,
   specId: '20260321-143052-add-weather-alerts',
-  revision,
-  phase:
-    revision === 1
-      ? WORKFLOW_PHASES.DRAFTING_SPEC
-      : WORKFLOW_PHASES.READY_FOR_BUILDER,
+  phase,
 });
 
 afterEach(async () => {
+  vi.clearAllMocks();
   await Promise.all(
     temporaryDirectories
       .splice(0)
@@ -38,113 +35,59 @@ afterEach(async () => {
 });
 
 describe('writeWorkflowState', () => {
-  it('creates and atomically replaces validated state', async () => {
-    const directory = await createTemporaryDirectory();
-    const path = join(directory, 'workflow.json');
-
-    await writeWorkflowState({
-      path,
-      state: state(1),
-      currentRevision: 0,
-    });
-    await writeWorkflowState({
-      path,
-      state: state(2),
-      currentRevision: 1,
-    });
-
-    await expect(readWorkflowState(path)).resolves.toEqual(state(2));
-    await expect(readFile(path, 'utf8')).resolves.toBe(
-      `${JSON.stringify(state(2), null, 2)}\n`,
+  it('creates and atomically replaces validated state without opening a workflow lock', async () => {
+    const directory = await mkdtemp(
+      join(tmpdir(), 'pi-maestro-workflow-state-'),
     );
-  });
 
-  it('rejects stale updates and preserves the old file', async () => {
-    const directory = await createTemporaryDirectory();
+    temporaryDirectories.push(directory);
     const path = join(directory, 'workflow.json');
     await writeWorkflowState({
       path,
-      state: state(1),
-      currentRevision: 0,
+      state: state(WORKFLOW_PHASES.DRAFTING_SPEC),
     });
-    const before = await readFile(path, 'utf8');
-
-    await expect(
-      writeWorkflowState({
-        path,
-        state: state(3),
-        currentRevision: 2,
-      }),
-    ).rejects.toThrow('Stale workflow revision: expected 2, found 1.');
-    await expect(readFile(path, 'utf8')).resolves.toBe(before);
-    await expect(readFile(`${path}.lock`, 'utf8')).rejects.toMatchObject({
-      code: 'ENOENT',
+    await writeWorkflowState({
+      path,
+      state: state(WORKFLOW_PHASES.READY_FOR_BUILDER),
     });
+    await expect(readWorkflowState(path)).resolves.toEqual(
+      state(WORKFLOW_PHASES.READY_FOR_BUILDER),
+    );
+    await expect(readFile(path, 'utf8')).resolves.toBe(
+      `${JSON.stringify(state(WORKFLOW_PHASES.READY_FOR_BUILDER), null, 2)}\n`,
+    );
+    expect(vi.mocked(open).mock.calls.length).toBeGreaterThan(0);
+    expect(
+      vi
+        .mocked(open)
+        .mock.calls.some(([openedPath]) =>
+          String(openedPath).endsWith('.lock'),
+        ),
+    ).toBe(false);
   });
 
   it('rejects invalid replacement state and preserves the old file', async () => {
-    const directory = await createTemporaryDirectory();
+    const directory = await mkdtemp(
+      join(tmpdir(), 'pi-maestro-workflow-state-'),
+    );
+
+    temporaryDirectories.push(directory);
     const path = join(directory, 'workflow.json');
     await writeWorkflowState({
       path,
-      state: state(1),
-      currentRevision: 0,
+      state: state(WORKFLOW_PHASES.DRAFTING_SPEC),
     });
     const before = await readFile(path, 'utf8');
 
+    const invalid = {
+      ...state(WORKFLOW_PHASES.READY_FOR_BUILDER),
+      version: '2.0.0',
+    };
+
+    // JUSTIFICATION: The invalid version tests the runtime boundary without changing the writer type.
     await expect(
-      writeWorkflowState({
-        path,
-        state: { ...state(2), revision: 0 },
-        currentRevision: 1,
-      }),
+      writeWorkflowState({ path, state: invalid as ReturnType<typeof state> }),
     ).rejects.toThrow('Invalid workflow state');
     await expect(readFile(path, 'utf8')).resolves.toBe(before);
-  });
-
-  it('given an existing lock when writing state then rejects and preserves the lock', async () => {
-    const directory = await createTemporaryDirectory();
-    const path = join(directory, 'workflow.json');
-    const lockPath = `${path}.lock`;
-    await writeFile(lockPath, 'Existing writer owns this lock.', 'utf8');
-
-    await expect(
-      writeWorkflowState({ path, state: state(1), currentRevision: 0 }),
-    ).rejects.toThrow('Another workflow state update is in progress.');
-    await expect(readFile(lockPath, 'utf8')).resolves.toBe(
-      'Existing writer owns this lock.',
-    );
-    await expect(readFile(path, 'utf8')).rejects.toMatchObject({
-      code: 'ENOENT',
-    });
-  });
-
-  it('allows only one concurrent update for the same expected revision', async () => {
-    const directory = await createTemporaryDirectory();
-    const path = join(directory, 'workflow.json');
-    await writeWorkflowState({
-      path,
-      state: state(1),
-      currentRevision: 0,
-    });
-
-    const results = await Promise.allSettled([
-      writeWorkflowState({ path, state: state(2), currentRevision: 1 }),
-      writeWorkflowState({
-        path,
-        state: { ...state(2), phase: WORKFLOW_PHASES.BUILDER_RUNNING },
-        currentRevision: 1,
-      }),
-    ]);
-
-    expect(
-      results.filter((result) => result.status === 'fulfilled'),
-    ).toHaveLength(1);
-    expect(
-      results.filter((result) => result.status === 'rejected'),
-    ).toHaveLength(1);
-    await expect(readWorkflowState(path)).resolves.toMatchObject({
-      revision: 2,
-    });
   });
 });

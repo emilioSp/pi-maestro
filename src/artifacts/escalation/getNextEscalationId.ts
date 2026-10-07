@@ -8,19 +8,16 @@ import { readEscalationHistory } from '#artifacts/escalation/readEscalationHisto
 type GetNextEscalationIdInput = {
   directory: string;
   specId: string;
-  currentRevision: number;
 };
 
 export const getNextEscalationId = async ({
   directory,
   specId,
-  currentRevision,
 }: GetNextEscalationIdInput): Promise<string> => {
   const history = await readEscalationHistory({
     directory,
     specId,
-    currentRevision,
   });
 
-  return `E${history.length + 1}`;
+  return `E${Number(history.at(-1)?.id.slice(1) ?? 0) + 1}`;
 };

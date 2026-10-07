@@ -15,7 +15,6 @@ import {
 import { readEscalationHistory } from '#artifacts/escalation/readEscalationHistory.ts';
 import type { Escalation } from '#artifacts/escalation/schema.ts';
 import { AGENTS } from '#config/schema.ts';
-import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
@@ -33,14 +32,17 @@ export const RUN_BUILDER_TOOL = {
   NAME: 'maestro_run_builder',
   LABEL: 'Run Builder',
   DESCRIPTION:
-    'Run the builder in the current checkout for an owner-approved spec. The builder runs in the foreground and cannot be retried after a committed failure.',
+    'Run the builder in the project directory for an owner-approved spec. The builder runs in the foreground and cannot be retried after a recorded failure.',
 } as const;
 
 const RunBuilderToolParameters = Type.Object(
   {
     specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
   },
-  { additionalProperties: false },
+  {
+    additionalProperties: false,
+    patternProperties: { '^revision$': Type.Unknown() },
+  },
 );
 
 const MILLISECONDS_PER_MINUTE = 60_000;
@@ -49,45 +51,32 @@ type BuilderRunResult =
   | {
       outcome: typeof BUILDER_HANDOFF_STATUSES.DONE;
       specId: string;
-      revision: number;
       phase: typeof WORKFLOW_PHASES.READY_FOR_VERIFIER;
       handoff: BuilderHandoff;
     }
   | {
       outcome: typeof BUILDER_HANDOFF_STATUSES.FAILED;
       specId: string;
-      revision: number;
       phase: typeof WORKFLOW_PHASES.BUILDER_FAILED;
       handoff: BuilderHandoff;
     }
   | {
       outcome: typeof BUILDER_HANDOFF_STATUSES.ESCALATION;
       specId: string;
-      revision: number;
       phase: typeof WORKFLOW_PHASES.ESCALATION_DECISION;
       escalation: Escalation;
     };
 
-type ReadCommittedBuilderResultInput = {
+type ReadBuilderResultInput = {
   paths: MaestroPaths;
   specId: string;
 };
 
-const readCommittedBuilderResult = async ({
+const readBuilderResult = async ({
   paths,
   specId,
-}: ReadCommittedBuilderResultInput): Promise<BuilderRunResult> => {
+}: ReadBuilderResultInput): Promise<BuilderRunResult> => {
   try {
-    const repositoryStatus = await getRepositoryStatus(
-      paths.getRepositoryRoot(),
-    );
-
-    if (!repositoryStatus.clean) {
-      throw new Error(
-        'The builder returned without committing its final artifact and current work.',
-      );
-    }
-
     const state = await readWorkflowState(paths.getWorkflowPath(specId));
 
     if (state.specId !== specId) {
@@ -107,7 +96,6 @@ const readCommittedBuilderResult = async ({
 type ReadTerminalBuilderResultInput = {
   paths: MaestroPaths;
   specId: string;
-  revision: number;
   phase:
     | typeof WORKFLOW_PHASES.READY_FOR_VERIFIER
     | typeof WORKFLOW_PHASES.BUILDER_FAILED;
@@ -116,13 +104,11 @@ type ReadTerminalBuilderResultInput = {
 const readTerminalBuilderResult = async ({
   paths,
   specId,
-  revision,
   phase,
 }: ReadTerminalBuilderResultInput): Promise<BuilderRunResult> => {
   const handoff = await readBuilderHandoff({
-    path: paths.getBuilderHandoffPath(specId),
+    path: await paths.getActiveBuilderHandoffPath(specId),
     specId,
-    revision,
   });
 
   const expectedStatus =
@@ -140,7 +126,6 @@ const readTerminalBuilderResult = async ({
     return {
       outcome: BUILDER_HANDOFF_STATUSES.DONE,
       specId,
-      revision,
       phase,
       handoff,
     };
@@ -149,7 +134,6 @@ const readTerminalBuilderResult = async ({
   return {
     outcome: BUILDER_HANDOFF_STATUSES.FAILED,
     specId,
-    revision,
     phase,
     handoff,
   };
@@ -173,7 +157,6 @@ const buildRunResult = async ({
     return await readTerminalBuilderResult({
       paths,
       specId,
-      revision: state.revision,
       phase: state.phase,
     });
   }
@@ -182,25 +165,17 @@ const buildRunResult = async ({
     const history = await readEscalationHistory({
       directory: paths.getEscalationsPath(specId),
       specId,
-      currentRevision: state.revision,
     });
 
     const escalation = history.at(-1);
 
-    if (
-      escalation === undefined ||
-      escalation.revision !== state.revision ||
-      escalation.resolution !== null
-    ) {
-      throw new Error(
-        'The builder escalation is missing, stale, or already resolved.',
-      );
+    if (escalation === undefined || escalation.resolution !== null) {
+      throw new Error('The builder escalation is missing or already resolved.');
     }
 
     return {
       outcome: BUILDER_HANDOFF_STATUSES.ESCALATION,
       specId,
-      revision: state.revision,
       phase: state.phase,
       escalation,
     };
@@ -242,9 +217,9 @@ export const registerRunBuilderTool = (pi: ExtensionAPI): void => {
         // pi-subagents loads this name from agents/builder.md through package.json.
         // See docs/subagent-integration.md.
         agent: AGENTS.BUILDER,
-        task: `Implement specId "${specId}" in the current checkout "${run.repositoryRoot}". Read all applicable AGENTS.md files before working.`,
+        task: `Implement specId "${specId}" in the project directory "${run.projectRoot}". Read all applicable AGENTS.md files before working.`,
         context: 'fresh',
-        cwd: run.repositoryRoot,
+        cwd: run.projectRoot,
         model: config.builder.model,
         thinking: config.builder.thinking,
         timeoutMs: config.builder.timeoutMinutes * MILLISECONDS_PER_MINUTE,
@@ -257,7 +232,7 @@ export const registerRunBuilderTool = (pi: ExtensionAPI): void => {
       });
 
       assertDelegationResponse(response);
-      const result = await readCommittedBuilderResult({ paths, specId });
+      const result = await readBuilderResult({ paths, specId });
 
       return {
         content: [{ type: 'text', text: formatBuilderResult(result) }],

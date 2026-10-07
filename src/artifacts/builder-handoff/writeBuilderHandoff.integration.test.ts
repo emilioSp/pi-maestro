@@ -22,12 +22,11 @@ const createTemporaryDirectory = async (): Promise<string> => {
   return path;
 };
 
-const handoff = (revision: number): BuilderHandoff => ({
+const handoff = (summary: string): BuilderHandoff => ({
   version: BUILDER_HANDOFF_VERSION,
   specId,
-  revision,
   status: BUILDER_HANDOFF_STATUSES.DONE,
-  summary: `Implemented revision ${revision}.`,
+  summary,
   acceptanceCriteria: [
     {
       id: 'AC1',
@@ -49,37 +48,34 @@ afterEach(async () => {
 describe('builder handoff writes', () => {
   it('atomically replaces a validated handoff', async () => {
     const directory = await createTemporaryDirectory();
-    const path = join(directory, 'builder.json');
+    const path = join(directory, 'B1.json');
 
     await writeBuilderHandoff({
       path,
-      handoff: handoff(4),
+      handoff: handoff('Implemented greeting'),
       specId,
-      revision: 4,
     });
     await writeBuilderHandoff({
       path,
-      handoff: handoff(5),
+      handoff: handoff('Fixed greeting'),
       specId,
-      revision: 5,
     });
 
-    await expect(
-      readBuilderHandoff({ path, specId, revision: 5 }),
-    ).resolves.toEqual(handoff(5));
+    await expect(readBuilderHandoff({ path, specId })).resolves.toEqual(
+      handoff('Fixed greeting'),
+    );
     await expect(readFile(path, 'utf8')).resolves.toBe(
-      `${JSON.stringify(handoff(5), null, 2)}\n`,
+      `${JSON.stringify(handoff('Fixed greeting'), null, 2)}\n`,
     );
   });
 
   it('rejects invalid writes without replacing the current handoff', async () => {
     const directory = await createTemporaryDirectory();
-    const path = join(directory, 'builder.json');
+    const path = join(directory, 'B1.json');
     await writeBuilderHandoff({
       path,
-      handoff: handoff(4),
+      handoff: handoff('Implemented greeting'),
       specId,
-      revision: 4,
     });
     const before = await readFile(path, 'utf8');
 
@@ -87,16 +83,15 @@ describe('builder handoff writes', () => {
       writeBuilderHandoff({
         path,
         handoff: {
-          ...handoff(5),
+          ...handoff('Fixed greeting'),
           acceptanceCriteria: [
             {
-              ...handoff(5).acceptanceCriteria[0],
+              ...handoff('Fixed greeting').acceptanceCriteria[0],
               probeStatus: PROBE_STATUSES.FAILED,
             },
           ],
         },
         specId,
-        revision: 5,
       }),
     ).rejects.toThrow('Done builder handoff requires every probe to pass');
     await expect(readFile(path, 'utf8')).resolves.toBe(before);

@@ -1,7 +1,4 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { getCurrentBranch } from '#git/repository/getCurrentBranch.ts';
-import { getHeadCommit } from '#git/repository/getHeadCommit.ts';
-import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -17,10 +14,10 @@ import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 afterEach(cleanupBuilderWorkflows);
 
 describe('verifier run preparation', () => {
-  it('given completed builder work when verification starts then the running checkpoint is the fixed candidate', async () => {
+  it('given completed builder work when verification starts then the live project enters verifier-running', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
-    const builderRun = await prepareBuilderRun({
+    await prepareBuilderRun({
       paths,
       specId: SPEC_ID,
     });
@@ -28,24 +25,13 @@ describe('verifier run preparation', () => {
     await completeBuilderPass({
       paths,
       specId: SPEC_ID,
-      handoff: doneHandoff(builderRun.revision + 1),
+      handoff: doneHandoff(),
     });
-    await repository.commit('Builder completed');
-
-    const candidateBefore = await getHeadCommit(repository.path);
 
     const run = await prepareVerifierRun({ paths, specId: SPEC_ID });
 
-    expect(run.candidateCommit).toBe(run.checkpointCommit);
-    await expect(getHeadCommit(repository.path)).resolves.toBe(
-      run.candidateCommit,
-    );
-    expect(run.repositoryRoot).toBe(repository.path);
-    expect(run.checkpointCommit).not.toBe(candidateBefore);
-    await expect(getCurrentBranch(repository.path)).resolves.toBe('main');
-    await expect(getRepositoryStatus(repository.path)).resolves.toMatchObject({
-      clean: true,
-    });
+    expect(run.projectRoot).toBe(repository.path);
+
     await expect(
       readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({

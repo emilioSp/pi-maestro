@@ -14,14 +14,17 @@ export const MARK_SPEC_READY_TOOL = {
   NAME: 'maestro_mark_spec_ready',
   LABEL: 'Mark Spec Ready',
   DESCRIPTION:
-    'Approve the current spec.md after explicit owner approval and move the workflow to ready-for-builder. The owner must commit spec.md and workflow.json before running the builder.',
+    'Approve the current spec.md after the owner replies GREEN FLAG and move the workflow to ready-for-builder. Only the owner reply GREEN FLAG authorizes approval. After this transition succeeds, call maestro_run_builder in the foreground.',
 } as const;
 
 const MarkSpecReadyToolParameters = Type.Object(
   {
     specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
   },
-  { additionalProperties: false },
+  {
+    additionalProperties: false,
+    patternProperties: { '^revision$': Type.Unknown() },
+  },
 );
 
 export const registerMarkSpecReadyTool = (pi: ExtensionAPI): void => {
@@ -43,7 +46,7 @@ export const registerMarkSpecReadyTool = (pi: ExtensionAPI): void => {
         content: [
           {
             type: 'text',
-            text: `Spec ${state.specId} is approved at workflow revision ${state.revision} and ready-for-builder. Commit spec.md and workflow.json before running the builder.`,
+            text: `Spec ${state.specId} is approved and ready-for-builder. Call maestro_run_builder now. No separate owner start request is needed.`,
           },
         ],
         details: state,

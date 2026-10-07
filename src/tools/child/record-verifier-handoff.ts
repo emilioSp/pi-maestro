@@ -1,5 +1,5 @@
 /**
- * Objective: Register the verifier handoff tool for the current checkout.
+ * Objective: Register the verifier handoff tool for the current project.
  * Used: When the verifier reports its terminal review result.
  */
 
@@ -10,8 +10,6 @@ import {
   VERIFIER_HANDOFF_VERSION,
   VerifierFindingSchema,
 } from '#artifacts/verifier-handoff/schema.ts';
-import { createWorkflowCheckpointCommit } from '#git/commits/createWorkflowCheckpointCommit.ts';
-import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import { resolveWorkflowContext } from '#tools/child/utils/resolveWorkflowContext.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -21,15 +19,17 @@ export const VERIFIER_HANDOFF_TOOL = {
   NAME: 'maestro_record_verifier_handoff',
   LABEL: 'Record Verifier Handoff',
   DESCRIPTION:
-    'Record the verifier review after restoring every product change. The tool commits only workflow.json and handoffs/verifier.json. Do not run git commit.',
+    'Record the verifier review after restoring only temporary changes from this pass. The tool saves a numbered verifier handoff and the workflow phase.',
 } as const;
 
 const VerifierFindingSubmissionSchema = Type.Object(
   {
     ...VerifierFindingSchema.properties,
-    rejection: Type.Null(),
+    decision: Type.Null(),
   },
-  { additionalProperties: false },
+  {
+    additionalProperties: false,
+  },
 );
 
 const VerifierHandoffToolParameters = Type.Object(
@@ -40,7 +40,10 @@ const VerifierHandoffToolParameters = Type.Object(
     findings: Type.Array(VerifierFindingSubmissionSchema),
     notes: Type.Array(Type.String()),
   },
-  { additionalProperties: false },
+  {
+    additionalProperties: false,
+    patternProperties: { '^revision$': Type.Unknown() },
+  },
 );
 
 export const registerRecordVerifierHandoffTool = (pi: ExtensionAPI): void => {
@@ -52,7 +55,7 @@ export const registerRecordVerifierHandoffTool = (pi: ExtensionAPI): void => {
     async execute(_toolCallId, params, _signal, _onUpdate, context) {
       const { specId, ...submission } = params;
 
-      const { paths, repositoryRoot } = await resolveWorkflowContext({
+      const { paths } = await resolveWorkflowContext({
         cwd: context.cwd,
         specId,
       });
@@ -64,8 +67,10 @@ export const registerRecordVerifierHandoffTool = (pi: ExtensionAPI): void => {
       const handoff = {
         version: VERIFIER_HANDOFF_VERSION,
         specId: currentState.specId,
-        revision: currentState.revision + 1,
-        ...submission,
+        summary: submission.summary,
+        acceptanceCriteria: submission.acceptanceCriteria,
+        findings: submission.findings,
+        notes: submission.notes,
       };
 
       const completed = await completeVerifierPass({
@@ -74,31 +79,16 @@ export const registerRecordVerifierHandoffTool = (pi: ExtensionAPI): void => {
         handoff,
       });
 
-      const workflowCheckpointCommit = await createWorkflowCheckpointCommit({
-        repositoryRoot,
-        expectedPaths: [
-          paths.getWorkflowPath(specId),
-          paths.getVerifierHandoffPath(specId),
-        ],
-      });
-
-      if (!(await getRepositoryStatus(repositoryRoot)).clean) {
-        throw new Error(
-          'Verifier handoff requires a clean checkout after its commit.',
-        );
-      }
-
       return {
         content: [
           {
             type: 'text',
-            text: `Verifier handoff recorded as ${completed.state.phase}. The tool committed only the verifier handoff and workflow state. Do not run git commit.`,
+            text: `Verifier handoff recorded as ${completed.state.phase}. The handoff and workflow phase are saved. Stop now.`,
           },
         ],
         details: {
+          handoffPath: completed.handoffPath,
           phase: completed.state.phase,
-          workflowCheckpointCommit,
-          revision: completed.state.revision,
           specId: completed.handoff.specId,
         },
       };

@@ -8,7 +8,6 @@ import {
 const escalation = (): Escalation => ({
   version: ESCALATION_VERSION,
   specId: '20260321-143052-add-weather-alerts',
-  revision: 3,
   id: 'E1',
   question: 'Which persistence strategy should be used?',
   context: 'The approved behavior has two valid implementations.',
@@ -35,6 +34,12 @@ const escalation = (): Escalation => ({
 });
 
 describe('escalation schema', () => {
+  it('ignores an unused revision field while validating the artifact', () => {
+    expect(() =>
+      assertEscalation({ ...escalation(), revision: 'ignored' }),
+    ).not.toThrow();
+  });
+
   it('accepts a valid unresolved escalation', () => {
     expect(() => assertEscalation(escalation())).not.toThrow();
   });

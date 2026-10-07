@@ -12,8 +12,7 @@ const specId = '20260321-143052-add-weather-alerts';
 const handoff = (): VerifierHandoff => ({
   version: VERIFIER_HANDOFF_VERSION,
   specId,
-  revision: 6,
-  summary: 'Regenerated the checks from the candidate commit.',
+  summary: 'Regenerated the checks from the live project.',
   acceptanceCriteria: [
     {
       id: 'AC1',
@@ -37,13 +36,22 @@ const finding = (): VerifierHandoff['findings'][number] => ({
       observation: 'The restored alert list was empty.',
     },
   ],
-  rejection: null,
+  decision: null,
 });
 
 describe('verifier handoff validation', () => {
+  it('ignores an unused revision field while validating the artifact', () => {
+    expect(() =>
+      assertVerifierHandoff({
+        handoff: { ...handoff(), revision: 'ignored' },
+        specId,
+      }),
+    ).not.toThrow();
+  });
+
   it('accepts an empty finding list with completed checks', () => {
     expect(() =>
-      assertVerifierHandoff({ handoff: handoff(), specId, revision: 6 }),
+      assertVerifierHandoff({ handoff: handoff(), specId }),
     ).not.toThrow();
   });
 
@@ -57,13 +65,13 @@ describe('verifier handoff validation', () => {
         probeStatus,
       });
 
-      expect(() =>
-        assertVerifierHandoff({ handoff: input, specId, revision: 6 }),
-      ).toThrow('requires a finding');
+      expect(() => assertVerifierHandoff({ handoff: input, specId })).toThrow(
+        'requires a finding',
+      );
 
       input.findings = [{ ...finding(), acceptanceCriterion: 'AC2' }];
       expect(() =>
-        assertVerifierHandoff({ handoff: input, specId, revision: 6 }),
+        assertVerifierHandoff({ handoff: input, specId }),
       ).not.toThrow();
     },
   );
@@ -90,7 +98,6 @@ describe('verifier handoff validation', () => {
           ],
         },
         specId,
-        revision: 6,
       }),
     ).not.toThrow();
   });
@@ -165,22 +172,17 @@ describe('verifier handoff validation', () => {
       message: 'Invalid verifier handoff',
     },
   ])('rejects invalid handoff data %#', ({ handoff: input, message }) => {
-    expect(() =>
-      assertVerifierHandoff({ handoff: input, specId, revision: 6 }),
-    ).toThrow(message);
+    expect(() => assertVerifierHandoff({ handoff: input, specId })).toThrow(
+      message,
+    );
   });
 
-  it('requires the expected spec ID and revision', () => {
+  it('requires the expected spec ID', () => {
     expect(() =>
       assertVerifierHandoff({
         handoff: handoff(),
         specId: '20260321-143052-other-change',
-        revision: 6,
       }),
     ).toThrow('Verifier handoff spec ID mismatch');
-
-    expect(() =>
-      assertVerifierHandoff({ handoff: handoff(), specId, revision: 7 }),
-    ).toThrow('Verifier handoff revision mismatch');
   });
 });

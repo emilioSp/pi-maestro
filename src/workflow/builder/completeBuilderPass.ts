@@ -14,7 +14,6 @@ import {
 } from '#artifacts/builder-handoff/schema.ts';
 import { writeBuilderHandoff } from '#artifacts/builder-handoff/writeBuilderHandoff.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
-import { pathExists } from '#utils/path-exists.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
   WORKFLOW_EVENTS,
@@ -27,7 +26,8 @@ import { transitionWorkflow } from '#workflow/transitions.ts';
 export type CompletedBuilderPass = {
   handoff: BuilderHandoff;
   state: WorkflowState;
-  repositoryRoot: string;
+  projectRoot: string;
+  handoffPath: string;
 };
 
 type BuildBuilderHandoffInput = {
@@ -43,7 +43,6 @@ const buildBuilderHandoff = ({
     return {
       version: BUILDER_HANDOFF_VERSION,
       specId: state.specId,
-      revision: state.revision + 1,
       status: draftHandoff.status,
       summary: draftHandoff.summary,
       acceptanceCriteria: draftHandoff.acceptanceCriteria,
@@ -55,7 +54,6 @@ const buildBuilderHandoff = ({
   return {
     version: BUILDER_HANDOFF_VERSION,
     specId: state.specId,
-    revision: state.revision + 1,
     status: draftHandoff.status,
     summary: draftHandoff.summary,
     acceptanceCriteria: draftHandoff.acceptanceCriteria,
@@ -75,7 +73,7 @@ export const completeBuilderPass = async ({
   handoff: draftHandoff,
 }: CompleteBuilderPassInput): Promise<CompletedBuilderPass> => {
   const workflowPath = paths.getWorkflowPath(specId);
-  const handoffPath = paths.getBuilderHandoffPath(specId);
+  const handoffPath = await paths.getNextBuilderHandoffPath(specId);
   const currentState = await readWorkflowState(workflowPath);
 
   if (currentState.specId !== specId) {
@@ -90,14 +88,9 @@ export const completeBuilderPass = async ({
     );
   }
 
-  if (await pathExists(handoffPath)) {
-    throw new Error('Builder terminal handoff already exists.');
-  }
-
   const handoffInput = {
     handoff: buildBuilderHandoff({ draftHandoff, state: currentState }),
     specId: currentState.specId,
-    revision: currentState.revision + 1,
   };
 
   assertBuilderHandoff(handoffInput);
@@ -117,18 +110,17 @@ export const completeBuilderPass = async ({
     path: handoffPath,
     handoff,
     specId: currentState.specId,
-    revision: nextState.revision,
   });
 
   await writeWorkflowState({
     path: workflowPath,
     state: nextState,
-    currentRevision: currentState.revision,
   });
 
   return {
     handoff,
+    handoffPath,
     state: nextState,
-    repositoryRoot: paths.getRepositoryRoot(),
+    projectRoot: paths.getProjectRoot(),
   };
 };

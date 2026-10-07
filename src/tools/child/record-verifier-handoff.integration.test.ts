@@ -1,12 +1,8 @@
 import { readFile, writeFile } from 'node:fs/promises';
-import { relative } from 'node:path';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
 import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { FINDING_SEVERITIES } from '#artifacts/verifier-handoff/schema.ts';
-import { runGitCommand } from '#git/command.ts';
-import { getParentCommit } from '#git/history/getParentCommit.ts';
-import { getRepositoryStatus } from '#git/repository/getRepositoryStatus.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -34,6 +30,26 @@ afterEach(async () => {
 });
 
 describe('verifier handoff tool', () => {
+  it('given an existing source and unrelated notes then verifier instructions require restoring only its own probe changes', async () => {
+    const instructions = await readFile(
+      new URL(import.meta.resolve('#agents/verifier.md')),
+      'utf8',
+    );
+
+    expect(instructions).toContain(
+      'Before each temporary change, retain the exact original file contents and note which files already exist.',
+    );
+    expect(instructions).toContain(
+      'Remove only temporary files created during this pass. Preserve all pre-existing files and content.',
+    );
+    expect(instructions).toContain(
+      'restore `src/total.ts` from `return 0` to its original `return 42`, remove your `probe.txt`, and leave pre-existing `notes.txt` unchanged.',
+    );
+    expect(instructions).toContain(
+      'If cleanup cannot finish safely, stop and report the remaining changes.',
+    );
+  });
+
   it('registers a closed input schema with explicit verifier identity', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerRecordVerifierHandoffTool,
@@ -42,6 +58,9 @@ describe('verifier handoff tool', () => {
     const input = createHandoffInput();
 
     expect(Value.Check(tool.parameters, input)).toBe(true);
+    expect(
+      Value.Check(tool.parameters, { ...input, revision: 'ignored' }),
+    ).toBe(true);
     expect(Value.Check(tool.parameters, { ...input, branch: 'main' })).toBe(
       false,
     );
@@ -56,7 +75,7 @@ describe('verifier handoff tool', () => {
             confidence: 1,
             summary: 'Finding',
             evidence: [{ source: 'test', observation: 'Observed' }],
-            rejection: { reason: 'Rejected' },
+            decision: { decision: 'reject', reason: 'Rejected' },
           },
         ],
       }),
@@ -105,7 +124,7 @@ describe('verifier handoff tool', () => {
     );
   });
 
-  it('given restored temporary product changes when the verifier records its handoff then only protocol files are committed', async () => {
+  it('given restored temporary product changes when the verifier records its handoff then the tool records only protocol files', async () => {
     const workflow = await createApprovedWorkflow();
     await prepareBuilderRun({
       paths: workflow.paths,
@@ -122,9 +141,8 @@ describe('verifier handoff tool', () => {
         notes: [],
       },
     });
-    await workflow.repository.commit('Builder completed');
 
-    const verifierRun = await prepareVerifierRun({
+    await prepareVerifierRun({
       paths: workflow.paths,
       specId: SPEC_ID,
     });
@@ -139,83 +157,19 @@ describe('verifier handoff tool', () => {
     await writeFile(productPath, '# Temporary verification change\n', 'utf8');
     await writeFile(productPath, originalProduct, 'utf8');
 
-    const result = await tool.execute('test-call', createHandoffInput());
+    const result = await tool.execute('test-call', {
+      ...createHandoffInput(),
+      revision: 'ignored',
+    });
+
+    await expect(readFile(productPath, 'utf8')).resolves.toBe(originalProduct);
 
     expect(result.details).toMatchObject({
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
-      revision: verifierRun.revision + 1,
       specId: SPEC_ID,
     });
     await expect(
       readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID)),
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
-    await expect(
-      getRepositoryStatus(workflow.repository.path),
-    ).resolves.toMatchObject({
-      clean: true,
-      staged: [],
-      unstaged: [],
-      untracked: [],
-    });
-
-    const commitFiles = await runGitCommand({
-      arguments: ['diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD'],
-      cwd: workflow.repository.path,
-    });
-
-    expect(commitFiles.stdout.trim().split(/\r?\n/).sort()).toEqual(
-      [
-        relative(
-          workflow.repository.path,
-          workflow.paths.getVerifierHandoffPath(SPEC_ID),
-        ),
-        relative(
-          workflow.repository.path,
-          workflow.paths.getWorkflowPath(SPEC_ID),
-        ),
-      ].sort(),
-    );
-    await expect(
-      getParentCommit({
-        repositoryRoot: workflow.repository.path,
-        commit: 'HEAD',
-      }),
-    ).resolves.toBe(verifierRun.checkpointCommit);
-  });
-
-  it('given a commit hook that changes the product when the verifier records its handoff then the tool does not report success', async () => {
-    const workflow = await createApprovedWorkflow();
-    await prepareBuilderRun({ paths: workflow.paths, specId: SPEC_ID });
-    await completeBuilderPass({
-      paths: workflow.paths,
-      specId: SPEC_ID,
-      handoff: {
-        status: BUILDER_HANDOFF_STATUSES.DONE,
-        summary: 'Implemented the approved change.',
-        acceptanceCriteria: [],
-        notes: [],
-      },
-    });
-    await workflow.repository.commit('Builder completed');
-    await prepareVerifierRun({ paths: workflow.paths, specId: SPEC_ID });
-    await writeFile(
-      `${workflow.repository.path}/.git/hooks/post-commit`,
-      '#!/bin/sh\nprintf "Changed by hook\\n" >> README.md\n',
-      { mode: 0o755 },
-    );
-
-    const { tool } = await piTestSessions.createRegisteredTool({
-      cwd: workflow.repository.path,
-      extension: registerRecordVerifierHandoffTool,
-    });
-
-    await expect(
-      tool.execute('test-call', createHandoffInput()),
-    ).rejects.toThrow(
-      'Verifier handoff requires a clean checkout after its commit.',
-    );
-    await expect(
-      getRepositoryStatus(workflow.repository.path),
-    ).resolves.toMatchObject({ clean: false, unstaged: ['README.md'] });
   });
 });

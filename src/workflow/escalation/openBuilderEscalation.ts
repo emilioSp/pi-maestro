@@ -10,7 +10,6 @@ import type {
   NewEscalation,
 } from '#artifacts/escalation/schema.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
-import { pathExists } from '#utils/path-exists.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
   WORKFLOW_EVENTS,
@@ -23,7 +22,7 @@ import { transitionWorkflow } from '#workflow/transitions.ts';
 export type OpenedBuilderEscalation = {
   escalation: Escalation;
   state: WorkflowState;
-  repositoryRoot: string;
+  projectRoot: string;
   workflowPath: string;
   escalationPath: string;
 };
@@ -40,7 +39,6 @@ export const openBuilderEscalation = async ({
   escalation,
 }: OpenBuilderEscalationInput): Promise<OpenedBuilderEscalation> => {
   const workflowPath = paths.getWorkflowPath(specId);
-  const handoffPath = paths.getBuilderHandoffPath(specId);
   const escalationsPath = paths.getEscalationsPath(specId);
   const currentState = await readWorkflowState(workflowPath);
 
@@ -56,10 +54,6 @@ export const openBuilderEscalation = async ({
     );
   }
 
-  if (await pathExists(handoffPath)) {
-    throw new Error('Builder terminal handoff already exists.');
-  }
-
   const nextState = transitionWorkflow({
     state: currentState,
     event: WORKFLOW_EVENTS.OPEN_ESCALATION,
@@ -70,20 +64,18 @@ export const openBuilderEscalation = async ({
   const created = await createEscalation({
     directory: escalationsPath,
     specId: currentState.specId,
-    revision: nextState.revision,
     escalation,
   });
 
   await writeWorkflowState({
     path: workflowPath,
     state: nextState,
-    currentRevision: currentState.revision,
   });
 
   return {
     escalation: created.escalation,
     state: nextState,
-    repositoryRoot: paths.getRepositoryRoot(),
+    projectRoot: paths.getProjectRoot(),
     workflowPath,
     escalationPath: created.path,
   };

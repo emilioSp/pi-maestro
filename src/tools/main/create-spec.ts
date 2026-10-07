@@ -20,7 +20,10 @@ const CreateSpecToolParameters = Type.Object(
   {
     title: Type.String({ minLength: 1 }),
   },
-  { additionalProperties: false },
+  {
+    additionalProperties: false,
+    patternProperties: { '^revision$': Type.Unknown() },
+  },
 );
 
 export const registerCreateSpecTool = (pi: ExtensionAPI): void => {

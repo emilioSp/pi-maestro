@@ -1,5 +1,5 @@
 /**
- * Objective: Resolve the current checkout and explicit workflow identity.
+ * Objective: Resolve the current project and explicit workflow identity.
  * Used: By tools that write workflow artifacts.
  */
 
@@ -19,7 +19,7 @@ export const resolveWorkflowContext = async ({
     throw new Error(`Invalid spec ID: "${specId}".`);
   }
 
-  const { paths, repositoryRoot } = await resolveToolRunContext(cwd);
+  const { paths, projectRoot } = await resolveToolRunContext(cwd);
 
-  return { paths, specId, repositoryRoot };
+  return { paths, specId, projectRoot };
 };

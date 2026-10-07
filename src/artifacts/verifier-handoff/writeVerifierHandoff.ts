@@ -10,21 +10,21 @@ type WriteVerifierHandoffInput = {
   path: string;
   handoff: unknown;
   specId: string;
-  revision: number;
 };
 
 export const writeVerifierHandoff = async ({
   path,
   handoff: draftHandoff,
   specId,
-  revision,
 }: WriteVerifierHandoffInput): Promise<void> => {
-  const input = { handoff: draftHandoff, specId, revision };
+  const input = { handoff: draftHandoff, specId };
   assertVerifierHandoff(input);
   const { handoff } = input;
 
-  if (handoff.findings.some((finding) => finding.rejection !== null)) {
-    throw new Error('New verifier handoff findings must have no rejection.');
+  if (handoff.findings.some((finding) => finding.decision !== null)) {
+    throw new Error(
+      'New verifier handoff findings must have no owner decision.',
+    );
   }
 
   await writeJsonAtomically({ path, data: handoff });
