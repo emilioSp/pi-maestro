@@ -25,7 +25,7 @@ Maestro's Pi status shows the workflow phase. `pi-subagents` FleetView shows age
 
 Each child saves its result through Maestro tools before returning.
 
-If a run fails or returns without a valid saved result, Maestro reports the error and stops. Manual follow-up is described in [Failures and interruptions](workflow.md#failures-and-interruptions).
+If a run fails or returns without a valid saved result, Maestro reports the error and stops. Manual follow-up is described in [Limitations](workflow.md#limitations).
 
 ## External configuration
 
