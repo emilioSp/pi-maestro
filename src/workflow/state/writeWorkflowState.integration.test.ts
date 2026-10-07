@@ -1,4 +1,4 @@
-import { mkdtemp, open, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -10,12 +10,6 @@ import {
   type WorkflowState,
 } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
-
-vi.mock('node:fs/promises', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('node:fs/promises')>();
-
-  return { ...actual, open: vi.fn(actual.open) };
-});
 
 const temporaryDirectories: string[] = [];
 
@@ -35,35 +29,32 @@ afterEach(async () => {
 });
 
 describe('writeWorkflowState', () => {
-  it('creates and atomically replaces validated state without opening a workflow lock', async () => {
+  it('creates and replaces validated state', async () => {
     const directory = await mkdtemp(
       join(tmpdir(), 'pi-maestro-workflow-state-'),
     );
 
     temporaryDirectories.push(directory);
+
     const path = join(directory, 'workflow.json');
+
     await writeWorkflowState({
       path,
       state: state(WORKFLOW_PHASES.DRAFTING_SPEC),
     });
+
     await writeWorkflowState({
       path,
       state: state(WORKFLOW_PHASES.READY_FOR_BUILDER),
     });
+
     await expect(readWorkflowState(path)).resolves.toEqual(
       state(WORKFLOW_PHASES.READY_FOR_BUILDER),
     );
+
     await expect(readFile(path, 'utf8')).resolves.toBe(
       `${JSON.stringify(state(WORKFLOW_PHASES.READY_FOR_BUILDER), null, 2)}\n`,
     );
-    expect(vi.mocked(open).mock.calls.length).toBeGreaterThan(0);
-    expect(
-      vi
-        .mocked(open)
-        .mock.calls.some(([openedPath]) =>
-          String(openedPath).endsWith('.lock'),
-        ),
-    ).toBe(false);
   });
 
   it('rejects invalid replacement state and preserves the old file', async () => {
@@ -72,6 +63,7 @@ describe('writeWorkflowState', () => {
     );
 
     temporaryDirectories.push(directory);
+
     const path = join(directory, 'workflow.json');
     await writeWorkflowState({
       path,
@@ -88,6 +80,7 @@ describe('writeWorkflowState', () => {
     await expect(
       writeWorkflowState({ path, state: invalid as ReturnType<typeof state> }),
     ).rejects.toThrow('Invalid workflow state');
+
     await expect(readFile(path, 'utf8')).resolves.toBe(before);
   });
 });

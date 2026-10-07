@@ -4,7 +4,7 @@
  */
 
 import { assertBuilderHandoff } from '#artifacts/builder-handoff/assertBuilderHandoff.ts';
-import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
+import { writeJson } from '#utils/write-json.ts';
 
 type WriteBuilderHandoffInput = {
   path: string;
@@ -18,5 +18,5 @@ export const writeBuilderHandoff = async ({
   specId,
 }: WriteBuilderHandoffInput): Promise<void> => {
   assertBuilderHandoff({ handoff, specId });
-  await writeJsonAtomically({ path, data: handoff });
+  await writeJson({ path, data: handoff });
 };

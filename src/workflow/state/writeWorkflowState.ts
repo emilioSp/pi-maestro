@@ -1,9 +1,9 @@
 /**
- * Objective: Atomically write a validated workflow state.
+ * Objective: Write a validated workflow state.
  * Used: When Maestro persists a sequential workflow transition.
  */
 
-import { writeJsonAtomically } from '#utils/write-json-atomically.ts';
+import { writeJson } from '#utils/write-json.ts';
 import {
   assertWorkflowState,
   type WorkflowState,
@@ -19,7 +19,7 @@ export const writeWorkflowState = async ({
   state,
 }: WriteWorkflowStateInput): Promise<void> => {
   assertWorkflowState(state);
-  await writeJsonAtomically({
+  await writeJson({
     path,
     data: { version: state.version, specId: state.specId, phase: state.phase },
   });

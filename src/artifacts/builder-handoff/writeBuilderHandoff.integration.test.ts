@@ -46,7 +46,7 @@ afterEach(async () => {
 });
 
 describe('builder handoff writes', () => {
-  it('atomically replaces a validated handoff', async () => {
+  it('replaces a validated handoff', async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, 'B1.json');
 
