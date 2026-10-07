@@ -4,6 +4,7 @@
  */
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
+import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { assertEnvironment } from '#maestro/checks/assertEnvironment.ts';
 import { getMaestroInstructions } from '#maestro/instructions/getMaestroInstructions.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
@@ -83,6 +84,27 @@ export default (pi: ExtensionAPI): void => {
 
       try {
         await assertEnvironment(context);
+        const config = await loadConfiguration(context.cwd);
+
+        maestroSessionState.activate();
+        syncMainTools();
+        await refreshMaestroStatus(context);
+
+        // show builder/verifier model on activation
+        context.ui.notify(
+          [
+            context.ui.theme.fg('muted', 'Maestro active'),
+            context.ui.theme.fg(
+              'accent',
+              `Builder (${config.builder.model} ${config.builder.thinking})`,
+            ),
+            context.ui.theme.fg(
+              'accent',
+              `Verifier (${config.verifier.model} ${config.verifier.thinking})`,
+            ),
+          ].join('\n'),
+          'info',
+        );
       } catch (error) {
         context.ui.notify(
           error instanceof Error ? error.message : String(error),
@@ -91,10 +113,6 @@ export default (pi: ExtensionAPI): void => {
 
         return;
       }
-
-      maestroSessionState.activate();
-      syncMainTools();
-      await refreshMaestroStatus(context);
     },
   });
 

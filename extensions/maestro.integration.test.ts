@@ -3,26 +3,32 @@
  * Used: In integration tests with real Pi sessions and scripted child work.
  */
 
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type {
   ExtensionAPI,
   wrapRegisteredTool,
 } from '@earendil-works/pi-coding-agent';
 import { getAgentDir } from '@earendil-works/pi-coding-agent';
+import { stripTerminalSequences } from '@earendil-works/pi-tui';
 import {
   SUBAGENT_DELEGATION_REQUEST_EVENT,
   SUBAGENT_DELEGATION_RESPONSE_EVENT,
   type SubagentDelegationRequest,
 } from 'pi-subagents/delegation';
 import { Type } from 'typebox';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   BUILDER_HANDOFF_STATUSES,
   PROBE_STATUSES,
 } from '#artifacts/builder-handoff/schema.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
-import { AGENTS } from '#config/schema.ts';
+import { DEFAULT_CONFIG } from '#config/defaults.ts';
+import {
+  AGENTS,
+  SUPPORTED_CONFIG_VERSION,
+  THINKING_LEVELS,
+} from '#config/schema.ts';
 import maestroExtension from '#extensions/maestro.ts';
 import maestroSubagentExtension from '#extensions/maestro-subagent.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
@@ -129,8 +135,16 @@ describe('main Maestro extension', () => {
       cwd: repository.path,
     });
 
-    await session.prompt('/maestro');
+    const entriesBeforeActivation = session.sessionManager.getEntries();
+    const modelRequests = vi.spyOn(session.agent, 'streamFunction');
 
+    await session.prompt('/maestro');
+    const theme = session.extensionRunner.createContext().ui.theme;
+
+    expect(modelRequests).not.toHaveBeenCalled();
+    expect(session.sessionManager.getEntries()).toEqual(
+      entriesBeforeActivation,
+    );
     expect(maestroSessionState.isActive()).toBe(true);
     expect(session.getActiveToolNames()).toEqual([
       ...BASE_TOOLS,
@@ -138,9 +152,14 @@ describe('main Maestro extension', () => {
     ]);
     expect(setStatus).toHaveBeenLastCalledWith(
       MAESTRO_STATUS_KEY,
-      'Maestro active · No active spec',
+      theme.fg('muted', 'Maestro active · ') +
+        theme.fg('accent', 'No active spec'),
     );
-    expect(notify).not.toHaveBeenCalled();
+    expect(notify).toHaveBeenCalledOnce();
+    expect(notify.mock.calls[0][1]).toBe('info');
+    expect(stripTerminalSequences(notify.mock.calls[0][0])).toBe(
+      `Maestro active\nBuilder (${DEFAULT_CONFIG.builder.model} ${DEFAULT_CONFIG.builder.thinking})\nVerifier (${DEFAULT_CONFIG.verifier.model} ${DEFAULT_CONFIG.verifier.thinking})`,
+    );
 
     const event = await session.extensionRunner.emitBeforeAgentStart(
       'Discuss the next change.',
@@ -171,6 +190,8 @@ describe('main Maestro extension', () => {
     expect(setStatus).not.toHaveBeenCalled();
 
     await session.prompt('/maestro');
+    expect(notify).toHaveBeenCalledOnce();
+    expect(setStatus).toHaveBeenLastCalledWith(MAESTRO_STATUS_KEY, undefined);
     await session.prompt('/maestro');
     expect(maestroSessionState.isActive()).toBe(true);
     expect(session.getActiveToolNames()).toEqual([
@@ -182,7 +203,61 @@ describe('main Maestro extension', () => {
         .getAllRegisteredTools()
         .map(({ definition }) => definition.name),
     ).toEqual([FOREIGN_TOOL, ...MAIN_TOOL_NAMES]);
-    expect(notify).not.toHaveBeenCalled();
+    expect(notify).toHaveBeenCalledTimes(2);
+    expect(session.sessionManager.getEntries()).toEqual(
+      entriesBeforeActivation,
+    );
+    expect(modelRequests).not.toHaveBeenCalled();
+
+    modelRequests.mockImplementation(() => {
+      throw new Error('Offline model context inspection.');
+    });
+    await session.prompt('Summarize the project');
+    expect(modelRequests).toHaveBeenCalledOnce();
+    const modelContext = JSON.stringify(modelRequests.mock.calls[0][1]);
+    expect(modelContext).toContain('Summarize the project');
+    expect(modelContext).not.toContain('Builder (');
+    expect(modelContext).not.toContain('Verifier (');
+  });
+
+  it('given explicit agent settings when Maestro activates then its notice shows the configured providers models and thinking levels', async () => {
+    const repository = await createTemporaryProject();
+    cleanupFunctions.push(repository.cleanup);
+    await mkdir(join(repository.path, '.pi'));
+    await writeFile(
+      join(repository.path, '.pi', 'maestro.json'),
+      JSON.stringify({
+        version: SUPPORTED_CONFIG_VERSION,
+        builder: {
+          model: 'openai-codex/gpt-6.1-sol',
+          thinking: THINKING_LEVELS.XHIGH,
+        },
+        verifier: {
+          model: 'openai-codex/gpt-6.1-sol',
+          thinking: THINKING_LEVELS.HIGH,
+        },
+      }),
+    );
+
+    const { session, notify } = await piTestSessions.create({
+      extensions: [maestroExtension],
+      cwd: repository.path,
+    });
+
+    await session.prompt('/maestro');
+    const theme = session.extensionRunner.createContext().ui.theme;
+
+    expect(notify).toHaveBeenCalledExactlyOnceWith(
+      [
+        theme.fg('muted', 'Maestro active'),
+        theme.fg('accent', 'Builder (openai-codex/gpt-6.1-sol xhigh)'),
+        theme.fg('accent', 'Verifier (openai-codex/gpt-6.1-sol high)'),
+      ].join('\n'),
+      'info',
+    );
+    expect(stripTerminalSequences(notify.mock.calls[0][0])).toBe(
+      'Maestro active\nBuilder (openai-codex/gpt-6.1-sol xhigh)\nVerifier (openai-codex/gpt-6.1-sol high)',
+    );
   });
 
   it('given active Maestro when its agents become unavailable then turning off succeeds and the next activation fails', async () => {
@@ -203,12 +278,12 @@ describe('main Maestro extension', () => {
     );
     await session.prompt('/maestro');
     expect(maestroSessionState.isActive()).toBe(false);
-    expect(notify).not.toHaveBeenCalled();
+    expect(notify).toHaveBeenCalledOnce();
 
     await session.prompt('/maestro');
     expect(maestroSessionState.isActive()).toBe(false);
     expect(session.getActiveToolNames()).toEqual(BASE_TOOLS);
-    expect(notify).toHaveBeenCalledOnce();
+    expect(notify).toHaveBeenCalledTimes(2);
     expect(notify).toHaveBeenLastCalledWith(
       expect.stringContaining(`Unknown agent: ${AGENTS.BUILDER}`),
       'error',
@@ -241,7 +316,7 @@ describe('main Maestro extension', () => {
     settingsManager.setProjectTrusted(true);
     await session.prompt('/maestro');
     expect(maestroSessionState.isActive()).toBe(true);
-    expect(notify).toHaveBeenCalledTimes(2);
+    expect(notify).toHaveBeenCalledTimes(3);
   });
 
   it('given an active spec when Maestro turns off then live state clears and files remain unchanged', async () => {
@@ -254,6 +329,7 @@ describe('main Maestro extension', () => {
       });
 
     await session.prompt('/maestro');
+    const theme = session.extensionRunner.createContext().ui.theme;
     maestroSessionState.setActiveSpecId(SPEC_ID);
     const specPath = paths.getSpecFilePath(SPEC_ID);
     const spec = await readFile(specPath, 'utf8');
@@ -285,7 +361,7 @@ describe('main Maestro extension', () => {
       foreign: 'Keep foreign instructions',
     });
     expect(setStatus).toHaveBeenLastCalledWith(MAESTRO_STATUS_KEY, undefined);
-    expect(notify).not.toHaveBeenCalled();
+    expect(notify).toHaveBeenCalledOnce();
     expect(await readFile(specPath, 'utf8')).toBe(spec);
     expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(
       workflow,
@@ -297,7 +373,8 @@ describe('main Maestro extension', () => {
     expect(maestroSessionState.getActiveSpecId()).toBeNull();
     expect(setStatus).toHaveBeenLastCalledWith(
       MAESTRO_STATUS_KEY,
-      'Maestro active · No active spec',
+      theme.fg('muted', 'Maestro active · ') +
+        theme.fg('accent', 'No active spec'),
     );
     expect(session.getActiveToolNames()).toEqual([
       'read',
@@ -337,6 +414,7 @@ describe('main Maestro extension', () => {
     });
 
     await session.prompt('/maestro');
+    const theme = session.extensionRunner.createContext().ui.theme;
 
     const createSpecTool = session.agent.state.tools.find(
       (tool) => tool.name === CREATE_SPEC_TOOL.NAME,
@@ -362,9 +440,13 @@ describe('main Maestro extension', () => {
       created.details as CreatedSpec;
 
     expect(maestroSessionState.getActiveSpecId()).toBe(specId);
+    expect(specPath).toBe(join(repository.path, '.specs', specId));
+    expect(await readWorkflowState(workflowPath)).toMatchObject({ specId });
     expect(setStatus).toHaveBeenLastCalledWith(
       MAESTRO_STATUS_KEY,
-      `Maestro active · ${specId} · Preparing specification`,
+      theme.fg('muted', `Maestro active · ${specId.slice(0, 26)}... · `) +
+        '📝 ' +
+        theme.fg('accent', 'Preparing specification'),
     );
 
     const approvedSpec = (
@@ -396,7 +478,9 @@ describe('main Maestro extension', () => {
     });
     expect(setStatus).toHaveBeenLastCalledWith(
       MAESTRO_STATUS_KEY,
-      `Maestro active · ${specId} · Ready for builder`,
+      theme.fg('muted', `Maestro active · ${specId.slice(0, 26)}... · `) +
+        '🚧 ' +
+        theme.fg('accent', 'Ready for builder'),
     );
 
     const productPath = join(repository.path, 'alert.txt');
@@ -424,6 +508,8 @@ describe('main Maestro extension', () => {
             ? WORKFLOW_PHASES.BUILDER_RUNNING
             : WORKFLOW_PHASES.VERIFIER_RUNNING;
 
+        const runningIcon = request.agent === AGENTS.BUILDER ? '🛠️' : '🔍';
+
         const runningLabel =
           request.agent === AGENTS.BUILDER
             ? 'Builder running'
@@ -434,7 +520,9 @@ describe('main Maestro extension', () => {
         });
         expect(setStatus).toHaveBeenLastCalledWith(
           MAESTRO_STATUS_KEY,
-          `Maestro active · ${specId} · ${runningLabel}`,
+          theme.fg('muted', `Maestro active · ${specId.slice(0, 26)}... · `) +
+            `${runningIcon} ` +
+            theme.fg('accent', runningLabel),
         );
 
         const { session: child } = await piTestSessions.create({
@@ -515,7 +603,9 @@ describe('main Maestro extension', () => {
     });
     expect(setStatus).toHaveBeenLastCalledWith(
       MAESTRO_STATUS_KEY,
-      `Maestro active · ${specId} · Ready for verifier`,
+      theme.fg('muted', `Maestro active · ${specId.slice(0, 26)}... · `) +
+        '📋 ' +
+        theme.fg('accent', 'Ready for verifier'),
     );
 
     const runVerifierTool = session.agent.state.tools.find(
@@ -554,7 +644,9 @@ describe('main Maestro extension', () => {
     ]);
     expect(setStatus).toHaveBeenLastCalledWith(
       MAESTRO_STATUS_KEY,
-      `Maestro active · ${specId} · Completed`,
+      theme.fg('muted', `Maestro active · ${specId.slice(0, 26)}... · `) +
+        '✅ ' +
+        theme.fg('success', 'Completed'),
     );
 
     const state = await readWorkflowState(workflowPath);
@@ -622,6 +714,7 @@ describe('main Maestro extension', () => {
       });
 
       await session.prompt('/maestro');
+      const theme = session.extensionRunner.createContext().ui.theme;
       maestroSessionState.setActiveSpecId(SPEC_ID);
 
       const markSpecReadyTool = session.agent.state.tools.find(
@@ -649,7 +742,9 @@ describe('main Maestro extension', () => {
       });
       expect(setStatus).toHaveBeenLastCalledWith(
         MAESTRO_STATUS_KEY,
-        `Maestro active · ${SPEC_ID} · Ready for builder`,
+        theme.fg('muted', `Maestro active · ${SPEC_ID.slice(0, 26)}... · `) +
+          '🚧 ' +
+          theme.fg('accent', 'Ready for builder'),
       );
     },
   );
@@ -663,6 +758,7 @@ describe('main Maestro extension', () => {
     });
 
     await session.prompt('/maestro');
+    const theme = session.extensionRunner.createContext().ui.theme;
     maestroSessionState.setActiveSpecId(SPEC_ID);
     const requests: SubagentDelegationRequest[] = [];
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
@@ -728,7 +824,9 @@ describe('main Maestro extension', () => {
     ]);
     expect(setStatus).toHaveBeenLastCalledWith(
       MAESTRO_STATUS_KEY,
-      `Maestro active · ${SPEC_ID} · Builder failed`,
+      theme.fg('muted', `Maestro active · ${SPEC_ID.slice(0, 26)}... · `) +
+        '❌ ' +
+        theme.fg('error', 'Builder failed'),
     );
   });
 
