@@ -50,9 +50,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "npm run test:unit && npm run test:integration",
-    "test:unit": "vitest run --exclude \"**/*.integration.test.ts\"",
-    "test:integration": "vitest run --exclude \"**/*.unit.test.ts\"",
+    "test": "vitest run --coverage --config vitest.config.ts",
     "check": "npm run lint:fix && npm run typecheck && npm test",
     "prepublishOnly": "npm run check",
     "publish:npm": "npm publish --access public",
@@ -75,6 +73,7 @@
     "@biomejs/biome": "2.5.15",
     "@earendil-works/pi-agent-core": "1.0.3",
     "@earendil-works/pi-tui": "1.0.3",
+    "@vitest/coverage-v8": "5.0.3",
     "@types/node": "26.6.4",
     "oxlint": "1.87.0",
     "oxlint-anti-slop": "0.3.3",

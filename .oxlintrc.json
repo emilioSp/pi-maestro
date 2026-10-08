@@ -16,7 +16,7 @@
       "specifier": "oxlint-anti-slop"
     }
   ],
-  "ignorePatterns": [".agents/**", ".pi/**"],
+  "ignorePatterns": [".agents/**", ".pi/**", "coverage/**"],
   "rules": {
     "anti-slop/no-reduce-accumulator-copy": "error",
     "anti-slop/no-chained-type-assertions": "error",
