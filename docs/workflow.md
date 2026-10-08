@@ -202,6 +202,14 @@ Maestro uses the latest saved handoff in each role's sequence as the active resu
 
 ## Limitations
 
+### No small models
+The owner must not use small models with a `low` thinking level for this workflow. These combinations cannot reliably follow the workflow rules. 
+One example is `gpt-luna-6` with `thinking: "low"`.
+
+Moreover, the workflow works well with a defined harness: tests, lint for code rules, anti-slop checks for unwanted patterns, and `AGENTS.md`. Maestro does not supply these project-specific checks.
+
+### No automatic rollback
 Maestro provides no automatic rollback, repair, or recovery for failed or interrupted workflows. The files that remain are available for owner inspection. The owner handles the workflow manually.
 
+### No reconciliation
 Disabling Maestro, restarting Pi, or using `/resume` clears live Maestro session state and leaves project files unchanged. Maestro starts disabled in a new or resumed session. Reactivating it does not reconstruct or resume a saved workflow.
