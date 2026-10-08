@@ -70,11 +70,14 @@ The owner follows this workflow:
 5. Reviews verifier findings and chooses an action for every finding.
 6. Reads Maestro's summary at `candidate-ready` and performs the final review.
 
-Maestro starts the verifier after a successful builder run. Both agents run in the foreground: Pi waits for each run to finish. Maestro shows the current phase in Pi's status. `pi-subagents` FleetView and `/subagents-fleet` show agent activity and transcripts.
+Maestro starts the verifier after a successful builder run. 
+Both agents run in the foreground: Pi waits for each run to finish and Maestro shows the current phase in Pi's status, while `pi-subagents` FleetView and `/subagents-fleet` show agent activity and transcripts.
 
-The owner must not edit product files while the workflow runs. Maestro can perform temporary experiments with owner agreement during spec preparation and permitted revisions. See [Workflow](docs/workflow.md#spec-approval).
+The owner must not edit product files while the workflow runs. 
+Maestro can perform temporary experiments with owner agreement during spec preparation and permitted revisions. See [Workflow](docs/workflow.md#spec-approval).
 
-If a contract change is needed during an escalation or finding decision, the owner reviews the revised spec and replies `GREEN FLAG` again. Maestro then starts another builder run. A recorded builder failure stops the workflow and requires manual owner follow-up.
+An escalation asks the owner to decide an implementation question, and a finding records a technical issue reported by the verifier. The owner discusses both with Maestro, never directly with the builder or verifier.
+If a contract change is needed during an escalation or finding decision, the owner reviews the revised spec and replies `GREEN FLAG` again. Maestro then starts another builder run.
 
 The workflow ends at `candidate-ready`. Rejected findings retain their reasons. Later changes are outside the completed verification. The owner controls any later Git use, pull request, and merge.
 
