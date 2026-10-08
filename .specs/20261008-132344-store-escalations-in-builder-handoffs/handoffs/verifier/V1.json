@@ -1,0 +1,65 @@
+{
+  "version": "1.0.0",
+  "specId": "20261008-132344-store-escalations-in-builder-handoffs",
+  "summary": "Independently reproduced all ten acceptance criteria against the live candidate. Repository checks passed with 260 tests; the focused rerun passed 78 tests. No technical findings.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npm run check and focused Vitest rerun: resolve-escalations.integration.test.ts submits the two exact CSV questions through the registered maestro_record_builder_handoff tool and compares B1 against the complete fixture, including both null resolutions.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "npm run check and focused Vitest rerun: resolve-escalations.integration.test.ts resolves B1/E1 and B1/E2, submits the next question as B2/E1, and verifies the saved B1 remains unchanged. Inspected sequential-ID validation in assertBuilderHandoff.ts.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "npm run check and focused Vitest rerun: resolve-escalations.integration.test.ts revises the contract with unresolved B1 questions, submits B2, resolves both current questions together using the exact specified resolutions, and compares unchanged B1 bytes and unchanged B2 content outside resolution fields.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "npm run check and focused Vitest rerun: resolve-escalations.integration.test.ts rejects missing, duplicate, unknown, invalid-option, blank-decision, blank-reason, and empty batches; wrong phase, incompatible handoff, and already resolved questions. Tests compare workflow and handoff bytes after each rejection.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "npm run check and focused Vitest rerun: completeBuilderPass.integration.test.ts rejects every specified malformed submission through the registered handoff tool and verifies unchanged workflow bytes and no handoff directory. assertBuilderHandoff.unit.test.ts also verifies existing invalid done probe combinations.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "npm run check and focused Vitest rerun: completeBuilderPass.integration.test.ts submits escalation outcomes with not-run and passed probes, observes escalation-decision, resolves questions, starts the next pass, and submits done with passed probes and escalations: [] to observe ready-for-verifier.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "npm run check and focused Vitest rerun: extension integration tests inspect actual owner and child registrations and loaded instructions. Independently read Maestro, builder, and verifier instructions and searched non-test src/, agents/, and extensions/ for removed tools, standalone storage APIs, and path fields; no obsolete references remained. Inspected creation and version contracts.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "npm run check and focused Vitest rerun: run-builder.integration.test.ts completes done and two-question escalated runs using scripted delegation responses and compares each structured result exactly with the saved active handoff.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC9",
+      "probe": "npm run check and focused Vitest rerun: run-builder.integration.test.ts returns from runs with missing handoffs, wrong spec identity, invalid schema, status/phase mismatches, or resolved questions in escalation-decision; each produces a Builder protocol error. Inspected result readers to confirm no alternative artifact fallback.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC10",
+      "probe": "npm run check and focused Vitest rerun: resolve-escalations.integration.test.ts submits both decisions through registered maestro_resolve_escalations and verifies ready-for-builder in both returned details and saved workflow state.",
+      "probeStatus": "passed"
+    }
+  ],
+  "findings": [],
+  "notes": [
+    "Inspected package scripts before execution. npm run lint, read-only oxlint, npm run check, and git diff --check passed. The required automatic-fix check made no product or protocol content changes.",
+    "Focused rerun command: ./node_modules/.bin/vitest run src/tools/main/resolve-escalations.integration.test.ts src/workflow/builder/completeBuilderPass.integration.test.ts src/tools/main/run-builder.integration.test.ts extensions/maestro.integration.test.ts extensions/maestro-subagent.integration.test.ts src/specs/create.integration.test.ts src/artifacts/builder-handoff/assertBuilderHandoff.unit.test.ts --reporter=verbose.",
+    "Used B1 only as context. Its note explains submission through the previously loaded schema. Fresh candidate registrations and executable tests independently verified the new required contract.",
+    "All original product and protected protocol contents remained unchanged. Removed the verifier-owned temporary backup. Preserved an unrelated external update to ignored .idea/workspace.xml containing IDE changelist and time tracking data.",
+    "README.md and docs/ remain unchanged as required. No prototypes or earlier verifier handoffs were present."
+  ]
+}

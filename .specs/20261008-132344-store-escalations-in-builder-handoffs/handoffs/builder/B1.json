@@ -1,0 +1,63 @@
+{
+  "version": "1.0.0",
+  "specId": "20261008-132344-store-escalations-in-builder-handoffs",
+  "status": "done",
+  "summary": "Embedded escalation questions and owner resolutions in numbered builder handoffs. Added complete batch resolution, unified builder run results, removed standalone escalation storage and tools, and updated runtime instructions. npm run check passed all 260 tests.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npm run check: resolve-escalations.integration.test.ts submits the two exact CSV questions through the registered builder handoff tool and compares B1 with the complete fixture, including null resolutions.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "npm run check: resolve-escalations.integration.test.ts resolves B1/E1 and B1/E2, submits a new timestamp question in B2/E1, and verifies B1 remains unchanged.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "npm run check: resolve-escalations.integration.test.ts revises the contract with unresolved B1 questions, submits B2, resolves both current questions together, and compares exact resolutions and unchanged remaining content.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "npm run check: resolve-escalations.integration.test.ts rejects missing, duplicate, unknown, invalid-option, blank-text, and empty batches; wrong phases, incompatible handoffs, and resolved questions. Workflow and handoff bytes remain unchanged.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "npm run check: completeBuilderPass.integration.test.ts exercises malformed submissions through the registered tool and verifies no handoff directory or workflow change. Covers empty escalations, done with questions, nonsequential IDs, invalid options/recommendation, builder-supplied resolution, and invalid done probe combinations.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "npm run check: completeBuilderPass.integration.test.ts submits escalations with not-run and passed probes, verifies escalation-decision, resolves questions, and submits done with passed probes and empty escalations to ready-for-verifier.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "npm run check: existing main and subagent extension integration tests inspect registered tools and Maestro/builder/verifier instructions for plural complete batches, embedded resolutions, qualified IDs, and removal of obsolete tools/storage references. Source inspection and ripgrep confirm obsolete APIs are removed.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "npm run check: run-builder.integration.test.ts completes done and two-question escalation runs and compares returned structured results with their saved active builder handoffs.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC9",
+      "probe": "npm run check: run-builder.integration.test.ts verifies protocol errors for missing handoffs, wrong spec identity, invalid schema, status/phase mismatches, and resolved questions in escalation-decision.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC10",
+      "probe": "npm run check: resolve-escalations.integration.test.ts resolves both questions through the registered plural tool and verifies returned and persisted phases are ready-for-builder.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "This session's terminal tool was loaded before the product change and uses the prior schema. Fresh candidate tool tests require and verify escalations: [] for done. Maestro instructed this pass to submit through the loaded tool without adding compatibility code or editing artifacts directly.",
+    "README.md and docs/ remain unchanged as required. The pre-existing .pi/maestro.json edit was preserved.",
+    "Final npm run check passed 130 unit tests and 130 integration tests. git diff --check passed. Temporary test projects were cleaned up."
+  ]
+}
