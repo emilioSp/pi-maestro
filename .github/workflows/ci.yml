@@ -34,5 +34,12 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          disable_search: true
+
       - name: Check package contents
         run: npm pack --dry-run
