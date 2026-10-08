@@ -41,3 +41,13 @@ Update the validator and its tests to cover this case. Remove the corresponding 
 ## Remove failed status --> replace with escalation
 
 ## Add test coverage
+
+## ensure spec ac implementation and verification
+
+Una funzione estrae gli ID da titoli con un formato fisso, per esempio ### AC1: .... Alla submission del builder e del verifier confronti gli ID della spec con quelli dell’handoff:
+
+* Nessun criterio mancante.
+* Nessun criterio aggiunto.
+* Nessun duplicato, anche nella spec.
+
+Se il controllo fallisce, rifiuti l’handoff prima di salvare il report e cambiare fase.
