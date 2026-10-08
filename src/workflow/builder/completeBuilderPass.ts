@@ -1,15 +1,17 @@
 /**
  * Objective: Complete a builder pass with a validated terminal handoff.
- * Used: When the builder reports done or failed through the child tool.
+ * Used: When the builder reports done, escalation, or failed through the child tool.
  */
 
 import { mkdir } from 'node:fs/promises';
+import { Value } from 'typebox/value';
 import { assertBuilderHandoff } from '#artifacts/builder-handoff/assertBuilderHandoff.ts';
 import {
   BUILDER_HANDOFF_STATUSES,
   BUILDER_HANDOFF_VERSION,
   type BuilderHandoff,
   type BuilderHandoffSubmissionInput,
+  BuilderHandoffSubmissionSchema,
 } from '#artifacts/builder-handoff/schema.ts';
 import { writeBuilderHandoff } from '#artifacts/builder-handoff/writeBuilderHandoff.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
@@ -29,36 +31,14 @@ export type CompletedBuilderPass = {
   handoffPath: string;
 };
 
-type BuildBuilderHandoffInput = {
-  draftHandoff: BuilderHandoffSubmissionInput;
-  state: WorkflowState;
-};
+function assertBuilderHandoffSubmission(
+  input: unknown,
+): asserts input is BuilderHandoffSubmissionInput {
+  const [error] = Value.Errors(BuilderHandoffSubmissionSchema, input);
 
-const buildBuilderHandoff = ({
-  draftHandoff,
-  state,
-}: BuildBuilderHandoffInput) => {
-  if (draftHandoff.status === BUILDER_HANDOFF_STATUSES.FAILED) {
-    return {
-      version: BUILDER_HANDOFF_VERSION,
-      specId: state.specId,
-      status: draftHandoff.status,
-      summary: draftHandoff.summary,
-      acceptanceCriteria: draftHandoff.acceptanceCriteria,
-      failure: draftHandoff.failure,
-      notes: draftHandoff.notes,
-    };
-  }
-
-  return {
-    version: BUILDER_HANDOFF_VERSION,
-    specId: state.specId,
-    status: draftHandoff.status,
-    summary: draftHandoff.summary,
-    acceptanceCriteria: draftHandoff.acceptanceCriteria,
-    notes: draftHandoff.notes,
-  };
-};
+  if (error !== undefined)
+    throw new Error(`Invalid builder submission: ${error.message}.`);
+}
 
 type CompleteBuilderPassInput = {
   paths: MaestroPaths;
@@ -86,8 +66,14 @@ export const completeBuilderPass = async ({
     );
   }
 
+  assertBuilderHandoffSubmission(draftHandoff);
+
   const handoffInput = {
-    handoff: buildBuilderHandoff({ draftHandoff, state: currentState }),
+    handoff: {
+      ...draftHandoff,
+      version: BUILDER_HANDOFF_VERSION,
+      specId: currentState.specId,
+    },
     specId: currentState.specId,
   };
 
@@ -99,7 +85,9 @@ export const completeBuilderPass = async ({
     event:
       draftHandoff.status === BUILDER_HANDOFF_STATUSES.DONE
         ? WORKFLOW_EVENTS.BUILDER_DONE
-        : WORKFLOW_EVENTS.BUILDER_FAILED,
+        : draftHandoff.status === BUILDER_HANDOFF_STATUSES.ESCALATION
+          ? WORKFLOW_EVENTS.OPEN_ESCALATION
+          : WORKFLOW_EVENTS.BUILDER_FAILED,
   });
 
   await mkdir(paths.getBuilderHandoffsPath(specId), { recursive: true });
