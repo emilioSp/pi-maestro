@@ -1,5 +1,7 @@
 # pi-maestro
 
+[![Coverage](https://img.shields.io/codecov/c/github/emiliosp/pi-maestro?logo=codecov)](https://codecov.io/gh/emiliosp/pi-maestro)
+
 Pi extension for a spec-driven multiagent development workflow.
 
 ![Maestro workflow](docs/maestro.png)
