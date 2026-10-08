@@ -51,3 +51,20 @@ Una funzione estrae gli ID da titoli con un formato fisso, per esempio ### AC1: 
 * Nessun duplicato, anche nella spec.
 
 Se il controllo fallisce, rifiuti l’handoff prima di salvare il report e cambiare fase.
+
+## Limit verifier modification 
+
+TODO: ridurre le modifiche temporanee del verifier
+
+Aggiornare le istruzioni del verifier:
+
+* Preferire prove che non modificano i file esistenti.
+* Usare file temporanei separati quando possibile.
+* Modificare un file esistente solo quando serve per verificare un criterio.
+* Prima della modifica, conservare il contenuto originale esatto.
+* Ripristinare i file subito dopo ogni prova, anche se fallisce.
+* Non usare comandi con correzioni automatiche quando esiste una modalità di solo controllo.
+* Prima dell’handoff, controllare che ogni modifica temporanea sia stata ripristinata e ogni file temporaneo creato sia stato rimosso.
+* Se il ripristino non riesce, fermarsi e riportare i percorsi e le modifiche residue.
+
+Queste istruzioni riducono il rischio. Il controllo degli hash rileva gli eventuali errori di ripristino.
