@@ -70,7 +70,7 @@ The owner follows this workflow:
 5. Reviews verifier findings and chooses an action for every finding.
 6. Reads Maestro's summary at `candidate-ready` and performs the final review.
 
-Maestro starts the verifier after a successful builder run. 
+Maestro starts the verifier after a successful builder run.
 Both agents run in the foreground: Pi waits for each run to finish and Maestro shows the current phase in Pi's status, while `pi-subagents` FleetView and `/subagents-fleet` show agent activity and transcripts.
 
 The owner must not edit product files while the workflow runs. 
@@ -89,6 +89,9 @@ Maestro uses default values when `.pi/maestro.json` is absent from the project r
 
 ## Documentation
 
-1. [Workflow](docs/workflow.md).
-2. [Configuration](docs/configuration.md).
-3. [Subagent integration](docs/subagent-integration.md).
+The reading order is:
+
+1. [Glossary](docs/glossary.md): terms and identifiers used in specs, reports, and Maestro messages. Read this before the first workflow.
+2. [Workflow](docs/workflow.md): approvals, decisions, and how each run produces artifacts.
+3. [Configuration](docs/configuration.md): project paths, models, and timeouts.
+4. [Subagent integration](docs/subagent-integration.md): agent context, execution, and activity tracking.

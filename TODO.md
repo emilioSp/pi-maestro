@@ -35,3 +35,5 @@ Update the validator and its tests to cover this case. Remove the corresponding 
 ## Maestro can change model for builder and verifier in spec preparation and ready for builder phases
 
 ## Reconciliacion
+
+## Escalation in builder handoff
