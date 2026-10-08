@@ -1,3 +1,4 @@
+import { readFile, rm, writeFile } from 'node:fs/promises';
 import {
   SUBAGENT_DELEGATION_REQUEST_EVENT,
   SUBAGENT_DELEGATION_RESPONSE_EVENT,
@@ -5,12 +6,14 @@ import {
 } from 'pi-subagents/delegation';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
+import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import {
   BUILDER_HANDOFF_STATUSES,
   PROBE_STATUSES,
 } from '#artifacts/builder-handoff/schema.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { AGENTS } from '#config/schema.ts';
+import { csvExportEscalation } from '#test/fixtures/csv-export-escalation.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -20,7 +23,6 @@ import piTestSessions from '#test/support/pi-session.ts';
 import { registerRunBuilderTool } from '#tools/main/run-builder.ts';
 import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
-import { openBuilderEscalation } from '#workflow/escalation/openBuilderEscalation.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
@@ -73,6 +75,61 @@ describe('run builder tool', () => {
     );
   });
 
+  it.each(['missing', 'wrong-status', 'resolved-question'])(
+    'given %s saved escalation result then reports a protocol error',
+    async (scenario) => {
+      const { paths, repository } = await createApprovedWorkflow();
+
+      const { tool, events } = await piTestSessions.createRegisteredTool({
+        cwd: repository.path,
+        extension: registerRunBuilderTool,
+      });
+
+      events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
+        // JUSTIFICATION: The run tool emits a delegation request on this channel.
+        const request = payload as SubagentDelegationRequest;
+
+        const completed = await completeBuilderPass({
+          paths,
+          specId: SPEC_ID,
+          handoff: csvExportEscalation,
+        });
+
+        const handoff = JSON.parse(
+          await readFile(completed.handoffPath, 'utf8'),
+        );
+
+        if (scenario === 'missing') await rm(completed.handoffPath);
+
+        if (scenario === 'wrong-status') {
+          handoff.status = BUILDER_HANDOFF_STATUSES.DONE;
+          handoff.escalations = [];
+          handoff.acceptanceCriteria = [];
+        }
+
+        if (scenario === 'resolved-question')
+          handoff.escalations[0].resolution = {
+            selectedOptionId: 'exclude',
+            decision: 'Exclude archived rows',
+            reason: 'Keep exports current',
+          };
+
+        if (scenario !== 'missing')
+          await writeFile(completed.handoffPath, JSON.stringify(handoff));
+        events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
+          requestId: request.requestId,
+          ownerRunId: request.ownerRunId,
+          nodeId: request.nodeId,
+          status: DELEGATION_STATUSES.COMPLETED,
+          result: { kind: 'text', text: 'Saved' },
+        });
+      });
+      await expect(
+        tool.execute('test-call', { specId: SPEC_ID }),
+      ).rejects.toThrow('Builder protocol error:');
+    },
+  );
+
   it('registers a closed spec-only input schema', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerRunBuilderTool,
@@ -113,6 +170,7 @@ describe('run builder tool', () => {
         specId: SPEC_ID,
         handoff: {
           status: BUILDER_HANDOFF_STATUSES.DONE,
+          escalations: [],
           summary: 'The approved change was implemented.',
           acceptanceCriteria: [
             {
@@ -135,6 +193,18 @@ describe('run builder tool', () => {
     });
 
     const result = await tool.execute('test-call', { specId: SPEC_ID });
+
+    const saved = await readBuilderHandoff({
+      path: await paths.getActiveBuilderHandoffPath(SPEC_ID),
+      specId: SPEC_ID,
+    });
+
+    expect(result.details).toEqual({
+      outcome: BUILDER_HANDOFF_STATUSES.DONE,
+      specId: SPEC_ID,
+      phase: WORKFLOW_PHASES.READY_FOR_VERIFIER,
+      handoff: saved,
+    });
 
     const receivedRequest = emit.mock.calls[0][1];
     expect(receivedRequest).toMatchObject({
@@ -159,6 +229,7 @@ describe('run builder tool', () => {
       outcome: BUILDER_HANDOFF_STATUSES.DONE,
       specId: SPEC_ID,
       phase: WORKFLOW_PHASES.READY_FOR_VERIFIER,
+      handoff: { status: BUILDER_HANDOFF_STATUSES.DONE, escalations: [] },
     });
   });
 
@@ -229,23 +300,10 @@ describe('run builder tool', () => {
       // JUSTIFICATION: The run tool emits a delegation request on this channel.
       const request = payload as SubagentDelegationRequest;
 
-      const opened = await openBuilderEscalation({
+      const opened = await completeBuilderPass({
         paths,
         specId: SPEC_ID,
-        escalation: {
-          question: 'Which behavior should the builder use?',
-          context: 'The repository exposes two existing behaviors.',
-          options: [
-            {
-              id: 'existing',
-              description: 'Keep the existing behavior.',
-              consequences: 'No compatibility change is needed.',
-              nextStep: 'Continue with the existing behavior.',
-            },
-          ],
-          recommendation: null,
-          notes: [],
-        },
+        handoff: csvExportEscalation,
       });
 
       expect(opened.state.phase).toBe(WORKFLOW_PHASES.ESCALATION_DECISION);
@@ -261,10 +319,22 @@ describe('run builder tool', () => {
 
     const result = await tool.execute('test-call', { specId: SPEC_ID });
 
+    const saved = await readBuilderHandoff({
+      path: await paths.getActiveBuilderHandoffPath(SPEC_ID),
+      specId: SPEC_ID,
+    });
+
+    expect(result.details).toEqual({
+      outcome: BUILDER_HANDOFF_STATUSES.ESCALATION,
+      specId: SPEC_ID,
+      phase: WORKFLOW_PHASES.ESCALATION_DECISION,
+      handoff: saved,
+    });
+
     expect(result.details).toMatchObject({
       outcome: BUILDER_HANDOFF_STATUSES.ESCALATION,
       phase: WORKFLOW_PHASES.ESCALATION_DECISION,
-      escalation: { id: 'E1' },
+      handoff: { ...csvExportEscalation, version: '1.0.0', specId: SPEC_ID },
     });
   });
 
