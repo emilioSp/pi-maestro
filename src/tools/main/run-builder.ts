@@ -12,8 +12,6 @@ import {
   BUILDER_HANDOFF_STATUSES,
   type BuilderHandoff,
 } from '#artifacts/builder-handoff/schema.ts';
-import { readEscalationHistory } from '#artifacts/escalation/readEscalationHistory.ts';
-import type { Escalation } from '#artifacts/escalation/schema.ts';
 import { AGENTS } from '#config/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
@@ -61,7 +59,7 @@ type BuilderRunResult =
       outcome: typeof BUILDER_HANDOFF_STATUSES.ESCALATION;
       specId: string;
       phase: typeof WORKFLOW_PHASES.ESCALATION_DECISION;
-      escalation: Escalation;
+      handoff: BuilderHandoff;
     };
 
 type ReadBuilderResultInput = {
@@ -159,22 +157,28 @@ const buildRunResult = async ({
   }
 
   if (state.phase === WORKFLOW_PHASES.ESCALATION_DECISION) {
-    const history = await readEscalationHistory({
-      directory: paths.getEscalationsPath(specId),
+    const handoff = await readBuilderHandoff({
+      path: await paths.getActiveBuilderHandoffPath(specId),
       specId,
     });
 
-    const escalation = history.at(-1);
+    if (handoff.status !== BUILDER_HANDOFF_STATUSES.ESCALATION) {
+      throw new Error(
+        `Builder handoff status does not match workflow phase "${state.phase}".`,
+      );
+    }
 
-    if (escalation === undefined || escalation.resolution !== null) {
-      throw new Error('The builder escalation is missing or already resolved.');
+    if (handoff.escalations.some(({ resolution }) => resolution !== null)) {
+      throw new Error(
+        'Current builder escalations already contain an owner resolution.',
+      );
     }
 
     return {
       outcome: BUILDER_HANDOFF_STATUSES.ESCALATION,
       specId,
       phase: state.phase,
-      escalation,
+      handoff,
     };
   }
 
@@ -192,7 +196,7 @@ const formatBuilderResult = (result: BuilderRunResult): string => {
     return `Builder failed for spec ${result.specId}. The workflow is builder-failed and cannot be retried.`;
   }
 
-  return `Builder opened escalation ${result.escalation.id} for spec ${result.specId}. The workflow is waiting for an owner decision.`;
+  return `Builder submitted escalation questions for spec ${result.specId}. The workflow is waiting for an owner decision.`;
 };
 
 export const registerRunBuilderTool = (pi: ExtensionAPI): void => {

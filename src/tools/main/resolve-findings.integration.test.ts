@@ -62,6 +62,7 @@ const createFindingsDecisionWorkflow = async (findings: VerifierFinding[]) => {
     specId: SPEC_ID,
     handoff: {
       status: BUILDER_HANDOFF_STATUSES.DONE,
+      escalations: [],
       summary: 'Implemented the approved change.',
       acceptanceCriteria: [],
       notes: [],

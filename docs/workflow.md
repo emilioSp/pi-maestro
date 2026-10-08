@@ -6,9 +6,10 @@ The approved `spec.md` is the contract for the change. It defines behavior, scop
 
 An acceptance criterion contains a probe, an expected result, and an example. A probe is a scenario used to test behavior.
 
-A handoff is a saved report from a builder or verifier run. It records the result, probe outcomes, and notes. A verifier handoff also contains findings, which are technical issues.
+A handoff is a saved report from a builder or verifier run. It records the result, probe outcomes, and notes.
 
-An escalation is a separate request for an owner decision. The builder saves it instead of a handoff when an implementation question requires an answer.
+A builder handoff can contain escalations, which are questions that need owner decisions. 
+A verifier handoff can contain findings, which are technical issues.
 
 ## Roles
 
@@ -46,8 +47,8 @@ flowchart TD
     verify --> findings
     findings -->|None| candidate
 
-    buildOutcome -->|Escalation| ownerEscalation{Owner decides}
-    ownerEscalation -->|Contract unchanged| recordEscalation[Maestro records the answer]
+    buildOutcome -->|Escalation| ownerEscalation{Owner decides every question}
+    ownerEscalation -->|Contract unchanged| recordEscalation[Maestro records all answers]
     recordEscalation --> build
     ownerEscalation -->|Contract changes| reviseSpec[Owner and Maestro revise the spec]
     reviseSpec --> approval
@@ -77,7 +78,7 @@ The default path is `.specs/<spec-id>/workflow.json`. The spec directory is [con
 | `drafting-spec` | The owner and Maestro are preparing the initial spec. |
 | `ready-for-builder` | The approved spec or recorded owner decisions permit a builder run. |
 | `builder-running` | A builder run is active. |
-| `escalation-decision` | The owner must decide how to handle the current escalation. |
+| `escalation-decision` | The owner must decide how to handle every escalation question. |
 | `builder-failed` | The builder recorded a technical failure. The workflow stops. |
 | `ready-for-verifier` | The builder completed the work and the verifier can start. |
 | `verifier-running` | A verifier run is active. |
@@ -111,14 +112,18 @@ Each criterion contains these parts:
 
 An escalation returns an implementation decision to the owner. It does not necessarily mean that a technical failure occurred. Examples include undefined behavior, a conflict with the spec, or a possible scope change.
 
-Maestro presents the question, evidence, options, consequences, and next steps. The workflow pauses in `escalation-decision` until the owner decides.
+The builder saves all questions from one pass in the `escalations` list of its numbered handoff. Maestro identifies each question with both report and escalation IDs, such as `B1/E1`. See [Escalation references](glossary.md#escalation-references) for their scope.
+
+Maestro presents each question, evidence, options, consequences, and next steps. The workflow pauses in `escalation-decision` while the owner decides how to proceed.
+
+If the contract stays unchanged, the owner gives Maestro an answer and reason for every current question. The owner can select a listed option or give a different decision.
 
 | Owner choice | Result |
 |---|---|
-| Keep the current contract | Maestro records the answer and reason, returns to `ready-for-builder`, and starts another builder run. |
+| Keep the current contract | Maestro saves all answers and reasons together in the active builder handoff, returns to `ready-for-builder`, and starts another builder run. |
 | Change the contract | The owner and Maestro revise the same spec and obtain renewed approval before another builder run. |
 
-The builder saves escalations as `handoffs/escalations/E1.json`, `handoffs/escalations/E2.json`, and so on. The files remain available as history.
+Owner decisions update only the questions' `resolution` fields. The handoff's other content and earlier handoffs remain unchanged.
 
 ## Findings
 
@@ -126,7 +131,7 @@ Every current finding requires an owner decision, regardless of severity. Maestr
 
 Maestro identifies each finding with its report and finding IDs. For example, `V1/F2` means finding 2 in verifier report `V1.json`. The finding is an entry in that file's `findings` list, not a separate `F2.json` file. Finding numbers restart at `F1` in each verifier report. See [Finding references](glossary.md#finding-references) for a worked example.
 
-Maestro records owner decisions in the same verifier report, e.g. decisions about `V1/F2` update `V1.json`, not a new `V2.json`. A new verifier result creates the next report (`V3.json`).
+Maestro records owner decisions in the same verifier report, e.g. decisions about `V1/F2` update `V1.json`, not a new `V2.json`. A new verifier result creates the next report (`V2.json`).
 
 | Decision | Result |
 |---|---|
@@ -143,7 +148,7 @@ Contract revisions are allowed only in `escalation-decision` or `findings-decisi
 
 After review and cleanup, Maestro asks the owner to inspect the revised spec and reply `GREEN FLAG` again. Maestro then records `ready-for-builder` and starts another builder run.
 
-Previous escalations, findings, and handoffs remain as historical context. The revised spec is the contract for subsequent work.
+Previous escalations, findings, and handoffs remain as historical context. The new (revised) spec is the contract for subsequent work.
 
 ## Verification boundary
 
@@ -159,11 +164,13 @@ The owner performs the final review and controls any later Git use, pull request
 
 ## Stored artifacts
 
-An artifact is a saved workflow file. Maestro creates the spec directory with `spec.md`, `workflow.json`, and empty `handoffs/escalations/` and `prototypes/` directories. Builder and verifier handoff directories appear when those results are saved.
+An artifact is a saved workflow file. Maestro creates the spec directory with `spec.md`, `workflow.json`, and an empty `prototypes/` directory. Builder and verifier handoff directories appear when those results are saved.
 
 The agents submit results through Maestro tools instead of writing the reports directly. A successful submission saves the result and updates the phase in `workflow.json` before the agent returns.
 
-The numbers prefix count saved artifacts within one spec. Builder (`B`), verifier (`V`), and escalation (`E`) sequences each start at 1 and advance independently. An escalation does not consume a builder report number. Revising the same spec keeps these sequences while a new spec starts a new sequences.
+Builder (`B`) and verifier (`V`) numbers count saved handoffs within one spec. Each sequence starts at 1 and advances independently. Every saved builder outcome, including escalation, creates the next `B` report. Revising the same spec keeps these sequences. A new spec starts new sequences.
+
+Escalation (`E`) numbers identify questions within a builder handoff. They restart at `E1` in each handoff.
 
 For example, a repair cycle with successful builder results produces these files:
 
@@ -175,7 +182,7 @@ For example, a repair cycle with successful builder results produces these files
 | 4 | A new builder run completes the fixes. | Creates `handoffs/builder/B2.json`. |
 | 5 | A new verifier run checks the work again and reports no findings. | Creates `handoffs/verifier/V2.json`. The workflow reaches `candidate-ready`. |
 
-If the first builder run escalates, it saves `E1.json` without creating `B1.json`.
+If the first builder run escalates, it creates `B1.json` with its questions. Owner answers update `B1.json`. The next saved builder result creates `B2.json`.
 
 A builder report with `status: failed` stops the workflow without a verifier run. If an agent returns without a valid saved result, Maestro stops and reports the error. See [Limitations](#limitations).
 
@@ -189,16 +196,13 @@ The default layout after multiple runs is:
 │   ├── builder/
 │   │   ├── B1.json
 │   │   └── B2.json
-│   ├── verifier/
-│   │   ├── V1.json
-│   │   └── V2.json
-│   └── escalations/
-│       ├── E1.json
-│       └── ...
+│   └── verifier/
+│       ├── V1.json
+│       └── V2.json
 └── prototypes/
 ```
 
-Maestro uses the latest saved handoff in each role's sequence as the active result. New results do not replace earlier numbered reports. Earlier reports remain available as context, not as proof for the current run. Owner decisions update the relevant verifier or escalation file without creating another numbered artifact.
+Maestro uses the latest saved handoff in each role's sequence as the active result. New results do not replace earlier numbered reports. Earlier reports remain available as context, not as proof for the current run. Owner decisions update the active builder or verifier handoff without creating another numbered report.
 
 ## Limitations
 

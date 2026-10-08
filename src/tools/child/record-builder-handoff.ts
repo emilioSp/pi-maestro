@@ -1,14 +1,14 @@
 /**
  * Objective: Register the builder handoff tool for the current project.
- * Used: When the builder reports a done or failed result.
+ * Used: When the builder reports a done, escalation, or failed result.
  */
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
 import {
-  BUILDER_HANDOFF_STATUSES,
-  BuilderAcceptanceCriterionSchema,
-  BuilderHandoffFailureSchema,
+  BuilderDoneHandoffSubmissionSchema,
+  BuilderEscalationHandoffSubmissionSchema,
+  BuilderFailedHandoffSubmissionSchema,
 } from '#artifacts/builder-handoff/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import { resolveWorkflowContext } from '#tools/child/utils/resolveWorkflowContext.ts';
@@ -18,30 +18,28 @@ export const BUILDER_HANDOFF_TOOL = {
   NAME: 'maestro_record_builder_handoff',
   LABEL: 'Record Builder Handoff',
   DESCRIPTION:
-    'Record the builder pass as done or failed. Put significant discoveries that do not require an owner decision in notes. After success, stop. The tool saves a numbered builder handoff and the workflow phase.',
+    'Record the builder pass as done, escalation, or failed. Put significant discoveries that do not require an owner decision in notes. After success, stop. The tool saves a numbered builder handoff and the workflow phase.',
 } as const;
-
-const BuilderHandoffContentFields = {
-  summary: Type.String({ minLength: 1 }),
-  acceptanceCriteria: Type.Array(BuilderAcceptanceCriterionSchema),
-  notes: Type.Array(Type.String()),
-};
 
 const BuilderHandoffToolParameters = Type.Union([
   Type.Object(
     {
       specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
-      status: Type.Literal(BUILDER_HANDOFF_STATUSES.DONE),
-      ...BuilderHandoffContentFields,
+      ...BuilderDoneHandoffSubmissionSchema.properties,
     },
     { additionalProperties: false },
   ),
   Type.Object(
     {
       specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
-      status: Type.Literal(BUILDER_HANDOFF_STATUSES.FAILED),
-      ...BuilderHandoffContentFields,
-      failure: BuilderHandoffFailureSchema,
+      ...BuilderEscalationHandoffSubmissionSchema.properties,
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
+      ...BuilderFailedHandoffSubmissionSchema.properties,
     },
     { additionalProperties: false },
   ),

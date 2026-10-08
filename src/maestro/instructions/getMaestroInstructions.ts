@@ -16,7 +16,7 @@ The project root is the canonical Pi working directory, resolved with realpath. 
 Load .pi/maestro.json only from this root. Resolve spec and product paths against this root. Children run in this directory.
 Do not add worktree checks, activation gates, warnings, or configuration changes: compatible pi-subagents configuration is the owner's responsibility.
 Use generic tools for project inspection. Use only maestro_* tools for workflow transitions, protocol artifacts, and agent runs.
-Do not edit workflow.json, handoffs, or escalation files directly, including through shell commands.
+Do not edit workflow.json or handoffs directly, including through shell commands.
 The spec, prototype, and experiment permissions below are the only exceptions for file changes.
 
 Use the specId and paths returned by maestro_create_spec. Read workflow.json before selecting the next action. Its validated phase is the source of truth.
@@ -82,7 +82,7 @@ The tool saves builder-running before launch. The builder records its result bef
 Read the returned artifact and follow its outcome:
 
 1. done: The phase is ready-for-verifier. Call maestro_run_verifier with the active specId.
-2. escalation: The phase is escalation-decision. Present the question, evidence, options, consequences, and next steps to the owner.
+2. escalation: The phase is escalation-decision. Present all questions from the active builder handoff, with evidence, options, consequences, and next steps.
 3. failed: The phase is builder-failed. Report the failure and stop. There is no builder retry or spec revision from this phase.
 
 A significant discovery needs an escalation when the owner must choose between meaningful alternatives, even without a technical blocker.
@@ -98,14 +98,14 @@ Read the returned verifier handoff. If there are findings, follow findings-decis
 
 ### Explain findings and escalations
 
-Before requesting a decision, read the active spec, the finding or escalation artifact, and the relevant code.
+Before requesting a decision, read the active spec, the handoff that contains the finding or escalation, and the relevant code.
 Trace the affected behavior across components. Do not just repeat the builder's or verifier's summary.
 For findings, inspect the live project files checked by the verifier.
 This inspection does not authorize product repairs, new verification runs, or experiments. Follow the existing permissions above.
 
 For each finding or escalation, give the owner enough detail to decide without opening other files:
 
-1. Identify findings with both handoff and finding IDs, such as V1/F1. Finding IDs are local to each verifier handoff. Identify escalations by their IDs. Explain the issue or open question and its relation to the approved contract.
+1. Identify findings with both handoff and finding IDs, such as V1/F1. Finding IDs are local to each verifier handoff. Identify escalation questions with both handoff and local IDs, such as B1/E1 or B2/E1. Escalation IDs restart at E1 in each builder handoff. Explain the issue or open question and its relation to the approved contract.
 2. For code-related issues, show a short code excerpt with its file path and line numbers. Explain how that code causes or constrains the behavior. A file reference alone is not enough.
 3. Give a concrete example with starting conditions, input or action, current behavior, and practical impact. Compare with the contract's expected result when defined. Otherwise identify the behavior that needs an owner decision.
 4. Explain each available choice, its required changes, scope, consequences, and next workflow step. For findings, cover fix-code, rejection, and spec revision when relevant. Explain what remains unchanged or unresolved if no code changes.
@@ -117,9 +117,9 @@ Keep excerpts and explanations focused, but do not replace the details with seve
 
 ### Record owner decisions
 
-In escalation-decision, wait for the explicit owner answer. Do not choose an option for the owner.
-If the contract stays unchanged, call maestro_resolve_escalation with the current escalation ID and the owner's decision and reason.
-The tool saves the resolution and returns ready-for-builder. Call maestro_run_builder separately.
+In escalation-decision, collect an explicit owner answer for every current question. Do not choose options for the owner.
+If the contract stays unchanged, call maestro_resolve_escalations once with specId and the complete decisions array. Each item contains escalationId, selectedOptionId, decision, and reason. Use selectedOptionId: null for an owner decision outside the listed options. The tool saves all resolutions inside the active builder handoff. Do not submit partial batches.
+The tool saves all resolutions and returns ready-for-builder. Call maestro_run_builder separately.
 If the contract must change, use the spec revision procedure below instead of resolving the escalation against the old contract.
 
 In findings-decision, present every current finding. Every finding requires an owner decision, regardless of severity.

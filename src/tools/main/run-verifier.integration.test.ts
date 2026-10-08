@@ -42,6 +42,7 @@ const createReadyForVerifierWorkflow = async () => {
     specId: SPEC_ID,
     handoff: {
       status: BUILDER_HANDOFF_STATUSES.DONE,
+      escalations: [],
       summary: 'The approved change was implemented.',
       acceptanceCriteria: [],
       notes: [],

@@ -23,7 +23,7 @@ Runs stay in the foreground and occur one at a time. Pi waits for each run to fi
 
 Maestro's Pi status shows the workflow phase. `pi-subagents` FleetView shows agent activity, and `/subagents-fleet` opens its inspector for details and transcripts.
 
-Each child saves its result through Maestro tools before returning. Builder results produce `B1.json`, `B2.json`, and so on. Verifier results produce `V1.json`, `V2.json`, and so on. A builder escalation produces an `E1.json` or later escalation file instead of a builder report. See [Stored artifacts](workflow.md#stored-artifacts) for the creation sequence.
+Each child saves its result through Maestro tools before returning. Builder results produce `B1.json`, `B2.json`, and so on. Verifier results produce `V1.json`, `V2.json`, and so on. See [Stored artifacts](workflow.md#stored-artifacts) for the creation sequence.
 
 If a run fails or returns without a valid saved result, Maestro reports the error and stops. Manual follow-up is described in [Limitations](workflow.md#limitations).
 

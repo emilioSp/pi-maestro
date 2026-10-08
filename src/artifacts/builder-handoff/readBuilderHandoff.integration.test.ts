@@ -25,6 +25,7 @@ const handoff = (summary: string): BuilderHandoff => ({
   version: BUILDER_HANDOFF_VERSION,
   specId,
   status: BUILDER_HANDOFF_STATUSES.DONE,
+  escalations: [],
   summary,
   acceptanceCriteria: [
     {

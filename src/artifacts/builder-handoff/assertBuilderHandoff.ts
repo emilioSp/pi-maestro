@@ -80,6 +80,35 @@ export function assertBuilderHandoff(
     );
   }
 
+  if (handoff.status === BUILDER_HANDOFF_STATUSES.ESCALATION) {
+    for (const [index, escalation] of handoff.escalations.entries()) {
+      if (escalation.id !== `E${index + 1}`) {
+        throw new Error('Escalation IDs must be sequential in array order.');
+      }
+
+      const optionIds = new Set(escalation.options.map(({ id }) => id));
+
+      if (optionIds.size !== escalation.options.length) {
+        throw new Error('Escalation option IDs must be unique.');
+      }
+
+      if (
+        escalation.recommendation !== null &&
+        !optionIds.has(escalation.recommendation.optionId)
+      ) {
+        throw new Error('Escalation recommendation references unknown option.');
+      }
+
+      if (
+        escalation.resolution !== null &&
+        escalation.resolution.selectedOptionId !== null &&
+        !optionIds.has(escalation.resolution.selectedOptionId)
+      ) {
+        throw new Error('Escalation resolution references unknown option.');
+      }
+    }
+  }
+
   if (!isValidSpecId(specId)) {
     throw new Error(`Invalid expected builder handoff spec ID: "${specId}".`);
   }

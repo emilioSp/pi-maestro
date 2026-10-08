@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { wrapRegisteredTool } from '@earendil-works/pi-coding-agent';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -11,7 +12,6 @@ import {
   SPEC_ID,
 } from '#test/support/builder-workflow.ts';
 import piTestSessions from '#test/support/pi-session.ts';
-import { BUILDER_ESCALATION_TOOL } from '#tools/child/open-escalation.ts';
 import { BUILDER_HANDOFF_TOOL } from '#tools/child/record-builder-handoff.ts';
 import { VERIFIER_HANDOFF_TOOL } from '#tools/child/record-verifier-handoff.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
@@ -42,19 +42,25 @@ describe('subagent extension', () => {
       builder.session.extensionRunner.getAllRegisteredTools();
 
     expect(builderTools.map(({ definition }) => definition.name)).toEqual([
-      BUILDER_ESCALATION_TOOL.NAME,
       BUILDER_HANDOFF_TOOL.NAME,
       VERIFIER_HANDOFF_TOOL.NAME,
     ]);
 
+    const registeredBuilderTool = builderTools.find(
+      ({ definition }) => definition.name === BUILDER_HANDOFF_TOOL.NAME,
+    );
+
+    assert(registeredBuilderTool, 'Builder handoff tool is not registered.');
+
     const builderTool = wrapRegisteredTool(
-      builderTools[1],
+      registeredBuilderTool,
       builder.session.extensionRunner,
     );
 
     const builderResult = await builderTool.execute('builder-handoff', {
       specId: SPEC_ID,
       status: BUILDER_HANDOFF_STATUSES.DONE,
+      escalations: [],
       summary: 'Implemented the approved change.',
       acceptanceCriteria: [],
       notes: [],
@@ -87,8 +93,14 @@ describe('subagent extension', () => {
     const verifierTools =
       verifier.session.extensionRunner.getAllRegisteredTools();
 
+    const registeredVerifierTool = verifierTools.find(
+      ({ definition }) => definition.name === VERIFIER_HANDOFF_TOOL.NAME,
+    );
+
+    assert(registeredVerifierTool, 'Verifier handoff tool is not registered.');
+
     const verifierTool = wrapRegisteredTool(
-      verifierTools[2],
+      registeredVerifierTool,
       verifier.session.extensionRunner,
     );
 

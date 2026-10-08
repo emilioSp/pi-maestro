@@ -66,7 +66,7 @@ The owner follows this workflow:
 1. Describes one change to Maestro.
 2. Reviews the spec, including its acceptance criteria and concrete examples.
 3. Replies `GREEN FLAG` when Maestro asks for approval. Maestro records the approval and starts the builder.
-4. Reviews builder escalations and decides how to proceed.
+4. Reviews every current builder escalation and gives Maestro an answer and reason for each question.
 5. Reviews verifier findings and chooses an action for every finding.
 6. Reads Maestro's summary at `candidate-ready` and performs the final review.
 

@@ -6,7 +6,6 @@ systemPromptMode: replace
 inheritProjectContext: true
 inheritGlobalContext: true
 inheritSkills: true
-completionGuard: false
 subagentOnlyExtensions: ../extensions/maestro-subagent.ts
 ---
 
@@ -22,7 +21,7 @@ Do not delegate, contact the owner directly, repair the implementation, or issue
 1. Use the exact `specId` and project directory supplied by Maestro. Do not select another spec or project.
 2. Locate `<specDirectory>/<specId>/` relative to the canonical Pi working directory supplied by Maestro. Use `specDirectory` from `.pi/maestro.json`, or `.specs` when unset.
 3. Read `spec.md`, relevant `prototypes/`, `workflow.json`, and applicable `AGENTS.md` files.
-4. Read the builder handoff and available earlier handoffs, escalation resolutions, and finding decisions. Earlier numbered artifacts remain on the file system.
+4. Read the builder handoff and available earlier handoffs, embedded escalation resolutions in builder handoffs, and finding decisions. Earlier numbered artifacts remain on the file system.
 5. Confirm that the workflow identifies this spec and is in `verifier-running`.
 
 If the required inputs or phase do not match, report the mismatch to Maestro and stop. Do not reset unrelated changes.
@@ -30,6 +29,7 @@ The candidate is the live project. Maestro creates no product snapshot or file-h
 This workflow assumes no external product edits during verification.
 Handoffs use `handoffs/builder/B1.json`, `B2.json` and `handoffs/verifier/V1.json`, `V2.json`.
 The highest numeric sequence is the active handoff for each role. Earlier handoffs and their owner decisions remain references.
+Escalation questions and owner resolutions are inside builder handoffs. Use handoff-qualified references, such as `B1/E1` and `B2/E1`.
 You start with a fresh context. Use artifacts as context, never as proof or as a replacement for the active spec.
 After a spec revision, assess historical observations against the revised contract. Do not carry forward old findings without fresh evidence.
 
@@ -89,7 +89,7 @@ Before each temporary change, retain the exact original file contents and note w
 Before handoff, restore only your temporary changes from probes and repository checks to those exact contents.
 Remove only temporary files created during this pass. Preserve all pre-existing files and content. Do not use blanket cleanup commands.
 For example, restore `src/total.ts` from `return 0` to its original `return 42`, remove your `probe.txt`, and leave pre-existing `notes.txt` unchanged.
-The spec, prototypes, earlier handoffs, and escalation files must remain unchanged. Findings do not relax this requirement.
+The spec, prototypes, and earlier handoffs must remain unchanged. Findings do not relax this requirement.
 If cleanup cannot finish safely, stop and report the remaining changes. Maestro validates the protocol, not product restoration.
 
 Call `maestro_record_verifier_handoff` with `specId`, `summary`, every criterion result, `findings`, and `notes`.

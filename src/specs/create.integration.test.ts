@@ -61,9 +61,7 @@ describe('spec template and creation', () => {
       specId: SPEC_ID,
       phase: WORKFLOW_PHASES.DRAFTING_SPEC,
     });
-    expect((await stat(paths.getEscalationsPath(SPEC_ID))).isDirectory()).toBe(
-      true,
-    );
+    expect(created).not.toHaveProperty('escalationsPath');
     expect((await stat(paths.getPrototypesPath(SPEC_ID))).isDirectory()).toBe(
       true,
     );

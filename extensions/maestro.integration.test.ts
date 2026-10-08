@@ -46,7 +46,7 @@ import { BUILDER_HANDOFF_TOOL } from '#tools/child/record-builder-handoff.ts';
 import { VERIFIER_HANDOFF_TOOL } from '#tools/child/record-verifier-handoff.ts';
 import { CREATE_SPEC_TOOL } from '#tools/main/create-spec.ts';
 import { MARK_SPEC_READY_TOOL } from '#tools/main/mark-spec-ready.ts';
-import { RESOLVE_ESCALATION_TOOL } from '#tools/main/resolve-escalation.ts';
+import { RESOLVE_ESCALATIONS_TOOL } from '#tools/main/resolve-escalations.ts';
 import { RESOLVE_FINDINGS_TOOL } from '#tools/main/resolve-findings.ts';
 import { RUN_BUILDER_TOOL } from '#tools/main/run-builder.ts';
 import { RUN_VERIFIER_TOOL } from '#tools/main/run-verifier.ts';
@@ -62,7 +62,7 @@ const MAIN_TOOL_NAMES = [
   CREATE_SPEC_TOOL.NAME,
   MARK_SPEC_READY_TOOL.NAME,
   RUN_BUILDER_TOOL.NAME,
-  RESOLVE_ESCALATION_TOOL.NAME,
+  RESOLVE_ESCALATIONS_TOOL.NAME,
   RUN_VERIFIER_TOOL.NAME,
   RESOLVE_FINDINGS_TOOL.NAME,
 ];
@@ -552,7 +552,7 @@ describe('main Maestro extension', () => {
           acceptanceCriteria,
           notes: [],
           ...(request.agent === AGENTS.BUILDER
-            ? { status: BUILDER_HANDOFF_STATUSES.DONE }
+            ? { status: BUILDER_HANDOFF_STATUSES.DONE, escalations: [] }
             : { findings: [] }),
         });
 
@@ -599,6 +599,7 @@ describe('main Maestro extension', () => {
         specId,
         acceptanceCriteria,
         status: BUILDER_HANDOFF_STATUSES.DONE,
+        escalations: [],
       },
     });
     expect(setStatus).toHaveBeenLastCalledWith(

@@ -13,6 +13,7 @@ const doneHandoff = (): BuilderHandoff => ({
   version: BUILDER_HANDOFF_VERSION,
   specId,
   status: BUILDER_HANDOFF_STATUSES.DONE,
+  escalations: [],
   summary: 'Implemented the approved change.',
   acceptanceCriteria: [
     {
