@@ -60,6 +60,7 @@ describe('Maestro paths', () => {
           version: BUILDER_HANDOFF_VERSION,
           specId: SPEC_ID,
           status: BUILDER_HANDOFF_STATUSES.DONE,
+          escalations: [],
           summary: 'Implemented greeting',
           acceptanceCriteria: [],
           notes: [],
@@ -133,16 +134,6 @@ describe('Maestro paths', () => {
         'V1.json',
       ),
     );
-    expect(
-      paths.getEscalationPath({ specId: SPEC_ID, escalationNumber: 2 }),
-    ).toBe(
-      join(
-        repository.path,
-        'custom/specs',
-        SPEC_ID,
-        'handoffs/escalations/E2.json',
-      ),
-    );
   });
 
   it('keeps generated artifact paths inside the repository', async () => {
@@ -164,8 +155,6 @@ describe('Maestro paths', () => {
       paths.getHandoffsPath(SPEC_ID),
       paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
       paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
-      paths.getEscalationsPath(SPEC_ID),
-      paths.getEscalationPath({ specId: SPEC_ID, escalationNumber: 1 }),
       paths.getPrototypesPath(SPEC_ID),
       paths.getPrototypePath({
         specId: SPEC_ID,
