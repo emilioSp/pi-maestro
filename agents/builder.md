@@ -6,7 +6,6 @@ systemPromptMode: replace
 inheritProjectContext: true
 inheritGlobalContext: true
 inheritSkills: true
-completionGuard: false
 subagentOnlyExtensions: ../extensions/maestro-subagent.ts
 ---
 
