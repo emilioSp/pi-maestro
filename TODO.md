@@ -37,3 +37,5 @@ Update the validator and its tests to cover this case. Remove the corresponding 
 ## Reconciliacion
 
 ## Escalation in builder handoff
+
+## Remove failed status --> replace with escalation
