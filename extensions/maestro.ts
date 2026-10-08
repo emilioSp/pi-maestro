@@ -18,9 +18,9 @@ import {
   registerMarkSpecReadyTool,
 } from '#tools/main/mark-spec-ready.ts';
 import {
-  RESOLVE_ESCALATION_TOOL,
-  registerResolveEscalationTool,
-} from '#tools/main/resolve-escalation.ts';
+  RESOLVE_ESCALATIONS_TOOL,
+  registerResolveEscalationsTool,
+} from '#tools/main/resolve-escalations.ts';
 import {
   RESOLVE_FINDINGS_TOOL,
   registerResolveFindingsTool,
@@ -38,7 +38,7 @@ const MAIN_TOOL_NAMES: readonly string[] = [
   CREATE_SPEC_TOOL.NAME,
   MARK_SPEC_READY_TOOL.NAME,
   RUN_BUILDER_TOOL.NAME,
-  RESOLVE_ESCALATION_TOOL.NAME,
+  RESOLVE_ESCALATIONS_TOOL.NAME,
   RUN_VERIFIER_TOOL.NAME,
   RESOLVE_FINDINGS_TOOL.NAME,
 ];
@@ -47,7 +47,7 @@ export default (pi: ExtensionAPI): void => {
   registerCreateSpecTool(pi);
   registerMarkSpecReadyTool(pi);
   registerRunBuilderTool(pi);
-  registerResolveEscalationTool(pi);
+  registerResolveEscalationsTool(pi);
   registerRunVerifierTool(pi);
   registerResolveFindingsTool(pi);
 
