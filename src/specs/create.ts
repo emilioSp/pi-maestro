@@ -22,7 +22,6 @@ export type CreatedSpec = {
   specPath: string;
   specFilePath: string;
   workflowPath: string;
-  escalationsPath: string;
   prototypesPath: string;
   state: WorkflowState;
 };
@@ -48,7 +47,6 @@ export const createSpec = async ({
   const specPath = paths.getSpecPath(specId);
   const specFilePath = paths.getSpecFilePath(specId);
   const workflowPath = paths.getWorkflowPath(specId);
-  const escalationsPath = paths.getEscalationsPath(specId);
   const prototypesPath = paths.getPrototypesPath(specId);
 
   if (await pathExists(specPath)) {
@@ -71,7 +69,6 @@ export const createSpec = async ({
     await mkdir(paths.getSpecDirectory(), { recursive: true });
     await mkdir(specPath);
     created = true;
-    await mkdir(escalationsPath, { recursive: true });
     await mkdir(prototypesPath, { recursive: true });
     await writeFile(specFilePath, spec, { encoding: 'utf8', flag: 'wx' });
     await writeWorkflowState({
@@ -100,7 +97,6 @@ export const createSpec = async ({
     specPath,
     specFilePath,
     workflowPath,
-    escalationsPath,
     prototypesPath,
     state,
   };
