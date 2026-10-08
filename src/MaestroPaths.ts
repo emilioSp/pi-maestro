@@ -15,7 +15,6 @@ const PATHS = {
   HANDOFFS_PATH: 'handoffs',
   BUILDER_HANDOFFS_PATH: 'handoffs/builder',
   VERIFIER_HANDOFFS_PATH: 'handoffs/verifier',
-  ESCALATIONS_PATH: 'handoffs/escalations',
   PROTOTYPES_PATH: 'prototypes',
 } as const;
 
@@ -53,11 +52,6 @@ function assertSafeRelativePrototypePath(value: string): void {
 export type MaestroPathsInput = {
   projectRoot: string;
   config: MaestroConfig;
-};
-
-type EscalationPathInput = {
-  specId: string;
-  escalationNumber: number;
 };
 
 type HandoffPathInput = {
@@ -211,32 +205,6 @@ export class MaestroPaths {
       specId,
       handoffPassNumber: handoffPassNumber + 1,
     });
-  }
-
-  public getEscalationsPath(specId: string): string {
-    assertSpecId(specId);
-
-    return resolve(
-      this.projectRoot,
-      this.specDirectoryFromRoot,
-      specId,
-      PATHS.ESCALATIONS_PATH,
-    );
-  }
-
-  public getEscalationPath({
-    specId,
-    escalationNumber,
-  }: EscalationPathInput): string {
-    assertArtifactNumber(escalationNumber);
-    assertSpecId(specId);
-
-    return resolve(
-      this.projectRoot,
-      this.specDirectoryFromRoot,
-      specId,
-      `${PATHS.ESCALATIONS_PATH}/E${escalationNumber}.json`,
-    );
   }
 
   public getPrototypesPath(specId: string): string {
