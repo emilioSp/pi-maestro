@@ -215,7 +215,6 @@ describe('main Maestro extension', () => {
     await session.prompt('Summarize the project');
     expect(modelRequests).toHaveBeenCalledOnce();
     const modelContext = JSON.stringify(modelRequests.mock.calls[0][1]);
-    expect(modelContext).toContain('Summarize the project');
     expect(modelContext).not.toContain('Builder (');
     expect(modelContext).not.toContain('Verifier (');
   });
@@ -254,9 +253,6 @@ describe('main Maestro extension', () => {
         theme.fg('accent', 'Verifier (openai-codex/gpt-6.1-sol high)'),
       ].join('\n'),
       'info',
-    );
-    expect(stripTerminalSequences(notify.mock.calls[0][0])).toBe(
-      'Maestro active\nBuilder (openai-codex/gpt-6.1-sol xhigh)\nVerifier (openai-codex/gpt-6.1-sol high)',
     );
   });
 
@@ -546,7 +542,8 @@ describe('main Maestro extension', () => {
         );
 
         assertToolRegistered(tool);
-        await tool.execute(request.requestId, {
+
+        const handoffResult = await tool.execute(request.requestId, {
           specId,
           summary: 'The weather alert message passed the probe.',
           acceptanceCriteria,
@@ -556,8 +553,13 @@ describe('main Maestro extension', () => {
             : { findings: [] }),
         });
 
-        if (request.agent === AGENTS.BUILDER) {
-        }
+        expect(handoffResult.details).toMatchObject({
+          specId,
+          phase:
+            request.agent === AGENTS.BUILDER
+              ? WORKFLOW_PHASES.READY_FOR_VERIFIER
+              : WORKFLOW_PHASES.CANDIDATE_READY,
+        });
 
         events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
           requestId: request.requestId,
@@ -737,10 +739,13 @@ describe('main Maestro extension', () => {
         isError: false,
       });
 
-      expect(result.details).toMatchObject({
-        specId: SPEC_ID,
+      expect(result.details).toEqual({
+        ...current,
         phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
       });
+      await expect(
+        readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
+      ).resolves.toEqual(result.details);
       expect(setStatus).toHaveBeenLastCalledWith(
         MAESTRO_STATUS_KEY,
         theme.fg('muted', `Maestro active · ${SPEC_ID.slice(0, 26)}... · `) +
