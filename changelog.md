@@ -2,9 +2,11 @@
 
 This file summarizes meaningful changes to the codebase, including behavior, contracts, architecture, and development tools. Git tags identify version boundaries; GitHub Releases are not required. Version-only changes and routine maintenance are omitted.
 
-## Unreleased
+## 0.7.1
 
-Documented the project mission, current tech stack, owner responsibilities, roadmap, and codebase change history.
+1. Documented the project mission, current tech stack, owner responsibilities, roadmap, and codebase change history. See [PR #30](https://github.com/emilioSp/pi-maestro/pull/30).
+2. Replaced `TODO.md` with the roadmap and included the four project constitution documents in the npm package.
+3. Updated documentation audits to compare all current documentation and the project constitution with the working tree without requesting a comparison baseline.
 
 ## 0.7.0
 
