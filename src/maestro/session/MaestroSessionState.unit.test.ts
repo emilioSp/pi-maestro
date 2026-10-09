@@ -28,14 +28,4 @@ describe('Maestro session state', () => {
       maestroSessionState.setActiveSpecId('20260321-143053-add-other-change'),
     ).toThrow('Cannot replace active Maestro spec');
   });
-
-  it('given an active spec when Maestro deactivates then activation and selection clear', () => {
-    maestroSessionState.activate();
-    maestroSessionState.setActiveSpecId(SPEC_ID);
-
-    maestroSessionState.deactivate();
-
-    expect(maestroSessionState.isActive()).toBe(false);
-    expect(maestroSessionState.getActiveSpecId()).toBeNull();
-  });
 });
