@@ -5,7 +5,6 @@ import {
   readFile,
   realpath,
   rm,
-  symlink,
   writeFile,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
