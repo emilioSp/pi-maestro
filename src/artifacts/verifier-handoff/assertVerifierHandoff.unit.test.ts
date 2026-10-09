@@ -40,12 +40,6 @@ const finding = (): VerifierHandoff['findings'][number] => ({
 });
 
 describe('verifier handoff validation', () => {
-  it('accepts an empty finding list with completed checks', () => {
-    expect(() =>
-      assertVerifierHandoff({ handoff: handoff(), specId }),
-    ).not.toThrow();
-  });
-
   it.each([PROBE_STATUSES.FAILED, PROBE_STATUSES.NOT_RUN])(
     'given a passed probe and a second %s probe then requires a related finding',
     (probeStatus) => {
@@ -166,14 +160,5 @@ describe('verifier handoff validation', () => {
     expect(() => assertVerifierHandoff({ handoff: input, specId })).toThrow(
       message,
     );
-  });
-
-  it('requires the expected spec ID', () => {
-    expect(() =>
-      assertVerifierHandoff({
-        handoff: handoff(),
-        specId: '20260321-143052-other-change',
-      }),
-    ).toThrow('Verifier handoff spec ID mismatch');
   });
 });

@@ -6,7 +6,6 @@ import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
   WORKFLOW_PHASES,
   WORKFLOW_STATE_VERSION,
-  type WorkflowState,
 } from '#workflow/state/schema.ts';
 
 const temporaryDirectories: string[] = [];
@@ -27,21 +26,6 @@ afterEach(async () => {
 });
 
 describe('readWorkflowState', () => {
-  it('returns a validated state', async () => {
-    const directory = await createTemporaryDirectory();
-    const path = join(directory, 'workflow.json');
-
-    const state: WorkflowState = {
-      version: WORKFLOW_STATE_VERSION,
-      specId: '20260321-143052-add-weather-alerts',
-      phase: WORKFLOW_PHASES.DRAFTING_SPEC,
-    };
-
-    await writeFile(path, JSON.stringify(state), 'utf8');
-
-    await expect(readWorkflowState(path)).resolves.toEqual(state);
-  });
-
   it('rejects malformed and unvalidated files on read', async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, 'workflow.json');

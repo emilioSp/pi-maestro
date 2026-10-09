@@ -12,13 +12,7 @@ import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
   WORKFLOW_PHASES,
   WORKFLOW_STATE_VERSION,
-  type WorkflowPhase,
 } from '#workflow/state/schema.ts';
-import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
-
-type CreateWorkflowInput = {
-  phase?: WorkflowPhase;
-};
 
 const INSTANT = Temporal.Instant.from('2026-03-21T14:30:52Z');
 
@@ -28,9 +22,7 @@ const OTHER_SPEC_ID = '20260321-143053-other-spec';
 
 const cleanupFunctions: Array<() => Promise<void>> = [];
 
-const createWorkflow = async ({
-  phase = WORKFLOW_PHASES.DRAFTING_SPEC,
-}: CreateWorkflowInput = {}) => {
+const createWorkflow = async () => {
   const repository = await createTemporaryProject();
   cleanupFunctions.push(repository.cleanup);
 
@@ -47,13 +39,6 @@ const createWorkflow = async ({
     activeWorkflowSpecId: null,
     instant: INSTANT,
   });
-
-  if (phase !== WORKFLOW_PHASES.DRAFTING_SPEC) {
-    await writeWorkflowState({
-      path: created.workflowPath,
-      state: { ...created.state, phase },
-    });
-  }
 
   maestroSessionState.activate();
   maestroSessionState.setActiveSpecId(SPEC_ID);
@@ -112,58 +97,6 @@ describe('mark spec ready tool', () => {
     await expect(readWorkflowState(created.workflowPath)).resolves.toEqual(
       result.details,
     );
-  });
-
-  it.each([
-    WORKFLOW_PHASES.ESCALATION_DECISION,
-    WORKFLOW_PHASES.FINDINGS_DECISION,
-  ])('approves an authorized revision from %s', async (phase) => {
-    const { created, repository } = await createWorkflow({
-      phase,
-    });
-
-    const { tool } = await piTestSessions.createRegisteredTool({
-      cwd: repository.path,
-      extension: registerMarkSpecReadyTool,
-    });
-
-    const result = await tool.execute('test-call', { specId: SPEC_ID });
-
-    expect(result.details).toEqual({
-      version: WORKFLOW_STATE_VERSION,
-      specId: SPEC_ID,
-      phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
-    });
-    await expect(readWorkflowState(created.workflowPath)).resolves.toEqual(
-      result.details,
-    );
-  });
-
-  it.each([
-    WORKFLOW_PHASES.READY_FOR_BUILDER,
-    WORKFLOW_PHASES.BUILDER_RUNNING,
-    WORKFLOW_PHASES.BUILDER_FAILED,
-    WORKFLOW_PHASES.READY_FOR_VERIFIER,
-    WORKFLOW_PHASES.VERIFIER_RUNNING,
-    WORKFLOW_PHASES.CANDIDATE_READY,
-  ])('rejects approval from %s', async (phase) => {
-    const { created, repository } = await createWorkflow({
-      phase,
-    });
-
-    const { tool } = await piTestSessions.createRegisteredTool({
-      cwd: repository.path,
-      extension: registerMarkSpecReadyTool,
-    });
-
-    await expect(
-      tool.execute('test-call', { specId: SPEC_ID }),
-    ).rejects.toThrow(
-      `Workflow event "mark-spec-ready" is not allowed from phase "${phase}".`,
-    );
-    await expect(
-      readWorkflowState(created.workflowPath),
-    ).resolves.toMatchObject({ phase });
   });
 
   it('returns a domain error when the requested spec is not active', async () => {

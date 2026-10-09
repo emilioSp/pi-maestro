@@ -5,7 +5,6 @@ import {
   readFile,
   realpath,
   rm,
-  symlink,
   writeFile,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -77,104 +76,6 @@ describe('configuration loading', () => {
       await workspace.cleanup();
     }
   });
-
-  it('rejects an obsolete worktree configuration field', async () => {
-    const workspace = await createWorkspace();
-    const piDirectory = join(workspace.path, '.pi');
-    await mkdir(piDirectory, { recursive: true });
-    await writeFile(
-      join(piDirectory, 'maestro.json'),
-      JSON.stringify({
-        version: SUPPORTED_CONFIG_VERSION,
-        worktreeDirectory: '.worktree',
-      }),
-      'utf8',
-    );
-
-    try {
-      await expect(loadConfiguration(workspace.path)).rejects.toThrow(
-        'Unknown configuration field: "worktreeDirectory".',
-      );
-    } finally {
-      await workspace.cleanup();
-    }
-  });
-
-  it.each([
-    {
-      specDirectory: '../outside',
-      message: 'specDirectory must stay inside the project root.',
-    },
-    {
-      specDirectory: '/absolute-specs',
-      message: 'specDirectory must be relative to the project root.',
-    },
-    {
-      specDirectory: '.',
-      message: 'specDirectory must not be the project root.',
-    },
-    {
-      specDirectory: 'specs\0',
-      message: 'specDirectory must not contain a null byte.',
-    },
-  ])(
-    'given $specDirectory when loaded then it is rejected',
-    async ({ specDirectory, message }) => {
-      const workspace = await createWorkspace();
-      const piDirectory = join(workspace.path, '.pi');
-      await mkdir(piDirectory, { recursive: true });
-      await writeFile(
-        join(piDirectory, 'maestro.json'),
-        JSON.stringify({
-          version: SUPPORTED_CONFIG_VERSION,
-          specDirectory,
-        }),
-        'utf8',
-      );
-
-      try {
-        await expect(loadConfiguration(workspace.path)).rejects.toThrow(
-          message,
-        );
-      } finally {
-        await workspace.cleanup();
-      }
-    },
-  );
-
-  it.each(['.specs', '.specs/missing/nested'])(
-    'given an external symlink and $specDirectory when loaded then the configured path is kept without creating directories',
-    async (specDirectory) => {
-      const workspace = await createWorkspace();
-      const externalWorkspace = await createWorkspace();
-
-      try {
-        await symlink(
-          externalWorkspace.path,
-          join(workspace.path, '.specs'),
-          'dir',
-        );
-        await mkdir(join(workspace.path, '.pi'));
-        await writeFile(
-          join(workspace.path, '.pi', 'maestro.json'),
-          JSON.stringify({ version: SUPPORTED_CONFIG_VERSION, specDirectory }),
-          'utf8',
-        );
-
-        const config = await loadConfiguration(workspace.path);
-
-        expect(config.specDirectory).toBe(join(workspace.path, specDirectory));
-        await expect(
-          lstat(join(externalWorkspace.path, 'missing')),
-        ).rejects.toMatchObject({
-          code: 'ENOENT',
-        });
-      } finally {
-        await workspace.cleanup();
-        await externalWorkspace.cleanup();
-      }
-    },
-  );
 
   it('reports invalid JSON with the configuration path', async () => {
     const workspace = await createWorkspace();

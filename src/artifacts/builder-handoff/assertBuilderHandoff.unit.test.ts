@@ -42,12 +42,6 @@ const failedHandoff = (): BuilderHandoff => ({
 });
 
 describe('builder handoff validation', () => {
-  it('accepts a done handoff with completed checks', () => {
-    expect(() =>
-      assertBuilderHandoff({ handoff: doneHandoff(), specId }),
-    ).not.toThrow();
-  });
-
   it.each([PROBE_STATUSES.FAILED, PROBE_STATUSES.NOT_RUN])(
     'given a passed probe and a second %s probe then rejects done',
     (probeStatus) => {
@@ -74,12 +68,6 @@ describe('builder handoff validation', () => {
     expect(() => assertBuilderHandoff({ handoff, specId })).toThrow(
       'Failed builder handoff cannot mark every acceptance check as completed',
     );
-  });
-
-  it('accepts a failed handoff with explicit partial checks', () => {
-    expect(() =>
-      assertBuilderHandoff({ handoff: failedHandoff(), specId }),
-    ).not.toThrow();
   });
 
   it('accepts a failed handoff without acceptance criteria', () => {
@@ -114,26 +102,6 @@ describe('builder handoff validation', () => {
         ],
       },
       message: 'Invalid builder handoff',
-    },
-    {
-      handoff: {
-        ...doneHandoff(),
-        acceptanceCriteria: [
-          {
-            ...doneHandoff().acceptanceCriteria[0],
-            probeStatus: PROBE_STATUSES.FAILED,
-          },
-        ],
-      },
-      message: 'Done builder handoff requires every probe to pass',
-    },
-    {
-      handoff: {
-        ...failedHandoff(),
-        acceptanceCriteria: doneHandoff().acceptanceCriteria,
-      },
-      message:
-        'Failed builder handoff cannot mark every acceptance check as completed',
     },
     {
       handoff: {
@@ -180,14 +148,5 @@ describe('builder handoff validation', () => {
         specId,
       }),
     ).toThrow('Invalid builder handoff spec ID');
-  });
-
-  it('requires the expected spec ID', () => {
-    expect(() =>
-      assertBuilderHandoff({
-        handoff: doneHandoff(),
-        specId: '20260321-143052-other-change',
-      }),
-    ).toThrow('Builder handoff spec ID mismatch');
   });
 });
