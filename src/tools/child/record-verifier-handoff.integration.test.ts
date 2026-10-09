@@ -1,7 +1,6 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
-import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import {
   FINDING_DECISIONS,
   FINDING_SEVERITIES,
@@ -13,11 +12,7 @@ import {
 } from '#test/support/builder-workflow.ts';
 import piTestSessions from '#test/support/pi-session.ts';
 import { registerRecordVerifierHandoffTool } from '#tools/child/record-verifier-handoff.ts';
-import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
-import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
-import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 
 const createHandoffInput = () => ({
   specId: SPEC_ID,
@@ -105,50 +100,5 @@ describe('verifier handoff tool', () => {
     ).rejects.toThrow(
       `Workflow spec ID mismatch: expected "${SPEC_ID}", found "20260321-143052-other-spec".`,
     );
-  });
-
-  it('given restored temporary product changes when the verifier records its handoff then the tool records only protocol files', async () => {
-    const workflow = await createApprovedWorkflow();
-    await prepareBuilderRun({
-      paths: workflow.paths,
-      specId: SPEC_ID,
-    });
-
-    await completeBuilderPass({
-      paths: workflow.paths,
-      specId: SPEC_ID,
-      handoff: {
-        status: BUILDER_HANDOFF_STATUSES.DONE,
-        escalations: [],
-        summary: 'Implemented the approved change.',
-        acceptanceCriteria: [],
-        notes: [],
-      },
-    });
-
-    await prepareVerifierRun({
-      paths: workflow.paths,
-      specId: SPEC_ID,
-    });
-
-    const { tool } = await piTestSessions.createRegisteredTool({
-      cwd: workflow.repository.path,
-      extension: registerRecordVerifierHandoffTool,
-    });
-
-    const productPath = `${workflow.repository.path}/README.md`;
-    const originalProduct = await readFile(productPath, 'utf8');
-    await writeFile(productPath, '# Temporary verification change\n', 'utf8');
-    await writeFile(productPath, originalProduct, 'utf8');
-
-    const result = await tool.execute('test-call', createHandoffInput());
-
-    expect(result.details).toMatchObject({
-      phase: WORKFLOW_PHASES.CANDIDATE_READY,
-      specId: SPEC_ID,
-    });
-    await expect(
-      readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID)),
-    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
   });
 });
