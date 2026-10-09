@@ -1,105 +1,102 @@
 ---
 name: docs-audit
-description: Audit README.md, docs/, tasks/, and plan.md against the repository source code or a selected Git commit range. Use when reviewing documentation consistency, stale references, broken links, task drift, or documentation-to-code mismatches.
+description: Audit README.md, docs/, and the project constitution (mission, tech stack, roadmap, and changelog) against the current working tree without asking for a comparison baseline. Use when reviewing documentation consistency, stale references, broken links, roadmap state, or documentation-to-code mismatches.
 ---
 
 # Documentation audit
 
-Run a read-only audit. Do not modify documentation, code, or tasks during the audit. Propose corrections in the report and ask for confirmation before applying them.
+Run a read-only audit. Do not modify documentation or code during the audit. Propose corrections in the report and ask for confirmation before applying them.
 
 ## Starting point
 
-Ask one question at the beginning:
+Always compare the current documentation with the current working tree, including staged, unstaged, and untracked files. Start the audit without asking the owner for a commit, range, or comparison baseline.
 
-> Do you want to start from a specific commit? Provide the SHA. If not, I will compare the documentation with the current code.
-
-If the user answers `no`, compare the documentation with the current working tree.
-
-If the user provides a commit:
-
-1. Verify the SHA with Git.
-2. Include the specified commit in the audit.
-3. Use its parent as the comparison base and compare documentation through `HEAD`.
-4. Read the commit history in order with `git log --reverse`.
-5. Check both the documentation diff and the code changed in the same range.
-
-If the commit is the repository root commit, use that commit as the first state without requiring a missing parent.
+Do not check out historical commits or limit the audit to a Git diff. Use history only as supporting evidence for past changes, completed outcomes, and changelog entries.
 
 ## Scope
 
-Check these paths:
+Check `README.md`, `docs/`, and the available project constitution:
 
-- `README.md`
-- `docs/`
-- `tasks/`
-- `plan.md`
+1. `mission.md`: purpose, scope, and owner responsibilities.
+2. `tech-stack.md`: technologies and their roles.
+3. `roadmap.md`: completed outcomes and planned priorities.
+4. `changelog.md`: meaningful codebase changes and breaking contracts.
 
-Use `package.json`, `package-lock.json`, and the code under `src/`, `extensions/`, `agents/`, and `templates/` as comparison sources. `package.json` is authoritative for scripts, dependencies, peer dependencies, import aliases, published files, and the Pi manifest. Do not treat a copy of `package.json` in `plan.md` as authoritative.
+These four files default to the project root. Discover alternative names, directories, or embedded sections from the repository and its instructions. Audit the actual documents rather than assuming a fixed layout. Report missing documents only when project instructions require them.
+
+Use `package.json`, `package-lock.json`, and the code under `src/`, `extensions/`, `agents/`, and `templates/` as comparison sources. `package.json` is authoritative for declared scripts, dependencies, peer dependencies, import aliases, published files, and the Pi manifest. Use relevant specs, tests, configuration, and local Git history as supporting evidence.
 
 ## Procedure
 
 ### 1. Inventory
 
-- Check the working tree with `git status`.
-- List the existing documentation files.
-- Read `AGENTS.md` and all applicable instructions before evaluating style or structure.
-- Identify files, directories, symbols, commands, tasks, and links mentioned by the documentation.
+1. Check the working tree with `git status` and record existing changes.
+2. Read `AGENTS.md` and all applicable instructions before evaluating style or structure.
+3. List available documentation and locate the project constitution.
+4. Identify referenced files, directories, symbols, commands, roadmap identifiers, versions, and links.
+5. Distinguish current behavior, owner-approved intent, future work, and historical changes.
 
-### 2. Changed documentation
+Do not invent missing history, decisions, approvals, dates, or versions. GitHub PRs can provide optional supporting evidence, but GitHub access and GitHub Releases are not required.
 
-When the audit starts from a commit:
+### 2. Documentation consistency
 
-- Use `git diff --find-renames` for `README.md`, `docs/`, `tasks/`, and `plan.md`.
-- For each commit, connect documentation changes to the corresponding code changes.
-- Search for references to removed, renamed, or simplified files, symbols, and behaviors.
-- Check that decisions about restart, deactivation, and `/resume` are consistent across all pages.
+Audit all current documentation in scope, not only changed files. Use `git diff --find-renames` when useful to understand working-tree changes and moved documents. These diffs support the audit but do not replace the current code as its comparison baseline.
+
+Search for references to removed, renamed, or simplified files, symbols, and behaviors. Check that restart, deactivation, and `/resume` decisions are consistent across current documentation. Do not treat an accurately labeled historical changelog entry as a current behavior claim.
 
 ### 3. Links and references
 
-Check:
+Check these references from each document's actual location:
 
-- Markdown links to existing files;
-- existing internal anchors;
-- references to existing tasks, commits, files, and directories;
-- references to deleted or renamed files;
-- names of APIs, functions, classes, tools, and commands present in the code.
+1. Markdown file links and internal anchors.
+2. Roadmap identifiers, specification links, commit references, and version references.
+3. Paths and filename case, including references to deleted or renamed files.
+4. API, function, class, tool, and command names against the code.
+5. Published documentation links against package contents or clearly declared repository-only targets.
 
-For file references, also check the real path and case sensitivity. Do not report an explicitly declared future placeholder as an error without checking its context in the task.
+Do not report an explicitly labeled future placeholder as a broken implementation claim without checking its context. If remote links cannot be checked, report that limit rather than claiming that they are valid or broken.
 
 ### 4. Documentation-to-code comparison
 
-Check operational claims against the code and tests:
+Check current operational claims against code and tests:
 
-- commands and tools that are actually registered;
-- extensions and composition roots that are actually implemented;
-- API and method names;
-- workflow transitions and phases;
-- live and persisted state;
-- recovery, retry, restart, and `/resume` behavior;
-- paths, branches, worktrees, and artifacts;
-- configuration and validation;
-- features described as available to users.
+1. Registered commands, tools, extensions, and entry points.
+2. API and method names.
+3. Workflow phases, transitions, live state, and persisted state.
+4. Recovery, retry, restart, deactivation, and `/resume` behavior.
+5. Paths, branches, worktrees, and artifacts.
+6. Configuration, validation, dependencies, and development checks.
+7. Features described as currently available to the owner.
 
-Always distinguish between:
+Report an overclaim when current usage documentation presents an unimplemented feature as available. Clearly labeled future work is not an overclaim. Existing code is evidence of implemented behavior, not automatic proof that the owner intended that behavior.
 
-- user documentation, which must describe what users can use;
-- `plan.md`, which describes approved decisions;
-- `tasks/`, which describes future or completed work.
+### 5. Project constitution
 
-If a document describes a future feature, check that it says so clearly and that the related task has a consistent status. If `README.md` or `docs/` describe a feature as available while it is still made of placeholders or `TODO` tasks, report it as a documentation overclaim.
+#### Mission
 
-### 5. Tasks and plan
+Check that purpose, scope boundaries, and owner responsibilities agree across the mission and other documentation. Distinguish intended capabilities from capabilities already implemented. Report contradictions without rewriting the mission to match the current code automatically.
 
-Check:
+#### Tech stack
 
-- `STATUS` values against the existing code;
-- dependencies on missing, obsolete, or incomplete tasks;
-- references to valid plan sections;
-- instructions to remove placeholders that have already been deleted;
-- test requirements that are no longer desired or applicable;
-- duplicated or contradictory decisions.
+Compare listed runtime technologies and development tools with manifests, configuration, and code. Check their stated roles and any documented versions or constraints. Planned choices must remain clearly labeled as planned, and descriptions must not silently become mandatory rules.
 
-Do not add tests or requirements only because they are missing if the project does not consider them necessary. Report the mismatch and leave the decision to the user.
+#### Roadmap
+
+Check identifiers for uniqueness and references for consistency. Compare outcome descriptions, scope boundaries, known dependencies, completion conditions, and specification links with the available evidence. Check that partially implemented work is not described as wholly complete.
+
+Where the roadmap uses Completed, Now, Next, and Later, check their documented meaning and priorities. Completed entries need evidence consistent with owner acceptance. Passing tests, an agent handoff, or `candidate-ready` alone do not prove final owner review.
+
+Report absent completion evidence as unverified, not automatically false. Do not infer acceptance dates from spec identifiers or creation dates. Do not promote priorities or treat roadmap entries as permission to implement.
+
+#### Changelog
+
+Check meaningful change summaries and breaking contracts against code, diffs, and available history. Check migration instructions against supported behavior. Where version boundaries exist, verify them through tags and commit ancestry rather than PR merge dates.
+
+Check the declared history range when available. A concise changelog can omit older history and routine maintenance. Do not require every commit, every version, a GitHub Release, or invented publication dates.
+
+Unreleased entries describe actual changes outside recorded version boundaries, not roadmap ideas. Historical entries can describe behavior later removed or reverted. Report omissions of meaningful changes within the reviewed range and contradictions with current documentation.
+
+Do not add tests, features, or requirements merely because they are absent. Report mismatches with the project's recorded decisions and leave new decisions to the owner.
 
 ### 6. Report
 
@@ -108,16 +105,10 @@ Write a concise report in English, ordered by severity. For every finding includ
 1. Severity: `High`, `Medium`, or `Low`.
 2. File path and line number.
 3. Problem.
-4. Evidence from the code, diff, or another document.
+4. Evidence from code, history, or another document.
 5. Impact.
 6. Recommended correction.
 
-If you find no problems, state this explicitly. Also include:
+If no problems are found, state this explicitly. Record that the current working tree was audited, along with checks performed, verified links, and relevant evidence limits. Confirm that no files were modified.
 
-- the Git range checked, when applicable;
-- the checks performed;
-- verified links and anchors;
-- relevant consistent areas;
-- confirmation that no files were modified.
-
-Do not apply corrections in the same pass unless the user explicitly asks after reviewing the report.
+Do not apply corrections in the same pass unless the owner explicitly asks after reviewing the report.
