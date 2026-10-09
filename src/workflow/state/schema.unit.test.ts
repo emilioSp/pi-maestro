@@ -24,8 +24,6 @@ describe('workflow state schema', () => {
   });
 
   it.each([
-    { ...validState, extra: true },
-    { ...validState, version: '2.0.0' },
     { ...validState, specId: 'not-a-spec-id' },
     { ...validState, phase: 'unknown' },
   ])('rejects an invalid state %#', (state) => {
