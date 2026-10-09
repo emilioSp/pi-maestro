@@ -97,3 +97,10 @@ The reading order is:
 2. [Workflow](docs/workflow.md): approvals, decisions, and how each run produces artifacts.
 3. [Configuration](docs/configuration.md): project paths, models, and timeouts.
 4. [Subagent integration](docs/subagent-integration.md): agent context, execution, and activity tracking.
+
+## Project constitution
+
+1. [Mission](mission.md): purpose, scope, and owner responsibilities.
+2. [Tech stack](tech-stack.md): runtime technologies and development tools.
+3. [Roadmap](roadmap.md): completed outcomes and planned priorities.
+4. [Changelog](changelog.md): meaningful codebase changes and breaking contracts.

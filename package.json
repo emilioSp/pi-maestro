@@ -33,6 +33,10 @@
     "src/",
     "!**/*.test.ts",
     "docs/",
+    "mission.md",
+    "tech-stack.md",
+    "roadmap.md",
+    "changelog.md",
     "README.md",
     "LICENSE"
   ],
