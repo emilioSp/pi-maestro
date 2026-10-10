@@ -1,6 +1,6 @@
 ---
 name: docs-audit
-description: Audit README.md, docs/, and the project constitution (mission, tech stack, roadmap, and changelog) against the current working tree without asking for a comparison baseline. Use when reviewing documentation consistency, stale references, broken links, roadmap state, or documentation-to-code mismatches.
+description: Audit README.md, docs/, and the project constitution (mission, tech stack, roadmap, changelog, and design decisions) against the current working tree without asking for a comparison baseline. Use when reviewing documentation consistency, stale references, broken links, roadmap state, or documentation-to-code mismatches.
 ---
 
 # Documentation audit
@@ -21,8 +21,9 @@ Check `README.md`, `docs/`, and the available project constitution:
 2. `../../../TECH_STACK.md`: technologies and their roles.
 3. `../../../ROADMAP.md`: completed outcomes and planned priorities.
 4. `../../../CHANGELOG.md`: meaningful codebase changes and breaking contracts.
+5. `../../../DESIGN_DECISIONS.md`: choices, reasons, alternatives, and constraints.
 
-These four files default to the project root. Discover alternative names, directories, or embedded sections from the repository and its instructions. Audit the actual documents rather than assuming a fixed layout. Report missing documents only when project instructions require them.
+These five files default to the project root. Discover alternative names, directories, or embedded sections from the repository and its instructions. Audit the actual documents rather than assuming a fixed layout. Report missing documents only when project instructions require them.
 
 Use `package.json`, `package-lock.json`, and the code under `src/`, `extensions/`, `agents/`, and `templates/` as comparison sources. `package.json` is authoritative for declared scripts, dependencies, peer dependencies, import aliases, published files, and the Pi manifest. Use relevant specs, tests, configuration, and local Git history as supporting evidence.
 
@@ -46,7 +47,7 @@ Search for references to removed, renamed, or simplified files, symbols, and beh
 
 Check that documentation follows this rule, with paths relative to the project root:
 
-In `README.md`, `docs/*.md`, `MISSION.md`, `TECH_STACK.md`, `ROADMAP.md`, and `CHANGELOG.md`, format terms from `docs/glossary.md` with inline code. Do not apply this formatting to section titles, blockquotes (`>`), link labels, or text inside quotation marks. Do not format `spec` within `spec-driven` phrases. Leave possessive forms, such as `owner's`, unformatted. Include plurals and capitalization variants only when they have the glossary meaning. Do not change wording, code blocks, link targets, or file paths just to apply this formatting.
+In `README.md`, `docs/*.md`, `MISSION.md`, `TECH_STACK.md`, `ROADMAP.md`, `CHANGELOG.md`, and `DESIGN_DECISIONS.md`, format terms from `docs/glossary.md` with inline code. Do not apply this formatting to section titles, blockquotes (`>`), link labels, or text inside quotation marks. Do not format `spec` within `spec-driven` phrases. Leave possessive forms, such as `owner's`, unformatted. Include plurals and capitalization variants only when they have the glossary meaning. Do not change wording, code blocks, link targets, or file paths just to apply this formatting.
 
 ### 3. Links and references
 
@@ -101,6 +102,10 @@ Check the declared history range when available. A concise changelog can omit ol
 Unreleased entries describe actual changes outside recorded version boundaries, not roadmap ideas. Historical entries can describe behavior later removed or reverted. Report omissions of meaningful changes within the reviewed range and contradictions with current documentation.
 
 Do not add tests, features, or requirements merely because they are absent. Report mismatches with the project's recorded decisions and leave new decisions to the owner.
+
+#### Design decisions
+
+Check choices and constraints against specs, code, and history. Reasons and rejected alternatives need explicit evidence, not inference from implementation. Distinguish implementation dates from approval dates. Preserve explicitly unknown rationale and check replacement links when a decision is superseded.
 
 ### 6. Report
 
