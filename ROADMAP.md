@@ -87,3 +87,9 @@ Complete when `verifier` instructions cover these limits and require restoration
 ### R-13: Show when Maestro is working
 
 Show an activity indicator in Pi's status bar while progress does not require an `owner` decision. A spinner is one option, not an agreed implementation. Complete when the status clearly distinguishes work in progress from a request for `owner` action.
+
+### R-14: Introduce Maestro at activation
+
+When activated, `Maestro` gives a brief introduction and invites the `owner` to ask how it works, if interested. `Maestro` must have access to its own documentation to answer those questions.
+
+Complete when activation includes this short introduction and `Maestro` can consult its documentation.
