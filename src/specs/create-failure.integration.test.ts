@@ -24,7 +24,7 @@ afterEach(async () => {
 });
 
 describe('partial spec creation failure', () => {
-  it('leaves the partial directory and blocks a retry', async () => {
+  it('given a spec creation write failure when creation is retried then the partial directory remains and the retry is blocked', async () => {
     const projectRoot = await mkdtemp(
       join(tmpdir(), 'pi-maestro-spec-failure-'),
     );

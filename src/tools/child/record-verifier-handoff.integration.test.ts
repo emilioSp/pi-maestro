@@ -28,7 +28,7 @@ afterEach(async () => {
 });
 
 describe('verifier handoff tool', () => {
-  it('registers a closed input schema with explicit verifier identity', async () => {
+  it('given the verifier handoff tool when registered then its closed schema requires a spec ID and rejects owner decisions', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerRecordVerifierHandoffTool,
     });
@@ -60,7 +60,7 @@ describe('verifier handoff tool', () => {
     ).toBe(false);
   });
 
-  it('rejects a handoff outside the verifier-running phase', async () => {
+  it('given a workflow outside verifier-running when a verifier handoff is submitted then it is rejected', async () => {
     const workflow = await createApprovedWorkflow();
 
     const { tool } = await piTestSessions.createRegisteredTool({
@@ -75,7 +75,7 @@ describe('verifier handoff tool', () => {
     );
   });
 
-  it('rejects a workflow spec identity mismatch', async () => {
+  it('given a workflow spec ID mismatch when a verifier handoff is submitted then it is rejected', async () => {
     const workflow = await createApprovedWorkflow();
     const statePath = workflow.paths.getWorkflowPath(SPEC_ID);
     const state = await readWorkflowState(statePath);

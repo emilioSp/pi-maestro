@@ -14,7 +14,7 @@ const validState = {
 };
 
 describe('workflow state schema', () => {
-  it('is closed and accepts every workflow phase', () => {
+  it('given each supported workflow phase when state is validated then it is accepted by a closed schema', () => {
     expect(WorkflowStateSchema.type).toBe('object');
     expect(ObjectOptions(WorkflowStateSchema).additionalProperties).toBe(false);
 
@@ -26,11 +26,16 @@ describe('workflow state schema', () => {
   it.each([
     { ...validState, specId: 'not-a-spec-id' },
     { ...validState, phase: 'unknown' },
-  ])('rejects an invalid state %#', (state) => {
-    expect(() => assertWorkflowState(state)).toThrow('Invalid workflow state');
-  });
+  ])(
+    'given invalid workflow state %# when validated then it is rejected',
+    (state) => {
+      expect(() => assertWorkflowState(state)).toThrow(
+        'Invalid workflow state',
+      );
+    },
+  );
 
-  it('rejects a structurally valid ID with an invalid UTC date', () => {
+  it('given a workflow spec ID with an invalid UTC date when state is validated then it is rejected', () => {
     expect(() =>
       assertWorkflowState({
         ...validState,
@@ -39,7 +44,7 @@ describe('workflow state schema', () => {
     ).toThrow('Invalid workflow spec ID');
   });
 
-  it('rejects non-object state', () => {
+  it('given null workflow state when validated then it is rejected as a non-object', () => {
     expect(() => assertWorkflowState(null)).toThrow(
       'Workflow state must be a JSON object.',
     );

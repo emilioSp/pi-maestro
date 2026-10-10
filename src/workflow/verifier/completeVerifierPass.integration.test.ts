@@ -108,7 +108,7 @@ describe('verifier completion', () => {
     });
   });
 
-  it('writes one verifier handoff on the current project', async () => {
+  it('given a running verifier when a valid handoff is submitted then one verifier handoff is saved in the current project', async () => {
     const { paths, repository } = await prepareRunningVerifier();
 
     const handoff = {

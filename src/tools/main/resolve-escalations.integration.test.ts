@@ -61,7 +61,7 @@ afterEach(async () => {
 });
 
 describe('resolve escalations tool', () => {
-  it('registers a closed nonempty owner batch schema', async () => {
+  it('given the escalation resolution tool when registered then its closed schema requires a nonempty owner decision batch', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerResolveEscalationsTool,
     });
@@ -83,7 +83,7 @@ describe('resolve escalations tool', () => {
       expect(Value.Check(tool.parameters, params)).toBe(false);
   });
 
-  it('records every exact owner resolution and saves ready-for-builder, then restarts IDs in B2', async () => {
+  it('given open escalations when all owner resolutions are recorded then the workflow becomes ready-for-builder and IDs restart in B2', async () => {
     const { paths, repository, handoffPath } = await openEscalations();
 
     const before = await readBuilderHandoff({
@@ -176,7 +176,7 @@ describe('resolve escalations tool', () => {
     expect(await readFile(handoffPath, 'utf8')).toBe(savedB1);
   });
 
-  it('leaves revised-contract questions historical and updates only B2 resolution fields', async () => {
+  it('given a revised spec and B2 escalations when owner resolutions are recorded then B1 stays unchanged and only B2 resolution fields change', async () => {
     const { paths, repository, handoffPath } = await openEscalations();
     const b1Before = await readFile(handoffPath, 'utf8');
     await writeFile(paths.getSpecFilePath(SPEC_ID), '# Revised contract\n');
@@ -228,7 +228,7 @@ describe('resolve escalations tool', () => {
     ['blank reason', [decisions[0], { ...decisions[1], reason: ' \n\t' }]],
     ['empty', []],
   ])(
-    'given %s batch then no protocol file changes',
+    'given a %s batch when escalations are resolved then it is rejected without changing protocol files',
     async (_name, invalidDecisions) => {
       const { paths, repository, handoffPath } = await openEscalations();
       const handoffBefore = await readFile(handoffPath, 'utf8');
@@ -271,62 +271,65 @@ describe('resolve escalations tool', () => {
     'incompatible-handoff',
     'resolved',
     'resolved-in-decision-phase',
-  ])('given %s then rejects resolution without writes', async (scenario) => {
-    const { paths, repository, handoffPath } = await openEscalations();
+  ])(
+    'given %s when escalations are resolved then resolution is rejected without writes',
+    async (scenario) => {
+      const { paths, repository, handoffPath } = await openEscalations();
 
-    if (scenario.startsWith('resolved'))
-      await resolveEscalations({ paths, specId: SPEC_ID, decisions });
+      if (scenario.startsWith('resolved'))
+        await resolveEscalations({ paths, specId: SPEC_ID, decisions });
 
-    if (
-      scenario === 'wrong-phase' ||
-      scenario === 'resolved-in-decision-phase'
-    ) {
-      const state = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
-      await writeWorkflowState({
-        path: paths.getWorkflowPath(SPEC_ID),
-        state: {
-          ...state,
-          phase:
-            scenario === 'wrong-phase'
-              ? WORKFLOW_PHASES.BUILDER_RUNNING
-              : WORKFLOW_PHASES.ESCALATION_DECISION,
-        },
-      });
-    }
+      if (
+        scenario === 'wrong-phase' ||
+        scenario === 'resolved-in-decision-phase'
+      ) {
+        const state = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
+        await writeWorkflowState({
+          path: paths.getWorkflowPath(SPEC_ID),
+          state: {
+            ...state,
+            phase:
+              scenario === 'wrong-phase'
+                ? WORKFLOW_PHASES.BUILDER_RUNNING
+                : WORKFLOW_PHASES.ESCALATION_DECISION,
+          },
+        });
+      }
 
-    if (scenario === 'incompatible-handoff')
-      await writeFile(
-        handoffPath,
-        JSON.stringify({
-          version: '1.0.0',
-          specId: SPEC_ID,
-          status: BUILDER_HANDOFF_STATUSES.DONE,
-          summary: 'Done',
-          acceptanceCriteria: [],
-          notes: [],
-          escalations: [],
-        }),
+      if (scenario === 'incompatible-handoff')
+        await writeFile(
+          handoffPath,
+          JSON.stringify({
+            version: '1.0.0',
+            specId: SPEC_ID,
+            status: BUILDER_HANDOFF_STATUSES.DONE,
+            summary: 'Done',
+            acceptanceCriteria: [],
+            notes: [],
+            escalations: [],
+          }),
+        );
+      const handoffBefore = await readFile(handoffPath, 'utf8');
+
+      const workflowBefore = await readFile(
+        paths.getWorkflowPath(SPEC_ID),
+        'utf8',
       );
-    const handoffBefore = await readFile(handoffPath, 'utf8');
 
-    const workflowBefore = await readFile(
-      paths.getWorkflowPath(SPEC_ID),
-      'utf8',
-    );
+      const { tool } = await piTestSessions.createRegisteredTool({
+        cwd: repository.path,
+        extension: registerResolveEscalationsTool,
+      });
 
-    const { tool } = await piTestSessions.createRegisteredTool({
-      cwd: repository.path,
-      extension: registerResolveEscalationsTool,
-    });
+      await expect(
+        tool.execute('invalid-owner-batch', { specId: SPEC_ID, decisions }),
+      ).rejects.toThrow();
 
-    await expect(
-      tool.execute('invalid-owner-batch', { specId: SPEC_ID, decisions }),
-    ).rejects.toThrow();
+      expect(await readFile(handoffPath, 'utf8')).toBe(handoffBefore);
 
-    expect(await readFile(handoffPath, 'utf8')).toBe(handoffBefore);
-
-    expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(
-      workflowBefore,
-    );
-  });
+      expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(
+        workflowBefore,
+      );
+    },
+  );
 });

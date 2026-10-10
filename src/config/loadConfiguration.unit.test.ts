@@ -27,7 +27,7 @@ const createWorkspace = async (): Promise<{
 };
 
 describe('configuration loading', () => {
-  it('returns defaults when the configuration file is missing', async () => {
+  it('given no configuration file when configuration is loaded then defaults are returned', async () => {
     const workspace = await createWorkspace();
 
     try {
@@ -45,7 +45,7 @@ describe('configuration loading', () => {
     }
   });
 
-  it('loads a valid custom spec directory and agent settings', async () => {
+  it('given a valid custom configuration when loaded then its spec directory and agent settings are used', async () => {
     const workspace = await createWorkspace();
     const piDirectory = join(workspace.path, '.pi');
     await mkdir(piDirectory, { recursive: true });
@@ -77,7 +77,7 @@ describe('configuration loading', () => {
     }
   });
 
-  it('reports invalid JSON with the configuration path', async () => {
+  it('given invalid configuration JSON when loaded then the error includes the configuration path', async () => {
     const workspace = await createWorkspace();
     const piDirectory = join(workspace.path, '.pi');
     await mkdir(piDirectory, { recursive: true });

@@ -24,7 +24,7 @@ afterEach(async () => {
 });
 
 describe('builder completion', () => {
-  it('writes the builder handoff and state in the current project', async () => {
+  it('given a running builder when a done handoff is submitted then the handoff and state are saved in the current project', async () => {
     const { paths, repository } = await createApprovedWorkflow();
     await prepareBuilderRun({ paths, specId: SPEC_ID });
 
@@ -52,7 +52,7 @@ describe('builder completion', () => {
     });
   });
   it.each([PROBE_STATUSES.NOT_RUN, PROBE_STATUSES.PASSED])(
-    'given escalation with %s probe then saves escalation-decision and a later done saves ready-for-verifier',
+    'given an escalation with a %s probe when submitted and followed by a done handoff then the workflow moves through escalation-decision to ready-for-verifier',
     async (probeStatus) => {
       const { paths, repository } = await createApprovedWorkflow();
       await prepareBuilderRun({ paths, specId: SPEC_ID });
@@ -236,7 +236,7 @@ describe('builder completion', () => {
       },
     ],
   ])(
-    'given %s builder submission then no handoff or workflow write',
+    'given a %s builder submission when recorded then it is rejected without writing a handoff or workflow state',
     async (_name, handoff) => {
       const { paths, repository } = await createApprovedWorkflow();
       await prepareBuilderRun({ paths, specId: SPEC_ID });

@@ -13,7 +13,7 @@ afterEach(async () => {
 });
 
 describe('workflow context', () => {
-  it('uses the canonical child working directory', async () => {
+  it('given a child working directory symlink when workflow context is resolved then the canonical child directory is used', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     const childDirectory = join(repository.path, 'nested', 'child');
@@ -40,7 +40,7 @@ describe('workflow context', () => {
     );
   });
 
-  it('rejects an invalid spec ID before resolving repository context', async () => {
+  it('given an invalid spec ID when workflow context is resolved then it is rejected before resolving project context', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 

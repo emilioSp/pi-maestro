@@ -53,7 +53,7 @@ afterEach(async () => {
 });
 
 describe('mark spec ready tool', () => {
-  it('registers a closed spec ID-only input schema', async () => {
+  it('given the spec approval tool when registered then its closed schema accepts only a valid spec ID', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerMarkSpecReadyTool,
     });
@@ -68,7 +68,7 @@ describe('mark spec ready tool', () => {
     ).toBe(false);
   });
 
-  it('approves the current spec from drafting without comparing its content', async () => {
+  it('given a changed drafting spec when the current spec is approved then approval succeeds without comparing its content', async () => {
     const { created, repository } = await createWorkflow();
     const approvedContent = '# Changed after the original draft\n';
     await writeFile(created.specFilePath, approvedContent, 'utf8');
@@ -99,7 +99,7 @@ describe('mark spec ready tool', () => {
     );
   });
 
-  it('returns a domain error when the requested spec is not active', async () => {
+  it('given a spec that is not active when approval is requested then a domain error is returned', async () => {
     const { repository } = await createWorkflow();
 
     const { tool } = await piTestSessions.createRegisteredTool({

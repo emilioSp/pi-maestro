@@ -103,7 +103,7 @@ afterEach(async () => {
 });
 
 describe('resolve findings tool', () => {
-  it('registers a closed schema with conditional rejection reasons', async () => {
+  it('given the finding resolution tool when registered then its closed schema requires reasons for rejections', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerResolveFindingsTool,
     });
@@ -166,7 +166,7 @@ describe('resolve findings tool', () => {
     ).toBe(false);
   });
 
-  it('records mixed decisions, prioritizes code fixes, and saves explicit decisions', async () => {
+  it('given mixed owner decisions when findings are resolved then decisions are saved and code fixes take priority', async () => {
     const { paths, repository } = await createFindingsDecisionWorkflow([
       createFinding('F1'),
       createFinding('F2'),
@@ -222,7 +222,7 @@ describe('resolve findings tool', () => {
     ]);
   });
 
-  it('records all rejections and saves candidate-ready', async () => {
+  it('given all findings rejected when decisions are recorded then rejections are saved and the workflow becomes candidate-ready', async () => {
     const { paths, repository } = await createFindingsDecisionWorkflow([
       createFinding('F1'),
       createFinding('F2'),
@@ -284,7 +284,7 @@ describe('resolve findings tool', () => {
     ]);
   });
 
-  it('requires exact finding coverage before changing the workflow', async () => {
+  it('given incomplete or duplicate finding decisions when resolved then the workflow and handoff are unchanged', async () => {
     const { paths, repository } = await createFindingsDecisionWorkflow([
       createFinding('F1'),
       createFinding('F2'),
@@ -420,7 +420,7 @@ describe('resolve findings tool', () => {
     await expect(readFile(handoffPath, 'utf8')).resolves.toBe(handoffBefore);
   });
 
-  it('bypasses finding resolution when the owner revises the spec', async () => {
+  it('given unresolved findings when the owner approves a revised spec then finding resolution is bypassed', async () => {
     const { paths } = await createFindingsDecisionWorkflow([
       createFinding('F1'),
     ]);
@@ -451,7 +451,7 @@ describe('resolve findings tool', () => {
     ).resolves.toEqual(handoffBefore);
   });
 
-  it('returns a domain error without resolving an unknown finding', async () => {
+  it('given an unknown finding when resolution is requested then a domain error is returned without changes', async () => {
     const { paths, repository } = await createFindingsDecisionWorkflow([
       createFinding('F1'),
     ]);

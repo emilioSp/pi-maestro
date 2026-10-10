@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createSpecId } from '#ids/createSpecId.ts';
 
 describe('createSpecId', () => {
-  it('formats an instant in UTC to second precision', () => {
+  it('given an instant with fractional seconds when a spec ID is created then the timestamp uses UTC second precision', () => {
     const instant = Temporal.Instant.from('2026-03-21T14:30:52.987Z');
 
     expect(createSpecId({ title: 'Weather', instant })).toBe(
@@ -10,7 +10,7 @@ describe('createSpecId', () => {
     );
   });
 
-  it('uses UTC rather than the local time zone', () => {
+  it('given an instant with a non-UTC offset when a spec ID is created then the timestamp uses UTC', () => {
     const instant = Temporal.Instant.from('2026-03-21T00:30:52+02:00');
 
     expect(createSpecId({ title: 'Weather', instant })).toBe(
@@ -18,7 +18,7 @@ describe('createSpecId', () => {
     );
   });
 
-  it('normalizes title punctuation, whitespace, case, and accents', () => {
+  it('given titles with punctuation, whitespace, case, and accents when spec IDs are created then their slugs are normalized', () => {
     const instant = Temporal.Instant.from('2026-03-21T14:30:52Z');
 
     expect(
@@ -29,7 +29,7 @@ describe('createSpecId', () => {
     );
   });
 
-  it('rejects a title without a slug character', () => {
+  it('given a title without a slug character when a spec ID is created then it is rejected', () => {
     expect(() =>
       createSpecId({
         title: '--- !!!',
@@ -38,7 +38,7 @@ describe('createSpecId', () => {
     ).toThrow('Spec slug must contain at least one letter or number.');
   });
 
-  it('composes deterministic IDs that sort by UTC timestamp', () => {
+  it('given different UTC timestamps when spec IDs are created then deterministic IDs sort by timestamp', () => {
     const earlier = createSpecId({
       title: 'Earlier change',
       instant: Temporal.Instant.from('2026-03-21T14:30:51Z'),
