@@ -2,6 +2,12 @@
 
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries; GitHub Releases are not required. Version-only changes and routine maintenance are omitted.
 
+## 0.7.3
+
+1. Added Oxlint rules for `given ... when ... then ...` test titles, `const` usage, unnecessary `else` branches, type aliases, and ESM imports. See [PR #31](https://github.com/emilioSp/pi-maestro/pull/31).
+2. Updated `oxlint-anti-slop` from `0.3.3` to `0.3.6`.
+3. Updated 106 test titles to match the naming rule without changing test logic.
+
 ## 0.7.2
 
 1. Renamed the constitution files to `MISSION.md`, `TECH_STACK.md`, `ROADMAP.md`, and `CHANGELOG.md`. Updated their links, package file list, and audit references.
