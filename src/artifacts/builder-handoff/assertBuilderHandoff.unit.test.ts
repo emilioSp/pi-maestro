@@ -43,7 +43,7 @@ const failedHandoff = (): BuilderHandoff => ({
 
 describe('builder handoff validation', () => {
   it.each([PROBE_STATUSES.FAILED, PROBE_STATUSES.NOT_RUN])(
-    'given a passed probe and a second %s probe then rejects done',
+    'given a passed probe and a second %s probe when a done handoff is validated then it is rejected',
     (probeStatus) => {
       const handoff = doneHandoff();
       handoff.acceptanceCriteria.push({
@@ -58,7 +58,7 @@ describe('builder handoff validation', () => {
     },
   );
 
-  it('given all probes pass then rejects failed', () => {
+  it('given all probes pass when a failed handoff is validated then it is rejected', () => {
     const handoff = failedHandoff();
     handoff.acceptanceCriteria[0] = {
       ...handoff.acceptanceCriteria[0],
@@ -70,7 +70,7 @@ describe('builder handoff validation', () => {
     );
   });
 
-  it('accepts a failed handoff without acceptance criteria', () => {
+  it('given a failed handoff without acceptance criteria when validated then it is accepted', () => {
     expect(() =>
       assertBuilderHandoff({
         handoff: { ...failedHandoff(), acceptanceCriteria: [] },
@@ -134,11 +134,14 @@ describe('builder handoff validation', () => {
       },
       message: 'Invalid builder handoff',
     },
-  ])('rejects invalid handoff data %#', ({ handoff, message }) => {
-    expect(() => assertBuilderHandoff({ handoff, specId })).toThrow(message);
-  });
+  ])(
+    'given invalid builder handoff data %# when validated then it is rejected',
+    ({ handoff, message }) => {
+      expect(() => assertBuilderHandoff({ handoff, specId })).toThrow(message);
+    },
+  );
 
-  it('rejects a structurally valid spec ID with an invalid UTC date', () => {
+  it('given a builder handoff with an invalid UTC date in its spec ID when validated then it is rejected', () => {
     expect(() =>
       assertBuilderHandoff({
         handoff: {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { isPathWithinOrEqual } from '#utils/path-within-or-equal.ts';
 
 describe('isPathWithinOrEqual', () => {
-  it('accepts the parent and its descendants', () => {
+  it('given parent and descendant paths when checked for containment then they are accepted', () => {
     expect(isPathWithinOrEqual({ parent: '/repo', candidate: '/repo' })).toBe(
       true,
     );
@@ -11,7 +11,7 @@ describe('isPathWithinOrEqual', () => {
     ).toBe(true);
   });
 
-  it('rejects siblings and paths above the parent', () => {
+  it('given sibling and ancestor paths when checked for containment then they are rejected', () => {
     expect(isPathWithinOrEqual({ parent: '/repo', candidate: '/repo2' })).toBe(
       false,
     );

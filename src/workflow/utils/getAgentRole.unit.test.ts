@@ -14,7 +14,10 @@ describe('getAgentRole', () => {
     [WORKFLOW_PHASES.CANDIDATE_READY, null],
     [WORKFLOW_PHASES.DRAFTING_SPEC, null],
     [WORKFLOW_PHASES.READY_FOR_BUILDER, null],
-  ])('returns the role for phase %s', (phase, role) => {
-    expect(getAgentRole(phase)).toBe(role);
-  });
+  ])(
+    'given phase %s when the agent role is requested then the expected role is returned',
+    (phase, role) => {
+      expect(getAgentRole(phase)).toBe(role);
+    },
+  );
 });

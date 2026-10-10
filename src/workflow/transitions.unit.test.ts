@@ -15,7 +15,7 @@ const state = (phase: WorkflowPhase): WorkflowState => ({
 });
 
 describe('workflow transitions', () => {
-  it('treats builder-failed as a sink', () => {
+  it('given builder-failed when any event is requested then the transition is rejected', () => {
     for (const event of Object.values(WORKFLOW_EVENTS)) {
       expect(() =>
         transitionWorkflow({
@@ -37,7 +37,7 @@ describe('workflow transitions', () => {
     }
   });
 
-  it('does not mutate the input state', () => {
+  it('given ready-for-builder state when the builder run transition is applied then the input state is unchanged', () => {
     const current = state(WORKFLOW_PHASES.READY_FOR_BUILDER);
 
     transitionWorkflow({

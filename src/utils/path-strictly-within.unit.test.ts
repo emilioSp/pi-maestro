@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { isPathStrictlyWithin } from '#utils/path-strictly-within.ts';
 
 describe('isPathStrictlyWithin', () => {
-  it('accepts descendants but not the parent or an equivalent path', () => {
+  it('given descendant and equivalent paths when checked for strict containment then only descendants are accepted', () => {
     expect(isPathStrictlyWithin({ parent: '/repo', path: '/repo/spec' })).toBe(
       true,
     );
@@ -14,7 +14,7 @@ describe('isPathStrictlyWithin', () => {
     ).toBe(false);
   });
 
-  it('rejects siblings and paths above the parent', () => {
+  it('given sibling and ancestor paths when checked for strict containment then they are rejected', () => {
     expect(isPathStrictlyWithin({ parent: '/repo', path: '/repo2' })).toBe(
       false,
     );

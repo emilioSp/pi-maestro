@@ -4,7 +4,7 @@ import { assertConfiguration } from '#config/assertConfiguration.ts';
 import { SUPPORTED_CONFIG_VERSION, THINKING_LEVELS } from '#config/schema.ts';
 
 describe('configuration input validation', () => {
-  it('accepts a full configuration without worktree settings', () => {
+  it('given a full configuration without worktree settings when validated then it is accepted', () => {
     expect(() =>
       assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
@@ -23,13 +23,13 @@ describe('configuration input validation', () => {
     ).not.toThrow();
   });
 
-  it('accepts a minimal configuration', () => {
+  it('given a minimal configuration when validated then it is accepted', () => {
     expect(() =>
       assertConfiguration({ version: SUPPORTED_CONFIG_VERSION }),
     ).not.toThrow();
   });
 
-  it('accepts all supported thinking levels', () => {
+  it('given supported thinking levels when configuration is validated then all levels are accepted', () => {
     for (const level of Object.values(THINKING_LEVELS)) {
       expect(() =>
         assertConfiguration({
@@ -40,7 +40,7 @@ describe('configuration input validation', () => {
     }
   });
 
-  it('rejects an unknown configuration', () => {
+  it('given an unknown configuration field when validated then the configuration is rejected', () => {
     expect(() =>
       assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
@@ -49,7 +49,7 @@ describe('configuration input validation', () => {
     ).toThrow('Unknown configuration field: "worktreeDirectory".');
   });
 
-  it('rejects an empty spec directory', () => {
+  it('given an empty spec directory when configuration is validated then it is rejected', () => {
     expect(() =>
       assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,

@@ -17,7 +17,7 @@ import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 afterEach(cleanupBuilderWorkflows);
 
 describe('builder run preparation', () => {
-  it('saves the running phase in the current project', async () => {
+  it('given an approved workflow when a builder run is prepared then the running phase is saved in the current project', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const run = await prepareBuilderRun({ paths, specId: SPEC_ID });
@@ -33,7 +33,7 @@ describe('builder run preparation', () => {
     });
   });
 
-  it('does not rerun a builder while it is running', async () => {
+  it('given a running builder when another run is prepared then the run is rejected', async () => {
     const { paths } = await createApprovedWorkflow();
     await prepareBuilderRun({ paths, specId: SPEC_ID });
 
@@ -42,7 +42,7 @@ describe('builder run preparation', () => {
     );
   });
 
-  it('stops after a builder failure and does not run again', async () => {
+  it('given a failed builder when another run is prepared then the run is rejected', async () => {
     const { paths } = await createApprovedWorkflow();
     await prepareBuilderRun({ paths, specId: SPEC_ID });
 

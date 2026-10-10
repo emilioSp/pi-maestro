@@ -29,7 +29,7 @@ afterEach(async () => {
 });
 
 describe('writeWorkflowState', () => {
-  it('creates and replaces validated state', async () => {
+  it('given valid workflow states when created and replaced then the latest state is saved', async () => {
     const directory = await mkdtemp(
       join(tmpdir(), 'pi-maestro-workflow-state-'),
     );
@@ -57,7 +57,7 @@ describe('writeWorkflowState', () => {
     );
   });
 
-  it('rejects invalid replacement state and preserves the old file', async () => {
+  it('given an existing workflow state when an invalid replacement is written then it is rejected and the old file is preserved', async () => {
     const directory = await mkdtemp(
       join(tmpdir(), 'pi-maestro-workflow-state-'),
     );

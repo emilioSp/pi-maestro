@@ -99,7 +99,7 @@ afterEach(async () => {
 });
 
 describe('run verifier tool', () => {
-  it('registers a closed spec-only input schema', async () => {
+  it('given the verifier run tool when registered then its closed schema accepts only a spec ID', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerRunVerifierTool,
     });
@@ -116,7 +116,7 @@ describe('run verifier tool', () => {
     ).toBe(false);
   });
 
-  it('runs the verifier in the current project with explicit spec identity', async () => {
+  it('given a ready-for-verifier workflow when the verifier runs then it uses the current project and explicit spec identity', async () => {
     const workflow = await createReadyForVerifierWorkflow();
 
     const { tool, events, emit, on } =
@@ -192,7 +192,7 @@ describe('run verifier tool', () => {
     ).resolves.toBe(true);
   });
 
-  it('returns findings and cleans the response listener', async () => {
+  it('given a verifier handoff with findings when delegation completes then findings are returned and the response listener is cleaned', async () => {
     const workflow = await createReadyForVerifierWorkflow();
 
     const { tool, events, on } = await piTestSessions.createRegisteredTool({
@@ -242,7 +242,7 @@ describe('run verifier tool', () => {
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
   });
 
-  it('returns a workflow error before delegation', async () => {
+  it('given a workflow outside ready-for-verifier when the verifier run is requested then a workflow error is returned before delegation', async () => {
     const workflow = await createApprovedWorkflow();
 
     const { tool, emit, on } = await piTestSessions.createRegisteredTool({
@@ -259,7 +259,7 @@ describe('run verifier tool', () => {
     expect(on).not.toHaveBeenCalled();
   });
 
-  it('returns a delegation error without advancing the workflow', async () => {
+  it('given a verifier delegation failure when the response is received then an error is returned without advancing the workflow', async () => {
     const workflow = await createReadyForVerifierWorkflow();
 
     const { tool, events, on } = await piTestSessions.createRegisteredTool({
@@ -294,7 +294,7 @@ describe('run verifier tool', () => {
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
   });
 
-  it('returns timeout and interruption errors distinctly', async () => {
+  it('given verifier delegation timeouts and interruptions when responses are received then distinct errors are returned', async () => {
     const timeoutWorkflow = await createReadyForVerifierWorkflow();
 
     const timeoutTool = await piTestSessions.createRegisteredTool({
@@ -342,7 +342,7 @@ describe('run verifier tool', () => {
     ).rejects.toThrow('Delegation interruption: The verifier was interrupted.');
   });
 
-  it('returns a protocol error when a completed response has no handoff', async () => {
+  it('given a completed verifier response without a handoff when processed then a protocol error is returned', async () => {
     const workflow = await createReadyForVerifierWorkflow();
 
     const { tool, events, on } = await piTestSessions.createRegisteredTool({

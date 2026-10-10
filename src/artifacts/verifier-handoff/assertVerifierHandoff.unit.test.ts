@@ -41,7 +41,7 @@ const finding = (): VerifierHandoff['findings'][number] => ({
 
 describe('verifier handoff validation', () => {
   it.each([PROBE_STATUSES.FAILED, PROBE_STATUSES.NOT_RUN])(
-    'given a passed probe and a second %s probe then requires a related finding',
+    'given a passed probe and a second %s probe when validated without a related finding then the handoff is rejected',
     (probeStatus) => {
       const input = handoff();
       input.acceptanceCriteria.push({
@@ -61,7 +61,7 @@ describe('verifier handoff validation', () => {
     },
   );
 
-  it('accepts findings linked to incomplete checks and other spec rules', () => {
+  it('given findings linked to incomplete checks and other spec rules when the verifier handoff is validated then it is accepted', () => {
     expect(() =>
       assertVerifierHandoff({
         handoff: {
@@ -156,9 +156,12 @@ describe('verifier handoff validation', () => {
       },
       message: 'Invalid verifier handoff',
     },
-  ])('rejects invalid handoff data %#', ({ handoff: input, message }) => {
-    expect(() => assertVerifierHandoff({ handoff: input, specId })).toThrow(
-      message,
-    );
-  });
+  ])(
+    'given invalid verifier handoff data %# when validated then it is rejected',
+    ({ handoff: input, message }) => {
+      expect(() => assertVerifierHandoff({ handoff: input, specId })).toThrow(
+        message,
+      );
+    },
+  );
 });

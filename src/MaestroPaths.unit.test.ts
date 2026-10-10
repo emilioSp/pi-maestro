@@ -30,7 +30,7 @@ const expectInside = ({ root, path }: { root: string; path: string }): void => {
 };
 
 describe('Maestro paths', () => {
-  it('given handoffs numbered 1 through 10 for both roles then the active handoffs are 10 and the next are 11', async () => {
+  it('given handoffs numbered 1 through 10 for both roles when active and next paths are requested then active handoffs are 10 and next handoffs are 11', async () => {
     const project = await createTemporaryProject();
     temporaryPaths.push(project.path);
 
@@ -97,7 +97,7 @@ describe('Maestro paths', () => {
     );
   });
 
-  it('builds every workflow path from the current repository checkout', async () => {
+  it('given a custom spec directory when workflow paths are built then every path uses the current project root', async () => {
     const repository = await createTemporaryProject();
     temporaryPaths.push(repository.path);
 
@@ -136,7 +136,7 @@ describe('Maestro paths', () => {
     );
   });
 
-  it('keeps generated artifact paths inside the repository', async () => {
+  it('given artifact paths when generated then they stay inside the project and escaping paths are rejected', async () => {
     const repository = await createTemporaryProject();
     temporaryPaths.push(repository.path);
 
@@ -175,7 +175,7 @@ describe('Maestro paths', () => {
     ).toThrow('Prototype path must stay inside the prototypes directory.');
   });
 
-  it('rejects a configured spec directory outside the repository root', () => {
+  it('given a spec directory outside the project root when Maestro paths are created then the directory is rejected', () => {
     expect(
       () =>
         new MaestroPaths({

@@ -92,20 +92,20 @@ const createWorkflow = (phase: WorkflowPhase) => {
 };
 
 describe('Maestro status', () => {
-  it('hides status when Maestro is inactive', () => {
+  it('given inactive Maestro when status is formatted then status is hidden', () => {
     expect(
       formatMaestroStatus({ active: false, workflow: null, theme }),
     ).toBeUndefined();
   });
 
-  it('shows active mode when there is no workflow', () => {
+  it('given active Maestro without a workflow when status is formatted then active mode is shown', () => {
     expect(formatMaestroStatus({ active: true, workflow: null, theme })).toBe(
       '<muted>Maestro active · </muted><accent>No active spec</accent>',
     );
   });
 
   it.each(PHASE_LABEL_CASES)(
-    'shows the $label label for $phase',
+    'given the $phase phase when status is formatted then the $label label is shown',
     ({ phase, label, icon, color }) => {
       const status = formatMaestroStatus({
         active: true,

@@ -61,7 +61,7 @@ afterEach(async () => {
 });
 
 describe('markSpecReady', () => {
-  it('moves the approved drafting spec to ready without changing the contract', async () => {
+  it('given an approved drafting spec when marked ready then the workflow becomes ready without changing the spec', async () => {
     const { paths, created } = await createWorkflow();
     const markdown = '# Owner-approved content\n';
     await writeFile(created.specFilePath, markdown, 'utf8');
@@ -94,7 +94,7 @@ describe('markSpecReady', () => {
     WORKFLOW_PHASES.ESCALATION_DECISION,
     WORKFLOW_PHASES.FINDINGS_DECISION,
   ])(
-    'approves the spec from %s without changing its content',
+    'given the %s phase when the spec is approved then it becomes ready without changing its content',
     async (phase) => {
       const { created, paths, repository } = await createWorkflow(phase);
       const originalContent = await readFile(created.specFilePath, 'utf8');
@@ -124,27 +124,30 @@ describe('markSpecReady', () => {
     WORKFLOW_PHASES.READY_FOR_VERIFIER,
     WORKFLOW_PHASES.VERIFIER_RUNNING,
     WORKFLOW_PHASES.CANDIDATE_READY,
-  ])('rejects a spec revision from %s', async (phase) => {
-    const { created, paths } = await createWorkflow(phase);
+  ])(
+    'given the %s phase when a spec revision is approved then the revision is rejected',
+    async (phase) => {
+      const { created, paths } = await createWorkflow(phase);
 
-    await expect(
-      markSpecReady({
-        paths,
-        specId: SPEC_ID,
-        activeWorkflowSpecId: SPEC_ID,
-      }),
-    ).rejects.toThrow(
-      `Workflow event "mark-spec-ready" is not allowed from phase "${phase}".`,
-    );
+      await expect(
+        markSpecReady({
+          paths,
+          specId: SPEC_ID,
+          activeWorkflowSpecId: SPEC_ID,
+        }),
+      ).rejects.toThrow(
+        `Workflow event "mark-spec-ready" is not allowed from phase "${phase}".`,
+      );
 
-    await expect(
-      readWorkflowState(created.workflowPath),
-    ).resolves.toMatchObject({
-      phase,
-    });
-  });
+      await expect(
+        readWorkflowState(created.workflowPath),
+      ).resolves.toMatchObject({
+        phase,
+      });
+    },
+  );
 
-  it('rejects a workflow spec identity mismatch', async () => {
+  it('given a workflow spec ID mismatch when the spec is marked ready then approval is rejected', async () => {
     const { created, paths } = await createWorkflow();
     await writeFile(
       created.workflowPath,
@@ -167,7 +170,7 @@ describe('markSpecReady', () => {
     );
   });
 
-  it('rejects readiness when spec.md is missing', async () => {
+  it('given a missing spec.md when the spec is marked ready then approval is rejected', async () => {
     const { paths, created } = await createWorkflow();
     await rm(created.specFilePath);
 

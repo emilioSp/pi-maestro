@@ -47,7 +47,7 @@ afterEach(async () => {
 });
 
 describe('builder handoff writes', () => {
-  it('replaces a validated handoff', async () => {
+  it('given an existing builder handoff when a valid replacement is written then the replacement is saved', async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, 'B1.json');
 
@@ -70,7 +70,7 @@ describe('builder handoff writes', () => {
     );
   });
 
-  it('rejects invalid writes without replacing the current handoff', async () => {
+  it('given an existing builder handoff when an invalid replacement is written then the write is rejected and the file is unchanged', async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, 'B1.json');
     await writeBuilderHandoff({
