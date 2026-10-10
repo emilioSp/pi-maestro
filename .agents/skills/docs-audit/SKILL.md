@@ -17,10 +17,10 @@ Do not check out historical commits or limit the audit to a Git diff. Use histor
 
 Check `README.md`, `docs/`, and the available project constitution:
 
-1. `mission.md`: purpose, scope, and owner responsibilities.
-2. `tech-stack.md`: technologies and their roles.
-3. `roadmap.md`: completed outcomes and planned priorities.
-4. `changelog.md`: meaningful codebase changes and breaking contracts.
+1. `../../../MISSION.md`: purpose, scope, and owner responsibilities.
+2. `../../../TECH_STACK.md`: technologies and their roles.
+3. `../../../ROADMAP.md`: completed outcomes and planned priorities.
+4. `../../../CHANGELOG.md`: meaningful codebase changes and breaking contracts.
 
 These four files default to the project root. Discover alternative names, directories, or embedded sections from the repository and its instructions. Audit the actual documents rather than assuming a fixed layout. Report missing documents only when project instructions require them.
 

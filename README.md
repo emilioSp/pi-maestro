@@ -100,7 +100,7 @@ The reading order is:
 
 ## Project constitution
 
-1. [Mission](mission.md): purpose, scope, and owner responsibilities.
-2. [Tech stack](tech-stack.md): runtime technologies and development tools.
-3. [Roadmap](roadmap.md): completed outcomes and planned priorities.
-4. [Changelog](changelog.md): meaningful codebase changes and breaking contracts.
+1. [Mission](MISSION.md): purpose, scope, and owner responsibilities.
+2. [Tech stack](TECH_STACK.md): runtime technologies and development tools.
+3. [Roadmap](ROADMAP.md): completed outcomes and planned priorities.
+4. [Changelog](CHANGELOG.md): meaningful codebase changes and breaking contracts.
