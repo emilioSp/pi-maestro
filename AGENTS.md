@@ -26,4 +26,6 @@ The package is source-only. Pi loads TypeScript directly, `src/` is published, a
 
 README.md, and all docs under /docs folder are intended for humans. Don't write them for agents. They are not.
 
-When referring to humans, use "the owner", don't use "you". 
+When referring to humans, use "the owner", don't use "you".
+
+In `README.md`, `docs/*.md`, `MISSION.md`, `TECH_STACK.md`, `ROADMAP.md`, and `CHANGELOG.md`, format terms from `docs/glossary.md` with inline code. Do not apply this formatting to section titles, blockquotes (`>`), link labels, or text inside quotation marks. Do not format `spec` within `spec-driven` phrases. Leave possessive forms, such as `owner's`, unformatted. Include plurals and capitalization variants only when they have the glossary meaning. Do not change wording, code blocks, link targets, or file paths just to apply this formatting.
