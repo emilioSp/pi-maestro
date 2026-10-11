@@ -29,3 +29,7 @@ Evidence: [Repository-only specification](.specs/20261008-132344-store-escalatio
 ## Planned: Keep the activation introduction brief
 
 `Maestro` will introduce itself briefly and offer to explain how it works if the `owner` asks. It must have access to its documentation to answer. This requirement is recorded in [R-14](ROADMAP.md#r-14-introduce-maestro-at-activation). The documentation access method is not yet decided.
+
+## Planned: Check code quality against AGENTS.md instructions
+
+The `verifier` will check code quality against applicable `AGENTS.md` instructions as well as the approved `spec`. Each `finding` about an instruction violation must identify the instruction file, quote the violated instruction, and explain the violation. This requirement is recorded in [R-16](ROADMAP.md#r-16-verify-code-quality-against-agentsmd-instructions). It extends existing guidance without adding personal style preferences as requirements.

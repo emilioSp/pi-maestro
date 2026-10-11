@@ -169,3 +169,15 @@ When activated, `Maestro` gives a brief introduction and invites the `owner` to 
 #### Completed when
 
 Activation includes this short introduction. `Maestro` can consult its documentation.
+
+### R-16: Verify code quality against AGENTS.md instructions
+
+#### Objective
+
+Make the `verifier` responsible for checking code quality against applicable `AGENTS.md` instructions, in addition to checking the approved `spec`.
+
+Existing `verifier` instructions already require reading applicable `AGENTS.md` files and following technical rules. Extend that guidance to require explicit code-quality review and reporting of instruction violations. Do not introduce personal style preferences as requirements.
+
+#### Completed when
+
+The `verifier` checks code quality for compliance with applicable `AGENTS.md` instructions. Each `finding` about an instruction violation identifies the `AGENTS.md` file, quotes the violated instruction, and explains how the code violates it.
