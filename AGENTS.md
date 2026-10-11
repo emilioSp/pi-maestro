@@ -7,12 +7,12 @@ Pi extension that implements a multiagent spec driven development workflow.
 ## At session start (clock in)
 
 1. Read ROADMAP.md and CHANGELOG.md for current state 
-2. Read DESIGN_DECISIONS.md for important decisions
+2. Read ADR.md for architectural decisions
 
 ## Before session end (clock out)
 
 1. Update ROADMAP.md
-2. Update DESIGN_DECISIONS.md
+2. Update ADR.md only when the session includes a significant architectural decision.
 
 ## Commands
 
@@ -63,4 +63,4 @@ README.md, and all docs under /docs folder are intended for humans. Don't write 
 
 When referring to humans, use "the owner", don't use "you".
 
-In `README.md`, `docs/*.md`, `MISSION.md`, `TECH_STACK.md`, `ROADMAP.md`, `CHANGELOG.md`, and `DESIGN_DECISIONS.md`, format terms from `docs/glossary.md` with inline code. Do not apply this formatting to section titles, blockquotes (`>`), link labels, or text inside quotation marks. Do not format `spec` within `spec-driven` phrases. Leave possessive forms, such as `owner's`, unformatted. Include plurals and capitalization variants only when they have the glossary meaning. Do not change wording, code blocks, link targets, or file paths just to apply this formatting.
+In `README.md`, `docs/*.md`, `MISSION.md`, `TECH_STACK.md`, `ROADMAP.md`, `CHANGELOG.md`, and `ADR.md`, format terms from `docs/glossary.md` with inline code. Do not apply this formatting to section titles, blockquotes (`>`), link labels, or text inside quotation marks. Do not format `spec` within `spec-driven` phrases. Leave possessive forms, such as `owner's`, unformatted. Include plurals and capitalization variants only when they have the glossary meaning. Do not change wording, code blocks, link targets, or file paths just to apply this formatting.

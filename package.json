@@ -37,7 +37,7 @@
     "TECH_STACK.md",
     "ROADMAP.md",
     "CHANGELOG.md",
-    "DESIGN_DECISIONS.md",
+    "ADR.md",
     "README.md",
     "LICENSE"
   ],

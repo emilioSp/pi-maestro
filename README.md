@@ -104,4 +104,4 @@ The reading order is:
 2. [Tech stack](TECH_STACK.md): runtime technologies and development tools.
 3. [Roadmap](ROADMAP.md): completed outcomes and planned priorities.
 4. [Changelog](CHANGELOG.md): meaningful codebase changes and breaking changes.
-5. [Design decisions](DESIGN_DECISIONS.md): recorded choices, reasons, alternatives, and constraints.
+5. [Architecture decision records](ADR.md): architectural choices, context, consequences, and evidence.

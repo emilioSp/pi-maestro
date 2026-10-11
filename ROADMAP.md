@@ -34,7 +34,7 @@ Applied glossary formatting across the documentation and recorded its exclusions
 
 ### R-15: Rename the test support directory
 
-Renamed `test/` to `tests/` at the owner's request. Updated imports, fixture paths, lint configuration, and project instructions. Source tests remain next to their source files.
+Renamed `test/` to `tests/` at the owner's request. Updated imports, fixture paths, lint configuration, and project instructions. This follows the global instruction to keep fixtures under `tests/fixtures`. Source tests remain next to their source files. Historical `handoffs` retain their recorded paths.
 
 #### Evidence
 

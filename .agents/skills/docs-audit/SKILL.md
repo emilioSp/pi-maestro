@@ -1,6 +1,6 @@
 ---
 name: docs-audit
-description: Audit README.md, docs/, and the project constitution (mission, tech stack, roadmap, changelog, and design decisions) against the current working tree without asking for a comparison baseline. Use when reviewing documentation consistency, stale references, broken links, roadmap state, or documentation-to-code mismatches.
+description: Audit README.md, docs/, and the project constitution (mission, tech stack, roadmap, changelog, and architecture decision records) against the current working tree without asking for a comparison baseline. Use when reviewing documentation consistency, stale references, broken links, roadmap state, or documentation-to-code mismatches.
 ---
 
 # Documentation audit
@@ -21,7 +21,7 @@ Check `README.md`, `docs/`, and the available project constitution:
 2. `../../../TECH_STACK.md`: technologies and their roles.
 3. `../../../ROADMAP.md`: completed outcomes and planned priorities.
 4. `../../../CHANGELOG.md`: meaningful codebase changes and breaking contracts.
-5. `../../../DESIGN_DECISIONS.md`: choices, reasons, alternatives, and constraints.
+5. `../../../ADR.md`: architectural choices, status, context, consequences, and evidence.
 
 These five files default to the project root. Discover alternative names, directories, or embedded sections from the repository and its instructions. Audit the actual documents rather than assuming a fixed layout. Report missing documents only when project instructions require them.
 
@@ -47,7 +47,7 @@ Search for references to removed, renamed, or simplified files, symbols, and beh
 
 Check that documentation follows this rule, with paths relative to the project root:
 
-In `README.md`, `docs/*.md`, `MISSION.md`, `TECH_STACK.md`, `ROADMAP.md`, `CHANGELOG.md`, and `DESIGN_DECISIONS.md`, format terms from `docs/glossary.md` with inline code. Do not apply this formatting to section titles, blockquotes (`>`), link labels, or text inside quotation marks. Do not format `spec` within `spec-driven` phrases. Leave possessive forms, such as `owner's`, unformatted. Include plurals and capitalization variants only when they have the glossary meaning. Do not change wording, code blocks, link targets, or file paths just to apply this formatting.
+In `README.md`, `docs/*.md`, `MISSION.md`, `TECH_STACK.md`, `ROADMAP.md`, `CHANGELOG.md`, and `ADR.md`, format terms from `docs/glossary.md` with inline code. Do not apply this formatting to section titles, blockquotes (`>`), link labels, or text inside quotation marks. Do not format `spec` within `spec-driven` phrases. Leave possessive forms, such as `owner's`, unformatted. Include plurals and capitalization variants only when they have the glossary meaning. Do not change wording, code blocks, link targets, or file paths just to apply this formatting.
 
 ### 3. Links and references
 
@@ -103,9 +103,9 @@ Unreleased entries describe actual changes outside recorded version boundaries, 
 
 Do not add tests, features, or requirements merely because they are absent. Report mismatches with the project's recorded decisions and leave new decisions to the owner.
 
-#### Design decisions
+#### Architecture decision records
 
-Check choices and constraints against specs, code, and history. Reasons and rejected alternatives need explicit evidence, not inference from implementation. Distinguish implementation dates from approval dates. Preserve explicitly unknown rationale and check replacement links when a decision is superseded.
+Check that each record describes an architectural decision and includes its status, context, decision, consequences, and available evidence. Compare choices and constraints with specs, code, and history. Reasons and rejected alternatives need explicit evidence, not inference from implementation. Distinguish recorded dates, implementation dates, and approval dates. Preserve explicitly unknown rationale. When a decision is superseded, check its status and links to the replacement record. Keep non-architectural requirements in the roadmap or other relevant documentation.
 
 ### 6. Report
 
