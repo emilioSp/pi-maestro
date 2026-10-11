@@ -22,7 +22,20 @@ A `verifier` `handoff` can contain `findings`, which are technical issues.
 
 `Builder` and `verifier` `runs` are sequential foreground operations. Each starts with a fresh conversation and reads the `spec` and saved `artifacts`.
 
-Maestro's Pi status shows the current phase. `pi-subagents` FleetView and `/subagents-fleet` show live agent activity and transcripts.
+## Observability
+
+`Observability` is the owner's ability to inspect workflow progress and reported results. 
+
+Maestro's Pi status shows the current phase. 
+
+`pi-subagents` FleetView and `/subagents-fleet` show live agent activity and transcripts.
+
+Saved `handoffs` provide a structured account of each reported `run`.
+The `builder` reports its outcome, `probe` results, notes, and any `escalation` questions. 
+The `verifier` reports its independent checks, results, and `findings`. 
+Recorded `owner` decisions explain how questions and issues were resolved. Earlier numbered reports remain available for inspection.
+
+For example, the `owner` can read `B1.json` to see what the `builder` reports implementing and which `probes` it ran. `V1.json` shows what the `verifier` reports checking independently and which issues it found.
 
 ## Main flow
 

@@ -14,6 +14,7 @@
 | `Expected result` | The observable result that a `probe` must produce. |
 | `Artifact` | A saved workflow file, such as a `spec`, or a `handoff` between agents. |
 | `Handoff` | A saved `builder` or `verifier` report with results, `probe` outcomes, and notes. |
+| `Observability` | The owner's ability to inspect workflow progress and reported results. |
 | `Run` or `pass` | One execution of the `builder` or `verifier` with a fresh conversation. |
 | `Candidate` | The project files created by agents after a workflow `run` |
 | `Finding` | A technical issue that the `verifier` records for an `owner` decision. |
