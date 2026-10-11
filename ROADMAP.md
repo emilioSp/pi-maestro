@@ -174,10 +174,10 @@ Activation includes this short introduction. `Maestro` can consult its documenta
 
 #### Objective
 
-Make the `verifier` responsible for checking code quality against applicable `AGENTS.md` instructions, in addition to checking the approved `spec`.
+Add code-quality review against applicable `AGENTS.md` instructions as another `verifier` responsibility. Keep all existing responsibilities unchanged, including independent verification of every `acceptance criterion` in the approved `spec`. Code-quality review supplements that verification. It does not replace or reduce it.
 
 Existing `verifier` instructions already require reading applicable `AGENTS.md` files and following technical rules. Extend that guidance to require explicit code-quality review and reporting of instruction violations. Do not introduce personal style preferences as requirements.
 
 #### Completed when
 
-The `verifier` checks code quality for compliance with applicable `AGENTS.md` instructions. Each `finding` about an instruction violation identifies the `AGENTS.md` file, quotes the violated instruction, and explains how the code violates it.
+The `verifier` performs both its existing verification duties and the additional code-quality review. Every `acceptance criterion` is still independently verified. Each code-quality `finding` about an instruction violation identifies the `AGENTS.md` file, quotes the violated instruction, and explains how the code violates it.
