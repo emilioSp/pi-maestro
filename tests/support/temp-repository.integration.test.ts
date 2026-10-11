@@ -1,7 +1,7 @@
 import { access, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { createTemporaryProject } from '#test/support/temp-repository.ts';
+import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 
 describe('temporary project support', () => {
   it('given a temporary project when a file is written and cleanup runs then the project is isolated and removed', async () => {

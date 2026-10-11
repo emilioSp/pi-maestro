@@ -51,7 +51,7 @@ describe('configuration loading', () => {
     await mkdir(piDirectory, { recursive: true });
 
     const fixture = await readFile(
-      new URL(import.meta.resolve('#test/fixtures/config/valid-full.json')),
+      new URL(import.meta.resolve('#tests/fixtures/config/valid-full.json')),
       'utf8',
     );
 
@@ -84,7 +84,7 @@ describe('configuration loading', () => {
     const configPath = join(piDirectory, 'maestro.json');
 
     const fixture = await readFile(
-      new URL(import.meta.resolve('#test/fixtures/config/invalid-json.json')),
+      new URL(import.meta.resolve('#tests/fixtures/config/invalid-json.json')),
       'utf8',
     );
 
@@ -120,7 +120,7 @@ describe('configuration loading', () => {
         await mkdir(piDirectory, { recursive: true });
 
         const content = await readFile(
-          new URL(import.meta.resolve(`#test/fixtures/config/${fixture}`)),
+          new URL(import.meta.resolve(`#tests/fixtures/config/${fixture}`)),
           'utf8',
         );
 

@@ -10,7 +10,7 @@ import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts'
 import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
-import { createTemporaryProject } from '#test/support/temp-repository.ts';
+import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 
 const SPEC_ID = '20260321-143052-add-weather-alerts';
 

@@ -26,6 +26,10 @@ Applied glossary formatting across the documentation and recorded its exclusions
 
 Evidence: [Glossary](docs/glossary.md) and [workflow documentation](docs/workflow.md).
 
+### R-15: Rename the test support directory
+
+Renamed `test/` to `tests/` at the owner's request. Updated imports, fixture paths, lint configuration, and project instructions. Source tests remain next to their source files.
+
 ## Now
 
 No current priority is selected.

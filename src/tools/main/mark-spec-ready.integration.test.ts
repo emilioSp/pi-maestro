@@ -5,8 +5,8 @@ import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { createSpec } from '#specs/create.ts';
-import piTestSessions from '#test/support/pi-session.ts';
-import { createTemporaryProject } from '#test/support/temp-repository.ts';
+import piTestSessions from '#tests/support/pi-session.ts';
+import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { registerMarkSpecReadyTool } from '#tools/main/mark-spec-ready.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {

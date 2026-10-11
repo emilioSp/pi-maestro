@@ -9,8 +9,8 @@ import {
 } from '#config/defaults.ts';
 import { AGENTS } from '#config/schema.ts';
 import { assertEnvironment } from '#maestro/checks/assertEnvironment.ts';
-import piTestSessions from '#test/support/pi-session.ts';
-import { createTemporaryProject } from '#test/support/temp-repository.ts';
+import piTestSessions from '#tests/support/pi-session.ts';
+import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 
 const cleanupFunctions: Array<() => Promise<void>> = [];
 

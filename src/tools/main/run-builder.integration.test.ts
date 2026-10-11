@@ -13,13 +13,13 @@ import {
 } from '#artifacts/builder-handoff/schema.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { AGENTS } from '#config/schema.ts';
-import { csvExportEscalation } from '#test/fixtures/csv-export-escalation.ts';
+import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
   SPEC_ID,
-} from '#test/support/builder-workflow.ts';
-import piTestSessions from '#test/support/pi-session.ts';
+} from '#tests/support/builder-workflow.ts';
+import piTestSessions from '#tests/support/pi-session.ts';
 import { registerRunBuilderTool } from '#tools/main/run-builder.ts';
 import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';

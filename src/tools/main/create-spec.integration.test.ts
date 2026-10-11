@@ -3,8 +3,8 @@ import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import type { CreatedSpec } from '#specs/create.ts';
-import piTestSessions from '#test/support/pi-session.ts';
-import { createTemporaryProject } from '#test/support/temp-repository.ts';
+import piTestSessions from '#tests/support/pi-session.ts';
+import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { registerCreateSpecTool } from '#tools/main/create-spec.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {

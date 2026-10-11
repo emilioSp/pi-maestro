@@ -1,7 +1,7 @@
 import { mkdir, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { createTemporaryProject } from '#test/support/temp-repository.ts';
+import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { resolveWorkflowContext } from '#tools/child/utils/resolveWorkflowContext.ts';
 
 const SPEC_ID = '20260321-143052-add-weather-alerts';

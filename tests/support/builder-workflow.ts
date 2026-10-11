@@ -15,7 +15,7 @@ import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { createSpec } from '#specs/create.ts';
-import { createTemporaryProject } from '#test/support/temp-repository.ts';
+import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
 
 export const INSTANT = Temporal.Instant.from('2026-03-21T14:30:52Z');

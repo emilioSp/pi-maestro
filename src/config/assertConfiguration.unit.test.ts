@@ -109,7 +109,7 @@ describe('configuration input validation', () => {
     async ({ fixture, message }) => {
       const input = JSON.parse(
         await readFile(
-          new URL(import.meta.resolve(`#test/fixtures/config/${fixture}`)),
+          new URL(import.meta.resolve(`#tests/fixtures/config/${fixture}`)),
           'utf8',
         ),
       );

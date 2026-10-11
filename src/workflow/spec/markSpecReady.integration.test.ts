@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 import { createSpec } from '#specs/create.ts';
-import { createTemporaryProject } from '#test/support/temp-repository.ts';
+import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES, type WorkflowPhase } from '#workflow/state/schema.ts';

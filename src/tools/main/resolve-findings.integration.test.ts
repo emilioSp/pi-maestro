@@ -19,8 +19,8 @@ import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
   SPEC_ID,
-} from '#test/support/builder-workflow.ts';
-import piTestSessions from '#test/support/pi-session.ts';
+} from '#tests/support/builder-workflow.ts';
+import piTestSessions from '#tests/support/pi-session.ts';
 import { registerResolveFindingsTool } from '#tools/main/resolve-findings.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';

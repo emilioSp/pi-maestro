@@ -3,13 +3,13 @@ import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
-import { csvExportEscalation } from '#test/fixtures/csv-export-escalation.ts';
+import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
   SPEC_ID,
-} from '#test/support/builder-workflow.ts';
-import piTestSessions from '#test/support/pi-session.ts';
+} from '#tests/support/builder-workflow.ts';
+import piTestSessions from '#tests/support/pi-session.ts';
 import { registerRecordBuilderHandoffTool } from '#tools/child/record-builder-handoff.ts';
 import { registerResolveEscalationsTool } from '#tools/main/resolve-escalations.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';

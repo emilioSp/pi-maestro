@@ -39,9 +39,9 @@ import {
   createApprovedWorkflow,
   failedHandoff,
   SPEC_ID,
-} from '#test/support/builder-workflow.ts';
-import piTestSessions from '#test/support/pi-session.ts';
-import { createTemporaryProject } from '#test/support/temp-repository.ts';
+} from '#tests/support/builder-workflow.ts';
+import piTestSessions from '#tests/support/pi-session.ts';
+import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { BUILDER_HANDOFF_TOOL } from '#tools/child/record-builder-handoff.ts';
 import { VERIFIER_HANDOFF_TOOL } from '#tools/child/record-verifier-handoff.ts';
 import { CREATE_SPEC_TOOL } from '#tools/main/create-spec.ts';
@@ -447,7 +447,7 @@ describe('main Maestro extension', () => {
 
     const approvedSpec = (
       await readFile(
-        new URL(import.meta.resolve('#test/fixtures/weather-alert-spec.md')),
+        new URL(import.meta.resolve('#tests/fixtures/weather-alert-spec.md')),
         'utf8',
       )
     ).replace('<id>', specId);

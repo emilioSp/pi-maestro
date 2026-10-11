@@ -10,7 +10,7 @@
     "includes": [
       "**",
       "!!**/node_modules",
-      "!!test/fixtures/config/invalid-json.json",
+      "!!tests/fixtures/config/invalid-json.json",
       "!!**/coverage"
     ]
   },

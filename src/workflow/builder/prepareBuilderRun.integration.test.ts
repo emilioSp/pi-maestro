@@ -7,7 +7,7 @@ import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
   SPEC_ID,
-} from '#test/support/builder-workflow.ts';
+} from '#tests/support/builder-workflow.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';

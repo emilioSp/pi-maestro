@@ -19,8 +19,8 @@ import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
   SPEC_ID,
-} from '#test/support/builder-workflow.ts';
-import piTestSessions from '#test/support/pi-session.ts';
+} from '#tests/support/builder-workflow.ts';
+import piTestSessions from '#tests/support/pi-session.ts';
 import { registerRunVerifierTool } from '#tools/main/run-verifier.ts';
 import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';

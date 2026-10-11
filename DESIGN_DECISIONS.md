@@ -20,6 +20,12 @@ Evidence: [Commit deae41c](https://github.com/emilioSp/pi-maestro/commit/deae41c
 
 Evidence: [Repository-only specification](.specs/20261008-132344-store-escalations-in-builder-handoffs/spec.md), [Commit dda6eb5](https://github.com/emilioSp/pi-maestro/commit/dda6eb5b3ab76ba175112c3c565c70be747d7344), and [escalation workflow](docs/workflow.md#escalations).
 
+## Use tests/ for test support and fixtures
+
+1. Decision: Rename `test/` to `tests/` at the owner's request. Update imports, fixture paths, and lint configuration.
+2. Reason: Match the global instruction that places fixtures under `tests/fixtures`.
+3. Constraints: Keep source tests next to their source files. Test behavior and fixture contents stay unchanged. Historical `handoffs` retain their recorded paths.
+
 ## Planned: Keep the activation introduction brief
 
 `Maestro` will introduce itself briefly and offer to explain how it works if the `owner` asks. It must have access to its documentation to answer. This requirement is recorded in [R-14](ROADMAP.md#r-14-introduce-maestro-at-activation). The documentation access method is not yet decided.

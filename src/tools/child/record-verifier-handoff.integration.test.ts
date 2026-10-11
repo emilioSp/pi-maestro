@@ -9,8 +9,8 @@ import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
   SPEC_ID,
-} from '#test/support/builder-workflow.ts';
-import piTestSessions from '#test/support/pi-session.ts';
+} from '#tests/support/builder-workflow.ts';
+import piTestSessions from '#tests/support/pi-session.ts';
 import { registerRecordVerifierHandoffTool } from '#tools/child/record-verifier-handoff.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 

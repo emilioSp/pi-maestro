@@ -28,7 +28,7 @@ Keep the existing structure stable. Add a new structural file or directory only 
 2. `agents/`: Agent instructions.
 3. `src/`: Application code.
 4. `docs/`: User documentation.
-5. `test/`: Test support and fixture tests.
+5. `tests/`: Test support and fixture tests.
 
 Keep configuration, Git operations, artifacts, workflow coordination, subagent integration, and tools in their existing domain directories.
 
@@ -49,7 +49,7 @@ Keep each test file next to the source file it tests. Use these suffixes:
 1. `.unit.test.ts` for unit tests.
 2. `.integration.test.ts` for integration tests.
 
-Keep support and fixture tests under `test/`.
+Keep support and fixture tests under `tests/`.
 Use one test level when it gives meaningful coverage. A module does not need both unit and integration tests.
 
 ### Package format
