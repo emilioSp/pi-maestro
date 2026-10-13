@@ -1,0 +1,44 @@
+{
+  "status": "done",
+  "summary": "Added the approved UI-only activation introduction and package-relative absolute documentation paths with on-demand reading guidance. All six acceptance criteria and npm run check passed.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Ran ./node_modules/.bin/vitest run extensions/maestro.integration.test.ts and npm run check. The valid-activation scenario invokes /maestro, strips terminal sequences, and compares the single info notice to the exact heading, approved introduction lines, and agent details in order.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Ran ./node_modules/.bin/vitest run extensions/maestro.integration.test.ts and npm run check. Explicit configuration uses openai-codex/gpt-6.1-sol with builder xhigh and verifier high. Compared the whole notice against the muted heading and accent-styled configured agent lines.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Ran ./node_modules/.bin/vitest run extensions/activation-probes.integration.test.ts using a temporary, uncommitted test, then removed it. Created an offline real Pi session with Maestro off, appended the owner message 'Work on checkout', cloned session entries, and invoked /maestro. Entries remained exactly unchanged; no model stream request occurred; one notice appeared.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Ran ./node_modules/.bin/vitest run extensions/maestro.integration.test.ts and npm run check. With project trust disabled, /maestro emitted only the existing error. After successful activation, deactivation and session_start reset emitted no notices. Successful reactivation emitted exactly one introduction info notice.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "Ran ./node_modules/.bin/vitest run extensions/maestro.integration.test.ts and npm run check. Loaded the package from /Users/emiliosp/Workspace/pi-maestro with Pi running in a separate temporary project whose README contains 'Shop project'. Activated Maestro and extracted the advertised absolute README and docs paths from its instructions. Invoked Pi's existing read tool on README.md, workflow.md, configuration.md, glossary.md, and subagent-integration.md, comparing each response with the package document contents.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "Ran ./node_modules/.bin/vitest run extensions/activation-probes.integration.test.ts using a temporary, uncommitted test, then removed it. Activated Maestro and inspected the before_agent_start instructions for 'Discuss checkout' before any documentation read. Absolute paths and on-demand guidance were present. README's '## Prerequisites', configuration's default JSON block, and each complete documentation body were absent.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "npm run check passed: lint, TypeScript checking, and 205 tests across 37 files; coverage exceeded all configured thresholds.",
+    "AC4 and AC8 used only temporary probes, not additions or extensions to the committed suite. Temporary verification files were removed.",
+    "Preserved pre-existing configuration and roadmap changes. Added only an implementation-status note to R-14; independent verification remains pending."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261013-171954-introduce-maestro-at-activation"
+}

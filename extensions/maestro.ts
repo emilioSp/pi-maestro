@@ -90,10 +90,12 @@ export default (pi: ExtensionAPI): void => {
         syncMainTools();
         await refreshMaestroStatus(context);
 
-        // show builder/verifier model on activation
+        // Introduce Maestro and show configured agents only in the UI.
         context.ui.notify(
           [
             context.ui.theme.fg('muted', 'Maestro active'),
+            'Maestro helps the owner define a spec, then coordinates implementation and independent verification.',
+            'Ask how Maestro works for a short explanation.',
             context.ui.theme.fg(
               'accent',
               `Builder (${config.builder.model} ${config.builder.thinking})`,

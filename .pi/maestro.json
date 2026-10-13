@@ -7,8 +7,8 @@
     "timeoutMinutes": 120
   },
   "verifier": {
-    "model": "openai-codex/gpt-6.1-sol",
-    "thinking": "high",
+    "model": "openai-codex/gpt-6-astra",
+    "thinking": "medium",
     "timeoutMinutes": 120
   }
 }

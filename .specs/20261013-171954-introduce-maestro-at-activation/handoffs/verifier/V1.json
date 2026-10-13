@@ -1,0 +1,43 @@
+{
+  "version": "1.0.0",
+  "specId": "20261013-171954-introduce-maestro-at-activation",
+  "summary": "Independently verified all six acceptance criteria. Activation notices, configured styling, history isolation, activation boundaries, and on-demand package documentation matched the spec. No findings.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Ran ./node_modules/.bin/vitest run extensions/verifier-activation-probes.integration.test.ts extensions/maestro.integration.test.ts. The valid activation test invoked /maestro in an isolated trusted project, stripped terminal sequences, and compared the single info notice with the exact approved introduction followed by agent details. Matched.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Ran extensions/maestro.integration.test.ts with Vitest. Explicit builder openai-codex/gpt-6.1-sol xhigh and verifier openai-codex/gpt-6.1-sol high produced exactly one notice with the muted heading and both accent-styled configured agent lines.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Ran the temporary extensions/verifier-activation-probes.integration.test.ts with Vitest. Appended owner message 'Work on checkout' to an offline real Pi session, cloned existing entries, activated with /maestro, and compared entries. Entries were identical, one info notice appeared, and the model stream spy had no calls. Removed the temporary probe; no committed test was added or extended.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Ran extensions/maestro.integration.test.ts with Vitest. Untrusted activation emitted only its existing error without introduction. Successful activation introduced Maestro. Deactivation and session_start reset emitted no notices. Successful reactivation emitted exactly one introduction info notice.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "Ran extensions/maestro.integration.test.ts with Vitest. Loaded this package while Pi used a distinct temporary project containing README 'Shop project'. Activated and extracted the advertised absolute README and docs paths. Pi's existing read tool returned the package README, workflow.md, configuration.md, glossary.md, and subagent-integration.md, matching their file contents rather than project documentation.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "Ran the temporary extensions/verifier-activation-probes.integration.test.ts with Vitest. Activated and inspected before_agent_start instructions for 'Discuss checkout' before reading documentation. Absolute paths and on-demand reading guidance were present; README '## Prerequisites', the actual default configuration JSON block, and every full documentation body were absent. Removed the temporary probe; no committed test was added or extended.",
+      "probeStatus": "passed"
+    }
+  ],
+  "findings": [],
+  "notes": [
+    "Reviewed the active spec, verifier-running workflow, B1 handoff, implementation, test changes, repository instructions, and relevant project history. No prototypes or earlier handoffs were present.",
+    "Used non-mutating equivalents of npm run check because that script invokes automatic fixes: npm run lint, ./node_modules/.bin/oxlint, npm run typecheck, and npm test -- --coverage.reportsDirectory=<temporary directory>. All passed. The full suite passed 205 tests in 37 files; coverage exceeded all thresholds.",
+    "Temporary acceptance probes passed alongside the extension tests: 16 tests in two files. Removed the temporary test and temporary coverage directory. Existing coverage output and all pre-existing product changes were preserved."
+  ]
+}

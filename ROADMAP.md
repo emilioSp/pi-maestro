@@ -52,6 +52,22 @@ Renamed `test/` to `tests/` at the owner's request. Updated imports, fixture pat
 
 ## Now
 
+### R-14: Introduce Maestro at activation
+
+#### Objective
+
+When activated, `Maestro` gives a brief introduction and invites the `owner` to ask how it works, if interested. `Maestro` must have access to its own documentation to answer those questions.
+
+#### Completed when
+
+Activation includes this short introduction. `Maestro` can consult its documentation.
+
+#### Implementation status
+
+The activation notice includes the approved introduction before the configured agent details. Active instructions identify the installed README and documentation directory for reading on demand.
+
+[Specification](.specs/20261013-171954-introduce-maestro-at-activation/spec.md).
+
 ## Next
 
 ## Later
@@ -155,16 +171,6 @@ Show an activity indicator in Pi's status bar while progress does not require an
 #### Completed when
 
 The status clearly distinguishes work in progress from a request for `owner` action.
-
-### R-14: Introduce Maestro at activation
-
-#### Objective
-
-When activated, `Maestro` gives a brief introduction and invites the `owner` to ask how it works, if interested. `Maestro` must have access to its own documentation to answer those questions.
-
-#### Completed when
-
-Activation includes this short introduction. `Maestro` can consult its documentation.
 
 ### R-16: Verify code quality against AGENTS.md instructions
 
