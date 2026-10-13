@@ -98,27 +98,19 @@ All 3 `acceptance criteria` passed with no `verifier` `findings`. The saved work
 
 [Specification](.specs/20261013-202811-check-acceptance-criterion-numbering-before-builder-execution/spec.md), [verifier report](.specs/20261013-202811-check-acceptance-criterion-numbering-before-builder-execution/handoffs/verifier/V1.json), and [merged PR #36](https://github.com/emilioSp/pi-maestro/pull/36).
 
-## Now
-
 ### R-10: Match handoff criteria to the approved spec
 
-#### Objective
+Implemented in `0.9.5` with the narrower scope approved by the `owner`. Both `handoff` submissions require every `acceptance criterion` ID from the approved `spec` before saving a report or changing phase. Extra report IDs remain allowed. Existing report validation is unchanged, and no new check rejects duplicate `spec` IDs.
 
-Prevent `builder` and `verifier` reports from omitting or adding `acceptance criteria`. Each report must contain exactly the criterion IDs in the approved `spec`, with no duplicates in either place. Existing duplicate checks in reports do not establish this match.
+Both `acceptance criteria` passed independent verification with no `findings`. The saved workflow reached `candidate-ready`.
 
-The `specification` must define the criterion heading format used to extract IDs. For example, a heading can use `### AC1: ...`.
+Later changes requested by the `owner` extracted the shared check and replaced repeated integration scenarios with unit tests. One missing-ID integration test remains per role. These changes are outside the completed independent verification. The final `npm run check` passed all 227 tests and coverage thresholds.
 
-#### Completed when
+#### Evidence
 
-Both `handoff` submissions reject missing, extra, or duplicate criterion IDs before saving a report or changing phase.
+[Specification](.specs/20261013-211629-match-handoff-criteria-to-the-approved-spec/spec.md), [verifier report](.specs/20261013-211629-match-handoff-criteria-to-the-approved-spec/handoffs/verifier/V1.json), and [merged PR #37](https://github.com/emilioSp/pi-maestro/pull/37).
 
-#### Implementation status
-
-The [approved specification](.specs/20261013-211629-match-handoff-criteria-to-the-approved-spec/spec.md) limits this change to missing IDs. The implementation rejects missing `spec` IDs before saving either `handoff` or changing phase. Extra report IDs remain allowed. No new check rejects duplicate IDs in the `spec`.
-
-Both `acceptance criteria` passed independent verification with no `findings`. The saved workflow reached `candidate-ready`. The broader exact-match objective remains outside this approved scope.
-
-Later changes requested by the `owner` extract the shared presence check into one utility and cover extraction with unit tests. One missing-ID integration test remains per role to check rejection before saving. These changes are outside the completed independent verification.
+## Now
 
 ## Next
 

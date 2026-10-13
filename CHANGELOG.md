@@ -2,6 +2,13 @@
 
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries; GitHub Releases are not required. Version-only changes and routine maintenance are omitted.
 
+## 0.9.5
+
+1. Added a shared check that requires every approved `spec` criterion ID in `builder` and `verifier` `handoffs`. See [PR #37](https://github.com/emilioSp/pi-maestro/pull/37).
+2. Missing IDs reject submission before saving a report or changing phase. Extra report IDs remain allowed, and existing report validation is unchanged.
+3. Reused the raw heading rule `^### AC(\d+):`, including leading zeros and matching lines inside code blocks. No matching headings impose no new restriction.
+4. Added unit tests for extraction and one missing-ID integration test per role.
+
 ## 0.9.4
 
 1. Added numbering validation to `spec` approval. Matched `acceptance criterion` headings must start at `AC1` and continue without gaps. See [PR #36](https://github.com/emilioSp/pi-maestro/pull/36).
