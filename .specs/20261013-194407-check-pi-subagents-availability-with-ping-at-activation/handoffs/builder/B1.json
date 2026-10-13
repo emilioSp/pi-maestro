@@ -1,0 +1,51 @@
+{
+  "status": "done",
+  "summary": "Activation now requires a matching successful version 1 pi-subagents ping within 2000 ms. Failures show the required installation sentence. Existing checks, UI-only notices, history isolation, and deactivation behavior remain intact.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npm run check: existing extensions/maestro.integration.test.ts valid-checks test supplies a matching successful reply after 100 ms, observes active state and preserved notice, and confirms no model request or agent delegation.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "npm run check: no-ping-reply integration test uses controlled timers, observes an unfinished activation without notification at 1999 ms, then observes the required UI installation error and inactive state at 2000 ms.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "npm run check: matching-reply integration cases reject success:false with Unavailable, null, invalid envelope/data versions, wrong method, missing data, and missing requestId. Emission-error test throws Bus unavailable. All remain inactive with the required installation sentence.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Inspected src/maestro/checks/assertEnvironment.ts lines 124–190 and extensions/maestro.ts lines 74–117 using nl -ba and sed. Each check creates one request and has one emission. Timeout rejects; finally removes the listener and timer; command failure only notifies and returns. No automatic retry path or dedicated retry test was added.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "npm run check: existing successful-activation test compares session entries and model context. No-ping-reply test starts with three saved entries, activates successfully, deactivates, times out without a responder, and verifies identical entries after success and failure.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "npm run check: existing active-Maestro/agents-unavailable integration test activates using a controlled responder, removes it, and observes zero event emissions during successful deactivation.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "npm run check: existing failed-check/retry integration test has a successful controlled responder available but an untrusted project. Activation remains off and reports Project is not trusted. Environment tests also preserve agent discovery, configuration, model, and read-only checks.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "npm run check passed: lint, TypeScript checks, 37 test files, and 212 tests. git diff --check passed.",
+    "Controlled replies also verified that late replies cannot activate Maestro, later attempts use fresh request IDs, and replies from another request cannot satisfy the check.",
+    "No live pi-subagents responder or executor was used for ping verification. Dependencies and configuration were unchanged.",
+    "The pre-existing ROADMAP.md priority change was preserved. Added implementation status with independent verification pending, and updated README activation documentation.",
+    "Temporary test projects were cleaned by the test harness. Generated coverage output was removed."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261013-194407-check-pi-subagents-availability-with-ping-at-activation"
+}

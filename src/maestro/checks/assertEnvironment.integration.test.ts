@@ -1,3 +1,8 @@
+/**
+ * Objective: Check Maestro's read-only activation requirements.
+ * Used: In integration tests with isolated Pi environments and controlled ping replies.
+ */
+
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -8,7 +13,10 @@ import {
   DEFAULT_SPEC_DIRECTORY,
 } from '#config/defaults.ts';
 import { AGENTS } from '#config/schema.ts';
-import { assertEnvironment } from '#maestro/checks/assertEnvironment.ts';
+import {
+  assertEnvironment,
+  SUBAGENT_PING,
+} from '#maestro/checks/assertEnvironment.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 
@@ -24,14 +32,17 @@ describe('assertEnvironment', () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 
-    const { session } = await piTestSessions.create({
+    const { session, events } = await piTestSessions.create({
       cwd: repository.path,
       extensions: [],
       projectTrusted: false,
     });
 
     await expect(
-      assertEnvironment(session.extensionRunner.createContext()),
+      assertEnvironment({
+        context: session.extensionRunner.createContext(),
+        piEventsBus: events,
+      }),
     ).rejects.toThrow(`Project is not trusted: "${repository.path}".`);
   });
 
@@ -39,14 +50,17 @@ describe('assertEnvironment', () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 
-    const { session } = await piTestSessions.create({
+    const { session, events } = await piTestSessions.create({
       cwd: repository.path,
       extensions: [],
       maestroAgentsAvailable: false,
     });
 
     await expect(
-      assertEnvironment(session.extensionRunner.createContext()),
+      assertEnvironment({
+        context: session.extensionRunner.createContext(),
+        piEventsBus: events,
+      }),
     ).rejects.toThrow(
       `Builder or verifier agent check failed: Unknown agent: ${AGENTS.BUILDER}`,
     );
@@ -61,13 +75,16 @@ describe('assertEnvironment', () => {
       JSON.stringify({ version: 999 }),
     );
 
-    const { session } = await piTestSessions.create({
+    const { session, events } = await piTestSessions.create({
       cwd: repository.path,
       extensions: [],
     });
 
     await expect(
-      assertEnvironment(session.extensionRunner.createContext()),
+      assertEnvironment({
+        context: session.extensionRunner.createContext(),
+        piEventsBus: events,
+      }),
     ).rejects.toThrow('Maestro configuration check failed:');
   });
 
@@ -83,15 +100,45 @@ describe('assertEnvironment', () => {
       }),
     );
 
-    const { session } = await piTestSessions.create({
+    const { session, events } = await piTestSessions.create({
       cwd: repository.path,
       extensions: [],
     });
 
     await expect(
-      assertEnvironment(session.extensionRunner.createContext()),
+      assertEnvironment({
+        context: session.extensionRunner.createContext(),
+        piEventsBus: events,
+      }),
     ).rejects.toThrow(
       'Configured model is not available: "openai-codex/missing".',
+    );
+  });
+
+  it('given a failed subagents reply when the environment is checked then the installation requirement is reported', async () => {
+    const { session, events } = await piTestSessions.create({
+      extensions: [],
+    });
+
+    events.on(SUBAGENT_PING.REQUEST_EVENT, (payload) => {
+      // JUSTIFICATION: Maestro emits this version 1 ping request.
+      const request = payload as { requestId: string };
+      events.emit(`${SUBAGENT_PING.REPLY_EVENT_PREFIX}${request.requestId}`, {
+        version: SUBAGENT_PING.VERSION,
+        requestId: request.requestId,
+        method: SUBAGENT_PING.METHOD,
+        success: false,
+        error: { message: 'Unavailable' },
+      });
+    });
+
+    await expect(
+      assertEnvironment({
+        context: session.extensionRunner.createContext(),
+        piEventsBus: events,
+      }),
+    ).rejects.toThrow(
+      `${SUBAGENT_PING.INSTALLATION_ERROR} Unsuccessful or invalid pi-subagents ping reply.`,
     );
   });
 
@@ -105,13 +152,28 @@ describe('assertEnvironment', () => {
       '# Uncommitted change\n',
     );
 
-    const { session } = await piTestSessions.create({
+    const { session, events } = await piTestSessions.create({
       cwd: repository.path,
       extensions: [],
     });
 
+    events.on(SUBAGENT_PING.REQUEST_EVENT, (payload) => {
+      // JUSTIFICATION: Maestro emits this version 1 ping request.
+      const request = payload as { requestId: string };
+      events.emit(`${SUBAGENT_PING.REPLY_EVENT_PREFIX}${request.requestId}`, {
+        version: SUBAGENT_PING.VERSION,
+        requestId: request.requestId,
+        method: SUBAGENT_PING.METHOD,
+        success: true,
+        data: { version: SUBAGENT_PING.VERSION },
+      });
+    });
+
     await expect(
-      assertEnvironment(session.extensionRunner.createContext()),
+      assertEnvironment({
+        context: session.extensionRunner.createContext(),
+        piEventsBus: events,
+      }),
     ).resolves.toBeUndefined();
 
     expect(await readFile(join(repository.path, 'README.md'), 'utf8')).toBe(

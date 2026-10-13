@@ -83,7 +83,7 @@ export default (pi: ExtensionAPI): void => {
       }
 
       try {
-        await assertEnvironment(context);
+        await assertEnvironment({ context, piEventsBus: pi.events });
         const config = await loadConfiguration(context.cwd);
 
         maestroSessionState.activate();
