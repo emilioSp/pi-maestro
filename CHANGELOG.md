@@ -2,6 +2,12 @@
 
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries; GitHub Releases are not required. Version-only changes and routine maintenance are omitted.
 
+## 0.9.3
+
+1. Added a parent `pi-subagents` availability check during activation. A matching successful version 1 `ping` reply is required within 2000 ms. See [PR #35](https://github.com/emilioSp/pi-maestro/pull/35).
+2. Failed or invalid replies, emission errors, and timeouts prevent activation. The error includes "Maestro flow requires pi-subagents installed in the Pi environment." The check makes no automatic retry.
+3. Preserved existing activation checks, UI-only notices, and unchanged session history. The availability check starts no agent, makes no model request, and does not run when turning `Maestro` off.
+
 ## 0.9.2
 
 1. Added code-quality review to `verifier` guidance for code affected by the approved change when applicable `AGENTS.md` directives exist. See [PR #34](https://github.com/emilioSp/pi-maestro/pull/34). All existing verification duties remain unchanged.

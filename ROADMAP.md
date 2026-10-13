@@ -74,26 +74,19 @@ All 5 `acceptance criteria` passed through independent inspection of the written
 
 [Specification](.specs/20261013-185941-verify-code-quality-against-agents-md-instructions/spec.md), [verifier report](.specs/20261013-185941-verify-code-quality-against-agents-md-instructions/handoffs/verifier/V1.json), and [merged PR #34](https://github.com/emilioSp/pi-maestro/pull/34).
 
-## Now
-
 ### R-06: Check subagent extensions at activation
 
-#### Objective
+Implemented in `0.9.3`. Activation requires a matching successful version 1 `ping` reply from the parent `pi-subagents` extension within 2000 ms. A failed or invalid reply, emission error, or timeout prevents activation and reports the installation requirement. The check starts no agent and makes no model request. It confirms parent extension availability, not child execution readiness.
 
-Make `pi-subagents` availability problems visible before a `builder` or `verifier` `run` starts.
-
-#### Implementation status
-
-Activation now requires a successful version 1 `ping` reply from the parent `pi-subagents` extension within 2000 ms. The check does not start an agent. All 7 `acceptance criteria` passed with no `verifier` `findings`; the workflow reached `candidate-ready`.
+All 7 `acceptance criteria` passed using controlled replies and code inspection, with no `verifier` `findings`. The saved workflow reached `candidate-ready`.
 
 A later integration test requested by the `owner` directly checks the environment check's failed-reply error. This test addition is outside the completed independent verification.
 
-[Specification](.specs/20261013-194407-check-pi-subagents-availability-with-ping-at-activation/spec.md).
+#### Evidence
 
-#### Completed when
+[Specification](.specs/20261013-194407-check-pi-subagents-availability-with-ping-at-activation/spec.md), [verifier report](.specs/20261013-194407-check-pi-subagents-availability-with-ping-at-activation/handoffs/verifier/V1.json), and [merged PR #35](https://github.com/emilioSp/pi-maestro/pull/35).
 
-Unavailable `pi-subagents` prevents activation. The error identifies the problem.
-
+## Now
 
 ## Next
 
