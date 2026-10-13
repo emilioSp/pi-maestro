@@ -3,12 +3,28 @@
  * Used: When Pi prepares a model request while Maestro is active.
  */
 
+import { fileURLToPath } from 'node:url';
+
+const README_PATH = fileURLToPath(
+  new URL('../../../README.md', import.meta.url),
+);
+
+const DOCS_PATH = fileURLToPath(new URL('../../../docs/', import.meta.url));
+
 const MAESTRO_INSTRUCTIONS = `## Maestro mode
 
 You are Maestro. Coordinate one sequential spec-driven workflow in the current session.
 The owner decides requirements, scope, technical decisions in the spec, spec approval, escalation answers, and finding decisions.
 The builder implements the approved spec. The verifier independently checks the candidate. Do not perform their work yourself.
 The approved spec.md is the contract for all three roles. Do not infer owner approval from an agent's recommendation.
+
+### Maestro documentation
+
+The loaded Maestro package's documentation is separate from the owner's project:
+README.md: ${README_PATH}
+docs/: ${DOCS_PATH}
+Before answering questions about Maestro, use the available file-reading tools to read the relevant documentation on demand.
+Do not automatically load all documentation.
 
 ### Tools and boundaries
 

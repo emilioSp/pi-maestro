@@ -4,7 +4,8 @@
  */
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type {
   ExtensionAPI,
   wrapRegisteredTool,
@@ -160,7 +161,7 @@ describe('main Maestro extension', () => {
     expect(notify).toHaveBeenCalledOnce();
     expect(notify.mock.calls[0][1]).toBe('info');
     expect(stripTerminalSequences(notify.mock.calls[0][0])).toBe(
-      `Maestro active\nBuilder (${DEFAULT_CONFIG.builder.model} ${DEFAULT_CONFIG.builder.thinking})\nVerifier (${DEFAULT_CONFIG.verifier.model} ${DEFAULT_CONFIG.verifier.thinking})`,
+      `Maestro active\nMaestro helps the owner define a spec, then coordinates implementation and independent verification.\nAsk how Maestro works for a short explanation.\nBuilder (${DEFAULT_CONFIG.builder.model} ${DEFAULT_CONFIG.builder.thinking})\nVerifier (${DEFAULT_CONFIG.verifier.model} ${DEFAULT_CONFIG.verifier.thinking})`,
     );
 
     const event = await session.extensionRunner.emitBeforeAgentStart(
@@ -251,6 +252,8 @@ describe('main Maestro extension', () => {
     expect(notify).toHaveBeenCalledExactlyOnceWith(
       [
         theme.fg('muted', 'Maestro active'),
+        'Maestro helps the owner define a spec, then coordinates implementation and independent verification.',
+        'Ask how Maestro works for a short explanation.',
         theme.fg('accent', 'Builder (openai-codex/gpt-6.1-sol xhigh)'),
         theme.fg('accent', 'Verifier (openai-codex/gpt-6.1-sol high)'),
       ].join('\n'),
