@@ -45,6 +45,7 @@ Follow applicable repository commands and technical rules. Inspect scripts befor
 Do not edit `spec.md`, prototypes, `workflow.json`, or handoffs directly through any tool.
 Use `maestro_record_builder_handoff` for protocol changes. The tool supplies artifact paths and versions.
 
+If a technical problem prevents completion and you can safely report it, stop implementation and submit an escalation. Use its fields for the reason, evidence, owner question, options, consequences, and next steps. The owner decides how work continues.
 If a significant discovery requires an owner choice, stop implementation and use the escalation outcome below.
 Examples include a spec conflict, undefined behavior, a material architectural alternative, scope changes, or verification and reversibility decisions.
 An escalation does not require a technical failure or blocker.
@@ -75,8 +76,7 @@ Before any terminal tool call, restore temporary verification changes and remove
 Choose the outcome from the actual result:
 
 1. `done`: Implementation and required checks are complete. Every criterion has `probeStatus: passed`. Call `maestro_record_builder_handoff` with `specId`, `status: done`, `summary`, `acceptanceCriteria`, `notes`, and `escalations: []`.
-2. `escalation`: An owner decision is required. Call `maestro_record_builder_handoff` with `specId`, `status: escalation`, `summary`, every criterion result, `notes`, and all `escalations`. Assign sequential IDs in array order: `E1`, `E2`, and so on. Restart at `E1` for each handoff. Each entry contains `id`, `question`, `context`, `options`, `recommendation`, `notes`, and `resolution: null`. Include evidence in the context. Give each option an ID, description, consequences, and next step. Use `recommendation: null` unless evidence supports an option. Refer to questions with both IDs, such as `B1/E1`. Record actual probe results, including incomplete probes. All probes can pass when an owner decision remains necessary. Save one handoff and stop.
-3. `failed`: You cannot complete the work for a technical reason that needs no owner decision. Call `maestro_record_builder_handoff` with `specId`, `status: failed`, `summary`, all criterion results, `failure.reason`, and `notes`. Report actual statuses, including `not-run` where applicable.
+2. `escalation`: An owner decision is required, including when a reportable technical problem prevents completion. Call `maestro_record_builder_handoff` with `specId`, `status: escalation`, `summary`, every criterion result, `notes`, and all `escalations`. Assign sequential IDs in array order: `E1`, `E2`, and so on. Restart at `E1` for each handoff. Each entry contains `id`, `question`, `context`, `options`, `recommendation`, `notes`, and `resolution: null`. Include evidence in the context. Give each option an ID, description, consequences, and next step. Use `recommendation: null` unless evidence supports an option. Refer to questions with both IDs, such as `B1/E1`. Record actual probe results, including incomplete probes. All probes can pass when an owner decision remains necessary or another required repository check prevents completion. Save one handoff and stop.
 
 After a successful terminal call, return the saved outcome and artifact path to Maestro. Stop the pass.
 Do not delete or replace earlier handoffs. Do not continue implementation after saving the result.
@@ -88,8 +88,6 @@ If a terminal call fails, inspect the error, current phase, and artifacts before
 If validation rejected the submission without writing it, correct the payload to match the tool schema and actual evidence.
 If the tool partially wrote an artifact or changed phase before an error, report it and stop. Do not resubmit.
 Never change honest statuses or omit criteria merely to make a payload pass validation.
-The tool rejects `failed` when a nonempty criterion list contains only `passed` probes.
-If another technical failure prevents completion in that case, report this protocol limitation to Maestro instead of falsifying criterion results.
 Do not delete a terminal artifact, edit workflow state, or use a different outcome to bypass an error.
 If cleanup or the protocol cannot be completed safely, report the exact blocker and remaining changes to Maestro and stop.
 Do not claim a saved result when the terminal call did not succeed.

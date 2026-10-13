@@ -2,6 +2,12 @@
 
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries; GitHub Releases are not required. Version-only changes and routine maintenance are omitted.
 
+## Unreleased
+
+1. Breaking: `builder` reports now support only `done` and `escalation`. Reportable technical problems use the existing `owner` `escalation` process.
+2. Removed the terminal `builder` failure phase and event. Execution errors and missing or invalid saved results still stop the workflow without automatic recovery.
+3. No migrations, compatibility readers, or deprecated aliases are provided. `Artifact` versions remain `1.0.0`.
+
 ## 0.7.3
 
 1. Added Oxlint rules for `given ... when ... then ...` test titles, `const` usage, unnecessary `else` branches, type aliases, and ESM imports. See [PR #31](https://github.com/emilioSp/pi-maestro/pull/31).
