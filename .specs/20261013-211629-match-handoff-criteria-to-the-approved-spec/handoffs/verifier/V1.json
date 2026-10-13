@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "specId": "20261013-211629-match-handoff-criteria-to-the-approved-spec",
+  "summary": "Independently verified both acceptance criteria against the live candidate. All required scenarios and repository checks passed; no findings.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Inspected the completion functions, tool integration tests, and fixtures, then ran ./node_modules/.bin/vitest run src/workflow/builder/completeBuilderPass.integration.test.ts src/workflow/verifier/completeVerifierPass.integration.test.ts --reporter=verbose -t 'spec criterion presence|raw headings'. Missing AC2 rejected builder done, builder escalation, and verifier submissions with and without findings. Tests verified unchanged saved content and directory entries, and absence of a new handoff, both with and without prior same-role reports.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Ran the same targeted Vitest command: all 22 selected tests passed. Both builder outcomes and both verifier finding cases accepted AC2, AC1, AC3 and saved the expected report and phase. No-heading specs accepted empty arrays. Raw-heading cases preserved AC01, counted fenced AC2, allowed repeated spec headings, and ignored nonmatching formats. Inspected unchanged approval and existing handoff validation.",
+      "probeStatus": "passed"
+    }
+  ],
+  "findings": [],
+  "notes": [
+    "Confirmed matching workflow specId and verifier-running phase; B1 was the only earlier handoff and no prototypes were present.",
+    "Reviewed affected code against applicable AGENTS.md directives; no supported instruction violations found.",
+    "Nonfixing npm run lint and oxlint passed before npm run check. npm run check passed lint, typecheck, all 240 tests in 37 files, and coverage thresholds. git diff --check passed.",
+    "Repository checks changed only pre-existing coverage HTML contents. Restored those exact original bytes and confirmed all captured project files matched their pre-check contents. No candidate fixes were applied."
+  ]
+}

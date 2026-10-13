@@ -3,7 +3,7 @@
  * Used: When the builder reports done or escalation through the child tool.
  */
 
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { Value } from 'typebox/value';
 import { assertBuilderHandoff } from '#artifacts/builder-handoff/assertBuilderHandoff.ts';
 import {
@@ -19,6 +19,7 @@ import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
+import { assertSpecAcceptanceCriteria } from '#workflow/utils/assertSpecAcceptanceCriteria.ts';
 
 export type CompletedBuilderPass = {
   handoff: BuilderHandoff;
@@ -75,6 +76,11 @@ export const completeBuilderPass = async ({
 
   assertBuilderHandoff(handoffInput);
   const { handoff } = handoffInput;
+
+  assertSpecAcceptanceCriteria({
+    markdown: await readFile(paths.getSpecFilePath(specId), 'utf8'),
+    criterionIds: new Set(handoff.acceptanceCriteria.map(({ id }) => id)),
+  });
 
   const nextState = transitionWorkflow({
     state: currentState,

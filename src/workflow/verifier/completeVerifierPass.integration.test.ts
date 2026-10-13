@@ -1,6 +1,9 @@
-import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { access, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
+import {
+  BUILDER_HANDOFF_STATUSES,
+  PROBE_STATUSES,
+} from '#artifacts/builder-handoff/schema.ts';
 import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
 import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
 import {
@@ -8,6 +11,8 @@ import {
   createApprovedWorkflow,
   SPEC_ID,
 } from '#tests/support/builder-workflow.ts';
+import piTestSessions from '#tests/support/pi-session.ts';
+import { registerRecordVerifierHandoffTool } from '#tools/child/record-verifier-handoff.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -26,6 +31,7 @@ const { writeFile: originalWriteFile } =
 
 afterEach(async () => {
   vi.mocked(writeFile).mockRestore();
+  await piTestSessions.cleanup();
   await cleanupBuilderWorkflows();
 });
 
@@ -33,7 +39,13 @@ const approvedHandoff = {
   version: VERIFIER_HANDOFF_VERSION,
   specId: SPEC_ID,
   summary: 'The candidate satisfies the approved specification.',
-  acceptanceCriteria: [],
+  acceptanceCriteria: [
+    {
+      id: 'AC1',
+      probe: 'Acceptance check',
+      probeStatus: PROBE_STATUSES.PASSED,
+    },
+  ],
   findings: [],
   notes: [],
 };
@@ -53,7 +65,13 @@ const prepareRunningVerifier = async () => {
       status: BUILDER_HANDOFF_STATUSES.DONE,
       escalations: [],
       summary: 'Implemented the approved change.',
-      acceptanceCriteria: [],
+      acceptanceCriteria: [
+        {
+          id: 'AC1',
+          probe: 'Acceptance check',
+          probeStatus: PROBE_STATUSES.PASSED,
+        },
+      ],
       notes: [],
     },
   });
@@ -146,6 +164,61 @@ describe('verifier completion', () => {
     ).rejects.toThrow('Verifier handoff spec ID mismatch');
 
     await expect(readFile(workflowPath, 'utf8')).resolves.toBe(workflowBefore);
+    await expect(
+      access(
+        paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
+      ),
+    ).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+});
+
+describe('verifier spec criterion presence', () => {
+  it('given AC1 and AC2 in the spec when a verifier submission contains only AC1 then no report or phase change is saved', async () => {
+    const { paths, repository } = await prepareRunningVerifier();
+    await writeFile(
+      paths.getSpecFilePath(SPEC_ID),
+      await readFile(
+        new URL(
+          '../../../tests/fixtures/two-acceptance-criteria-spec.md',
+          import.meta.url,
+        ),
+      ),
+    );
+    const workflowBefore = await readFile(paths.getWorkflowPath(SPEC_ID));
+
+    const entriesBefore = await readdir(paths.getSpecPath(SPEC_ID), {
+      recursive: true,
+    });
+
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerRecordVerifierHandoffTool,
+    });
+
+    await expect(
+      tool.execute('missing-criterion', {
+        specId: SPEC_ID,
+        summary: 'Checked first criterion.',
+        acceptanceCriteria: [
+          {
+            id: 'AC1',
+            probe: 'First criterion check',
+            probeStatus: PROBE_STATUSES.PASSED,
+          },
+        ],
+        findings: [],
+        notes: [],
+      }),
+    ).rejects.toThrow(
+      'Handoff is missing acceptance criterion IDs from spec.md: AC2.',
+    );
+
+    expect(await readFile(paths.getWorkflowPath(SPEC_ID))).toEqual(
+      workflowBefore,
+    );
+    expect(
+      await readdir(paths.getSpecPath(SPEC_ID), { recursive: true }),
+    ).toEqual(entriesBefore);
     await expect(
       access(
         paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),

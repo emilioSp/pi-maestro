@@ -3,7 +3,7 @@
  * Used: When the verifier submits its terminal handoff.
  */
 
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
 import type { VerifierHandoff } from '#artifacts/verifier-handoff/schema.ts';
 import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
@@ -12,6 +12,7 @@ import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
+import { assertSpecAcceptanceCriteria } from '#workflow/utils/assertSpecAcceptanceCriteria.ts';
 import { getWorkflowEventByVerifierHandoff } from '#workflow/verifier/utils/getWorkflowEventByVerifierHandoff.ts';
 
 export type CompletedVerifierPass = {
@@ -55,6 +56,11 @@ export const completeVerifierPass = async ({
 
   assertVerifierHandoff(handoffInput);
   const { handoff } = handoffInput;
+
+  assertSpecAcceptanceCriteria({
+    markdown: await readFile(paths.getSpecFilePath(specId), 'utf8'),
+    criterionIds: new Set(handoff.acceptanceCriteria.map(({ id }) => id)),
+  });
 
   const nextState = transitionWorkflow({
     state: currentState,

@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { afterEach, describe, expect, it } from 'vitest';
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
+import { PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import {
   FINDING_DECISIONS,
@@ -43,7 +44,13 @@ describe('finding resolution', () => {
         version: VERIFIER_HANDOFF_VERSION,
         specId: SPEC_ID,
         summary: 'Checked greeting',
-        acceptanceCriteria: [],
+        acceptanceCriteria: [
+          {
+            id: 'AC1',
+            probe: 'Acceptance check',
+            probeStatus: PROBE_STATUSES.PASSED,
+          },
+        ],
         findings: [
           {
             id: 'F1',
@@ -115,7 +122,13 @@ describe('finding resolution', () => {
         version: VERIFIER_HANDOFF_VERSION,
         specId: SPEC_ID,
         summary: 'Checked fixed greeting',
-        acceptanceCriteria: [],
+        acceptanceCriteria: [
+          {
+            id: 'AC1',
+            probe: 'Acceptance check',
+            probeStatus: PROBE_STATUSES.PASSED,
+          },
+        ],
         findings: [],
         notes: [],
       },
