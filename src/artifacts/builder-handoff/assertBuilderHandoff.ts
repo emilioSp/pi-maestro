@@ -26,11 +26,6 @@ const hasOnlyPassedProbes = (
     (criterion) => criterion.probeStatus === PROBE_STATUSES.PASSED,
   );
 
-const hasValidFailedChecks = (
-  acceptanceCriteria: BuilderAcceptanceCriterion[],
-): boolean =>
-  acceptanceCriteria.length === 0 || !hasOnlyPassedProbes(acceptanceCriteria);
-
 function assertBuilderHandoffSchema(
   input: unknown,
 ): asserts input is BuilderHandoff {
@@ -69,15 +64,6 @@ export function assertBuilderHandoff(
     !hasOnlyPassedProbes(handoff.acceptanceCriteria)
   ) {
     throw new Error('Done builder handoff requires every probe to pass.');
-  }
-
-  if (
-    handoff.status === BUILDER_HANDOFF_STATUSES.FAILED &&
-    !hasValidFailedChecks(handoff.acceptanceCriteria)
-  ) {
-    throw new Error(
-      'Failed builder handoff cannot mark every acceptance check as completed.',
-    );
   }
 
   if (handoff.status === BUILDER_HANDOFF_STATUSES.ESCALATION) {
