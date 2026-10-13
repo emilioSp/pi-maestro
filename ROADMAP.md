@@ -86,23 +86,19 @@ A later integration test requested by the `owner` directly checks the environmen
 
 [Specification](.specs/20261013-194407-check-pi-subagents-availability-with-ping-at-activation/spec.md), [verifier report](.specs/20261013-194407-check-pi-subagents-availability-with-ping-at-activation/handoffs/verifier/V1.json), and [merged PR #35](https://github.com/emilioSp/pi-maestro/pull/35).
 
-## Now
-
 ### R-05: Keep acceptance criterion numbering continuous
 
-#### Objective
+Implemented in `0.9.4`. `Spec` approval rejects numbered `acceptance criterion` headings that do not start at `AC1` and continue without gaps. Rejection leaves saved files unchanged.
 
-When criteria are removed during `spec` preparation or revision, renumber the remaining criteria without gaps. Numbering starts at `AC1` and continues through the final criterion.
+`Maestro` corrects numbering and affected references without changing criterion order or requirements, then retries with the existing `GREEN FLAG`. No additional `owner` approval is required.
 
-#### Current state
+All 3 `acceptance criteria` passed with no `verifier` `findings`. The saved workflow reached `candidate-ready`.
 
-Implemented approval-time numbering validation and `Maestro` guidance for numbering-only recovery using the existing GREEN FLAG. Rejected numbering leaves saved files unchanged. Independent verification is pending.
+#### Evidence
 
-[Specification](.specs/20261013-202811-check-acceptance-criterion-numbering-before-builder-execution/spec.md).
+[Specification](.specs/20261013-202811-check-acceptance-criterion-numbering-before-builder-execution/spec.md), [verifier report](.specs/20261013-202811-check-acceptance-criterion-numbering-before-builder-execution/handoffs/verifier/V1.json), and [merged PR #36](https://github.com/emilioSp/pi-maestro/pull/36).
 
-#### Completed when
-
-The `spec` and its current references use consistent numbering.
+## Now
 
 ## Next
 

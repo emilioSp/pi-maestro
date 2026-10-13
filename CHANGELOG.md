@@ -2,6 +2,12 @@
 
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries; GitHub Releases are not required. Version-only changes and routine maintenance are omitted.
 
+## 0.9.4
+
+1. Added numbering validation to `spec` approval. Matched `acceptance criterion` headings must start at `AC1` and continue without gaps. See [PR #36](https://github.com/emilioSp/pi-maestro/pull/36).
+2. Invalid numbering rejects approval before saving the workflow and leaves all saved files unchanged. No matching headings still permits approval.
+3. Added `Maestro` guidance to correct only numbering and affected references, then retry with the existing `GREEN FLAG`. No additional `owner` approval is required before starting the `builder`.
+
 ## 0.9.3
 
 1. Added a parent `pi-subagents` availability check during activation. A matching successful version 1 `ping` reply is required within 2000 ms. See [PR #35](https://github.com/emilioSp/pi-maestro/pull/35).
