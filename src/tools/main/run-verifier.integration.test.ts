@@ -7,7 +7,10 @@ import {
 } from 'pi-subagents/delegation';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
-import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
+import {
+  BUILDER_HANDOFF_STATUSES,
+  PROBE_STATUSES,
+} from '#artifacts/builder-handoff/schema.ts';
 import {
   FINDING_SEVERITIES,
   VERIFIER_HANDOFF_VERSION,
@@ -44,7 +47,13 @@ const createReadyForVerifierWorkflow = async () => {
       status: BUILDER_HANDOFF_STATUSES.DONE,
       escalations: [],
       summary: 'The approved change was implemented.',
-      acceptanceCriteria: [],
+      acceptanceCriteria: [
+        {
+          id: 'AC1',
+          probe: 'Acceptance check',
+          probeStatus: PROBE_STATUSES.PASSED,
+        },
+      ],
       notes: [],
     },
   });
@@ -60,7 +69,13 @@ const createVerifierHandoff = ({ findings = [] }: VerifierHandoffInput) => ({
   version: VERIFIER_HANDOFF_VERSION,
   specId: SPEC_ID,
   summary: 'The candidate was independently verified.',
-  acceptanceCriteria: [],
+  acceptanceCriteria: [
+    {
+      id: 'AC1',
+      probe: 'Acceptance check',
+      probeStatus: PROBE_STATUSES.PASSED,
+    },
+  ],
   findings,
   notes: [],
 });

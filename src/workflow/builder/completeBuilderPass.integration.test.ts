@@ -1,4 +1,4 @@
-import { access, readdir, readFile } from 'node:fs/promises';
+import { access, readdir, readFile, writeFile } from 'node:fs/promises';
 import { afterEach, describe, expect, it } from 'vitest';
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import {
@@ -34,7 +34,13 @@ describe('builder completion', () => {
       status: BUILDER_HANDOFF_STATUSES.DONE,
       escalations: [],
       summary: 'Implemented the approved change.',
-      acceptanceCriteria: [],
+      acceptanceCriteria: [
+        {
+          id: 'AC1',
+          probe: 'Acceptance check',
+          probeStatus: PROBE_STATUSES.PASSED,
+        },
+      ],
       notes: [],
     };
 
@@ -365,4 +371,61 @@ describe('builder completion', () => {
       ).rejects.toMatchObject({ code: 'ENOENT' });
     },
   );
+});
+
+describe('builder spec criterion presence', () => {
+  it('given AC1 and AC2 in the spec when a done submission contains only AC1 then no report or phase change is saved', async () => {
+    const { paths, repository } = await createApprovedWorkflow();
+    await writeFile(
+      paths.getSpecFilePath(SPEC_ID),
+      await readFile(
+        new URL(
+          '../../../tests/fixtures/two-acceptance-criteria-spec.md',
+          import.meta.url,
+        ),
+      ),
+    );
+    await prepareBuilderRun({ paths, specId: SPEC_ID });
+    const workflowBefore = await readFile(paths.getWorkflowPath(SPEC_ID));
+
+    const entriesBefore = await readdir(paths.getSpecPath(SPEC_ID), {
+      recursive: true,
+    });
+
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerRecordBuilderHandoffTool,
+    });
+
+    await expect(
+      tool.execute('missing-criterion', {
+        specId: SPEC_ID,
+        status: BUILDER_HANDOFF_STATUSES.DONE,
+        summary: 'Checked first criterion.',
+        acceptanceCriteria: [
+          {
+            id: 'AC1',
+            probe: 'First criterion check',
+            probeStatus: PROBE_STATUSES.PASSED,
+          },
+        ],
+        escalations: [],
+        notes: [],
+      }),
+    ).rejects.toThrow(
+      'Handoff is missing acceptance criterion IDs from spec.md: AC2.',
+    );
+
+    expect(await readFile(paths.getWorkflowPath(SPEC_ID))).toEqual(
+      workflowBefore,
+    );
+    expect(
+      await readdir(paths.getSpecPath(SPEC_ID), { recursive: true }),
+    ).toEqual(entriesBefore);
+    await expect(
+      access(
+        paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
+      ),
+    ).rejects.toMatchObject({ code: 'ENOENT' });
+  });
 });

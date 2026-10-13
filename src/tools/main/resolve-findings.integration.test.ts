@@ -6,7 +6,10 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
-import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
+import {
+  BUILDER_HANDOFF_STATUSES,
+  PROBE_STATUSES,
+} from '#artifacts/builder-handoff/schema.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import {
   FINDING_DECISIONS,
@@ -64,7 +67,13 @@ const createFindingsDecisionWorkflow = async (findings: VerifierFinding[]) => {
       status: BUILDER_HANDOFF_STATUSES.DONE,
       escalations: [],
       summary: 'Implemented the approved change.',
-      acceptanceCriteria: [],
+      acceptanceCriteria: [
+        {
+          id: 'AC1',
+          probe: 'Acceptance check',
+          probeStatus: PROBE_STATUSES.PASSED,
+        },
+      ],
       notes: [],
     },
   });
@@ -81,7 +90,13 @@ const createFindingsDecisionWorkflow = async (findings: VerifierFinding[]) => {
       version: VERIFIER_HANDOFF_VERSION,
       specId: SPEC_ID,
       summary: 'The candidate has findings.',
-      acceptanceCriteria: [],
+      acceptanceCriteria: [
+        {
+          id: 'AC1',
+          probe: 'Acceptance check',
+          probeStatus: PROBE_STATUSES.PASSED,
+        },
+      ],
       findings,
       notes: [],
     },

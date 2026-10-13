@@ -1,0 +1,24 @@
+{
+  "status": "done",
+  "summary": "Builder and verifier submissions now reject missing spec criterion IDs before saving reports or changing phase. Added integration coverage and updated existing test submissions.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Ran ./node_modules/.bin/vitest run src/workflow/builder/completeBuilderPass.integration.test.ts src/workflow/verifier/completeVerifierPass.integration.test.ts --reporter=verbose -t 'spec criterion presence|raw headings'. Builder done, builder escalation, and verifier submissions with and without findings containing only AC1 for an AC1/AC2 spec all rejected with unchanged workflow, spec, existing reports, and directory entries. No new handoff was created. Fresh submissions and submissions with existing same-role reports passed these rejection checks.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Ran ./node_modules/.bin/vitest run src/workflow/builder/completeBuilderPass.integration.test.ts src/workflow/verifier/completeVerifierPass.integration.test.ts --reporter=verbose -t 'spec criterion presence|raw headings'. Both builder outcomes and both verifier finding cases saved valid reports ordered AC2, AC1, AC3. Specs with no matching headings allowed empty criterion arrays. Raw-heading cases preserved AC01, counted fenced headings, permitted duplicate spec headings, and ignored nonmatching heading formats. All 22 selected tests passed.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "npm run check passed lint, typecheck, all 240 tests in 37 files, and coverage thresholds. git diff --check passed.",
+    "The approved scope is presence validation, not the broader roadmap exact-match objective. Extra report IDs remain allowed, existing report validation remains unchanged, and no new check rejects duplicate spec IDs.",
+    "Raw-heading fixtures exercise saved spec content at submission time without changing approval numbering validation. ROADMAP.md records the approved narrow scope and pending independent verification."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261013-211629-match-handoff-criteria-to-the-approved-spec"
+}

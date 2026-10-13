@@ -100,6 +100,26 @@ All 3 `acceptance criteria` passed with no `verifier` `findings`. The saved work
 
 ## Now
 
+### R-10: Match handoff criteria to the approved spec
+
+#### Objective
+
+Prevent `builder` and `verifier` reports from omitting or adding `acceptance criteria`. Each report must contain exactly the criterion IDs in the approved `spec`, with no duplicates in either place. Existing duplicate checks in reports do not establish this match.
+
+The `specification` must define the criterion heading format used to extract IDs. For example, a heading can use `### AC1: ...`.
+
+#### Completed when
+
+Both `handoff` submissions reject missing, extra, or duplicate criterion IDs before saving a report or changing phase.
+
+#### Implementation status
+
+The [approved specification](.specs/20261013-211629-match-handoff-criteria-to-the-approved-spec/spec.md) limits this change to missing IDs. The implementation rejects missing `spec` IDs before saving either `handoff` or changing phase. Extra report IDs remain allowed. No new check rejects duplicate IDs in the `spec`.
+
+Both `acceptance criteria` passed independent verification with no `findings`. The saved workflow reached `candidate-ready`. The broader exact-match objective remains outside this approved scope.
+
+Later changes requested by the `owner` extract the shared presence check into one utility and cover extraction with unit tests. One missing-ID integration test remains per role to check rejection before saving. These changes are outside the completed independent verification.
+
 ## Next
 
 ## Later
@@ -147,15 +167,3 @@ Explore how `Maestro` can reconcile saved `artifacts` and workflow state. The re
 #### Completed when
 
 Not yet defined. The `owner` must define the intended outcome, recovery boundaries, and completion condition before this item can move forward.
-
-### R-10: Match handoff criteria to the approved spec
-
-#### Objective
-
-Prevent `builder` and `verifier` reports from omitting or adding `acceptance criteria`. Each report must contain exactly the criterion IDs in the approved `spec`, with no duplicates in either place. Existing duplicate checks in reports do not establish this match.
-
-The `specification` must define the criterion heading format used to extract IDs. For example, a heading can use `### AC1: ...`.
-
-#### Completed when
-
-Both `handoff` submissions reject missing, extra, or duplicate criterion IDs before saving a report or changing phase.
