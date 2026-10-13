@@ -33,7 +33,7 @@ afterEach(async () => {
 });
 
 describe('run builder tool', () => {
-  it('given ready-for-verifier and a failed active builder handoff when delegation completes then the parent reports a protocol error', async () => {
+  it('given ready-for-verifier and an escalation active builder handoff when delegation completes then the parent reports a protocol error', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { tool, events } = await piTestSessions.createRegisteredTool({
@@ -47,13 +47,7 @@ describe('run builder tool', () => {
       await completeBuilderPass({
         paths,
         specId: SPEC_ID,
-        handoff: {
-          status: BUILDER_HANDOFF_STATUSES.FAILED,
-          summary: 'Builder failed',
-          acceptanceCriteria: [],
-          failure: { reason: 'Blocked' },
-          notes: [],
-        },
+        handoff: csvExportEscalation,
       });
       const state = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
       await writeWorkflowState({
@@ -231,61 +225,6 @@ describe('run builder tool', () => {
       phase: WORKFLOW_PHASES.READY_FOR_VERIFIER,
       handoff: { status: BUILDER_HANDOFF_STATUSES.DONE, escalations: [] },
     });
-  });
-
-  it('given an approved workflow when the builder records a failed handoff then the saved failure is returned and a rerun is rejected', async () => {
-    const { paths, repository } = await createApprovedWorkflow();
-
-    const { tool, events, emit } = await piTestSessions.createRegisteredTool({
-      cwd: repository.path,
-      extension: registerRunBuilderTool,
-    });
-
-    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: The run tool emits a delegation request on this channel.
-      const request = payload as SubagentDelegationRequest;
-      await completeBuilderPass({
-        paths,
-        specId: SPEC_ID,
-        handoff: {
-          status: BUILDER_HANDOFF_STATUSES.FAILED,
-          summary: 'The builder was blocked.',
-          acceptanceCriteria: [
-            {
-              id: 'AC1',
-              probe: 'npm test',
-              probeStatus: PROBE_STATUSES.NOT_RUN,
-            },
-          ],
-          failure: { reason: 'The implementation was blocked.' },
-          notes: [],
-        },
-      });
-
-      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: request.requestId,
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.COMPLETED,
-        result: { kind: 'text', text: 'The builder finished.' },
-      });
-    });
-
-    const result = await tool.execute('test-call', { specId: SPEC_ID });
-
-    expect(result.details).toMatchObject({
-      outcome: BUILDER_HANDOFF_STATUSES.FAILED,
-      phase: WORKFLOW_PHASES.BUILDER_FAILED,
-    });
-
-    await expect(
-      tool.execute('test-call', { specId: SPEC_ID }),
-    ).rejects.toThrow('Builder run is not valid from phase "builder-failed".');
-    expect(
-      emit.mock.calls.filter(
-        ([channel]) => channel === SUBAGENT_DELEGATION_REQUEST_EVENT,
-      ),
-    ).toHaveLength(1);
   });
 
   it('given an approved workflow when the builder records an escalation then the saved escalation result is returned', async () => {
