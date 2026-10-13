@@ -76,6 +76,25 @@ All 5 `acceptance criteria` passed through independent inspection of the written
 
 ## Now
 
+### R-06: Check subagent extensions at activation
+
+#### Objective
+
+Make `pi-subagents` availability problems visible before a `builder` or `verifier` `run` starts.
+
+#### Implementation status
+
+Activation now requires a successful version 1 `ping` reply from the parent `pi-subagents` extension within 2000 ms. The check does not start an agent. All 7 `acceptance criteria` passed with no `verifier` `findings`; the workflow reached `candidate-ready`.
+
+A later integration test requested by the `owner` directly checks the environment check's failed-reply error. This test addition is outside the completed independent verification.
+
+[Specification](.specs/20261013-194407-check-pi-subagents-availability-with-ping-at-activation/spec.md).
+
+#### Completed when
+
+Unavailable `pi-subagents` prevents activation. The error identifies the problem.
+
+
 ## Next
 
 ## Later
@@ -103,16 +122,6 @@ When criteria are removed during `spec` preparation or revision, renumber the re
 #### Completed when
 
 The `spec` and its current references use consistent numbering.
-
-### R-06: Check subagent extensions at activation
-
-#### Objective
-
-Make extension availability problems visible before a `builder` or `verifier` `run` starts. Activation already checks agent launch requirements, so first identify any missing extension checks.
-
-#### Completed when
-
-Unavailable required subagent extensions prevent activation. The error identifies the problem.
 
 ### R-07: Guide initial configuration
 

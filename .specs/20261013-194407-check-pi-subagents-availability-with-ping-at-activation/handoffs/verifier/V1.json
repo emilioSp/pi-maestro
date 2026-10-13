@@ -1,0 +1,48 @@
+{
+  "version": "1.0.0",
+  "specId": "20261013-194407-check-pi-subagents-availability-with-ping-at-activation",
+  "summary": "Verified all seven criteria against the live candidate. Controlled consumer tests and repository checks passed; no findings.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Ran npm run check. Inspected and executed extensions/maestro.integration.test.ts valid-checks scenario: matching version 1 ping reply after 100 ms activates Maestro, preserves its UI notice, and makes no model or delegation request.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Ran npm run check. The no-ping-reply integration scenario observes pending activation at 1999 ms, then inactive state and the required installation sentence in a UI error at 2000 ms.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "Ran npm run check. Matching-reply cases independently reject success:false with Unavailable, null, invalid versions, wrong method, missing data, and missing requestId. The emission-error case throws Bus unavailable. Each observes inactive state and the required installation sentence.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Inspected src/maestro/checks/assertEnvironment.ts:124–190 and extensions/maestro.ts command handler. Each attempt emits one request; timeout rejects, finally removes the timer and listener, and command failure only notifies. No retry path or dedicated retry test exists.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Ran npm run check. Inspected and executed successful activation history assertions and the no-ping-reply scenario, which seeds three entries, activates, deactivates, times out, and compares unchanged entries.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "Ran npm run check. The active-Maestro/agents-unavailable scenario activates with controlled replies, removes the responder, then deactivates with zero event emissions.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "Ran npm run check. The failed-check/retry scenario supplies a successful responder in an untrusted project and observes inactive state with Project is not trusted. Environment integration tests also retain discovery, configuration, model, and read-only checks.",
+      "probeStatus": "passed"
+    }
+  ],
+  "findings": [],
+  "notes": [
+    "npm run check passed: 37 test files and 212 tests, lint, typecheck, and coverage thresholds. git diff --check passed.",
+    "Reviewed affected code against applicable AGENTS.md directives. Tests use controlled replies rather than the upstream ping implementation. Late replies, foreign request IDs, and fresh subsequent requests are covered.",
+    "The check command includes automatic fixes. Exact pre-check file comparison confirmed no pre-existing files changed. Removed only generated coverage files and the temporary backup. No candidate, spec, or earlier handoff content was changed."
+  ]
+}

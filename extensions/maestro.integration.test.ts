@@ -32,6 +32,7 @@ import {
 import maestroExtension from '#extensions/maestro.ts';
 import maestroSubagentExtension from '#extensions/maestro-subagent.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
+import { SUBAGENT_PING } from '#maestro/checks/assertEnvironment.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { MAESTRO_STATUS_KEY } from '#maestro/status/refreshMaestroStatus.ts';
 import type { CreatedSpec } from '#specs/create.ts';
@@ -57,6 +58,20 @@ import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
+
+const successfulPingExtension = (pi: ExtensionAPI): void => {
+  pi.events.on(SUBAGENT_PING.REQUEST_EVENT, (payload) => {
+    // JUSTIFICATION: Maestro emits this version 1 ping request.
+    const request = payload as { requestId: string };
+    pi.events.emit(`${SUBAGENT_PING.REPLY_EVENT_PREFIX}${request.requestId}`, {
+      version: SUBAGENT_PING.VERSION,
+      requestId: request.requestId,
+      method: SUBAGENT_PING.METHOD,
+      success: true,
+      data: { version: SUBAGENT_PING.VERSION },
+    });
+  });
+};
 
 const FOREIGN_TOOL = 'foreign_tool';
 
@@ -92,6 +107,7 @@ function assertToolRegistered(
 const cleanupFunctions: Array<() => Promise<void>> = [];
 
 afterEach(async () => {
+  vi.useRealTimers();
   await piTestSessions.cleanup();
   await cleanupBuilderWorkflows();
   await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
@@ -100,7 +116,7 @@ afterEach(async () => {
 describe('main Maestro extension', () => {
   it('given startup when the extension loads then only main tools register once and Maestro stays silent and off', async () => {
     const { session, notify, setStatus } = await piTestSessions.create({
-      extensions: [foreignExtension, maestroExtension],
+      extensions: [foreignExtension, maestroExtension, successfulPingExtension],
       maestroAgentsAvailable: false,
     });
 
@@ -133,7 +149,7 @@ describe('main Maestro extension', () => {
     cleanupFunctions.push(repository.cleanup);
 
     const { session, notify, setStatus } = await piTestSessions.create({
-      extensions: [foreignExtension, maestroExtension],
+      extensions: [foreignExtension, maestroExtension, successfulPingExtension],
       cwd: repository.path,
     });
 
@@ -241,7 +257,7 @@ describe('main Maestro extension', () => {
     );
 
     const { session, notify } = await piTestSessions.create({
-      extensions: [maestroExtension],
+      extensions: [maestroExtension, successfulPingExtension],
       cwd: repository.path,
     });
 
@@ -264,13 +280,31 @@ describe('main Maestro extension', () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 
-    const { session, notify } = await piTestSessions.create({
+    const { session, events, notify } = await piTestSessions.create({
       extensions: [foreignExtension, maestroExtension],
       cwd: repository.path,
     });
 
+    // simulate the ping response from pi-subagents
+    const removeResponder = events.on(
+      SUBAGENT_PING.REQUEST_EVENT,
+      (payload) => {
+        // JUSTIFICATION: Maestro emits this version 1 ping request.
+        const request = payload as { requestId: string };
+        events.emit(`${SUBAGENT_PING.REPLY_EVENT_PREFIX}${request.requestId}`, {
+          version: SUBAGENT_PING.VERSION,
+          requestId: request.requestId,
+          method: SUBAGENT_PING.METHOD,
+          success: true,
+          data: { version: SUBAGENT_PING.VERSION },
+        });
+      },
+    );
+
     await session.prompt('/maestro');
     expect(maestroSessionState.isActive()).toBe(true);
+    removeResponder();
+    const emit = vi.spyOn(events, 'emit');
 
     await writeFile(
       join(getAgentDir(), 'settings.json'),
@@ -279,6 +313,7 @@ describe('main Maestro extension', () => {
     await session.prompt('/maestro');
     expect(maestroSessionState.isActive()).toBe(false);
     expect(notify).toHaveBeenCalledOnce();
+    expect(emit).not.toHaveBeenCalled();
 
     await session.prompt('/maestro');
     expect(maestroSessionState.isActive()).toBe(false);
@@ -290,13 +325,86 @@ describe('main Maestro extension', () => {
     );
   });
 
+  it.each([
+    {
+      label: 'unsuccessful',
+      reply: { success: false, error: { message: 'Unavailable' } },
+    },
+    { label: 'null', reply: null },
+    { label: 'wrong envelope version', reply: { version: 2 } },
+    { label: 'wrong method', reply: { method: 'status' } },
+    { label: 'missing data', reply: { data: undefined } },
+    { label: 'wrong data version', reply: { data: { version: 2 } } },
+    { label: 'missing request ID', reply: { requestId: undefined } },
+  ])(
+    'given a $label matching reply when Maestro activates then it stays off with the installation error',
+    async ({ reply }) => {
+      const { session, events, notify } = await piTestSessions.create({
+        extensions: [maestroExtension],
+      });
+
+      events.on(SUBAGENT_PING.REQUEST_EVENT, (payload) => {
+        // JUSTIFICATION: Maestro emits this version 1 ping request.
+        const request = payload as { requestId: string };
+        events.emit(
+          `${SUBAGENT_PING.REPLY_EVENT_PREFIX}${request.requestId}`,
+          reply === null
+            ? null
+            : {
+                version: SUBAGENT_PING.VERSION,
+                requestId: request.requestId,
+                method: SUBAGENT_PING.METHOD,
+                success: true,
+                data: { version: SUBAGENT_PING.VERSION },
+                ...reply,
+              },
+        );
+      });
+
+      await session.prompt('/maestro');
+
+      expect(maestroSessionState.isActive()).toBe(false);
+      expect(notify).toHaveBeenCalledExactlyOnceWith(
+        expect.stringContaining(SUBAGENT_PING.INSTALLATION_ERROR),
+        'error',
+      );
+    },
+  );
+
+  it('given an emission error when Maestro sends its ping then activation stays off with the installation error', async () => {
+    const { session, events, notify } = await piTestSessions.create({
+      extensions: [maestroExtension],
+    });
+
+    const emit = events.emit.bind(events);
+    vi.spyOn(events, 'emit').mockImplementation((channel, payload) => {
+      if (channel === SUBAGENT_PING.REQUEST_EVENT) {
+        throw new Error('Bus unavailable');
+      }
+
+      emit(channel, payload);
+    });
+
+    await session.prompt('/maestro');
+
+    expect(maestroSessionState.isActive()).toBe(false);
+    expect(notify).toHaveBeenCalledExactlyOnceWith(
+      `${SUBAGENT_PING.INSTALLATION_ERROR} Bus unavailable`,
+      'error',
+    );
+  });
+
   it('given a failed check when activation is retried then Maestro stays off and reports each error', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 
     const { session, notify, setStatus, settingsManager } =
       await piTestSessions.create({
-        extensions: [foreignExtension, maestroExtension],
+        extensions: [
+          foreignExtension,
+          maestroExtension,
+          successfulPingExtension,
+        ],
         cwd: repository.path,
         projectTrusted: false,
       });
@@ -324,7 +432,11 @@ describe('main Maestro extension', () => {
 
     const { session, notify, setStatus, settingsManager } =
       await piTestSessions.create({
-        extensions: [foreignExtension, maestroExtension],
+        extensions: [
+          foreignExtension,
+          maestroExtension,
+          successfulPingExtension,
+        ],
         cwd: repository.path,
       });
 
@@ -388,7 +500,7 @@ describe('main Maestro extension', () => {
     const workflow = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
 
     const { session, notify, setStatus } = await piTestSessions.create({
-      extensions: [foreignExtension, maestroExtension],
+      extensions: [foreignExtension, maestroExtension, successfulPingExtension],
       cwd: repository.path,
       sessionStartEvent: { type: 'session_start', reason: 'resume' },
       maestroAgentsAvailable: false,
@@ -409,7 +521,7 @@ describe('main Maestro extension', () => {
     cleanupFunctions.push(repository.cleanup);
 
     const { session, events, setStatus } = await piTestSessions.create({
-      extensions: [foreignExtension, maestroExtension],
+      extensions: [foreignExtension, maestroExtension, successfulPingExtension],
       cwd: repository.path,
     });
 
@@ -743,7 +855,11 @@ describe('main Maestro extension', () => {
       );
 
       const { session, setStatus } = await piTestSessions.create({
-        extensions: [foreignExtension, maestroExtension],
+        extensions: [
+          foreignExtension,
+          maestroExtension,
+          successfulPingExtension,
+        ],
         cwd: repository.path,
       });
 
@@ -790,7 +906,7 @@ describe('main Maestro extension', () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { session, events, setStatus } = await piTestSessions.create({
-      extensions: [foreignExtension, maestroExtension],
+      extensions: [foreignExtension, maestroExtension, successfulPingExtension],
       cwd: repository.path,
     });
 
@@ -883,7 +999,7 @@ describe('main Maestro extension', () => {
     cleanupFunctions.push(repository.cleanup);
 
     const { session, notify, setStatus } = await piTestSessions.create({
-      extensions: [foreignExtension, maestroExtension],
+      extensions: [foreignExtension, maestroExtension, successfulPingExtension],
       cwd: repository.path,
     });
 
