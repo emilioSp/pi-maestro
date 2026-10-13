@@ -64,6 +64,18 @@ Renamed `test/` to `tests/` at the owner's request. Updated imports, fixture pat
 
 ## Now
 
+### R-16: Verify code quality against AGENTS.md instructions
+
+#### Objective
+
+Add code-quality review against applicable `AGENTS.md` instructions as another `verifier` responsibility. Keep all existing responsibilities unchanged, including independent verification of every `acceptance criterion` in the approved `spec`. Code-quality review supplements that verification. It does not replace or reduce it.
+
+Existing `verifier` instructions already require reading applicable `AGENTS.md` files and following technical rules. Extend that guidance to require explicit code-quality review and reporting of instruction violations. Do not introduce personal style preferences as requirements.
+
+#### Completed when
+
+The `verifier` performs both its existing verification duties and the additional code-quality review. Every `acceptance criterion` is still independently verified. Each code-quality `finding` about an instruction violation identifies the `AGENTS.md` file, quotes the violated instruction, and explains how the code violates it.
+
 ## Next
 
 ## Later
@@ -167,15 +179,3 @@ Show an activity indicator in Pi's status bar while progress does not require an
 #### Completed when
 
 The status clearly distinguishes work in progress from a request for `owner` action.
-
-### R-16: Verify code quality against AGENTS.md instructions
-
-#### Objective
-
-Add code-quality review against applicable `AGENTS.md` instructions as another `verifier` responsibility. Keep all existing responsibilities unchanged, including independent verification of every `acceptance criterion` in the approved `spec`. Code-quality review supplements that verification. It does not replace or reduce it.
-
-Existing `verifier` instructions already require reading applicable `AGENTS.md` files and following technical rules. Extend that guidance to require explicit code-quality review and reporting of instruction violations. Do not introduce personal style preferences as requirements.
-
-#### Completed when
-
-The `verifier` performs both its existing verification duties and the additional code-quality review. Every `acceptance criterion` is still independently verified. Each code-quality `finding` about an instruction violation identifies the `AGENTS.md` file, quotes the violated instruction, and explains how the code violates it.

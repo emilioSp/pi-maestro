@@ -1,0 +1,39 @@
+{
+  "version": "1.0.0",
+  "specId": "20261013-185941-verify-code-quality-against-agents-md-instructions",
+  "summary": "Independently inspected all five approved guidance scenarios. All criterion probes matched their expected results; no findings.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Read agents/verifier.md sections 'Regenerate every proof' and 'Review code quality' and compared the diff with existing duties. Saving and reopening must both be independently verified even if code-quality review finds a violation. Existing duties remain unchanged.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Inspected 'Review code quality' against the relative source import scenario. The guidance requires evidence.source to identify AGENTS.md, evidence.observation to quote 'Do not use relative paths for source imports.' exactly, and evidence identifying and explaining the violating import. Confirmed the existing finding schema supports these fields.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "Inspected 'Review code quality' and 'Record findings, not decisions' against nonalphabetical imports with no applicable alphabetical-order directive. Both prohibit treating personal preferences as requirements or findings.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Inspected 'Review code quality' against the affected src/saveTitle.ts and unrelated src/exportReport.ts scenario. The guidance mandates review against applicable directives for affected code and explicitly excludes auditing unrelated code.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Inspected the absent-directive rules against both approved cases: no applicable AGENTS.md, and an AGENTS.md containing only 'Read ROADMAP.md at session start'. Both skip only the additional review, forbid missing-file/directive findings and invented requirements, and retain independent saving-title verification.",
+      "probeStatus": "passed"
+    }
+  ],
+  "findings": [],
+  "notes": [
+    "Confirmed the exact spec and verifier-running phase; B1 is the only prior handoff and no prototypes exist.",
+    "The product diff only adds the code-quality section to agents/verifier.md. Reviewed applicable instructions; no affected source code or instruction violations were found. Preserved the pre-existing ROADMAP.md changes as required.",
+    "Inspected package scripts and ran npm run check: 37 test files and 203 tests passed, with all coverage thresholds satisfied. No source fixes were applied. git diff --check passed.",
+    "Retained pre-check file contents, restored regenerated coverage HTML to its exact previous contents, and verified all snapshotted project files were unchanged. No temporary probe files remain."
+  ]
+}

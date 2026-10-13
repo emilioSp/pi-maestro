@@ -1,0 +1,39 @@
+{
+  "status": "done",
+  "summary": "Added scoped code-quality review and traceable instruction-violation findings to agents/verifier.md without changing existing verifier duties.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Read `nl -ba agents/verifier.md` lines 40-64 and 66-79 against the saving/reopening example. Both criteria still require independent verification, even when an instruction violation is found; the new review explicitly supplements all existing duties.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Inspect agents/verifier.md lines 73-76 against the relative-import example. Evidence must name the applicable AGENTS.md file, quote 'Do not use relative paths for source imports.' exactly, identify the candidate import, and explain its relative source path through the existing evidence fields.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "Inspect agents/verifier.md lines 71 and 83 against the unordered-import example. With no alphabetical-import directive, a personal preference cannot become a requirement or finding.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Inspect agents/verifier.md lines 68-69 against the saveTitle/exportReport example. Applicable code-quality directives require review of affected saveTitle code; unrelated exportReport code is excluded from the audit.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Inspect agents/verifier.md lines 70 and 78-79 against both approved cases: no applicable AGENTS.md files, and a file containing only 'Read ROADMAP.md at session start'. Both skip only the added review without missing-file/directive findings or invented requirements; saving-title verification remains mandatory.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "npm run check passed: lint, typecheck, 37 test files and 203 tests, with coverage thresholds satisfied. git diff --check passed.",
+    "Only agents/verifier.md was edited. The owner's existing ROADMAP.md changes were preserved as required by the spec; no roadmap update was made.",
+    "All prior verifier guidance and the existing finding schema remain unchanged. No additional model runs, dependencies, tests, or temporary probe files were needed."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261013-185941-verify-code-quality-against-agents-md-instructions"
+}
