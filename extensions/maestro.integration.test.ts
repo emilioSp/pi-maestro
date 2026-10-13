@@ -31,13 +31,14 @@ import {
 } from '#config/schema.ts';
 import maestroExtension from '#extensions/maestro.ts';
 import maestroSubagentExtension from '#extensions/maestro-subagent.ts';
+import type { MaestroPaths } from '#MaestroPaths.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { MAESTRO_STATUS_KEY } from '#maestro/status/refreshMaestroStatus.ts';
 import type { CreatedSpec } from '#specs/create.ts';
+import { unavailableCompilerEscalation } from '#tests/fixtures/unavailable-compiler-escalation.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
-  failedHandoff,
   SPEC_ID,
 } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
@@ -52,8 +53,9 @@ import { RUN_BUILDER_TOOL } from '#tools/main/run-builder.ts';
 import { RUN_VERIFIER_TOOL } from '#tools/main/run-verifier.ts';
 import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
+import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
+import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 
 const FOREIGN_TOOL = 'foreign_tool';
@@ -691,6 +693,35 @@ describe('main Maestro extension', () => {
     );
   });
 
+  type PrepareSpecRevisionPhaseInput = {
+    paths: MaestroPaths;
+    current: WorkflowState;
+    phase: WorkflowState['phase'];
+  };
+
+  const prepareSpecRevisionPhase = async ({
+    paths,
+    current,
+    phase,
+  }: PrepareSpecRevisionPhaseInput): Promise<void> => {
+    if (phase === WORKFLOW_PHASES.ESCALATION_DECISION) {
+      await prepareBuilderRun({ paths, specId: SPEC_ID });
+      await completeBuilderPass({
+        paths,
+        specId: SPEC_ID,
+        handoff: unavailableCompilerEscalation,
+      });
+
+      return;
+    }
+
+    // phase === WORKFLOW_PHASES.FINDINGS_DECISION
+    await writeWorkflowState({
+      path: paths.getWorkflowPath(SPEC_ID),
+      state: { ...current, phase },
+    });
+  };
+
   it.each([
     WORKFLOW_PHASES.ESCALATION_DECISION,
     WORKFLOW_PHASES.FINDINGS_DECISION,
@@ -701,13 +732,11 @@ describe('main Maestro extension', () => {
 
       const current = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
 
-      await writeWorkflowState({
-        path: paths.getWorkflowPath(SPEC_ID),
-        state: { ...current, phase },
-      });
+      await prepareSpecRevisionPhase({ paths, current, phase });
+
       await writeFile(
         paths.getSpecFilePath(SPEC_ID),
-        '# Owner-approved revised contract\n',
+        '# Owner-approved revised contract\nUse a local check instead of the unavailable compiler.\n',
         'utf8',
       );
 
@@ -755,7 +784,7 @@ describe('main Maestro extension', () => {
     },
   );
 
-  it('given a saved builder failure when the registered run tool returns then the owner receives the failure and status updates', async () => {
+  it('given a saved technical-problem escalation when the registered run tool returns then the owner receives the problem and status updates', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { session, events, setStatus } = await piTestSessions.create({
@@ -776,7 +805,7 @@ describe('main Maestro extension', () => {
         await completeBuilderPass({
           paths,
           specId: SPEC_ID,
-          handoff: failedHandoff(),
+          handoff: unavailableCompilerEscalation,
         });
 
         events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
@@ -784,7 +813,10 @@ describe('main Maestro extension', () => {
           ownerRunId: request.ownerRunId,
           nodeId: request.nodeId,
           status: DELEGATION_STATUSES.COMPLETED,
-          result: { kind: 'text', text: 'The builder failed.' },
+          result: {
+            kind: 'text',
+            text: 'The builder escalated the compiler problem.',
+          },
         });
       } catch (error) {
         events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
@@ -822,17 +854,25 @@ describe('main Maestro extension', () => {
       context: 'fresh',
     });
     expect(result.details).toMatchObject({
-      phase: WORKFLOW_PHASES.BUILDER_FAILED,
-      handoff: { failure: { reason: 'The implementation was blocked.' } },
+      outcome: BUILDER_HANDOFF_STATUSES.ESCALATION,
+      phase: WORKFLOW_PHASES.ESCALATION_DECISION,
+      handoff: {
+        ...unavailableCompilerEscalation,
+        version: '1.0.0',
+        specId: SPEC_ID,
+      },
     });
     expect(result.content).toEqual([
-      { type: 'text', text: expect.stringContaining('cannot be retried') },
+      {
+        type: 'text',
+        text: expect.stringContaining('waiting for an owner decision'),
+      },
     ]);
     expect(setStatus).toHaveBeenLastCalledWith(
       MAESTRO_STATUS_KEY,
       theme.fg('muted', `Maestro active · ${SPEC_ID.slice(0, 26)}... · `) +
-        '❌ ' +
-        theme.fg('error', 'Builder failed'),
+        '✋ ' +
+        theme.fg('warning', 'Owner decision needed: escalation'),
     );
   });
 
