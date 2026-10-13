@@ -159,27 +159,3 @@ The `specification` must define the criterion heading format used to extract IDs
 #### Completed when
 
 Both `handoff` submissions reject missing, extra, or duplicate criterion IDs before saving a report or changing phase.
-
-### R-11: Reduce temporary verifier changes
-
-#### Objective
-
-Reduce the risk that verification changes the `candidate`. Existing instructions already require exact restoration, cleanup, and reporting of unresolved restoration problems. Refine the remaining guidance rather than duplicate those rules.
-
-Prefer checks that leave existing files unchanged and use separate temporary files when possible. Change an existing file only when a criterion requires it. Retain its exact contents and restore it immediately after each `probe`, including failed `probes`. Prefer check-only commands over commands that apply automatic fixes.
-
-`Maestro` currently has no file-hash restoration check. Adding one requires a separate scope decision.
-
-#### Completed when
-
-`Verifier` instructions cover these limits and require restoration and temporary-file cleanup before `handoff`. If restoration fails, the `verifier` must stop and report affected paths and remaining changes.
-
-### R-13: Show when Maestro is working
-
-#### Objective
-
-Show an activity indicator in Pi's status bar while progress does not require an `owner` decision. A spinner is one option, not an agreed implementation.
-
-#### Completed when
-
-The status clearly distinguishes work in progress from a request for `owner` action.
