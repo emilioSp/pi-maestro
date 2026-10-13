@@ -1,9 +1,14 @@
-import { readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { BUILDER_HANDOFF_VERSION } from '#artifacts/builder-handoff/schema.ts';
+import { writeBuilderHandoff } from '#artifacts/builder-handoff/writeBuilderHandoff.ts';
+import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
+import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 import { createSpec } from '#specs/create.ts';
+import { unavailableCompilerEscalation } from '#tests/fixtures/unavailable-compiler-escalation.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -97,7 +102,8 @@ describe('markSpecReady', () => {
     'given the %s phase when the spec is approved then it becomes ready without changing its content',
     async (phase) => {
       const { created, paths, repository } = await createWorkflow(phase);
-      const originalContent = await readFile(created.specFilePath, 'utf8');
+      const originalContent = `${await readFile(created.specFilePath, 'utf8')}\n### AC2: Another criterion\n`;
+      await writeFile(created.specFilePath, originalContent, 'utf8');
 
       await expect(
         markSpecReady({
@@ -114,6 +120,110 @@ describe('markSpecReady', () => {
         originalContent,
       );
       expect(paths.getProjectRoot()).toBe(repository.path);
+    },
+  );
+
+  it.each([
+    {
+      phase: WORKFLOW_PHASES.DRAFTING_SPEC,
+      numbers: [2],
+    },
+    {
+      phase: WORKFLOW_PHASES.DRAFTING_SPEC,
+      numbers: [1, 3],
+    },
+    {
+      phase: WORKFLOW_PHASES.DRAFTING_SPEC,
+      numbers: [1, 1],
+    },
+    {
+      phase: WORKFLOW_PHASES.DRAFTING_SPEC,
+      numbers: [1, 3, 2],
+    },
+    {
+      phase: WORKFLOW_PHASES.ESCALATION_DECISION,
+      numbers: [1, 3],
+    },
+    {
+      phase: WORKFLOW_PHASES.FINDINGS_DECISION,
+      numbers: [1, 3],
+    },
+  ])(
+    'given criteria $numbers in $phase when approved then an ordering error leaves all saved files unchanged',
+    async ({ phase, numbers }) => {
+      const { created, paths } = await createWorkflow(phase);
+      await writeFile(
+        created.specFilePath,
+        numbers.map((number) => `### AC${number}: Criterion\n`).join('\n'),
+        'utf8',
+      );
+      await mkdir(paths.getBuilderHandoffsPath(SPEC_ID), { recursive: true });
+      await mkdir(paths.getVerifierHandoffsPath(SPEC_ID), { recursive: true });
+
+      const builderHandoffPath = paths.getBuilderHandoffPath({
+        specId: SPEC_ID,
+        handoffPassNumber: 1,
+      });
+
+      const verifierHandoffPath = paths.getVerifierHandoffPath({
+        specId: SPEC_ID,
+        handoffPassNumber: 1,
+      });
+
+      await writeBuilderHandoff({
+        path: builderHandoffPath,
+        specId: SPEC_ID,
+        handoff: {
+          ...unavailableCompilerEscalation,
+          version: BUILDER_HANDOFF_VERSION,
+          specId: SPEC_ID,
+        },
+      });
+      await writeVerifierHandoff({
+        path: verifierHandoffPath,
+        specId: SPEC_ID,
+        handoff: {
+          version: VERIFIER_HANDOFF_VERSION,
+          specId: SPEC_ID,
+          summary: 'Previous verifier pass.',
+          acceptanceCriteria: [],
+          findings: [],
+          notes: [],
+        },
+      });
+
+      const savedPaths = [
+        created.specFilePath,
+        created.workflowPath,
+        builderHandoffPath,
+        verifierHandoffPath,
+      ];
+
+      const savedContents = await Promise.all(
+        savedPaths.map((path) => readFile(path)),
+      );
+
+      const savedEntries = await readdir(created.specPath, { recursive: true });
+
+      await expect(
+        markSpecReady({
+          paths,
+          specId: SPEC_ID,
+          activeWorkflowSpecId: SPEC_ID,
+        }),
+      ).rejects.toThrow('Fix acceptance criterion ordering in spec.md.');
+
+      expect(
+        await Promise.all(savedPaths.map((path) => readFile(path))),
+      ).toEqual(savedContents);
+      expect(await readdir(created.specPath, { recursive: true })).toEqual(
+        savedEntries,
+      );
+      await expect(
+        readWorkflowState(created.workflowPath),
+      ).resolves.toMatchObject({
+        phase,
+      });
     },
   );
 
