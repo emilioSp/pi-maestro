@@ -83,7 +83,8 @@ If a `spec` change is needed during an `escalation` or `finding` decision, the `
 
 The workflow ends at `candidate-ready`. Rejected `findings` retain their reasons. Later changes are outside the completed verification. The `owner` controls any later Git use, pull request, and merge.
 
-The same `/maestro` command disables `Maestro` and leaves project files unchanged. Disabling `Maestro`, restarting Pi, or using `/resume` clears live session state. Saved files do not automatically restore or resume an incomplete workflow. The `owner` handles it manually.
+The same `/maestro` command disables `Maestro` and leaves project files unchanged. Disabling `Maestro`, restarting Pi, or using `/resume` clears live session state. 
+Saved files do not automatically restore or resume an incomplete workflow. The `owner` handles it manually.
 
 ## Configuration
 

@@ -11,7 +11,6 @@ export const BUILDER_HANDOFF_VERSION = '1.0.0';
 
 export const BUILDER_HANDOFF_STATUSES = {
   DONE: 'done',
-  FAILED: 'failed',
   ESCALATION: 'escalation',
 } as const;
 
@@ -40,11 +39,6 @@ export const BuilderAcceptanceCriterionSchema = Type.Object(
 export type BuilderAcceptanceCriterion = Static<
   typeof BuilderAcceptanceCriterionSchema
 >;
-
-export const BuilderHandoffFailureSchema = Type.Object(
-  { reason: Type.String({ minLength: 1 }) },
-  { additionalProperties: false },
-);
 
 const BuilderHandoffContentFields = {
   summary: Type.String({ minLength: 1 }),
@@ -134,19 +128,9 @@ export const BuilderEscalationHandoffSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const BuilderFailedHandoffSchema = Type.Object(
-  {
-    ...BuilderHandoffFields,
-    status: Type.Literal(BUILDER_HANDOFF_STATUSES.FAILED),
-    failure: BuilderHandoffFailureSchema,
-  },
-  { additionalProperties: false },
-);
-
 export const BuilderHandoffSchema = Type.Union([
   BuilderDoneHandoffSchema,
   BuilderEscalationHandoffSchema,
-  BuilderFailedHandoffSchema,
 ]);
 
 export type BuilderHandoff = Static<typeof BuilderHandoffSchema>;
@@ -169,19 +153,9 @@ export const BuilderEscalationHandoffSubmissionSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const BuilderFailedHandoffSubmissionSchema = Type.Object(
-  {
-    status: Type.Literal(BUILDER_HANDOFF_STATUSES.FAILED),
-    ...BuilderHandoffContentFields,
-    failure: BuilderHandoffFailureSchema,
-  },
-  { additionalProperties: false },
-);
-
 export const BuilderHandoffSubmissionSchema = Type.Union([
   BuilderDoneHandoffSubmissionSchema,
   BuilderEscalationHandoffSubmissionSchema,
-  BuilderFailedHandoffSubmissionSchema,
 ]);
 
 export type BuilderHandoffSubmissionInput = Static<

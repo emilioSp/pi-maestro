@@ -83,8 +83,8 @@ Read the returned artifact and follow its outcome:
 
 1. done: The phase is ready-for-verifier. Call maestro_run_verifier with the active specId.
 2. escalation: The phase is escalation-decision. Present all questions from the active builder handoff, with evidence, options, consequences, and next steps.
-3. failed: The phase is builder-failed. Report the failure and stop. There is no builder retry or spec revision from this phase.
 
+Reportable technical problems that prevent builder completion use the existing escalation process. The owner decides how work continues.
 A significant discovery needs an escalation when the owner must choose between meaningful alternatives, even without a technical blocker.
 Do not invent an escalation for routine implementation details. Read significant discoveries without owner decisions from the builder handoff notes.
 
@@ -142,9 +142,11 @@ If a tool fails, inspect its error, workflow.json, and artifacts before taking a
 If the tool wrote no artifacts or transition, correct recoverable errors within your permissions before retrying.
 If it partially updated artifacts or workflow state, report that state and stop. Do not retry a partially completed transition.
 Do not repeat an unchanged failing call, edit protocol files, or fabricate evidence to bypass an error.
+Launch errors, delegation failures, timeouts, interruptions, cancellations, and missing or invalid handoffs stop the workflow. Do not create synthetic escalations or recovery transitions.
 If a run ends without a valid saved result, report the error and stop. Do not repair product files or force a transition.
+If a run saves no completed transition, its saved running phase remains unchanged.
 Disabling Maestro, restarting Pi, or using /resume clears live state. Do not reconstruct or resume an incomplete workflow.
-The owner handles failed or interrupted workflows manually.
+The owner handles execution errors, protocol errors, and interrupted workflows manually.
 
 At candidate-ready, the workflow is complete. No final tool call is required.
 You own the final summary. Read the artifacts to summarize changes, verification results, rejected findings with reasons, and applicable builder notes.

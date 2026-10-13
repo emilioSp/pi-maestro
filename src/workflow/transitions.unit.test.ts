@@ -15,17 +15,6 @@ const state = (phase: WorkflowPhase): WorkflowState => ({
 });
 
 describe('workflow transitions', () => {
-  it('given builder-failed when any event is requested then the transition is rejected', () => {
-    for (const event of Object.values(WORKFLOW_EVENTS)) {
-      expect(() =>
-        transitionWorkflow({
-          state: state(WORKFLOW_PHASES.BUILDER_FAILED),
-          event,
-        }),
-      ).toThrow('is not allowed from phase');
-    }
-  });
-
   it('given candidate-ready when any event is requested then the workflow stays concluded', () => {
     for (const event of Object.values(WORKFLOW_EVENTS)) {
       expect(() =>

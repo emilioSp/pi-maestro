@@ -1,6 +1,6 @@
 /**
  * Objective: Register the builder handoff tool for the current project.
- * Used: When the builder reports a done, escalation, or failed result.
+ * Used: When the builder reports a done or escalation result.
  */
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
@@ -8,7 +8,6 @@ import { Type } from 'typebox';
 import {
   BuilderDoneHandoffSubmissionSchema,
   BuilderEscalationHandoffSubmissionSchema,
-  BuilderFailedHandoffSubmissionSchema,
 } from '#artifacts/builder-handoff/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import { resolveWorkflowContext } from '#tools/child/utils/resolveWorkflowContext.ts';
@@ -18,7 +17,7 @@ export const BUILDER_HANDOFF_TOOL = {
   NAME: 'maestro_record_builder_handoff',
   LABEL: 'Record Builder Handoff',
   DESCRIPTION:
-    'Record the builder pass as done, escalation, or failed. Put significant discoveries that do not require an owner decision in notes. After success, stop. The tool saves a numbered builder handoff and the workflow phase.',
+    'Record the builder pass as done or escalation. Report technical problems that prevent completion as escalations for owner decisions. Put significant discoveries that do not require an owner decision in notes. After success, stop. The tool saves a numbered builder handoff and the workflow phase.',
 } as const;
 
 const BuilderHandoffToolParameters = Type.Union([
@@ -33,13 +32,6 @@ const BuilderHandoffToolParameters = Type.Union([
     {
       specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
       ...BuilderEscalationHandoffSubmissionSchema.properties,
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
-      specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
-      ...BuilderFailedHandoffSubmissionSchema.properties,
     },
     { additionalProperties: false },
   ),

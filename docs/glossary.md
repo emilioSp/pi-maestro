@@ -18,7 +18,7 @@
 | `Run` or `pass` | One execution of the `builder` or `verifier` with a fresh conversation. |
 | `Candidate` | The project files created by agents after a workflow `run` |
 | `Finding` | A technical issue that the `verifier` records for an `owner` decision. |
-| `Escalation` | An implementation question that the `builder` records in its `handoff` for an `owner` decision. |
+| `Escalation` | An implementation question or reportable technical problem that the `builder` records in its `handoff` for an `owner` decision. |
 | `GREEN FLAG` | The owner's explicit reply that approves the current `spec` and starts the `builder`. |
 | `fix-code` | An `owner` decision that requests code fixes without changing the approved `spec`. |
 | `reject` | An `owner` decision that declines a `finding` and records a reason. It does not mean that verification passed. |

@@ -17,7 +17,7 @@ A `verifier` `handoff` can contain `findings`, which are technical issues.
 |---|---|
 | `Owner` | Decides requirements, scope, technical decisions, `spec` approval, `escalation` answers, and `finding` decisions. Performs the final review. |
 | `Maestro` | Prepares the `spec` with the `owner`, records workflow progress, runs agents, presents issues, and saves `owner` decisions. |
-| `Builder` | Implements the approved `spec` and runs every `probe`. Reports completion, an `escalation`, or a technical failure. |
+| `Builder` | Implements the approved `spec` and runs every `probe`. Reports completion or an `escalation`, including technical problems that prevent completion. |
 | `Verifier` | Independently runs every `probe` against the live project files. Reports `findings` without repairing product code. |
 
 `Builder` and `verifier` `runs` are sequential foreground operations. Each starts with a fresh conversation and reads the `spec` and saved `artifacts`.
@@ -66,8 +66,6 @@ flowchart TD
     ownerEscalation -->|Spec changes| reviseSpec[Owner and Maestro revise the spec]
     reviseSpec --> approval
 
-    buildOutcome -->|Failed| stopped[Workflow stops for manual owner follow-up]
-
     findings -->|One or more| ownerFindings[Owner decides every finding]
     ownerFindings -->|Reject all with reasons| candidate
     ownerFindings -->|Fix code| recordFixes[Maestro records the decisions]
@@ -77,7 +75,7 @@ flowchart TD
     candidate --> summary
     summary --> review
 
-    linkStyle 0,1,2,3,4,5,17,18 stroke:#2e7d32,stroke-width:3px
+    linkStyle 0,1,2,3,4,5,16,17 stroke:#2e7d32,stroke-width:3px
 ```
 
 ## Workflow phases
@@ -92,7 +90,6 @@ The default path is `.specs/<spec-id>/workflow.json`. The `spec` directory is [c
 | `ready-for-builder` | The approved `spec` or recorded `owner` decisions permit a `builder` `run`. |
 | `builder-running` | A `builder` `run` is active. |
 | `escalation-decision` | The `owner` must decide how to handle every `escalation` question. |
-| `builder-failed` | The `builder` recorded a technical failure. The workflow stops. |
 | `ready-for-verifier` | The `builder` completed the work and the `verifier` can start. |
 | `verifier-running` | A `verifier` `run` is active. |
 | `findings-decision` | The `owner` must decide how to handle every current `finding`. |
@@ -123,7 +120,8 @@ Each criterion contains these parts:
 
 ## Escalations
 
-An `escalation` returns an implementation decision to the `owner`. It does not necessarily mean that a technical failure occurred. Examples include undefined behavior, a conflict with the `spec`, or a possible scope change.
+An `escalation` returns an implementation decision or a technical problem to the `owner`. 
+For instance a technical failure, an undefined behavior, a conflict with the `spec`, or a possible scope change.
 
 The `builder` saves all questions from one `pass` in the `escalations` list of its numbered `handoff`. `Maestro` identifies each question with both report and `escalation` IDs, such as `B1/E1`. See [Escalation references](glossary.md#escalation-references) for their scope.
 
@@ -197,7 +195,10 @@ For example, a repair cycle with successful `builder` results produces these fil
 
 If the first `builder` `run` escalates, it creates `B1.json` with its questions. `Owner` answers update `B1.json`. The next saved `builder` result creates `B2.json`.
 
-A `builder` report with `status: failed` stops the workflow without a `verifier` `run`. If an agent returns without a valid saved result, `Maestro` stops and reports the error. See [Limitations](#limitations).
+A `builder` report has `status: done` or `status: escalation`. A `done` report requires every recorded `probe` to pass and an empty `escalations` list.
+An `escalation` retains actual `probe` results: `passed`, `failed`, or `not-run`. 
+
+Execution errors or missing or invalid saved results stop the workflow. See [Limitations](#limitations).
 
 The default layout after multiple `runs` is:
 
@@ -226,7 +227,9 @@ One example is `gpt-luna-6` with `thinking: "low"`.
 Moreover, the workflow works well with a defined harness: tests, lint for code rules, anti-slop checks for unwanted patterns, and `AGENTS.md`. `Maestro` does not supply these project-specific checks.
 
 ### No automatic rollback
-`Maestro` provides no automatic rollback, repair, or recovery for failed or interrupted workflows. The files that remain are available for `owner` inspection. The `owner` handles the workflow manually.
+Launch errors, delegation failures, timeouts, interruptions, cancellations, and missing or invalid `handoffs` stop the workflow without a recovery transition.
+If a `run` saves no completed transition, its saved running phase remains unchanged. Partial protocol writes require manual `owner` follow-up.
+`Maestro` provides no automatic rollback, repair, or recovery for these errors. The files that remain are available for `owner` inspection.
 
 ### No reconciliation
 Disabling `Maestro`, restarting Pi, or using `/resume` clears live `Maestro` session state and leaves project files unchanged. `Maestro` starts disabled in a new or resumed session. Reactivating it does not reconstruct or resume a saved workflow.

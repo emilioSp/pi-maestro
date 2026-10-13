@@ -79,17 +79,3 @@ export const doneHandoff = (): BuilderHandoffSubmissionInput => ({
   ],
   notes: [],
 });
-
-export const failedHandoff = (): BuilderHandoffSubmissionInput => ({
-  status: BUILDER_HANDOFF_STATUSES.FAILED,
-  summary: 'The builder could not complete the approved change.',
-  acceptanceCriteria: [
-    {
-      id: 'AC1',
-      probe: 'npm test',
-      probeStatus: PROBE_STATUSES.NOT_RUN,
-    },
-  ],
-  failure: { reason: 'The implementation was blocked.' },
-  notes: [],
-});

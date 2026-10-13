@@ -9,13 +9,10 @@ import type { VerifierHandoff } from '#artifacts/verifier-handoff/schema.ts';
 import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import {
-  WORKFLOW_EVENTS,
-  WORKFLOW_PHASES,
-  type WorkflowState,
-} from '#workflow/state/schema.ts';
+import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
+import { getWorkflowEventByVerifierHandoff } from '#workflow/verifier/utils/getWorkflowEventByVerifierHandoff.ts';
 
 export type CompletedVerifierPass = {
   handoff: VerifierHandoff;
@@ -61,10 +58,7 @@ export const completeVerifierPass = async ({
 
   const nextState = transitionWorkflow({
     state: currentState,
-    event:
-      handoff.findings.length > 0
-        ? WORKFLOW_EVENTS.VERIFIER_FOUND_FINDINGS
-        : WORKFLOW_EVENTS.VERIFIER_APPROVED,
+    event: getWorkflowEventByVerifierHandoff(handoff),
   });
 
   await mkdir(paths.getVerifierHandoffsPath(specId), { recursive: true });

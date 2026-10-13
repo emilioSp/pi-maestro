@@ -25,22 +25,6 @@ const doneHandoff = (): BuilderHandoff => ({
   notes: [],
 });
 
-const failedHandoff = (): BuilderHandoff => ({
-  version: BUILDER_HANDOFF_VERSION,
-  specId,
-  status: BUILDER_HANDOFF_STATUSES.FAILED,
-  summary: 'The migration could not be completed.',
-  acceptanceCriteria: [
-    {
-      id: 'AC1',
-      probe: 'npm test -- alert',
-      probeStatus: PROBE_STATUSES.NOT_RUN,
-    },
-  ],
-  failure: { reason: 'The required service is unavailable.' },
-  notes: ['No product files were changed.'],
-});
-
 describe('builder handoff validation', () => {
   it.each([PROBE_STATUSES.FAILED, PROBE_STATUSES.NOT_RUN])(
     'given a passed probe and a second %s probe when a done handoff is validated then it is rejected',
@@ -57,27 +41,6 @@ describe('builder handoff validation', () => {
       );
     },
   );
-
-  it('given all probes pass when a failed handoff is validated then it is rejected', () => {
-    const handoff = failedHandoff();
-    handoff.acceptanceCriteria[0] = {
-      ...handoff.acceptanceCriteria[0],
-      probeStatus: PROBE_STATUSES.PASSED,
-    };
-
-    expect(() => assertBuilderHandoff({ handoff, specId })).toThrow(
-      'Failed builder handoff cannot mark every acceptance check as completed',
-    );
-  });
-
-  it('given a failed handoff without acceptance criteria when validated then it is accepted', () => {
-    expect(() =>
-      assertBuilderHandoff({
-        handoff: { ...failedHandoff(), acceptanceCriteria: [] },
-        specId,
-      }),
-    ).not.toThrow();
-  });
 
   it.each([
     {
@@ -104,13 +67,6 @@ describe('builder handoff validation', () => {
       message: 'Invalid builder handoff',
     },
     {
-      handoff: {
-        ...failedHandoff(),
-        failure: { reason: '' },
-      },
-      message: 'Invalid builder handoff',
-    },
-    {
       handoff: { ...doneHandoff(), summary: '' },
       message: 'Invalid builder handoff',
     },
@@ -124,13 +80,6 @@ describe('builder handoff validation', () => {
         acceptanceCriteria: [
           { ...doneHandoff().acceptanceCriteria[0], extra: true },
         ],
-      },
-      message: 'Invalid builder handoff',
-    },
-    {
-      handoff: {
-        ...failedHandoff(),
-        failure: { reason: 'Blocked.', extra: true },
       },
       message: 'Invalid builder handoff',
     },

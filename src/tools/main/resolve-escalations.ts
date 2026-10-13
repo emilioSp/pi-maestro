@@ -11,7 +11,7 @@ import {
 } from '#artifacts/builder-handoff/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
-import { resolveEscalations } from '#workflow/escalation/resolveEscalations.ts';
+import { resolveEscalations } from '#workflow/builder/resolveEscalations.ts';
 
 export const RESOLVE_ESCALATIONS_TOOL = {
   NAME: 'maestro_resolve_escalations',

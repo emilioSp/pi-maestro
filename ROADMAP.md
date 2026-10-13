@@ -46,9 +46,10 @@ Renamed `test/` to `tests/` at the owner's request. Updated imports, fixture pat
 
 #### Objective
 
-A technical `builder` failure currently ends the workflow in `builder-failed`. Replace the builder's `failed` `handoff` status and the `builder-failed` workflow phase with an `escalation`. The `owner` decides how to proceed through the existing `escalation` process.
+The `builder` reports technical problems that prevent completion through the existing `escalation` process. The `owner` decides how to proceed.
 
-Automatic recovery of interrupted `runs` is outside this item. No `specification` is approved yet.
+The approved [specification](.specs/20261013-101454-route-builder-failures-through-owner-escalations/spec.md) is implemented.
+Automatic recovery of interrupted `runs` remains outside this item.
 
 #### Completed when
 

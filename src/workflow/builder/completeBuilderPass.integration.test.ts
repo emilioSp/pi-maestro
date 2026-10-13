@@ -1,10 +1,12 @@
 import { access, readdir, readFile } from 'node:fs/promises';
 import { afterEach, describe, expect, it } from 'vitest';
+import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import {
   BUILDER_HANDOFF_STATUSES,
   PROBE_STATUSES,
 } from '#artifacts/builder-handoff/schema.ts';
 import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
+import { unavailableCompilerEscalation } from '#tests/fixtures/unavailable-compiler-escalation.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -14,7 +16,7 @@ import piTestSessions from '#tests/support/pi-session.ts';
 import { registerRecordBuilderHandoffTool } from '#tools/child/record-builder-handoff.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
-import { resolveEscalations } from '#workflow/escalation/resolveEscalations.ts';
+import { resolveEscalations } from '#workflow/builder/resolveEscalations.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 
@@ -52,7 +54,7 @@ describe('builder completion', () => {
     });
   });
   it.each([PROBE_STATUSES.NOT_RUN, PROBE_STATUSES.PASSED])(
-    'given an escalation with a %s probe when submitted and followed by a done handoff then the workflow moves through escalation-decision to ready-for-verifier',
+    'given a technical escalation with a %s probe when resolved and followed by a done handoff then B2 is saved in ready-for-verifier',
     async (probeStatus) => {
       const { paths, repository } = await createApprovedWorkflow();
       await prepareBuilderRun({ paths, specId: SPEC_ID });
@@ -62,12 +64,34 @@ describe('builder completion', () => {
         extension: registerRecordBuilderHandoffTool,
       });
 
+      const specBefore = await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8');
+
+      const acceptanceCriteria = [
+        {
+          id: 'AC1',
+          probe:
+            probeStatus === PROBE_STATUSES.PASSED
+              ? 'The acceptance probe passed before the compiler repository check.'
+              : unavailableCompilerEscalation.acceptanceCriteria[0].probe,
+          probeStatus,
+        },
+      ];
+
       const result = await tool.execute('escalation', {
         specId: SPEC_ID,
-        ...csvExportEscalation,
-        acceptanceCriteria: [
-          { ...csvExportEscalation.acceptanceCriteria[0], probeStatus },
-        ],
+        ...unavailableCompilerEscalation,
+        acceptanceCriteria,
+      });
+
+      const b1 = await paths.getActiveBuilderHandoffPath(SPEC_ID);
+      expect(b1).toBe(
+        paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
+      );
+      expect(
+        await readBuilderHandoff({ path: b1, specId: SPEC_ID }),
+      ).toMatchObject({
+        acceptanceCriteria,
+        escalations: unavailableCompilerEscalation.escalations,
       });
 
       expect(result.details).toMatchObject({
@@ -82,23 +106,30 @@ describe('builder completion', () => {
       await resolveEscalations({
         paths,
         specId: SPEC_ID,
-        decisions: csvExportEscalation.escalations.map(({ id }) => ({
-          escalationId: id,
-          selectedOptionId: 'exclude',
-          decision: 'Exclude rows',
-          reason: 'Keep exports current',
-        })),
+        decisions: [
+          {
+            escalationId: 'E1',
+            selectedOptionId: 'restore',
+            decision: 'Retry the required check',
+            reason: 'The compiler is available now.',
+          },
+        ],
       });
       await prepareBuilderRun({ paths, specId: SPEC_ID });
 
-      const done = await tool.execute('done', {
+      const { tool: nextBuilder } = await piTestSessions.createRegisteredTool({
+        cwd: repository.path,
+        extension: registerRecordBuilderHandoffTool,
+      });
+
+      const done = await nextBuilder.execute('done', {
         specId: SPEC_ID,
         status: BUILDER_HANDOFF_STATUSES.DONE,
-        summary: 'Implemented CSV exports.',
+        summary: 'Implemented the approved change and ran the compiler check.',
         acceptanceCriteria: [
           {
             id: 'AC1',
-            probe: 'CSV export check passed.',
+            probe: 'The required compiler check passed.',
             probeStatus: PROBE_STATUSES.PASSED,
           },
         ],
@@ -106,14 +137,89 @@ describe('builder completion', () => {
         escalations: [],
       });
 
+      const b2 = paths.getBuilderHandoffPath({
+        specId: SPEC_ID,
+        handoffPassNumber: 2,
+      });
+
       expect(done.details).toMatchObject({
+        handoffPath: b2,
         phase: WORKFLOW_PHASES.READY_FOR_VERIFIER,
+      });
+      expect(
+        await readBuilderHandoff({ path: b2, specId: SPEC_ID }),
+      ).toMatchObject({
+        status: BUILDER_HANDOFF_STATUSES.DONE,
+        escalations: [],
+        acceptanceCriteria: [{ id: 'AC1', probeStatus: PROBE_STATUSES.PASSED }],
+      });
+      expect(await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8')).toBe(
+        specBefore,
+      );
+      expect(
+        await readBuilderHandoff({ path: b1, specId: SPEC_ID }),
+      ).toMatchObject({
+        acceptanceCriteria,
+        escalations: [
+          {
+            resolution: {
+              decision: 'Retry the required check',
+              reason: 'The compiler is available now.',
+            },
+          },
+        ],
       });
       expect(
         (await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).phase,
       ).toBe(WORKFLOW_PHASES.READY_FOR_VERIFIER);
     },
   );
+
+  it('given a technical escalation with mixed probe results when saved then each supplied result is preserved', async () => {
+    const { paths, repository } = await createApprovedWorkflow();
+    await prepareBuilderRun({ paths, specId: SPEC_ID });
+
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerRecordBuilderHandoffTool,
+    });
+
+    const acceptanceCriteria = [
+      {
+        id: 'AC1',
+        probe: 'The acceptance test passed.',
+        probeStatus: PROBE_STATUSES.PASSED,
+      },
+      {
+        id: 'AC2',
+        probe: 'The export test failed.',
+        probeStatus: PROBE_STATUSES.FAILED,
+      },
+      {
+        id: 'AC3',
+        probe: 'The compiler check could not run.',
+        probeStatus: PROBE_STATUSES.NOT_RUN,
+      },
+    ];
+
+    await tool.execute('mixed-probes', {
+      specId: SPEC_ID,
+      ...unavailableCompilerEscalation,
+      acceptanceCriteria,
+    });
+    expect(
+      await readBuilderHandoff({
+        path: await paths.getActiveBuilderHandoffPath(SPEC_ID),
+        specId: SPEC_ID,
+      }),
+    ).toMatchObject({
+      status: BUILDER_HANDOFF_STATUSES.ESCALATION,
+      acceptanceCriteria,
+    });
+    expect(
+      (await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).phase,
+    ).toBe(WORKFLOW_PHASES.ESCALATION_DECISION);
+  });
 
   it.each([
     ['empty escalations', { ...csvExportEscalation, escalations: [] }],

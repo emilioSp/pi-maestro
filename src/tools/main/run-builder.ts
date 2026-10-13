@@ -30,7 +30,7 @@ export const RUN_BUILDER_TOOL = {
   NAME: 'maestro_run_builder',
   LABEL: 'Run Builder',
   DESCRIPTION:
-    'Run the builder in the project directory for an owner-approved spec. The builder runs in the foreground and cannot be retried after a recorded failure.',
+    'Run the builder in the project directory for an owner-approved spec. The builder runs in the foreground and returns done or escalation. Owner decisions or renewed spec approval permit another pass after an escalation.',
 } as const;
 
 const RunBuilderToolParameters = Type.Object(
@@ -47,12 +47,6 @@ type BuilderRunResult =
       outcome: typeof BUILDER_HANDOFF_STATUSES.DONE;
       specId: string;
       phase: typeof WORKFLOW_PHASES.READY_FOR_VERIFIER;
-      handoff: BuilderHandoff;
-    }
-  | {
-      outcome: typeof BUILDER_HANDOFF_STATUSES.FAILED;
-      specId: string;
-      phase: typeof WORKFLOW_PHASES.BUILDER_FAILED;
       handoff: BuilderHandoff;
     }
   | {
@@ -88,48 +82,25 @@ const readBuilderResult = async ({
   }
 };
 
-type ReadTerminalBuilderResultInput = {
-  paths: MaestroPaths;
-  specId: string;
-  phase:
-    | typeof WORKFLOW_PHASES.READY_FOR_VERIFIER
-    | typeof WORKFLOW_PHASES.BUILDER_FAILED;
-};
-
-const readTerminalBuilderResult = async ({
+const readDoneBuilderResult = async ({
   paths,
   specId,
-  phase,
-}: ReadTerminalBuilderResultInput): Promise<BuilderRunResult> => {
+}: ReadBuilderResultInput): Promise<BuilderRunResult> => {
   const handoff = await readBuilderHandoff({
     path: await paths.getActiveBuilderHandoffPath(specId),
     specId,
   });
 
-  const expectedStatus =
-    phase === WORKFLOW_PHASES.READY_FOR_VERIFIER
-      ? BUILDER_HANDOFF_STATUSES.DONE
-      : BUILDER_HANDOFF_STATUSES.FAILED;
-
-  if (handoff.status !== expectedStatus) {
+  if (handoff.status !== BUILDER_HANDOFF_STATUSES.DONE) {
     throw new Error(
-      `Builder handoff status does not match workflow phase "${phase}".`,
+      `Builder handoff status does not match workflow phase "${WORKFLOW_PHASES.READY_FOR_VERIFIER}".`,
     );
   }
 
-  if (phase === WORKFLOW_PHASES.READY_FOR_VERIFIER) {
-    return {
-      outcome: BUILDER_HANDOFF_STATUSES.DONE,
-      specId,
-      phase,
-      handoff,
-    };
-  }
-
   return {
-    outcome: BUILDER_HANDOFF_STATUSES.FAILED,
+    outcome: BUILDER_HANDOFF_STATUSES.DONE,
     specId,
-    phase,
+    phase: WORKFLOW_PHASES.READY_FOR_VERIFIER,
     handoff,
   };
 };
@@ -145,15 +116,8 @@ const buildRunResult = async ({
   specId,
   state,
 }: BuildRunResultInput): Promise<BuilderRunResult> => {
-  if (
-    state.phase === WORKFLOW_PHASES.READY_FOR_VERIFIER ||
-    state.phase === WORKFLOW_PHASES.BUILDER_FAILED
-  ) {
-    return await readTerminalBuilderResult({
-      paths,
-      specId,
-      phase: state.phase,
-    });
+  if (state.phase === WORKFLOW_PHASES.READY_FOR_VERIFIER) {
+    return await readDoneBuilderResult({ paths, specId });
   }
 
   if (state.phase === WORKFLOW_PHASES.ESCALATION_DECISION) {
@@ -190,10 +154,6 @@ const buildRunResult = async ({
 const formatBuilderResult = (result: BuilderRunResult): string => {
   if (result.outcome === BUILDER_HANDOFF_STATUSES.DONE) {
     return `Builder completed spec ${result.specId}. The workflow is ready-for-verifier.`;
-  }
-
-  if (result.outcome === BUILDER_HANDOFF_STATUSES.FAILED) {
-    return `Builder failed for spec ${result.specId}. The workflow is builder-failed and cannot be retried.`;
   }
 
   return `Builder submitted escalation questions for spec ${result.specId}. The workflow is waiting for an owner decision.`;

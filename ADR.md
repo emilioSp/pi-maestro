@@ -56,3 +56,34 @@ There are no migration procedures, fallback readers, or deprecated aliases. `Art
 ### Evidence
 
 [Repository-only specification](.specs/20261008-132344-store-escalations-in-builder-handoffs/spec.md), [Commit dda6eb5](https://github.com/emilioSp/pi-maestro/commit/dda6eb5b3ab76ba175112c3c565c70be747d7344), and [escalation workflow](docs/workflow.md#escalations).
+
+## ADR-003: Route builder failures through owner escalations
+
+### Status
+
+Accepted. Implemented.
+
+### Context
+
+The `owner` must decide how work continues after a reportable technical problem.
+The workflow also needs a simpler model with two `builder` outcomes.
+
+### Decision
+
+The `builder` reports only `done` or `escalation`.
+Reportable technical failures use the existing `escalation` process.
+The `owner` decides how to proceed instead of reaching a terminal failure phase.
+
+### Consequences
+
+Reuse the existing tools, numbered `handoffs`, and batch decisions.
+Individual `probe` results retain `failed` as a valid value.
+
+Execution and protocol errors without a valid saved result still stop the workflow.
+This decision adds no automatic recovery.
+
+This breaking MVP change has no migrations, compatibility readers, deprecated aliases, or dedicated legacy-format tests.
+
+### Evidence
+
+[Specification](.specs/20261013-101454-route-builder-failures-through-owner-escalations/spec.md) and [R-03](ROADMAP.md#r-03-route-builder-failures-through-owner-escalations).
