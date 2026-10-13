@@ -2,6 +2,12 @@
 
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries; GitHub Releases are not required. Version-only changes and routine maintenance are omitted.
 
+## 0.9.1
+
+1. Added a brief introduction and an invitation to ask how `Maestro` works to the successful activation notice. See [PR #33](https://github.com/emilioSp/pi-maestro/pull/33).
+2. Preserved the configured agent details and UI-only activation. Activation does not add session history or start a model request.
+3. Added absolute paths to the installed README and documentation directory in active instructions. `Maestro` reads relevant documentation on demand without automatically loading its contents.
+
 ## 0.9.0
 
 1. Breaking: `builder` reports now support only `done` and `escalation`. Reportable technical problems use the existing `owner` `escalation` process. See [PR #32](https://github.com/emilioSp/pi-maestro/pull/32).

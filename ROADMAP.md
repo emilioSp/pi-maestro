@@ -42,6 +42,18 @@ Applied glossary formatting across the documentation and recorded its exclusions
 
 [Glossary](docs/glossary.md) and [workflow documentation](docs/workflow.md).
 
+### R-14: Introduce Maestro at activation
+
+Implemented in `0.9.1`. npm publication is pending. Successful activation introduces `Maestro` and invites the `owner` to ask how it works. The UI-only notice retains the configured agent details and does not add session history or start a model request.
+
+Active instructions identify absolute paths to the installed README and documentation directory. `Maestro` reads relevant documentation on demand without automatically loading its contents.
+
+All 6 `acceptance criteria` passed with no `verifier` `findings`. The saved workflow reached `candidate-ready`.
+
+#### Evidence
+
+[Specification](.specs/20261013-171954-introduce-maestro-at-activation/spec.md), [verifier report](.specs/20261013-171954-introduce-maestro-at-activation/handoffs/verifier/V1.json), and [merged PR #33](https://github.com/emilioSp/pi-maestro/pull/33).
+
 ### R-15: Rename the test support directory
 
 Renamed `test/` to `tests/` at the owner's request. Updated imports, fixture paths, lint configuration, and project instructions. This follows the global instruction to keep fixtures under `tests/fixtures`. Source tests remain next to their source files. Historical `handoffs` retain their recorded paths.
@@ -51,22 +63,6 @@ Renamed `test/` to `tests/` at the owner's request. Updated imports, fixture pat
 [Test support](tests/support/), [fixtures](tests/fixtures/), [lint configuration](biome.json), and [project instructions](AGENTS.md#tests).
 
 ## Now
-
-### R-14: Introduce Maestro at activation
-
-#### Objective
-
-When activated, `Maestro` gives a brief introduction and invites the `owner` to ask how it works, if interested. `Maestro` must have access to its own documentation to answer those questions.
-
-#### Completed when
-
-Activation includes this short introduction. `Maestro` can consult its documentation.
-
-#### Implementation status
-
-The activation notice includes the approved introduction before the configured agent details. Active instructions identify the installed README and documentation directory for reading on demand.
-
-[Specification](.specs/20261013-171954-introduce-maestro-at-activation/spec.md).
 
 ## Next
 
