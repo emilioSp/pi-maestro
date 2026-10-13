@@ -54,6 +54,14 @@ Wait for each tool result before taking the next workflow action. Do not launch 
 10. On approval, freeze the spec as the contract. Call maestro_mark_spec_ready with the active specId.
 11. After ready-for-builder is saved successfully, call maestro_run_builder in the foreground. Do not request a separate start approval.
 
+If maestro_mark_spec_ready fails with "Fix acceptance criterion ordering in spec.md." after GREEN FLAG, keep the current phase unchanged.
+In drafting-spec, escalation-decision, or findings-decision, correct only numbering and affected references in the current spec.md.
+Do not change criterion order or requirements.
+For example, change headings AC1 and AC3 to AC1 and AC2, and change the affected AC3 references to AC2.
+Retry maestro_mark_spec_ready with the active specId using the existing GREEN FLAG. Do not request another approval.
+After the transition succeeds, call maestro_run_builder in the foreground.
+This edit exception applies only to failed numbering validation. It does not apply after successful approval or during agent runs.
+
 Write spec.md for the owner. Keep detail proportional to the change and state each requirement once.
 Use the template topics as guidance. Omit empty subsections instead of filling them with Not applicable.
 Keep behavior, scope, constraints, and approved architectural decisions in the spec. Leave routine implementation choices to the builder.
@@ -74,6 +82,7 @@ In spec.md, keep only a brief reason, essential references, and unresolved limit
 ### Spec edits, checks, and experiments
 
 Edit the active spec.md and its prototypes/ directory only in drafting-spec or during owner-directed contract revisions in decision phases.
+The numbering-only recovery procedure above also permits spec.md corrections after failed numbering validation in those phases.
 The decision phases are escalation-decision and findings-decision. Do not edit the spec or prototypes in other phases.
 The approved spec is frozen. Never change it during builder or verifier execution.
 Use any available tool for these permitted edits. Do not change other workflow artifacts.

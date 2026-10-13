@@ -88,6 +88,22 @@ A later integration test requested by the `owner` directly checks the environmen
 
 ## Now
 
+### R-05: Keep acceptance criterion numbering continuous
+
+#### Objective
+
+When criteria are removed during `spec` preparation or revision, renumber the remaining criteria without gaps. Numbering starts at `AC1` and continues through the final criterion.
+
+#### Current state
+
+Implemented approval-time numbering validation and `Maestro` guidance for numbering-only recovery using the existing GREEN FLAG. Rejected numbering leaves saved files unchanged. Independent verification is pending.
+
+[Specification](.specs/20261013-202811-check-acceptance-criterion-numbering-before-builder-execution/spec.md).
+
+#### Completed when
+
+The `spec` and its current references use consistent numbering.
+
 ## Next
 
 ## Later
@@ -105,16 +121,6 @@ Compatibility with installations under the old name must be decided in the `spec
 #### Completed when
 
 Package metadata and installation documentation use the new name. The package is available under that name.
-
-### R-05: Keep acceptance criterion numbering continuous
-
-#### Objective
-
-When criteria are removed during `spec` preparation or revision, renumber the remaining criteria without gaps. Numbering starts at `AC1` and continues through the final criterion.
-
-#### Completed when
-
-The `spec` and its current references use consistent numbering.
 
 ### R-07: Guide initial configuration
 

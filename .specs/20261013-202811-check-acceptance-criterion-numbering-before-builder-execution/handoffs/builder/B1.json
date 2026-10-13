@@ -1,0 +1,30 @@
+{
+  "status": "done",
+  "summary": "Added acceptance criterion ordering validation before saving spec approval and Maestro guidance for numbering-only recovery using the existing GREEN FLAG.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Ran ./node_modules/.bin/vitest run --config vitest.config.ts src/workflow/spec/markSpecReady.integration.test.ts and npm run check. Approval rejected [2], [1,3], [1,1], and [1,3,2] in drafting-spec and [1,3] in both decision phases with the required ordering error.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "The same integration tests captured spec.md, workflow.json, B1.json, and V1.json as byte buffers before each invalid approval. Compared every file and recursive directory entries afterward and checked the phase remained unchanged in drafting-spec, escalation-decision, and findings-decision. All comparisons passed.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "Inspected getMaestroInstructions.ts and ran node --input-type=module with an stdin assertion script against getMaestroInstructions(). Confirmed unchanged permitted phases, numbering-only and affected-reference corrections, preserved requirements and criterion order, the AC3-to-AC2 example, retry with existing GREEN FLAG, builder launch after success without another approval, and exclusion of successful approval and running agents.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "npm run check passed: lint, typecheck, 37 test files, and 218 tests. git diff --check passed.",
+    "Reused successful approval coverage for consecutive numbering and retained the existing zero-match success case.",
+    "Updated the current R-05 roadmap state while preserving the pre-existing roadmap changes. Independent verification remains pending.",
+    "Isolated integration-test projects were cleaned automatically; the guidance probe used stdin and created no temporary files."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261013-202811-check-acceptance-criterion-numbering-before-builder-execution"
+}

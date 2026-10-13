@@ -1,0 +1,29 @@
+{
+  "version": "1.0.0",
+  "specId": "20261013-202811-check-acceptance-criterion-numbering-before-builder-execution",
+  "summary": "Verified all three acceptance criteria against the live candidate. No technical findings.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Inspected markSpecReady.integration.test.ts and ran npm run check. Its six rejection cases cover [2], [1,3], [1,1], and [1,3,2] in drafting-spec, plus [1,3] in both decision phases. Every case received the required ordering error.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Ran npm run check after inspecting the rejection tests. Each case compares byte buffers for spec.md, workflow.json, B1.json, and V1.json, compares recursive directory entries, and asserts the original phase. All cases passed across the three approval phases.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "Inspected the complete Maestro instructions and executed node --input-type=module stdin assertions against getMaestroInstructions(). Confirmed unchanged permitted phases, numbering and reference corrections only, preserved requirements and order, the AC3-to-AC2 example, retry using existing GREEN FLAG, builder launch after success, and exclusion of successful approval and running agents.",
+      "probeStatus": "passed"
+    }
+  ],
+  "findings": [],
+  "notes": [
+    "npm run check passed: lint, typecheck, 37 test files, 218 tests, and coverage thresholds. git diff --check passed.",
+    "Reviewed affected code against applicable AGENTS.md directives and confirmed exact regex, validation before saving, preserved prerequisite checks, unchanged tool interface, and reused successful-approval coverage.",
+    "The check applied no source fixes. Generated coverage report changes were restored to their exact prior bytes; file-content comparison confirmed restoration. No temporary probe files remain.",
+    "No prototype files or earlier verifier handoffs were present."
+  ]
+}

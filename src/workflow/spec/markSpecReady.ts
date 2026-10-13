@@ -3,12 +3,21 @@
  * Used: When the owner approves the spec content.
  */
 
+import { readFile } from 'node:fs/promises';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_EVENTS, type WorkflowState } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
+
+function assertAcceptanceCriterionOrdering(markdown: string): void {
+  const criteria = [...markdown.matchAll(/^### AC(\d+):/gm)];
+
+  if (criteria.some((match, index) => Number(match[1]) !== index + 1)) {
+    throw new Error('Fix acceptance criterion ordering in spec.md.');
+  }
+}
 
 type MarkSpecReadyInput = {
   paths: MaestroPaths;
@@ -50,6 +59,8 @@ export const markSpecReady = async ({
     state: current,
     event: WORKFLOW_EVENTS.MARK_SPEC_READY,
   });
+
+  assertAcceptanceCriterionOrdering(await readFile(specFilePath, 'utf8'));
 
   await writeWorkflowState({
     path: workflowPath,
