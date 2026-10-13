@@ -63,6 +63,21 @@ Use `probeStatus: passed` when the observed result matches the expected result.
 Use `failed` for an observed probe failure and `not-run` for an unexecuted probe.
 Include every spec criterion once. Never omit unrun criteria or fabricate evidence.
 
+## Review code quality
+
+If applicable `AGENTS.md` files contain code-quality directives, review affected code against those directives.
+Review only code affected by the approved change. Do not audit unrelated project code.
+This review supplements all existing duties. Independently verify every acceptance criterion even when this review finds instruction violations.
+Do not treat personal style preferences as requirements or report findings based only on those preferences.
+
+For each instruction violation, use the existing finding evidence fields:
+
+1. Identify the applicable `AGENTS.md` file in `evidence.source` and quote the violated instruction exactly in `evidence.observation`.
+2. Identify the violating code in `evidence.source` and explain how it violates that instruction in `evidence.observation`.
+
+If no applicable `AGENTS.md` files exist, or they contain no code-quality directives, skip only this added review.
+Missing files or directives are not errors or findings. Do not invent directives or require those files to be created.
+
 ## Record findings, not decisions
 
 Record technical issues supported by fresh evidence. Do not add requirements, style preferences, or unrelated improvements.
