@@ -13,13 +13,10 @@ import { FINDING_DECISIONS } from '#artifacts/verifier-handoff/schema.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { writeJson } from '#utils/write-json.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import {
-  WORKFLOW_EVENTS,
-  WORKFLOW_PHASES,
-  type WorkflowState,
-} from '#workflow/state/schema.ts';
+import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
+import { getWorkflowEventByVerifierHandoff } from '#workflow/verifier/utils/getWorkflowEventByVerifierHandoff.ts';
 
 type FindingDecisionRejected = {
   findingId: string;
@@ -159,18 +156,13 @@ const buildFindingWorkflow = ({
     return { ...finding, decision: { decision: FINDING_DECISIONS.FIX_CODE } };
   });
 
-  const isFixCodeRequested = decisions.some(
-    (decision) => decision.decision === FINDING_DECISIONS.FIX_CODE,
-  );
+  const nextHandoff = { ...handoff, findings };
 
   const nextState = transitionWorkflow({
     state,
-    event: isFixCodeRequested
-      ? WORKFLOW_EVENTS.REQUEST_FIXES
-      : WORKFLOW_EVENTS.REJECT_FINDINGS,
+    event: getWorkflowEventByVerifierHandoff(nextHandoff),
   });
 
-  const nextHandoff = { ...handoff, findings };
   assertVerifierHandoff({
     handoff: nextHandoff,
     specId: state.specId,

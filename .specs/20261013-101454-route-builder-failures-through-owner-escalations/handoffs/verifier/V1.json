@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "specId": "20261013-101454-route-builder-failures-through-owner-escalations",
+  "summary": "Independently verified all eight acceptance criteria against the live candidate. Repository checks passed. No technical findings.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Executed node --input-type=module assertions comparing WORKFLOW_PHASES, WorkflowPhaseSchema.anyOf, and all FSM source/destination phases with the eight specified phases. Exact sets matched.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Executed node --input-type=module assertions comparing WORKFLOW_EVENTS and Object.keys(WORKFLOW_TRANSITIONS) with the ten specified events. Both matched exactly.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "Executed node --input-type=module assertions inspecting BuilderHandoffSchema, BuilderHandoffSubmissionSchema, and the registered maestro_record_builder_handoff parameters. Each exposed exactly done and escalation. Inspected BuilderRunResult in src/tools/main/run-builder.ts and confirmed its two corresponding variants; typecheck passed.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Ran npm run check after inspecting extensions/maestro.integration.test.ts. Its saved technical-problem escalation scenario submitted the unavailable-compiler fixture, completed delegation normally, and asserted the returned escalation-decision phase, escalation outcome, and reported problem handoff. Passed.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Ran npm run check after inspecting src/workflow/builder/completeBuilderPass.integration.test.ts. Mixed passed/failed/not-run statuses survived reopening the saved escalation. The separate all-passed technical escalation was accepted and retained its supplied results. Passed.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "Ran npm run check: completeBuilderPass.integration.test.ts resolved B1/E1 with Retry the required check, prepared another pass, created a fresh Pi child session, and saved a passed done handoff as B2.json. Assertions confirmed the spec remained unchanged and B1 retained its resolution.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "Ran npm run check: extensions/maestro.integration.test.ts saved a technical escalation, revised the same temporary spec to use a local check, invoked the registered approval tool, and confirmed saved ready-for-builder state with the unchanged spec ID.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "Ran npm run check: src/tools/main/run-builder.integration.test.ts submitted done with AC1 passed and escalations [], completed delegation normally, and asserted the parent result equaled outcome done, phase ready-for-verifier, and the reopened active handoff.",
+      "probeStatus": "passed"
+    }
+  ],
+  "findings": [],
+  "notes": [
+    "npm run lint and non-fixing oxlint passed before npm run check. The full check passed 203 tests across 37 files, typecheck, lint, and coverage thresholds.",
+    "Integration probes used isolated offline Pi sessions with scripted delegation responses, not live model calls.",
+    "Inspected execution/protocol error handling and current instructions, status mappings, and documentation. No obsolete failure-outcome references were found in current source, tests, instructions, or workflow documentation.",
+    "No pre-existing file contents changed during checks. Removed generated coverage files and the temporary original-content backup before submission. Historical artifacts and the approved spec remained unchanged."
+  ]
+}

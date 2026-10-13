@@ -16,7 +16,7 @@ import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import {
   type EscalationDecision,
   resolveEscalations,
-} from '#workflow/escalation/resolveEscalations.ts';
+} from '#workflow/builder/resolveEscalations.ts';
 import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';

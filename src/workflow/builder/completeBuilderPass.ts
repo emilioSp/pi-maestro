@@ -1,13 +1,12 @@
 /**
  * Objective: Complete a builder pass with a validated terminal handoff.
- * Used: When the builder reports done, escalation, or failed through the child tool.
+ * Used: When the builder reports done or escalation through the child tool.
  */
 
 import { mkdir } from 'node:fs/promises';
 import { Value } from 'typebox/value';
 import { assertBuilderHandoff } from '#artifacts/builder-handoff/assertBuilderHandoff.ts';
 import {
-  BUILDER_HANDOFF_STATUSES,
   BUILDER_HANDOFF_VERSION,
   type BuilderHandoff,
   type BuilderHandoffSubmissionInput,
@@ -15,12 +14,9 @@ import {
 } from '#artifacts/builder-handoff/schema.ts';
 import { writeBuilderHandoff } from '#artifacts/builder-handoff/writeBuilderHandoff.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
+import { getWorkflowEventByBuilderHandoff } from '#workflow/builder/utils/getWorkflowEventByBuilderHandoff.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import {
-  WORKFLOW_EVENTS,
-  WORKFLOW_PHASES,
-  type WorkflowState,
-} from '#workflow/state/schema.ts';
+import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 
@@ -82,12 +78,7 @@ export const completeBuilderPass = async ({
 
   const nextState = transitionWorkflow({
     state: currentState,
-    event:
-      draftHandoff.status === BUILDER_HANDOFF_STATUSES.DONE
-        ? WORKFLOW_EVENTS.BUILDER_DONE
-        : draftHandoff.status === BUILDER_HANDOFF_STATUSES.ESCALATION
-          ? WORKFLOW_EVENTS.OPEN_ESCALATION
-          : WORKFLOW_EVENTS.BUILDER_FAILED,
+    event: getWorkflowEventByBuilderHandoff(handoff),
   });
 
   await mkdir(paths.getBuilderHandoffsPath(specId), { recursive: true });

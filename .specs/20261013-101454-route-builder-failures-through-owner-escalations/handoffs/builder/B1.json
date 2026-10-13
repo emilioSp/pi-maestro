@@ -1,0 +1,56 @@
+{
+  "status": "done",
+  "summary": "Removed the failed builder outcome and workflow phase. Reportable technical problems now use owner escalations. Updated tools, status mappings, agent instructions, tests, and current documentation while preserving execution and protocol error behavior.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Ran node --input-type=module with assertions comparing WORKFLOW_PHASES, WorkflowPhaseSchema.anyOf, and the FSM phase set against the eight approved phases. All sets matched exactly.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Ran node --input-type=module with assertions comparing WORKFLOW_EVENTS and Object.keys(WORKFLOW_TRANSITIONS) against the ten approved events. Both lists matched exactly.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "Ran node --input-type=module to inspect BuilderHandoffSchema, BuilderHandoffSubmissionSchema, the registered maestro_record_builder_handoff input variants, and the parent BuilderRunResult union. Each exposes exactly done and escalation.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "npm run check executed extensions/maestro.integration.test.ts: the saved technical-problem escalation scenario completes delegation normally and returns outcome escalation, phase escalation-decision, and the handoff containing E1 context 'The compiler command is unavailable.'",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "npm run check executed completeBuilderPass.integration.test.ts: the mixed-result scenario reopens a saved escalation with AC1 passed, AC2 failed, and AC3 not-run unchanged. The separate all-passed scenario saves AC1 passed despite an unavailable compiler required by another repository check.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "npm run check executed completeBuilderPass.integration.test.ts: resolve compiler escalation B1/E1 with 'Retry the required check', prepare another pass, create a fresh Pi child session, and save passed done handoff B2.json. The spec remains unchanged and B1 retains its resolution.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "npm run check executed extensions/maestro.integration.test.ts: from a saved compiler escalation, revise the same spec to use a local check and invoke the registered approval tool. The saved workflow becomes ready-for-builder with the same spec ID.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "npm run check executed run-builder.integration.test.ts: submit done with AC1 passed and escalations [], complete delegation normally, and compare the parent result with the reopened active handoff. Result is outcome done and phase ready-for-verifier.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "npm run check passed: 203 tests across 37 files, lint, typecheck, and coverage thresholds. Generated coverage files were removed.",
+    "Delegation probes use real offline Pi sessions with scripted child work and responses. No live model calls were made.",
+    "Current documentation has no obsolete builder outcome or phase references. All 45 checked local links and anchors resolve. Remote links were not checked.",
+    "Historical specs and handoffs remain unchanged. Artifact versions remain 1.0.0. No migration, compatibility reader, synthetic escalation, or recovery transition was added.",
+    "ROADMAP.md and ADR-003 identify implementation as complete with independent verifier review pending."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261013-101454-route-builder-failures-through-owner-escalations"
+}

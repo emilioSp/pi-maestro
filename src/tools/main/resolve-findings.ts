@@ -9,8 +9,8 @@ import { Type } from 'typebox';
 import { FINDING_DECISIONS } from '#artifacts/verifier-handoff/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
-import { resolveFindings } from '#workflow/findings/resolveFindings.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
+import { resolveFindings } from '#workflow/verifier/resolveFindings.ts';
 
 export const RESOLVE_FINDINGS_TOOL = {
   NAME: 'maestro_resolve_findings',

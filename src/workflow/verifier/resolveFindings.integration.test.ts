@@ -15,10 +15,10 @@ import {
 } from '#tests/support/builder-workflow.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
-import { resolveFindings } from '#workflow/findings/resolveFindings.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
 import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
+import { resolveFindings } from '#workflow/verifier/resolveFindings.ts';
 
 afterEach(cleanupBuilderWorkflows);
 
