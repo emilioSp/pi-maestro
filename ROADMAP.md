@@ -44,7 +44,7 @@ Applied glossary formatting across the documentation and recorded its exclusions
 
 ### R-14: Introduce Maestro at activation
 
-Implemented in `0.9.1`. npm publication is pending. Successful activation introduces `Maestro` and invites the `owner` to ask how it works. The UI-only notice retains the configured agent details and does not add session history or start a model request.
+Implemented in `0.9.1`. Successful activation introduces `Maestro` and invites the `owner` to ask how it works. The UI-only notice retains the configured agent details and does not add session history or start a model request.
 
 Active instructions identify absolute paths to the installed README and documentation directory. `Maestro` reads relevant documentation on demand without automatically loading its contents.
 
@@ -62,19 +62,19 @@ Renamed `test/` to `tests/` at the owner's request. Updated imports, fixture pat
 
 [Test support](tests/support/), [fixtures](tests/fixtures/), [lint configuration](biome.json), and [project instructions](AGENTS.md#tests).
 
-## Now
-
 ### R-16: Verify code quality against AGENTS.md instructions
 
-#### Objective
+Implemented in `0.9.2`. `Verifier` guidance now requires code-quality review only for code affected by the approved change when applicable `AGENTS.md` directives exist. All existing duties remain unchanged, including independent verification of every `acceptance criterion`.
 
-Add code-quality review against applicable `AGENTS.md` instructions as another `verifier` responsibility. Keep all existing responsibilities unchanged, including independent verification of every `acceptance criterion` in the approved `spec`. Code-quality review supplements that verification. It does not replace or reduce it.
+Instruction-violation `findings` identify the instruction file, quote the rule, and explain the violating code through existing evidence fields. Missing files or code-quality directives cause only the added review to be skipped. Personal style preferences are not requirements.
 
-Existing `verifier` instructions already require reading applicable `AGENTS.md` files and following technical rules. Extend that guidance to require explicit code-quality review and reporting of instruction violations. Do not introduce personal style preferences as requirements.
+All 5 `acceptance criteria` passed through independent inspection of the written guidance, with no `verifier` `findings`. No additional model trials were performed. The saved workflow reached `candidate-ready`.
 
-#### Completed when
+#### Evidence
 
-The `verifier` performs both its existing verification duties and the additional code-quality review. Every `acceptance criterion` is still independently verified. Each code-quality `finding` about an instruction violation identifies the `AGENTS.md` file, quotes the violated instruction, and explains how the code violates it.
+[Specification](.specs/20261013-185941-verify-code-quality-against-agents-md-instructions/spec.md), [verifier report](.specs/20261013-185941-verify-code-quality-against-agents-md-instructions/handoffs/verifier/V1.json), and [merged PR #34](https://github.com/emilioSp/pi-maestro/pull/34).
+
+## Now
 
 ## Next
 

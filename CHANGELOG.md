@@ -2,6 +2,12 @@
 
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries; GitHub Releases are not required. Version-only changes and routine maintenance are omitted.
 
+## 0.9.2
+
+1. Added code-quality review to `verifier` guidance for code affected by the approved change when applicable `AGENTS.md` directives exist. See [PR #34](https://github.com/emilioSp/pi-maestro/pull/34). All existing verification duties remain unchanged.
+2. Required instruction-violation `findings` to identify the instruction file, quote the rule, and explain the violating code through existing evidence fields.
+3. Skip only the added review when files or code-quality directives are absent. Missing directives and personal style preferences do not produce `findings`.
+
 ## 0.9.1
 
 1. Added a brief introduction and an invitation to ask how `Maestro` works to the successful activation notice. See [PR #33](https://github.com/emilioSp/pi-maestro/pull/33).
