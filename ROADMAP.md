@@ -42,10 +42,6 @@ Renamed `test/` to `tests/` at the owner's request. Updated imports, fixture pat
 
 ## Now
 
-No current priority is selected.
-
-## Next
-
 ### R-03: Route builder failures through owner escalations
 
 #### Objective
@@ -57,6 +53,9 @@ Automatic recovery of interrupted `runs` is outside this item. No `specification
 #### Completed when
 
 `Builder` failures produce `owner` `escalations` instead of a terminal failure state. Individual checks retain `failed` as a valid result. Agent instructions, tools, workflow transitions, tests, and documentation describe the same behavior.
+
+## Next
+
 
 ## Later
 

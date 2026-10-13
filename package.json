@@ -64,7 +64,7 @@
     "lint:fix": "biome check --write . && npm run lint:anti-slop"
   },
   "dependencies": {
-    "pi-subagents": "0.76.0"
+    "pi-subagents": "0.78.0"
   },
   "bundleDependencies": [
     "pi-subagents"
