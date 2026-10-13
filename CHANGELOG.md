@@ -2,11 +2,16 @@
 
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries; GitHub Releases are not required. Version-only changes and routine maintenance are omitted.
 
-## Unreleased
+## 0.9.0
 
-1. Breaking: `builder` reports now support only `done` and `escalation`. Reportable technical problems use the existing `owner` `escalation` process.
+1. Breaking: `builder` reports now support only `done` and `escalation`. Reportable technical problems use the existing `owner` `escalation` process. See [PR #32](https://github.com/emilioSp/pi-maestro/pull/32).
 2. Removed the terminal `builder` failure phase and event. Execution errors and missing or invalid saved results still stop the workflow without automatic recovery.
 3. No migrations, compatibility readers, or deprecated aliases are provided. `Artifact` versions remain `1.0.0`.
+
+## 0.8.0
+
+1. Updated the bundled `pi-subagents` dependency from `0.76.0` to `0.78.0`.
+2. Renamed `test/` to `tests/`. Updated imports, fixture paths, lint configuration, and project instructions. Source tests remain next to their source files.
 
 ## 0.7.3
 

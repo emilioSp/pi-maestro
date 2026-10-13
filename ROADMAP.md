@@ -24,6 +24,16 @@ Numbered `builder` `handoffs` contain multiple `escalation` questions and their 
 
 [Specification](.specs/20261008-132344-store-escalations-in-builder-handoffs/spec.md), [verifier report](.specs/20261008-132344-store-escalations-in-builder-handoffs/handoffs/verifier/V1.json), and [merged PR #27](https://github.com/emilioSp/pi-maestro/pull/27).
 
+### R-03: Route builder failures through owner escalations
+
+Released in `0.9.0`. The `builder` reports only `done` or `escalation`. Reportable technical problems use the existing `owner` `escalation` process. Individual `probe` results retain `failed`. Execution errors and missing or invalid saved results still stop the workflow without automatic recovery.
+
+All 8 `acceptance criteria` passed with no `verifier` `findings`. The saved workflow reached `candidate-ready`.
+
+#### Evidence
+
+[Specification](.specs/20261013-101454-route-builder-failures-through-owner-escalations/spec.md), [verifier report](.specs/20261013-101454-route-builder-failures-through-owner-escalations/handoffs/verifier/V1.json), and [merged PR #32](https://github.com/emilioSp/pi-maestro/pull/32).
+
 ### R-12: Format glossary terms consistently
 
 Applied glossary formatting across the documentation and recorded its exclusions in `AGENTS.md` and the documentation audit skill. The approved change document uses the term `spec`. The `owner` confirmed completion.
@@ -42,21 +52,7 @@ Renamed `test/` to `tests/` at the owner's request. Updated imports, fixture pat
 
 ## Now
 
-### R-03: Route builder failures through owner escalations
-
-#### Objective
-
-The `builder` reports technical problems that prevent completion through the existing `escalation` process. The `owner` decides how to proceed.
-
-The approved [specification](.specs/20261013-101454-route-builder-failures-through-owner-escalations/spec.md) is implemented.
-Automatic recovery of interrupted `runs` remains outside this item.
-
-#### Completed when
-
-`Builder` failures produce `owner` `escalations` instead of a terminal failure state. Individual checks retain `failed` as a valid result. Agent instructions, tools, workflow transitions, tests, and documentation describe the same behavior.
-
 ## Next
-
 
 ## Later
 
