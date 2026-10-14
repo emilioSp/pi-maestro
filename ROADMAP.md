@@ -159,3 +159,15 @@ Explore how `Maestro` can reconcile saved `artifacts` and workflow state. The re
 #### Completed when
 
 Not yet defined. The `owner` must define the intended outcome, recovery boundaries, and completion condition before this item can move forward.
+
+### R-17: Record escalation resolutions when the spec changes
+
+#### Objective
+
+Record the owner's chosen solution in each `escalation`'s `resolution`, including when that decision requires a `spec` revision. The current revision path leaves this field `null` in the original `builder` `handoff`.
+
+When an `escalation` causes a `spec` revision, its `resolution` must state that the `spec` was revised because of that `escalation` and describe the agreed change.
+
+#### Completed when
+
+Before another `builder` `run` starts, every current `escalation` has a non-null `resolution` containing the chosen solution and reason. This applies whether the `spec` stays unchanged or is revised. The original `handoff` preserves the decision and its link to any resulting `spec` revision.
