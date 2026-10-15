@@ -24,7 +24,7 @@ export const WORKFLOW_EVENTS = {
   MARK_SPEC_READY: 'mark-spec-ready',
   RUN_BUILDER: 'run-builder',
   BUILDER_OPEN_ESCALATIONS: 'builder-open-escalations',
-  RESOLVE_ESCALATION: 'resolve-escalation',
+  RESOLVE_ESCALATIONS: 'resolve-escalations',
   OWNER_REQUEST_SPEC_REVISION: 'owner-request-spec-revision',
   BUILDER_DONE: 'builder-done',
   RUN_VERIFIER: 'run-verifier',
