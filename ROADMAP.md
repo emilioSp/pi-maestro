@@ -141,6 +141,16 @@ Saved `resolutions`, workflow phases, tool results, agent instructions, and huma
 Verification checks both observable behavior and use of the central transition definitions for each resolution branch. Passing behavior tests alone is not enough.
 The new `spec` includes coverage labels and omits `acceptance criteria` already covered by tests of the same scenario.
 
+### R-20: Route finding-driven spec revisions through drafting-spec
+
+Implemented the approved revision route. `Maestro` records every current `finding` decision before returning to `drafting-spec` when revision is required.
+The `owner` reviews the same revised `spec` and gives renewed `GREEN FLAG` before separate approval and another `builder` `run`.
+Revision takes priority in mixed batches. Direct approval from `findings-decision` is rejected.
+
+#### Evidence
+
+[Specification](.specs/20261015-154812-route-finding-driven-spec-revisions-through-drafting-spec/spec.md) and [resolution integration tests](src/tools/main/resolve-findings.integration.test.ts).
+
 ## Now
 
 ## Next

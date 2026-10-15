@@ -32,6 +32,7 @@ export const WORKFLOW_EVENTS = {
   VERIFIER_APPROVED: 'verifier-approved',
   REJECT_FINDINGS: 'reject-findings',
   REQUEST_FIXES: 'request-fixes',
+  REQUEST_SPEC_REVISION: 'request-spec-revision',
 } as const;
 
 export const WorkflowPhaseSchema = Type.Union([

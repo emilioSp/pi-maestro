@@ -35,10 +35,19 @@ const FindingEvidenceSchema = Type.Object(
 export const FINDING_DECISIONS = {
   REJECT: 'reject',
   FIX_CODE: 'fix-code',
+  REVISE_SPEC: 'revise-spec',
 } as const;
 
 const FindingDecisionSchema = Type.Union([
   Type.Null(),
+  Type.Object(
+    {
+      decision: Type.Literal(FINDING_DECISIONS.REVISE_SPEC),
+      reason: Type.String({ minLength: 1, pattern: '\\S' }),
+      specChange: Type.String({ minLength: 1, pattern: '\\S' }),
+    },
+    { additionalProperties: false },
+  ),
   Type.Object(
     {
       decision: Type.Literal(FINDING_DECISIONS.REJECT),
