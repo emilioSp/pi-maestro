@@ -114,15 +114,38 @@ Later changes requested by the `owner` extracted the shared check and replaced r
 
 ### R-17: Record escalation resolutions when the spec changes
 
+#### Status
+
+Planned for reimplementation. The `owner` rejected the previous attempts. Their passing checks do not establish completion of this item.
+
 #### Objective
 
-Record the owner's chosen solution in each `escalation`'s `resolution`, including when that decision requires a `spec` revision. The current revision path leaves this field `null` in the original `builder` `handoff`.
+Save every current `escalation` answer in the original `builder` `handoff`, whether the `spec` stays unchanged or requires revision.
+Each `resolution` records the owner's chosen solution and reason. A decision requiring revision also identifies the `escalation` and describes the agreed `spec` change.
 
-When an `escalation` causes a `spec` revision, its `resolution` must state that the `spec` was revised because of that `escalation` and describe the agreed change.
+#### Agreed flow
+
+`Maestro` records the complete decision batch through `maestro_resolve_escalations` before changing phase.
+
+| Decision | Next phase and action |
+|---|---|
+| No `spec` change | `escalation-decision` → `ready-for-builder`. The `builder` continues under the approved `spec`, without renewed approval. |
+| `Spec` change required | `escalation-decision` → `drafting-spec`. The `owner` and `Maestro` revise and review the same `spec`. |
+| Revised `spec` receives renewed `GREEN FLAG` | `drafting-spec` → `ready-for-builder` through separate `maestro_mark_spec_ready` approval. |
+
+Direct `spec` approval from `escalation-decision` is rejected. Recording answers does not move to `ready-for-verifier`; that phase requires a completed `builder` `pass`.
+
+#### Implementation boundaries
+
+Reuse the existing resolution operation and `handoff` fields. Do not add a parallel decision store, tool, or workflow phase.
+Define both resolution transitions explicitly in `src/workflow/transitions.ts` and apply them through `transitionWorkflow`. Direct phase assignment elsewhere is banned.
+Preserve initial `spec` approval, `verifier` `finding` decisions, existing batch validation, and historical `handoffs`.
 
 #### Completed when
 
-Before another `builder` `run` starts, every current `escalation` has a non-null `resolution` containing the chosen solution and reason. This applies whether the `spec` stays unchanged or is revised. The original `handoff` preserves the decision and its link to any resulting `spec` revision.
+Saved `resolutions`, workflow phases, tool results, agent instructions, and human documentation follow the agreed flow.
+Verification checks both observable behavior and use of the central transition definitions for each resolution branch. Passing behavior tests alone is not enough.
+The new `spec` includes coverage labels and omits `acceptance criteria` already covered by tests of the same scenario.
 
 
 ## Next
