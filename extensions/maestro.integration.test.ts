@@ -1084,7 +1084,7 @@ describe('main Maestro extension', () => {
       MAESTRO_STATUS_KEY,
       theme.fg('muted', `Maestro active · ${SPEC_ID.slice(0, 26)}... · `) +
         '✋ ' +
-        theme.fg('warning', 'Owner decision needed: escalation'),
+        theme.fg('warning', 'Owner decision needed: escalations'),
     );
   });
 
