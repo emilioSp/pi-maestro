@@ -172,3 +172,15 @@ Explore how `Maestro` can reconcile saved `artifacts` and workflow state. The re
 #### Completed when
 
 Not yet defined. The `owner` must define the intended outcome, recovery boundaries, and completion condition before this item can move forward.
+
+### R-18: Label acceptance criterion coverage
+
+#### Objective
+
+Label each `acceptance criterion` in a `spec` as success, failure, or keep current behavior unchanged.
+The label makes the purpose of its `probe` clear. Failure means an invalid action is correctly rejected.
+
+#### Completed when
+
+The `spec` template and `Maestro` guidance require a coverage label for every `acceptance criterion`. 
+Each label matches the scenario and `expected result`. A `spec` does not need all three categories when they do not apply.
