@@ -184,3 +184,17 @@ The label makes the purpose of its `probe` clear. Failure means an invalid actio
 
 The `spec` template and `Maestro` guidance require a coverage label for every `acceptance criterion`. 
 Each label matches the scenario and `expected result`. A `spec` does not need all three categories when they do not apply.
+
+### R-19: Avoid acceptance criteria already covered by tests
+
+#### Objective
+
+Do not add an `acceptance criterion` when an existing test already covers the same starting conditions, action, and `expected result`.
+
+Similar tests do not count if they miss the proposed scenario.
+
+#### Completed when
+
+`Maestro` guidance requires inspection of existing tests before adding `acceptance criteria`. 
+During `spec` review, `Maestro` removes criteria already covered by tests and keeps numbering continuous. 
+Required behavior remains documented in the `spec`.
