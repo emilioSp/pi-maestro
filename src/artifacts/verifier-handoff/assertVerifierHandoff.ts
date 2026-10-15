@@ -40,18 +40,15 @@ export function assertVerifierHandoff(
     throw new Error(`Invalid verifier handoff spec ID: "${handoff.specId}".`);
   }
 
-  if (
-    new Set(handoff.acceptanceCriteria.map((criterion) => criterion.id))
-      .size !== handoff.acceptanceCriteria.length
-  ) {
+  const acceptanceCriterionIds = new Set(
+    handoff.acceptanceCriteria.map((criterion) => criterion.id),
+  );
+
+  if (acceptanceCriterionIds.size !== handoff.acceptanceCriteria.length) {
     throw new Error(
       'Verifier handoff acceptance criterion IDs must be unique.',
     );
   }
-
-  const acceptanceCriterionIds = new Set(
-    handoff.acceptanceCriteria.map((criterion) => criterion.id),
-  );
 
   for (const [index, finding] of handoff.findings.entries()) {
     const expectedId = `F${index + 1}`;
