@@ -10,12 +10,13 @@ Pi extension for a spec-driven multiagent development workflow.
 
 A `specification` (`spec`) describes one reversible change. The `builder` implements it. An independent `verifier` checks every `acceptance criterion`. The `owner` performs the final review.
 
-Four principles hold the workflow together:
+Five principles hold the workflow together:
 
 1. The approved `spec` defines the required work for the `builder` and `verifier`.
 2. No agent approves its own work.
 3. Every `acceptance criterion` is checked independently.
 4. The `owner` decides requirements, scope, and unresolved questions.
+5. Each agent has one and only one role. Specific and with clear instruction.
 
 ## The roles
 

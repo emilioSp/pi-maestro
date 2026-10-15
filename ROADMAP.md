@@ -228,3 +228,25 @@ Similar tests do not count if they miss the proposed scenario.
 `Maestro` guidance requires inspection of existing tests before adding `acceptance criteria`. 
 During `spec` review, `Maestro` removes criteria already covered by tests and keeps numbering continuous. 
 Required behavior remains documented in the `spec`.
+
+### R-21: Add a simplifier with one clear purpose per agent
+
+#### Objective
+
+Each agent has exactly one purpose. The `builder` implements the approved `spec`. The `verifier` independently checks its `acceptance criteria`. The simplifier refactors verified code.
+
+Add the simplifier after the `verifier`. It receives code built by the `builder` only after verification confirms that all checks defined in the `acceptance criteria` pass.
+
+The simplifier reduces complexity while preserving exact behavior. The goal is code that is easier to read, understand, modify, and debug, not fewer lines.
+Every simplification must pass this test: "Would a new team member understand this faster than the original?"
+
+#### Scope boundaries
+
+Remove the "Review code quality" section from `agents/verifier.md`. This replaces the additional review introduced in R-16, not independent verification of `acceptance criteria`.
+
+The simplifier's detailed instructions will be defined during `spec` preparation. This roadmap item does not define them.
+
+#### Completed when
+
+The workflow includes the simplifier after successful verification. Agent instructions keep implementation, verification, and simplification as separate responsibilities.
+The simplifier preserves exact behavior and follows the instructions agreed in the approved `spec`.
