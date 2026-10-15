@@ -1,6 +1,6 @@
 /**
  * Objective: Save all owner resolutions in the active builder handoff.
- * Used: When the owner keeps the contract and resolves current questions together.
+ * Used: When the owner resolves current questions, with or without spec revision.
  */
 
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
@@ -10,8 +10,9 @@ import {
 } from '#artifacts/builder-handoff/schema.ts';
 import { writeBuilderHandoff } from '#artifacts/builder-handoff/writeBuilderHandoff.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
+import { getWorkflowEventBySpecChangeRequired } from '#workflow/builder/utils/getWorkflowEventBySpecChangeRequired.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
+import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 
@@ -22,12 +23,14 @@ export type EscalationDecision = EscalationResolution & {
 type ResolveEscalationsInput = {
   paths: MaestroPaths;
   specId: string;
+  specChangeRequired: boolean;
   decisions: EscalationDecision[];
 };
 
 export const resolveEscalations = async ({
   paths,
   specId,
+  specChangeRequired,
   decisions,
 }: ResolveEscalationsInput) => {
   const workflowPath = paths.getWorkflowPath(specId);
@@ -81,7 +84,7 @@ export const resolveEscalations = async ({
 
   const nextState = transitionWorkflow({
     state,
-    event: WORKFLOW_EVENTS.RESOLVE_ESCALATION,
+    event: getWorkflowEventBySpecChangeRequired(specChangeRequired),
   });
 
   // The artifact writer validates every resolution before the first protocol write.
