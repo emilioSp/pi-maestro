@@ -112,6 +112,7 @@ describe('builder completion', () => {
       await resolveEscalations({
         paths,
         specId: SPEC_ID,
+        specChangeRequired: false,
         decisions: [
           {
             escalationId: 'E1',
