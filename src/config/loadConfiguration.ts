@@ -14,18 +14,8 @@ import { isPathStrictlyWithin } from '#utils/path-strictly-within.ts';
 const resolveConfiguration = (input: PartialMaestroConfig): MaestroConfig => ({
   version: DEFAULT_CONFIG.version,
   specDirectory: input.specDirectory ?? DEFAULT_CONFIG.specDirectory,
-  builder: {
-    model: input.builder?.model ?? DEFAULT_CONFIG.builder.model,
-    thinking: input.builder?.thinking ?? DEFAULT_CONFIG.builder.thinking,
-    timeoutMinutes:
-      input.builder?.timeoutMinutes ?? DEFAULT_CONFIG.builder.timeoutMinutes,
-  },
-  verifier: {
-    model: input.verifier?.model ?? DEFAULT_CONFIG.verifier.model,
-    thinking: input.verifier?.thinking ?? DEFAULT_CONFIG.verifier.thinking,
-    timeoutMinutes:
-      input.verifier?.timeoutMinutes ?? DEFAULT_CONFIG.verifier.timeoutMinutes,
-  },
+  builder: { ...DEFAULT_CONFIG.builder, ...input.builder },
+  verifier: { ...DEFAULT_CONFIG.verifier, ...input.verifier },
 });
 
 type ResolveSpecDirectoryInput = {

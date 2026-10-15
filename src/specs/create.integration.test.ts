@@ -86,7 +86,7 @@ describe('spec template and creation', () => {
         activeWorkflowSpecId: null,
         instant: INSTANT,
       }),
-    ).rejects.toThrow(`Spec directory already exists: ${first.specPath}.`);
+    ).rejects.toMatchObject({ code: 'EEXIST', path: first.specPath });
     await expect(readFile(first.specFilePath, 'utf8')).resolves.toBe(before);
   });
 

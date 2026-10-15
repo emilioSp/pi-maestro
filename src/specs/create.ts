@@ -7,7 +7,6 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { createSpecId } from '#ids/createSpecId.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { loadSpecTemplate, renderSpecTemplate } from '#specs/template.ts';
-import { pathExists } from '#utils/path-exists.ts';
 import {
   assertWorkflowState,
   WORKFLOW_PHASES,
@@ -47,10 +46,6 @@ export const createSpec = async ({
   const specFilePath = paths.getSpecFilePath(specId);
   const workflowPath = paths.getWorkflowPath(specId);
   const prototypesPath = paths.getPrototypesPath(specId);
-
-  if (await pathExists(specPath)) {
-    throw new Error(`Spec directory already exists: ${specPath}.`);
-  }
 
   const template = await loadSpecTemplate();
   const spec = renderSpecTemplate({ template, specId, title });

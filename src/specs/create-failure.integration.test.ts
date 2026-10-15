@@ -57,8 +57,9 @@ describe('partial spec creation failure', () => {
       access(paths.getSpecFilePath(specId)),
     ).resolves.toBeUndefined();
 
-    await expect(createSpec(input)).rejects.toThrow(
-      `Spec directory already exists: ${specPath}.`,
-    );
+    await expect(createSpec(input)).rejects.toMatchObject({
+      code: 'EEXIST',
+      path: specPath,
+    });
   });
 });
