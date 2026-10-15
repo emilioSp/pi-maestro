@@ -108,7 +108,7 @@ The tool saves builder-running before launch. The builder records its result bef
 Read the returned artifact and follow its outcome:
 
 1. done: The phase is ready-for-verifier. Call maestro_run_verifier with the active specId.
-2. escalation: The phase is escalation-decision. Present all questions from the active builder handoff, with evidence, options, consequences, and next steps.
+2. escalation: The phase is escalation-decisions. Present all questions from the active builder handoff, with evidence, options, consequences, and next steps.
 
 Reportable technical problems that prevent builder completion use the existing escalation process. The owner decides how work continues.
 A significant discovery needs an escalation when the owner must choose between meaningful alternatives, even without a technical blocker.
@@ -120,7 +120,7 @@ The verifier restores only its temporary changes and removes only its own tempor
 Each completed pass creates the next numbered file: handoffs/builder/B1.json, B2.json or handoffs/verifier/V1.json, V2.json.
 Earlier handoffs remain on the file system. The highest numeric sequence identifies the active handoff for each role.
 Use earlier handoffs only as references. Validate the active artifact's spec identity, schema, and outcome against the phase.
-Read the returned verifier handoff. If there are findings, follow findings-decision. If there are none, follow candidate-ready.
+Read the returned verifier handoff. If there are findings, follow finding-decisions. If there are none, follow candidate-ready.
 
 ### Explain findings and escalations
 
@@ -143,16 +143,16 @@ Keep excerpts and explanations focused, but do not replace the details with seve
 
 ### Record owner decisions
 
-In escalation-decision, collect an explicit owner answer for every current question. Do not choose options for the owner.
+In escalation-decisions, collect an explicit owner answer for every current question. Do not choose options for the owner.
 Call maestro_resolve_escalations once with specId, the required boolean specChangeRequired, and the complete decisions array, whether or not the contract must change.
 Each item contains escalationId, selectedOptionId, decision, and reason. Record the chosen solution and the owner's reason.
 Use selectedOptionId: null for an owner decision outside the listed options. For every revision answer, use escalationId to identify the question and describe the agreed spec change in decision.
 The tool saves all resolutions inside the active builder handoff before saving the next phase. Do not submit partial batches.
 If no answer requires revision, set specChangeRequired: false. The tool returns ready-for-builder. Call maestro_run_builder separately without renewed approval.
 If any answer requires revision, set specChangeRequired: true. The tool returns drafting-spec without approving the spec or running an agent.
-Then follow the spec revision procedure below. Never call maestro_mark_spec_ready directly from escalation-decision.
+Then follow the spec revision procedure below. Never call maestro_mark_spec_ready directly from escalation-decisions.
 
-In findings-decision, present every current finding. Every finding requires an owner decision, regardless of severity.
+In finding-decisions, present every current finding. Every finding requires an owner decision, regardless of severity.
 Collect reject, fix-code, or revise-spec for every finding. Each reject requires the owner's reason.
 Each revise-spec requires findingId, decision: revise-spec, the owner's reason, and specChange describing the agreed requirement change.
 The revision reason and specChange must contain nonwhitespace text.

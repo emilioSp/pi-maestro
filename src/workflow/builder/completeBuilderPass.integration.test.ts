@@ -101,11 +101,11 @@ describe('builder completion', () => {
       });
 
       expect(result.details).toMatchObject({
-        phase: WORKFLOW_PHASES.ESCALATION_DECISION,
+        phase: WORKFLOW_PHASES.ESCALATION_DECISIONS,
       });
       expect(
         (await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).phase,
-      ).toBe(WORKFLOW_PHASES.ESCALATION_DECISION);
+      ).toBe(WORKFLOW_PHASES.ESCALATION_DECISIONS);
       await expect(
         access(`${paths.getSpecPath(SPEC_ID)}/handoffs/escalations`),
       ).rejects.toMatchObject({ code: 'ENOENT' });
@@ -225,7 +225,7 @@ describe('builder completion', () => {
     });
     expect(
       (await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).phase,
-    ).toBe(WORKFLOW_PHASES.ESCALATION_DECISION);
+    ).toBe(WORKFLOW_PHASES.ESCALATION_DECISIONS);
   });
 
   it.each([

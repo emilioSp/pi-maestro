@@ -85,7 +85,7 @@ describe('resolve escalations tool', () => {
         specId: SPEC_ID,
         specChangeRequired: false,
         decisions,
-        phase: WORKFLOW_PHASES.ESCALATION_DECISION,
+        phase: WORKFLOW_PHASES.ESCALATION_DECISIONS,
       },
       { specId: SPEC_ID, specChangeRequired: false, ...decisions[0] },
     ])
@@ -357,7 +357,7 @@ describe('resolve escalations tool', () => {
 
     await expect(
       tool.execute('premature-approval', { specId: SPEC_ID }),
-    ).rejects.toThrow('is not allowed from phase "escalation-decision"');
+    ).rejects.toThrow('is not allowed from phase "escalation-decisions"');
     expect(await Promise.all(savedPaths.map((path) => readFile(path)))).toEqual(
       before,
     );
@@ -445,7 +445,7 @@ describe('resolve escalations tool', () => {
             phase:
               scenario === 'wrong-phase'
                 ? WORKFLOW_PHASES.BUILDER_RUNNING
-                : WORKFLOW_PHASES.ESCALATION_DECISION,
+                : WORKFLOW_PHASES.ESCALATION_DECISIONS,
           },
         });
       }

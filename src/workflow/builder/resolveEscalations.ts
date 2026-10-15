@@ -38,9 +38,9 @@ export const resolveEscalations = async ({
 
   if (state.specId !== specId) throw new Error('Workflow spec ID mismatch.');
 
-  if (state.phase !== WORKFLOW_PHASES.ESCALATION_DECISION) {
+  if (state.phase !== WORKFLOW_PHASES.ESCALATION_DECISIONS) {
     throw new Error(
-      `Escalation resolution requires escalation-decision state, found "${state.phase}".`,
+      `Escalation resolution requires escalation-decisions state, found "${state.phase}".`,
     );
   }
 

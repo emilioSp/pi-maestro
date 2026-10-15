@@ -89,10 +89,10 @@ The default path is `.specs/<spec-id>/workflow.json`. The `spec` directory is [c
 | `drafting-spec` | The `owner` and `Maestro` prepare the initial `spec` or revise it after recorded `escalation` answers or `finding` decisions. |
 | `ready-for-builder` | The approved `spec` or recorded `owner` decisions permit a `builder` `run`. |
 | `builder-running` | A `builder` `run` is active. |
-| `escalation-decision` | The `owner` must decide how to handle every `escalation` question. |
+| `escalation-decisions` | The `owner` must decide how to handle every `escalation` question. |
 | `ready-for-verifier` | The `builder` completed the work and the `verifier` can start. |
 | `verifier-running` | A `verifier` `run` is active. |
-| `findings-decision` | The `owner` must decide how to handle every current `finding`. |
+| `finding-decisions` | The `owner` must decide how to handle every current `finding`. |
 | `candidate-ready` | The `verifier` reported no `findings`, or the `owner` rejected every `finding` with a reason. The workflow is complete. |
 
 ## Spec approval
@@ -125,7 +125,7 @@ For instance a technical failure, an undefined behavior, a conflict with the `sp
 
 The `builder` saves all questions from one `pass` in the `escalations` list of its numbered `handoff`. `Maestro` identifies each question with both report and `escalation` IDs, such as `B1/E1`. See [Escalation references](glossary.md#escalation-references) for their scope.
 
-`Maestro` presents each question, evidence, options, consequences, and next steps. The workflow pauses in `escalation-decision` while the `owner` decides how to proceed.
+`Maestro` presents each question, evidence, options, consequences, and next steps. The workflow pauses in `escalation-decisions` while the `owner` decides how to proceed.
 
 The `owner` gives `Maestro` an answer and reason for every current question, whether or not the `spec` must change.
 The `owner` can select a listed option or give a different decision.

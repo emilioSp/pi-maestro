@@ -823,7 +823,7 @@ describe('main Maestro extension', () => {
     paths,
     phase,
   }: PrepareSpecRevisionPhaseInput): Promise<void> => {
-    if (phase === WORKFLOW_PHASES.ESCALATION_DECISION) {
+    if (phase === WORKFLOW_PHASES.ESCALATION_DECISIONS) {
       await prepareBuilderRun({ paths, specId: SPEC_ID });
       await completeBuilderPass({
         paths,
@@ -834,7 +834,7 @@ describe('main Maestro extension', () => {
       return;
     }
 
-    // phase === WORKFLOW_PHASES.FINDINGS_DECISION
+    // phase === WORKFLOW_PHASES.FINDING_DECISIONS
     await prepareBuilderRun({ paths, specId: SPEC_ID });
     await completeBuilderPass({
       paths,
@@ -872,8 +872,8 @@ describe('main Maestro extension', () => {
   };
 
   it.each([
-    WORKFLOW_PHASES.ESCALATION_DECISION,
-    WORKFLOW_PHASES.FINDINGS_DECISION,
+    WORKFLOW_PHASES.ESCALATION_DECISIONS,
+    WORKFLOW_PHASES.FINDING_DECISIONS,
   ])(
     'given %s when the owner follows the revision route and approves then the registered tools return ready-for-builder on the same project',
     async (phase) => {
@@ -896,7 +896,7 @@ describe('main Maestro extension', () => {
       const theme = session.extensionRunner.createContext().ui.theme;
       maestroSessionState.setActiveSpecId(SPEC_ID);
 
-      if (phase === WORKFLOW_PHASES.ESCALATION_DECISION) {
+      if (phase === WORKFLOW_PHASES.ESCALATION_DECISIONS) {
         const resolveTool = session.agent.state.tools.find(
           (tool) => tool.name === RESOLVE_ESCALATIONS_TOOL.NAME,
         );
@@ -926,7 +926,7 @@ describe('main Maestro extension', () => {
         ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.DRAFTING_SPEC });
       }
 
-      if (phase === WORKFLOW_PHASES.FINDINGS_DECISION) {
+      if (phase === WORKFLOW_PHASES.FINDING_DECISIONS) {
         const resolveTool = session.agent.state.tools.find(
           (tool) => tool.name === RESOLVE_FINDINGS_TOOL.NAME,
         );
@@ -1067,7 +1067,7 @@ describe('main Maestro extension', () => {
     });
     expect(result.details).toMatchObject({
       outcome: BUILDER_HANDOFF_STATUSES.ESCALATION,
-      phase: WORKFLOW_PHASES.ESCALATION_DECISION,
+      phase: WORKFLOW_PHASES.ESCALATION_DECISIONS,
       handoff: {
         ...unavailableCompilerEscalation,
         version: '1.0.0',

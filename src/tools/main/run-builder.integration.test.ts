@@ -245,7 +245,7 @@ describe('run builder tool', () => {
         handoff: csvExportEscalation,
       });
 
-      expect(opened.state.phase).toBe(WORKFLOW_PHASES.ESCALATION_DECISION);
+      expect(opened.state.phase).toBe(WORKFLOW_PHASES.ESCALATION_DECISIONS);
 
       events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
         requestId: request.requestId,
@@ -266,13 +266,13 @@ describe('run builder tool', () => {
     expect(result.details).toEqual({
       outcome: BUILDER_HANDOFF_STATUSES.ESCALATION,
       specId: SPEC_ID,
-      phase: WORKFLOW_PHASES.ESCALATION_DECISION,
+      phase: WORKFLOW_PHASES.ESCALATION_DECISIONS,
       handoff: saved,
     });
 
     expect(result.details).toMatchObject({
       outcome: BUILDER_HANDOFF_STATUSES.ESCALATION,
-      phase: WORKFLOW_PHASES.ESCALATION_DECISION,
+      phase: WORKFLOW_PHASES.ESCALATION_DECISIONS,
       handoff: { ...csvExportEscalation, version: '1.0.0', specId: SPEC_ID },
     });
   });

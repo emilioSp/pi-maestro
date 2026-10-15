@@ -47,9 +47,9 @@ type CandidateReadyResult = {
 };
 
 type FindingsResult = {
-  outcome: typeof WORKFLOW_PHASES.FINDINGS_DECISION;
+  outcome: typeof WORKFLOW_PHASES.FINDING_DECISIONS;
   specId: string;
-  phase: typeof WORKFLOW_PHASES.FINDINGS_DECISION;
+  phase: typeof WORKFLOW_PHASES.FINDING_DECISIONS;
   handoff: VerifierHandoff;
 };
 
@@ -70,7 +70,7 @@ const readTerminalVerifierResult = async ({
 > => {
   if (
     state.phase !== WORKFLOW_PHASES.CANDIDATE_READY &&
-    state.phase !== WORKFLOW_PHASES.FINDINGS_DECISION
+    state.phase !== WORKFLOW_PHASES.FINDING_DECISIONS
   ) {
     throw new Error(
       `Verifier returned with unexpected workflow phase "${state.phase}".`,
@@ -84,7 +84,7 @@ const readTerminalVerifierResult = async ({
 
   const expectedPhase =
     handoff.findings.length > 0
-      ? WORKFLOW_PHASES.FINDINGS_DECISION
+      ? WORKFLOW_PHASES.FINDING_DECISIONS
       : WORKFLOW_PHASES.CANDIDATE_READY;
 
   if (state.phase !== expectedPhase) {

@@ -1,6 +1,6 @@
 /**
  * Objective: Record owner decisions for current verifier findings on the active handoff.
- * Used: When the owner resolves a findings-decision handoff.
+ * Used: When the owner resolves a finding-decisions handoff.
  */
 
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
@@ -108,9 +108,9 @@ const readFindingWorkflow = async ({
     );
   }
 
-  if (state.phase !== WORKFLOW_PHASES.FINDINGS_DECISION) {
+  if (state.phase !== WORKFLOW_PHASES.FINDING_DECISIONS) {
     throw new Error(
-      `Finding resolution requires findings-decision state, found "${state.phase}".`,
+      `Finding resolution requires finding-decisions state, found "${state.phase}".`,
     );
   }
 

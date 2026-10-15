@@ -16,8 +16,8 @@ const state = (phase: WorkflowPhase): WorkflowState => ({
 
 describe('workflow transitions', () => {
   it.each([
-    WORKFLOW_PHASES.ESCALATION_DECISION,
-    WORKFLOW_PHASES.FINDINGS_DECISION,
+    WORKFLOW_PHASES.ESCALATION_DECISIONS,
+    WORKFLOW_PHASES.FINDING_DECISIONS,
   ])(
     'given %s when the owner requests a spec revision then the workflow returns to drafting-spec',
     (phase) => {

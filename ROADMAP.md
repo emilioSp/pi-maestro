@@ -123,11 +123,11 @@ Each `resolution` records the owner's chosen solution and reason. A decision req
 
 | Decision | Next phase and action |
 |---|---|
-| No `spec` change | `escalation-decision` → `ready-for-builder`. The `builder` continues under the approved `spec`, without renewed approval. |
-| `Spec` change required | `escalation-decision` → `drafting-spec`. The `owner` and `Maestro` revise and review the same `spec`. |
+| No `spec` change | `escalation-decisions` → `ready-for-builder`. The `builder` continues under the approved `spec`, without renewed approval. |
+| `Spec` change required | `escalation-decisions` → `drafting-spec`. The `owner` and `Maestro` revise and review the same `spec`. |
 | Revised `spec` receives renewed `GREEN FLAG` | `drafting-spec` → `ready-for-builder` through separate `maestro_mark_spec_ready` approval. |
 
-Direct `spec` approval from `escalation-decision` is rejected. Recording answers does not move to `ready-for-verifier`; that phase requires a completed `builder` `pass`.
+Direct `spec` approval from `escalation-decisions` is rejected. Recording answers does not move to `ready-for-verifier`; that phase requires a completed `builder` `pass`.
 
 #### Implementation boundaries
 
@@ -145,9 +145,10 @@ The new `spec` includes coverage labels and omits `acceptance criteria` already 
 
 Implemented the approved revision route. `Maestro` records every current `finding` decision before returning to `drafting-spec` when revision is required.
 The `owner` reviews the same revised `spec` and gives renewed `GREEN FLAG` before separate approval and another `builder` `run`.
-Revision takes priority in mixed batches. Direct approval from `findings-decision` is rejected.
+Revision takes priority in mixed batches. Direct approval from `finding-decisions` is rejected.
 
-Later event naming cleanup identifies `builder` and `owner` actions explicitly. Both revision routes use `OWNER_REQUEST_SPEC_REVISION` without changing the phase flow. Batch resolution uses `RESOLVE_ESCALATIONS`, and the status label refers to `escalations` in the plural.
+Later event naming cleanup identifies `builder` and `owner` actions explicitly. Both revision routes use `OWNER_REQUEST_SPEC_REVISION` without changing the phase flow. Batch resolution uses `RESOLVE_ESCALATIONS`, and the status label refers to `escalations` in the plural. The saved decision phases are named `escalation-decisions` and `finding-decisions`.
+
 #### Evidence
 
 [Specification](.specs/20261015-154812-route-finding-driven-spec-revisions-through-drafting-spec/spec.md) and [resolution integration tests](src/tools/main/resolve-findings.integration.test.ts).

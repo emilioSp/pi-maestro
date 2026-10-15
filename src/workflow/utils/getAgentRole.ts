@@ -9,13 +9,13 @@ import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
 
 const BUILDER_PHASES: readonly WorkflowState['phase'][] = [
   WORKFLOW_PHASES.BUILDER_RUNNING,
-  WORKFLOW_PHASES.ESCALATION_DECISION,
+  WORKFLOW_PHASES.ESCALATION_DECISIONS,
   WORKFLOW_PHASES.READY_FOR_VERIFIER,
 ];
 
 const VERIFIER_PHASES: readonly WorkflowState['phase'][] = [
   WORKFLOW_PHASES.VERIFIER_RUNNING,
-  WORKFLOW_PHASES.FINDINGS_DECISION,
+  WORKFLOW_PHASES.FINDING_DECISIONS,
 ];
 
 export const getAgentRole = (
