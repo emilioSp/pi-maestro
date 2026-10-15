@@ -25,6 +25,7 @@ export const WORKFLOW_EVENTS = {
   RUN_BUILDER: 'run-builder',
   OPEN_ESCALATION: 'open-escalation',
   RESOLVE_ESCALATION: 'resolve-escalation',
+  RESOLVE_ESCALATION_WITH_SPEC_CHANGE: 'resolve-escalation-with-spec-change',
   BUILDER_DONE: 'builder-done',
   RUN_VERIFIER: 'run-verifier',
   VERIFIER_FOUND_FINDINGS: 'verifier-found-findings',
