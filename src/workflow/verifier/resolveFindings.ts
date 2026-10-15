@@ -30,27 +30,30 @@ export type ResolvedFindings = {
   projectRoot: string;
 };
 
-type AssertDecisionsInput = {
+type ApplyFindingDecisionsInput = {
   decisions: FindingDecision[];
   findings: VerifierFinding[];
 };
 
-function assertDecisions({ decisions, findings }: AssertDecisionsInput): void {
+const applyFindingDecisions = ({
+  decisions,
+  findings,
+}: ApplyFindingDecisionsInput): VerifierFinding[] => {
   const expectedIds = new Set(findings.map(({ id }) => id));
-  const seenIds = new Set<string>();
+  const decisionsById = new Map<string, FindingDecision>();
 
   for (const decision of decisions) {
     if (!expectedIds.has(decision.findingId)) {
       throw new Error(`Unknown finding ID: "${decision.findingId}".`);
     }
 
-    if (seenIds.has(decision.findingId)) {
+    if (decisionsById.has(decision.findingId)) {
       throw new Error(
         `Duplicate decision for finding "${decision.findingId}".`,
       );
     }
 
-    seenIds.add(decision.findingId);
+    decisionsById.set(decision.findingId, decision);
 
     if (
       decision.decision === FINDING_DECISIONS.REJECT &&
@@ -62,12 +65,17 @@ function assertDecisions({ decisions, findings }: AssertDecisionsInput): void {
     }
   }
 
-  const missing = findings.find(({ id }) => !seenIds.has(id));
+  const missing = findings.find(({ id }) => !decisionsById.has(id));
 
   if (missing !== undefined) {
     throw new Error(`Missing decision for finding "${missing.id}".`);
   }
-}
+
+  return findings.map((finding) => ({
+    ...finding,
+    decision: getSavedFindingDecision(decisionsById.get(finding.id)),
+  }));
+};
 
 type FindingWorkflow = {
   state: WorkflowState;
@@ -150,16 +158,11 @@ export const resolveFindings = async ({
   decisions,
 }: ResolveFindingsInput): Promise<ResolvedFindings> => {
   const { state, handoff } = await readFindingWorkflow({ paths, specId });
-  assertDecisions({ decisions, findings: handoff.findings });
 
-  const decisionsById = new Map(
-    decisions.map((decision) => [decision.findingId, decision]),
-  );
-
-  const findings = handoff.findings.map((finding) => ({
-    ...finding,
-    decision: getSavedFindingDecision(decisionsById.get(finding.id)),
-  }));
+  const findings = applyFindingDecisions({
+    decisions,
+    findings: handoff.findings,
+  });
 
   const nextHandoff = { ...handoff, findings };
 
