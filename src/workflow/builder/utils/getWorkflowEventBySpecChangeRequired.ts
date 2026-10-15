@@ -1,5 +1,5 @@
 /**
- * Objective: Select the escalation resolution event from the spec revision decision.
+ * Objective: Select the workflow event for resolving escalations.
  * Used: When owner answers determine whether the spec must change.
  */
 
@@ -12,5 +12,5 @@ export const getWorkflowEventBySpecChangeRequired = (
     return WORKFLOW_EVENTS.OWNER_REQUEST_SPEC_REVISION;
   }
 
-  return WORKFLOW_EVENTS.RESOLVE_ESCALATION;
+  return WORKFLOW_EVENTS.RESOLVE_ESCALATIONS;
 };
