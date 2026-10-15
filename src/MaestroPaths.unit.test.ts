@@ -1,13 +1,6 @@
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  BUILDER_HANDOFF_STATUSES,
-  BUILDER_HANDOFF_VERSION,
-} from '#artifacts/builder-handoff/schema.ts';
-import { writeBuilderHandoff } from '#artifacts/builder-handoff/writeBuilderHandoff.ts';
-import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
-import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
@@ -23,11 +16,6 @@ afterEach(async () => {
       .map((path) => rm(path, { force: true, recursive: true })),
   );
 });
-
-const expectInside = ({ root, path }: { root: string; path: string }): void => {
-  const pathFromRoot = relative(root, path);
-  expect(pathFromRoot === '..' || pathFromRoot.startsWith('../')).toBe(false);
-};
 
 describe('Maestro paths', () => {
   it('given handoffs numbered 1 through 10 for both roles when active and next paths are requested then active handoffs are 10 and next handoffs are 11', async () => {
@@ -50,37 +38,15 @@ describe('Maestro paths', () => {
       handoffPassNumber <= 10;
       handoffPassNumber += 1
     ) {
-      await writeBuilderHandoff({
-        path: paths.getBuilderHandoffPath({
-          specId: SPEC_ID,
-          handoffPassNumber,
-        }),
-        specId: SPEC_ID,
-        handoff: {
-          version: BUILDER_HANDOFF_VERSION,
-          specId: SPEC_ID,
-          status: BUILDER_HANDOFF_STATUSES.DONE,
-          escalations: [],
-          summary: 'Implemented greeting',
-          acceptanceCriteria: [],
-          notes: [],
-        },
-      });
-      await writeVerifierHandoff({
-        path: paths.getVerifierHandoffPath({
-          specId: SPEC_ID,
-          handoffPassNumber,
-        }),
-        specId: SPEC_ID,
-        handoff: {
-          version: VERIFIER_HANDOFF_VERSION,
-          specId: SPEC_ID,
-          summary: 'Checked greeting',
-          acceptanceCriteria: [],
-          findings: [],
-          notes: [],
-        },
-      });
+      // Path lookup only needs directory entries
+      await writeFile(
+        paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber }),
+        '',
+      );
+      await writeFile(
+        paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber }),
+        '',
+      );
     }
 
     await expect(paths.getActiveBuilderHandoffPath(SPEC_ID)).resolves.toBe(
@@ -97,36 +63,33 @@ describe('Maestro paths', () => {
     );
   });
 
-  it('given a custom spec directory when workflow paths are built then every path uses the current project root', async () => {
-    const repository = await createTemporaryProject();
-    temporaryPaths.push(repository.path);
+  it('given a custom spec directory when workflow paths are built then every path uses the current project root', () => {
+    const projectRoot = '/repo';
 
     const paths = new MaestroPaths({
-      projectRoot: repository.path,
+      projectRoot,
       config: {
         ...DEFAULT_CONFIG,
-        specDirectory: join(repository.path, 'custom/specs'),
+        specDirectory: join(projectRoot, 'custom/specs'),
       },
     });
 
-    expect(paths.getProjectRoot()).toBe(repository.path);
-    expect(paths.getSpecDirectory()).toBe(
-      join(repository.path, 'custom/specs'),
-    );
+    expect(paths.getProjectRoot()).toBe(projectRoot);
+    expect(paths.getSpecDirectory()).toBe(join(projectRoot, 'custom/specs'));
     expect(paths.getSpecPath(SPEC_ID)).toBe(
-      join(repository.path, 'custom/specs', SPEC_ID),
+      join(projectRoot, 'custom/specs', SPEC_ID),
     );
     expect(paths.getSpecFilePath(SPEC_ID)).toBe(
-      join(repository.path, 'custom/specs', SPEC_ID, 'spec.md'),
+      join(projectRoot, 'custom/specs', SPEC_ID, 'spec.md'),
     );
     expect(paths.getWorkflowPath(SPEC_ID)).toBe(
-      join(repository.path, 'custom/specs', SPEC_ID, 'workflow.json'),
+      join(projectRoot, 'custom/specs', SPEC_ID, 'workflow.json'),
     );
     expect(
       paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
     ).toBe(
       join(
-        repository.path,
+        projectRoot,
         'custom/specs',
         SPEC_ID,
         'handoffs',
@@ -136,15 +99,14 @@ describe('Maestro paths', () => {
     );
   });
 
-  it('given artifact paths when generated then they stay inside the project and escaping paths are rejected', async () => {
-    const repository = await createTemporaryProject();
-    temporaryPaths.push(repository.path);
+  it('given artifact paths when generated then they stay inside the project and escaping paths are rejected', () => {
+    const projectRoot = '/repo';
 
     const paths = new MaestroPaths({
-      projectRoot: repository.path,
+      projectRoot,
       config: {
         ...DEFAULT_CONFIG,
-        specDirectory: join(repository.path, '.specs'),
+        specDirectory: join(projectRoot, '.specs'),
       },
     });
 
@@ -163,7 +125,10 @@ describe('Maestro paths', () => {
     ];
 
     for (const path of generatedPaths) {
-      expectInside({ root: paths.getProjectRoot(), path });
+      const pathFromRoot = relative(projectRoot, path);
+      expect(pathFromRoot === '..' || pathFromRoot.startsWith('../')).toBe(
+        false,
+      );
     }
 
     expect(() => paths.getSpecPath('../outside')).toThrow('Invalid spec ID');

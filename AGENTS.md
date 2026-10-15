@@ -1,13 +1,12 @@
 # AGENTS.md
 
 ## At session start (clock in)
-
-1. Read `ROADMAP.md`, `CHANGELOG.md`, and `ADR.md`.
+Read `ROADMAP.md`, `CHANGELOG.md`, and `ADR.md`.
 
 ## Before session end (clock out)
 
-1. Update `ROADMAP.md`.
-2. Update `ADR.md` only when the session includes a significant architectural decision.
+1. Update `ADR.md` only when the session includes a significant architectural decision.
+2. Update `ROADMAP.md`, but only when you worked on an item already present in it
 
 ## Commands
 

@@ -17,9 +17,8 @@ export const isPathWithinOrEqual = ({
   const pathToCandidate = relative(parent, candidate);
 
   return (
-    pathToCandidate === '' ||
-    (!pathToCandidate.startsWith(`..${sep}`) &&
-      pathToCandidate !== '..' &&
-      !isAbsolute(pathToCandidate))
+    !pathToCandidate.startsWith(`..${sep}`) &&
+    pathToCandidate !== '..' &&
+    !isAbsolute(pathToCandidate)
   );
 };

@@ -100,36 +100,15 @@ export class MaestroPaths {
   }
 
   public getSpecFilePath(specId: string): string {
-    assertSpecId(specId);
-
-    return resolve(
-      this.projectRoot,
-      this.specDirectoryFromRoot,
-      specId,
-      PATHS.SPEC_FILE,
-    );
+    return resolve(this.getSpecPath(specId), PATHS.SPEC_FILE);
   }
 
   public getWorkflowPath(specId: string): string {
-    assertSpecId(specId);
-
-    return resolve(
-      this.projectRoot,
-      this.specDirectoryFromRoot,
-      specId,
-      PATHS.WORKFLOW_FILE,
-    );
+    return resolve(this.getSpecPath(specId), PATHS.WORKFLOW_FILE);
   }
 
   public getHandoffsPath(specId: string): string {
-    assertSpecId(specId);
-
-    return resolve(
-      this.projectRoot,
-      this.specDirectoryFromRoot,
-      specId,
-      PATHS.HANDOFFS_PATH,
-    );
+    return resolve(this.getSpecPath(specId), PATHS.HANDOFFS_PATH);
   }
 
   public getBuilderHandoffsPath(specId: string): string {
@@ -208,14 +187,7 @@ export class MaestroPaths {
   }
 
   public getPrototypesPath(specId: string): string {
-    assertSpecId(specId);
-
-    return resolve(
-      this.projectRoot,
-      this.specDirectoryFromRoot,
-      specId,
-      PATHS.PROTOTYPES_PATH,
-    );
+    return resolve(this.getSpecPath(specId), PATHS.PROTOTYPES_PATH);
   }
 
   public getPrototypePath({

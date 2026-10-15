@@ -66,37 +66,31 @@ export function assertBuilderHandoff(
     throw new Error('Done builder handoff requires every probe to pass.');
   }
 
-  if (handoff.status === BUILDER_HANDOFF_STATUSES.ESCALATION) {
-    for (const [index, escalation] of handoff.escalations.entries()) {
-      if (escalation.id !== `E${index + 1}`) {
-        throw new Error('Escalation IDs must be sequential in array order.');
-      }
-
-      const optionIds = new Set(escalation.options.map(({ id }) => id));
-
-      if (optionIds.size !== escalation.options.length) {
-        throw new Error('Escalation option IDs must be unique.');
-      }
-
-      if (
-        escalation.recommendation !== null &&
-        !optionIds.has(escalation.recommendation.optionId)
-      ) {
-        throw new Error('Escalation recommendation references unknown option.');
-      }
-
-      if (
-        escalation.resolution !== null &&
-        escalation.resolution.selectedOptionId !== null &&
-        !optionIds.has(escalation.resolution.selectedOptionId)
-      ) {
-        throw new Error('Escalation resolution references unknown option.');
-      }
+  for (const [index, escalation] of handoff.escalations.entries()) {
+    if (escalation.id !== `E${index + 1}`) {
+      throw new Error('Escalation IDs must be sequential in array order.');
     }
-  }
 
-  if (!isValidSpecId(specId)) {
-    throw new Error(`Invalid expected builder handoff spec ID: "${specId}".`);
+    const optionIds = new Set(escalation.options.map(({ id }) => id));
+
+    if (optionIds.size !== escalation.options.length) {
+      throw new Error('Escalation option IDs must be unique.');
+    }
+
+    if (
+      escalation.recommendation !== null &&
+      !optionIds.has(escalation.recommendation.optionId)
+    ) {
+      throw new Error('Escalation recommendation references unknown option.');
+    }
+
+    if (
+      escalation.resolution !== null &&
+      escalation.resolution.selectedOptionId !== null &&
+      !optionIds.has(escalation.resolution.selectedOptionId)
+    ) {
+      throw new Error('Escalation resolution references unknown option.');
+    }
   }
 
   if (handoff.specId !== specId) {

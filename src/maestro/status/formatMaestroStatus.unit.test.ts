@@ -1,4 +1,9 @@
-import type { Theme, ThemeColor } from '@earendil-works/pi-coding-agent';
+/**
+ * Objective: Check Maestro status text, phase styling, and spec ID shortening.
+ * Used: In unit tests for the status formatter.
+ */
+
+import type { Theme } from '@earendil-works/pi-coding-agent';
 import { describe, expect, it } from 'vitest';
 import {
   formatMaestroStatus,
@@ -9,7 +14,6 @@ import {
 import {
   WORKFLOW_PHASES,
   WORKFLOW_STATE_VERSION,
-  type WorkflowPhase,
   type WorkflowState,
 } from '#workflow/state/schema.ts';
 
@@ -18,72 +22,6 @@ const theme: Pick<Theme, 'fg'> = {
 };
 
 const SPEC_ID = '20250101-000000-status-test';
-
-const PHASE_LABEL_CASES: Array<{
-  phase: WorkflowPhase;
-  label: string;
-  icon: string;
-  color: ThemeColor;
-}> = [
-  {
-    phase: WORKFLOW_PHASES.DRAFTING_SPEC,
-    icon: WORKFLOW_PHASE_ICONS[WORKFLOW_PHASES.DRAFTING_SPEC],
-    color: WORKFLOW_PHASE_COLORS[WORKFLOW_PHASES.DRAFTING_SPEC],
-    label: WORKFLOW_PHASE_LABELS[WORKFLOW_PHASES.DRAFTING_SPEC],
-  },
-  {
-    phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
-    icon: WORKFLOW_PHASE_ICONS[WORKFLOW_PHASES.READY_FOR_BUILDER],
-    color: WORKFLOW_PHASE_COLORS[WORKFLOW_PHASES.READY_FOR_BUILDER],
-    label: WORKFLOW_PHASE_LABELS[WORKFLOW_PHASES.READY_FOR_BUILDER],
-  },
-  {
-    phase: WORKFLOW_PHASES.BUILDER_RUNNING,
-    icon: WORKFLOW_PHASE_ICONS[WORKFLOW_PHASES.BUILDER_RUNNING],
-    color: WORKFLOW_PHASE_COLORS[WORKFLOW_PHASES.BUILDER_RUNNING],
-    label: WORKFLOW_PHASE_LABELS[WORKFLOW_PHASES.BUILDER_RUNNING],
-  },
-  {
-    phase: WORKFLOW_PHASES.ESCALATION_DECISIONS,
-    icon: WORKFLOW_PHASE_ICONS[WORKFLOW_PHASES.ESCALATION_DECISIONS],
-    color: WORKFLOW_PHASE_COLORS[WORKFLOW_PHASES.ESCALATION_DECISIONS],
-    label: WORKFLOW_PHASE_LABELS[WORKFLOW_PHASES.ESCALATION_DECISIONS],
-  },
-  {
-    phase: WORKFLOW_PHASES.READY_FOR_VERIFIER,
-    icon: WORKFLOW_PHASE_ICONS[WORKFLOW_PHASES.READY_FOR_VERIFIER],
-    color: WORKFLOW_PHASE_COLORS[WORKFLOW_PHASES.READY_FOR_VERIFIER],
-    label: WORKFLOW_PHASE_LABELS[WORKFLOW_PHASES.READY_FOR_VERIFIER],
-  },
-  {
-    phase: WORKFLOW_PHASES.VERIFIER_RUNNING,
-    icon: WORKFLOW_PHASE_ICONS[WORKFLOW_PHASES.VERIFIER_RUNNING],
-    color: WORKFLOW_PHASE_COLORS[WORKFLOW_PHASES.VERIFIER_RUNNING],
-    label: WORKFLOW_PHASE_LABELS[WORKFLOW_PHASES.VERIFIER_RUNNING],
-  },
-  {
-    phase: WORKFLOW_PHASES.FINDING_DECISIONS,
-    icon: WORKFLOW_PHASE_ICONS[WORKFLOW_PHASES.FINDING_DECISIONS],
-    color: WORKFLOW_PHASE_COLORS[WORKFLOW_PHASES.FINDING_DECISIONS],
-    label: WORKFLOW_PHASE_LABELS[WORKFLOW_PHASES.FINDING_DECISIONS],
-  },
-  {
-    phase: WORKFLOW_PHASES.CANDIDATE_READY,
-    icon: WORKFLOW_PHASE_ICONS[WORKFLOW_PHASES.CANDIDATE_READY],
-    color: WORKFLOW_PHASE_COLORS[WORKFLOW_PHASES.CANDIDATE_READY],
-    label: WORKFLOW_PHASE_LABELS[WORKFLOW_PHASES.CANDIDATE_READY],
-  },
-];
-
-const createWorkflow = (phase: WorkflowPhase) => {
-  const state: WorkflowState = {
-    version: WORKFLOW_STATE_VERSION,
-    specId: SPEC_ID,
-    phase,
-  };
-
-  return { state };
-};
 
 describe('Maestro status', () => {
   it('given inactive Maestro when status is formatted then status is hidden', () => {
@@ -98,14 +36,24 @@ describe('Maestro status', () => {
     );
   });
 
-  it.each(PHASE_LABEL_CASES)(
-    'given the $phase phase when status is formatted then the $label label is shown',
-    ({ phase, label, icon, color }) => {
+  it.each(Object.values(WORKFLOW_PHASES))(
+    'given the %s phase when status is formatted then its icon color and label are shown',
+    (phase) => {
+      const state: WorkflowState = {
+        version: WORKFLOW_STATE_VERSION,
+        specId: SPEC_ID,
+        phase,
+      };
+
       const status = formatMaestroStatus({
         active: true,
-        workflow: createWorkflow(phase),
+        workflow: { state },
         theme,
       });
+
+      const icon = WORKFLOW_PHASE_ICONS[phase];
+      const color = WORKFLOW_PHASE_COLORS[phase];
+      const label = WORKFLOW_PHASE_LABELS[phase];
 
       expect(status).toBe(
         `<muted>Maestro active · ${SPEC_ID.slice(0, 26)}... · </muted>${icon} <${color}>${label}</${color}>`,
@@ -131,8 +79,13 @@ describe('Maestro status', () => {
   ])(
     'given $specId when formatted then only the display becomes $display',
     ({ specId, display }) => {
-      const workflow = createWorkflow(WORKFLOW_PHASES.BUILDER_RUNNING);
-      workflow.state.specId = specId;
+      const state: WorkflowState = {
+        version: WORKFLOW_STATE_VERSION,
+        specId,
+        phase: WORKFLOW_PHASES.BUILDER_RUNNING,
+      };
+
+      const workflow = { state };
 
       expect(formatMaestroStatus({ active: true, workflow, theme })).toBe(
         `<muted>Maestro active · ${display} · </muted>🛠️ <accent>Builder running</accent>`,

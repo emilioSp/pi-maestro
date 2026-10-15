@@ -40,18 +40,17 @@ export function assertVerifierHandoff(
     throw new Error(`Invalid verifier handoff spec ID: "${handoff.specId}".`);
   }
 
-  if (
-    new Set(handoff.acceptanceCriteria.map((criterion) => criterion.id))
-      .size !== handoff.acceptanceCriteria.length
-  ) {
+  const acceptanceCriterionIds = new Set(
+    handoff.acceptanceCriteria.map((criterion) => criterion.id),
+  );
+
+  if (acceptanceCriterionIds.size !== handoff.acceptanceCriteria.length) {
     throw new Error(
       'Verifier handoff acceptance criterion IDs must be unique.',
     );
   }
 
-  const acceptanceCriterionIds = new Set(
-    handoff.acceptanceCriteria.map((criterion) => criterion.id),
-  );
+  const criterionIdsWithFindings = new Set<string>();
 
   for (const [index, finding] of handoff.findings.entries()) {
     const expectedId = `F${index + 1}`;
@@ -62,26 +61,23 @@ export function assertVerifierHandoff(
       );
     }
 
-    if (
-      finding.acceptanceCriterion !== null &&
-      !acceptanceCriterionIds.has(finding.acceptanceCriterion)
-    ) {
+    if (finding.acceptanceCriterion === null) {
+      continue;
+    }
+
+    if (!acceptanceCriterionIds.has(finding.acceptanceCriterion)) {
       throw new Error(
         `Verifier handoff finding "${finding.id}" references unknown acceptance criterion "${finding.acceptanceCriterion}".`,
       );
     }
-  }
 
-  const findingCriteria = new Set(
-    handoff.findings.flatMap((finding) =>
-      finding.acceptanceCriterion === null ? [] : [finding.acceptanceCriterion],
-    ),
-  );
+    criterionIdsWithFindings.add(finding.acceptanceCriterion);
+  }
 
   for (const criterion of handoff.acceptanceCriteria) {
     if (
       criterion.probeStatus !== PROBE_STATUSES.PASSED &&
-      !findingCriteria.has(criterion.id)
+      !criterionIdsWithFindings.has(criterion.id)
     ) {
       throw new Error(
         `Verifier handoff incomplete acceptance criterion "${criterion.id}" requires a finding.`,

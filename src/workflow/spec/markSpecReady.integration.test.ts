@@ -1,3 +1,8 @@
+/**
+ * Objective: Check spec approval rules and preservation of saved files.
+ * Used: In integration tests for drafting and invalid approval phases.
+ */
+
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -23,7 +28,9 @@ const OTHER_SPEC_ID = '20260322-143052-add-weather-alerts';
 
 const cleanupFunctions: Array<() => Promise<void>> = [];
 
-const createRepository = async () => {
+const createWorkflow = async (
+  phase: WorkflowPhase = WORKFLOW_PHASES.DRAFTING_SPEC,
+) => {
   const repository = await createTemporaryProject();
   cleanupFunctions.push(repository.cleanup);
   await writeFile(join(repository.path, 'README.md'), '# Test\n', 'utf8');
@@ -35,14 +42,6 @@ const createRepository = async () => {
       specDirectory: join(repository.path, '.specs'),
     },
   });
-
-  return { repository, paths };
-};
-
-const createWorkflow = async (
-  phase: WorkflowPhase = WORKFLOW_PHASES.DRAFTING_SPEC,
-) => {
-  const { repository, paths } = await createRepository();
 
   const created = await createSpec({
     paths,
@@ -96,26 +95,14 @@ describe('markSpecReady', () => {
   });
 
   it.each([
-    {
-      phase: WORKFLOW_PHASES.DRAFTING_SPEC,
-      numbers: [2],
-    },
-    {
-      phase: WORKFLOW_PHASES.DRAFTING_SPEC,
-      numbers: [1, 3],
-    },
-    {
-      phase: WORKFLOW_PHASES.DRAFTING_SPEC,
-      numbers: [1, 1],
-    },
-    {
-      phase: WORKFLOW_PHASES.DRAFTING_SPEC,
-      numbers: [1, 3, 2],
-    },
+    { numbers: [2] },
+    { numbers: [1, 3] },
+    { numbers: [1, 1] },
+    { numbers: [1, 3, 2] },
   ])(
-    'given criteria $numbers in $phase when approved then an ordering error leaves all saved files unchanged',
-    async ({ phase, numbers }) => {
-      const { created, paths } = await createWorkflow(phase);
+    'given criteria $numbers in drafting-spec when approved then an ordering error leaves all saved files unchanged',
+    async ({ numbers }) => {
+      const { created, paths } = await createWorkflow();
       await writeFile(
         created.specFilePath,
         numbers.map((number) => `### AC${number}: Criterion\n`).join('\n'),
@@ -186,7 +173,7 @@ describe('markSpecReady', () => {
       await expect(
         readWorkflowState(created.workflowPath),
       ).resolves.toMatchObject({
-        phase,
+        phase: WORKFLOW_PHASES.DRAFTING_SPEC,
       });
     },
   );

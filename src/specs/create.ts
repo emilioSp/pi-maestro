@@ -7,8 +7,6 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { createSpecId } from '#ids/createSpecId.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { loadSpecTemplate, renderSpecTemplate } from '#specs/template.ts';
-import { isErrnoException } from '#utils/is-errno-exception.ts';
-import { pathExists } from '#utils/path-exists.ts';
 import {
   assertWorkflowState,
   WORKFLOW_PHASES,
@@ -49,10 +47,6 @@ export const createSpec = async ({
   const workflowPath = paths.getWorkflowPath(specId);
   const prototypesPath = paths.getPrototypesPath(specId);
 
-  if (await pathExists(specPath)) {
-    throw new Error(`Spec directory already exists: ${specPath}.`);
-  }
-
   const template = await loadSpecTemplate();
   const spec = renderSpecTemplate({ template, specId, title });
 
@@ -63,12 +57,11 @@ export const createSpec = async ({
   } as const;
 
   assertWorkflowState(state);
-  let created = false;
+
+  await mkdir(paths.getSpecDirectory(), { recursive: true });
+  await mkdir(specPath);
 
   try {
-    await mkdir(paths.getSpecDirectory(), { recursive: true });
-    await mkdir(specPath);
-    created = true;
     await mkdir(prototypesPath, { recursive: true });
     await writeFile(specFilePath, spec, { encoding: 'utf8', flag: 'wx' });
     await writeWorkflowState({
@@ -76,20 +69,10 @@ export const createSpec = async ({
       state,
     });
   } catch (error) {
-    if (!created && isErrnoException(error) && error.code === 'EEXIST') {
-      throw new Error(`Spec directory already exists: ${specPath}.`, {
-        cause: error,
-      });
-    }
-
-    if (created) {
-      throw new Error(
-        `Spec creation failed after creating ${specPath}. Remove this directory before retrying.`,
-        { cause: error },
-      );
-    }
-
-    throw error;
+    throw new Error(
+      `Spec creation failed after creating ${specPath}. Remove this directory before retrying.`,
+      { cause: error },
+    );
   }
 
   return {

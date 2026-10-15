@@ -390,6 +390,38 @@ describe('run builder tool', () => {
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_RUNNING });
   });
 
+  it('given a running workflow without a handoff when delegation completes then the unexpected phase is reported before reading the handoff', async () => {
+    const { paths, repository } = await createApprovedWorkflow();
+
+    const { tool, events } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerRunBuilderTool,
+    });
+
+    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
+      // JUSTIFICATION: The run tool emits a delegation request on this channel.
+      const request = payload as SubagentDelegationRequest;
+      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
+        requestId: request.requestId,
+        ownerRunId: request.ownerRunId,
+        nodeId: request.nodeId,
+        status: DELEGATION_STATUSES.COMPLETED,
+        result: { kind: 'text', text: 'No handoff recorded.' },
+      });
+    });
+
+    await expect(
+      tool.execute('test-call', { specId: SPEC_ID }),
+    ).rejects.toThrow(
+      new Error(
+        `Builder protocol error: Builder returned with unexpected workflow phase "${WORKFLOW_PHASES.BUILDER_RUNNING}"..`,
+      ),
+    );
+    await expect(
+      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
+    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_RUNNING });
+  });
+
   it('given a completed builder response without a handoff when processed then a protocol error is returned without advancing the workflow', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 

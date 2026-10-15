@@ -18,28 +18,11 @@ import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 import { getWorkflowEventByVerifierHandoff } from '#workflow/verifier/utils/getWorkflowEventByVerifierHandoff.ts';
 
-type FindingDecisionRejected = {
-  findingId: string;
-  decision: typeof FINDING_DECISIONS.REJECT;
-  reason: string;
-};
+type SavedFindingDecision = NonNullable<VerifierFinding['decision']>;
 
-type FindingDecisionApproved = {
+export type FindingDecision = SavedFindingDecision & {
   findingId: string;
-  decision: typeof FINDING_DECISIONS.FIX_CODE;
 };
-
-type FindingDecisionRevision = {
-  findingId: string;
-  decision: typeof FINDING_DECISIONS.REVISE_SPEC;
-  reason: string;
-  specChange: string;
-};
-
-export type FindingDecision =
-  | FindingDecisionApproved
-  | FindingDecisionRejected
-  | FindingDecisionRevision;
 
 export type ResolvedFindings = {
   findings: VerifierFinding[];
@@ -47,27 +30,30 @@ export type ResolvedFindings = {
   projectRoot: string;
 };
 
-type AssertDecisionsInput = {
+type ApplyFindingDecisionsInput = {
   decisions: FindingDecision[];
   findings: VerifierFinding[];
 };
 
-function assertDecisions({ decisions, findings }: AssertDecisionsInput): void {
+const applyFindingDecisions = ({
+  decisions,
+  findings,
+}: ApplyFindingDecisionsInput): VerifierFinding[] => {
   const expectedIds = new Set(findings.map(({ id }) => id));
-  const seenIds = new Set<string>();
+  const decisionsById = new Map<string, FindingDecision>();
 
   for (const decision of decisions) {
     if (!expectedIds.has(decision.findingId)) {
       throw new Error(`Unknown finding ID: "${decision.findingId}".`);
     }
 
-    if (seenIds.has(decision.findingId)) {
+    if (decisionsById.has(decision.findingId)) {
       throw new Error(
         `Duplicate decision for finding "${decision.findingId}".`,
       );
     }
 
-    seenIds.add(decision.findingId);
+    decisionsById.set(decision.findingId, decision);
 
     if (
       decision.decision === FINDING_DECISIONS.REJECT &&
@@ -79,12 +65,17 @@ function assertDecisions({ decisions, findings }: AssertDecisionsInput): void {
     }
   }
 
-  const missing = findings.find(({ id }) => !seenIds.has(id));
+  const missing = findings.find(({ id }) => !decisionsById.has(id));
 
   if (missing !== undefined) {
     throw new Error(`Missing decision for finding "${missing.id}".`);
   }
-}
+
+  return findings.map((finding) => ({
+    ...finding,
+    decision: getSavedFindingDecision(decisionsById.get(finding.id)),
+  }));
+};
 
 type FindingWorkflow = {
   state: WorkflowState;
@@ -134,47 +125,43 @@ const readFindingWorkflow = async ({
   return { state, handoff };
 };
 
-type BuildFindingWorkflowInput = {
-  workflow: FindingWorkflow;
+const getSavedFindingDecision = (
+  decision: FindingDecision | undefined,
+): SavedFindingDecision => {
+  if (decision?.decision === FINDING_DECISIONS.REVISE_SPEC) {
+    return {
+      decision: FINDING_DECISIONS.REVISE_SPEC,
+      reason: decision.reason.trim(),
+      specChange: decision.specChange,
+    };
+  }
+
+  if (decision?.decision === FINDING_DECISIONS.REJECT) {
+    return {
+      decision: FINDING_DECISIONS.REJECT,
+      reason: decision.reason.trim(),
+    };
+  }
+
+  return { decision: FINDING_DECISIONS.FIX_CODE };
+};
+
+type ResolveFindingsInput = {
+  paths: MaestroPaths;
+  specId: string;
   decisions: FindingDecision[];
 };
 
-const buildFindingWorkflow = ({
-  workflow,
+export const resolveFindings = async ({
+  paths,
+  specId,
   decisions,
-}: BuildFindingWorkflowInput): FindingWorkflow => {
-  const { state, handoff } = workflow;
-  assertDecisions({ decisions, findings: handoff.findings });
+}: ResolveFindingsInput): Promise<ResolvedFindings> => {
+  const { state, handoff } = await readFindingWorkflow({ paths, specId });
 
-  const decisionsById = new Map(
-    decisions.map((decision) => [decision.findingId, decision]),
-  );
-
-  const findings = handoff.findings.map((finding) => {
-    const decision = decisionsById.get(finding.id);
-
-    if (decision?.decision === FINDING_DECISIONS.REVISE_SPEC) {
-      return {
-        ...finding,
-        decision: {
-          decision: FINDING_DECISIONS.REVISE_SPEC,
-          reason: decision.reason,
-          specChange: decision.specChange,
-        },
-      };
-    }
-
-    if (decision?.decision === FINDING_DECISIONS.REJECT) {
-      return {
-        ...finding,
-        decision: {
-          decision: FINDING_DECISIONS.REJECT,
-          reason: decision.reason.trim(),
-        },
-      };
-    }
-
-    return { ...finding, decision: { decision: FINDING_DECISIONS.FIX_CODE } };
+  const findings = applyFindingDecisions({
+    decisions,
+    findings: handoff.findings,
   });
 
   const nextHandoff = { ...handoff, findings };
@@ -189,37 +176,16 @@ const buildFindingWorkflow = ({
     specId: state.specId,
   });
 
-  return { state: nextState, handoff: nextHandoff };
-};
-
-type ResolveFindingsInput = {
-  paths: MaestroPaths;
-  specId: string;
-  decisions: FindingDecision[];
-};
-
-export const resolveFindings = async ({
-  paths,
-  specId,
-  decisions,
-}: ResolveFindingsInput): Promise<ResolvedFindings> => {
-  const currentWorkflow = await readFindingWorkflow({ paths, specId });
-
-  const workflow = buildFindingWorkflow({
-    workflow: currentWorkflow,
-    decisions,
-  });
-
   const handoffPath = await paths.getActiveVerifierHandoffPath(specId);
-  await writeJson({ path: handoffPath, data: workflow.handoff });
+  await writeJson({ path: handoffPath, data: nextHandoff });
   await writeWorkflowState({
     path: paths.getWorkflowPath(specId),
-    state: workflow.state,
+    state: nextState,
   });
 
   return {
-    findings: workflow.handoff.findings,
-    state: workflow.state,
+    findings,
+    state: nextState,
     projectRoot: paths.getProjectRoot(),
   };
 };

@@ -1,34 +1,19 @@
-import {
-  lstat,
-  mkdir,
-  mkdtemp,
-  readFile,
-  realpath,
-  rm,
-  writeFile,
-} from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+/**
+ * Objective: Check configuration loading, defaults, and file errors.
+ * Used: In tests with temporary project configuration files.
+ */
+
+import { lstat, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { SUPPORTED_CONFIG_VERSION, THINKING_LEVELS } from '#config/schema.ts';
-
-const createWorkspace = async (): Promise<{
-  path: string;
-  cleanup: () => Promise<void>;
-}> => {
-  const path = await realpath(await mkdtemp(join(tmpdir(), 'pi-maestro-')));
-
-  return {
-    path,
-    cleanup: async () => rm(path, { force: true, recursive: true }),
-  };
-};
+import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 
 describe('configuration loading', () => {
   it('given no configuration file when configuration is loaded then defaults are returned', async () => {
-    const workspace = await createWorkspace();
+    const workspace = await createTemporaryProject();
 
     try {
       const config = await loadConfiguration(workspace.path);
@@ -46,7 +31,7 @@ describe('configuration loading', () => {
   });
 
   it('given a valid custom configuration when loaded then its spec directory and agent settings are used', async () => {
-    const workspace = await createWorkspace();
+    const workspace = await createTemporaryProject();
     const piDirectory = join(workspace.path, '.pi');
     await mkdir(piDirectory, { recursive: true });
 
@@ -78,7 +63,7 @@ describe('configuration loading', () => {
   });
 
   it('given invalid configuration JSON when loaded then the error includes the configuration path', async () => {
-    const workspace = await createWorkspace();
+    const workspace = await createTemporaryProject();
     const piDirectory = join(workspace.path, '.pi');
     await mkdir(piDirectory, { recursive: true });
     const configPath = join(piDirectory, 'maestro.json');
@@ -101,6 +86,50 @@ describe('configuration loading', () => {
 
   it.each([
     {
+      scenario: 'a null byte in the spec directory',
+      specDirectory: 'specs\0',
+      message: 'specDirectory must not contain a null byte.',
+    },
+    {
+      scenario: 'an absolute spec directory',
+      specDirectory: '/outside',
+      message: 'specDirectory must be relative to the project root.',
+    },
+    {
+      scenario: 'a spec directory resolving to the project root',
+      specDirectory: 'nested/..',
+      message: 'specDirectory must not be the project root.',
+    },
+    {
+      scenario: 'a spec directory escaping the project root',
+      specDirectory: '../outside',
+      message: 'specDirectory must stay inside the project root.',
+    },
+  ])(
+    'given $scenario when configuration is loaded then it is rejected',
+    async ({ specDirectory, message }) => {
+      const workspace = await createTemporaryProject();
+
+      try {
+        const piDirectory = join(workspace.path, '.pi');
+        await mkdir(piDirectory, { recursive: true });
+        await writeFile(
+          join(piDirectory, 'maestro.json'),
+          JSON.stringify({ version: SUPPORTED_CONFIG_VERSION, specDirectory }),
+          'utf8',
+        );
+
+        await expect(loadConfiguration(workspace.path)).rejects.toThrow(
+          message,
+        );
+      } finally {
+        await workspace.cleanup();
+      }
+    },
+  );
+
+  it.each([
+    {
       fixture: 'valid-partial-builder-timeout.json',
       specDirectory: DEFAULT_CONFIG.specDirectory,
       builder: { ...DEFAULT_CONFIG.builder, timeoutMinutes: 90 },
@@ -113,7 +142,7 @@ describe('configuration loading', () => {
   ])(
     'given $fixture when loaded then supplied values override defaults and other settings keep their defaults',
     async ({ fixture, specDirectory, builder }) => {
-      const workspace = await createWorkspace();
+      const workspace = await createTemporaryProject();
 
       try {
         const piDirectory = join(workspace.path, '.pi');
