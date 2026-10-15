@@ -22,6 +22,14 @@ export const getWorkflowEventByVerifierHandoff = (
 
   if (
     handoff.findings.some(
+      ({ decision }) => decision?.decision === FINDING_DECISIONS.REVISE_SPEC,
+    )
+  ) {
+    return WORKFLOW_EVENTS.REQUEST_SPEC_REVISION;
+  }
+
+  if (
+    handoff.findings.some(
       ({ decision }) => decision?.decision === FINDING_DECISIONS.FIX_CODE,
     )
   ) {
