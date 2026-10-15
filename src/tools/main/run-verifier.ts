@@ -39,21 +39,16 @@ const RunVerifierToolParameters = Type.Object(
 
 const MILLISECONDS_PER_MINUTE = 60_000;
 
-type CandidateReadyResult = {
-  outcome: typeof WORKFLOW_PHASES.CANDIDATE_READY;
+type VerifierTerminalPhase =
+  | typeof WORKFLOW_PHASES.CANDIDATE_READY
+  | typeof WORKFLOW_PHASES.FINDING_DECISIONS;
+
+type VerifierRunResult = {
+  outcome: VerifierTerminalPhase;
   specId: string;
-  phase: typeof WORKFLOW_PHASES.CANDIDATE_READY;
+  phase: VerifierTerminalPhase;
   handoff: VerifierHandoff;
 };
-
-type FindingsResult = {
-  outcome: typeof WORKFLOW_PHASES.FINDING_DECISIONS;
-  specId: string;
-  phase: typeof WORKFLOW_PHASES.FINDING_DECISIONS;
-  handoff: VerifierHandoff;
-};
-
-type VerifierRunResult = CandidateReadyResult | FindingsResult;
 
 type ReadTerminalVerifierResultInput = {
   paths: MaestroPaths;
@@ -65,9 +60,7 @@ const readTerminalVerifierResult = async ({
   paths,
   specId,
   state,
-}: ReadTerminalVerifierResultInput): Promise<
-  CandidateReadyResult | FindingsResult
-> => {
+}: ReadTerminalVerifierResultInput): Promise<VerifierRunResult> => {
   if (
     state.phase !== WORKFLOW_PHASES.CANDIDATE_READY &&
     state.phase !== WORKFLOW_PHASES.FINDING_DECISIONS
@@ -93,16 +86,12 @@ const readTerminalVerifierResult = async ({
     );
   }
 
-  const details = {
+  return {
     specId,
     handoff,
+    outcome: state.phase,
+    phase: state.phase,
   };
-
-  if (state.phase === WORKFLOW_PHASES.CANDIDATE_READY) {
-    return { ...details, outcome: state.phase, phase: state.phase };
-  }
-
-  return { ...details, outcome: state.phase, phase: state.phase };
 };
 
 type ReadVerifierResultInput = {
