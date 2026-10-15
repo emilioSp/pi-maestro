@@ -138,16 +138,18 @@ const getSavedFindingDecision = (
   return { decision: FINDING_DECISIONS.FIX_CODE };
 };
 
-type BuildFindingWorkflowInput = {
-  workflow: FindingWorkflow;
+type ResolveFindingsInput = {
+  paths: MaestroPaths;
+  specId: string;
   decisions: FindingDecision[];
 };
 
-const buildFindingWorkflow = ({
-  workflow,
+export const resolveFindings = async ({
+  paths,
+  specId,
   decisions,
-}: BuildFindingWorkflowInput): FindingWorkflow => {
-  const { state, handoff } = workflow;
+}: ResolveFindingsInput): Promise<ResolvedFindings> => {
+  const { state, handoff } = await readFindingWorkflow({ paths, specId });
   assertDecisions({ decisions, findings: handoff.findings });
 
   const decisionsById = new Map(
@@ -171,37 +173,16 @@ const buildFindingWorkflow = ({
     specId: state.specId,
   });
 
-  return { state: nextState, handoff: nextHandoff };
-};
-
-type ResolveFindingsInput = {
-  paths: MaestroPaths;
-  specId: string;
-  decisions: FindingDecision[];
-};
-
-export const resolveFindings = async ({
-  paths,
-  specId,
-  decisions,
-}: ResolveFindingsInput): Promise<ResolvedFindings> => {
-  const currentWorkflow = await readFindingWorkflow({ paths, specId });
-
-  const workflow = buildFindingWorkflow({
-    workflow: currentWorkflow,
-    decisions,
-  });
-
   const handoffPath = await paths.getActiveVerifierHandoffPath(specId);
-  await writeJson({ path: handoffPath, data: workflow.handoff });
+  await writeJson({ path: handoffPath, data: nextHandoff });
   await writeWorkflowState({
     path: paths.getWorkflowPath(specId),
-    state: workflow.state,
+    state: nextState,
   });
 
   return {
-    findings: workflow.handoff.findings,
-    state: workflow.state,
+    findings,
+    state: nextState,
     projectRoot: paths.getProjectRoot(),
   };
 };
