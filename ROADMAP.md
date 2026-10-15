@@ -110,13 +110,7 @@ Later changes requested by the `owner` extracted the shared check and replaced r
 
 [Specification](.specs/20261013-211629-match-handoff-criteria-to-the-approved-spec/spec.md), [verifier report](.specs/20261013-211629-match-handoff-criteria-to-the-approved-spec/handoffs/verifier/V1.json), and [merged PR #37](https://github.com/emilioSp/pi-maestro/pull/37).
 
-## Now
-
 ### R-17: Record escalation resolutions when the spec changes
-
-#### Status
-
-Planned for reimplementation. The `owner` rejected the previous attempts. Their passing checks do not establish completion of this item.
 
 #### Objective
 
@@ -147,6 +141,7 @@ Saved `resolutions`, workflow phases, tool results, agent instructions, and huma
 Verification checks both observable behavior and use of the central transition definitions for each resolution branch. Passing behavior tests alone is not enough.
 The new `spec` includes coverage labels and omits `acceptance criteria` already covered by tests of the same scenario.
 
+## Now
 
 ## Next
 
