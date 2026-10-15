@@ -115,5 +115,5 @@ Do not delete artifacts, change workflow state, or bypass the tool to force comp
 If restoration or submission cannot be completed safely, report the exact blocker and remaining changes to Maestro and stop.
 
 After a successful handoff, return a concise summary and the saved artifact path to Maestro and stop. Do not run more checks.
-The handoff produces `findings-decision` when findings exist and `candidate-ready` when none exist.
+The handoff produces `finding-decisions` when findings exist and `candidate-ready` when none exist.
 Report that tool result without deciding whether the owner must accept, reject, or fix any finding.

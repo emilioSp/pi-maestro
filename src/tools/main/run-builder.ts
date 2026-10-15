@@ -52,7 +52,7 @@ type BuilderRunResult =
   | {
       outcome: typeof BUILDER_HANDOFF_STATUSES.ESCALATION;
       specId: string;
-      phase: typeof WORKFLOW_PHASES.ESCALATION_DECISION;
+      phase: typeof WORKFLOW_PHASES.ESCALATION_DECISIONS;
       handoff: BuilderHandoff;
     };
 
@@ -120,7 +120,7 @@ const buildRunResult = async ({
     return await readDoneBuilderResult({ paths, specId });
   }
 
-  if (state.phase === WORKFLOW_PHASES.ESCALATION_DECISION) {
+  if (state.phase === WORKFLOW_PHASES.ESCALATION_DECISIONS) {
     const handoff = await readBuilderHandoff({
       path: await paths.getActiveBuilderHandoffPath(specId),
       specId,

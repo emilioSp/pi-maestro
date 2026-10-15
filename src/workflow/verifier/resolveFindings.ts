@@ -1,6 +1,6 @@
 /**
  * Objective: Record owner decisions for current verifier findings on the active handoff.
- * Used: When the owner resolves a findings-decision handoff.
+ * Used: When the owner resolves a finding-decisions handoff.
  */
 
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
@@ -29,7 +29,17 @@ type FindingDecisionApproved = {
   decision: typeof FINDING_DECISIONS.FIX_CODE;
 };
 
-export type FindingDecision = FindingDecisionApproved | FindingDecisionRejected;
+type FindingDecisionRevision = {
+  findingId: string;
+  decision: typeof FINDING_DECISIONS.REVISE_SPEC;
+  reason: string;
+  specChange: string;
+};
+
+export type FindingDecision =
+  | FindingDecisionApproved
+  | FindingDecisionRejected
+  | FindingDecisionRevision;
 
 export type ResolvedFindings = {
   findings: VerifierFinding[];
@@ -98,9 +108,9 @@ const readFindingWorkflow = async ({
     );
   }
 
-  if (state.phase !== WORKFLOW_PHASES.FINDINGS_DECISION) {
+  if (state.phase !== WORKFLOW_PHASES.FINDING_DECISIONS) {
     throw new Error(
-      `Finding resolution requires findings-decision state, found "${state.phase}".`,
+      `Finding resolution requires finding-decisions state, found "${state.phase}".`,
     );
   }
 
@@ -142,6 +152,17 @@ const buildFindingWorkflow = ({
 
   const findings = handoff.findings.map((finding) => {
     const decision = decisionsById.get(finding.id);
+
+    if (decision?.decision === FINDING_DECISIONS.REVISE_SPEC) {
+      return {
+        ...finding,
+        decision: {
+          decision: FINDING_DECISIONS.REVISE_SPEC,
+          reason: decision.reason,
+          specChange: decision.specChange,
+        },
+      };
+    }
 
     if (decision?.decision === FINDING_DECISIONS.REJECT) {
       return {

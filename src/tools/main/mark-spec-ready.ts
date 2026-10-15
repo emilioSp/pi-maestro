@@ -14,7 +14,7 @@ export const MARK_SPEC_READY_TOOL = {
   NAME: 'maestro_mark_spec_ready',
   LABEL: 'Mark Spec Ready',
   DESCRIPTION:
-    'Approve the current spec.md after the owner replies GREEN FLAG and move the workflow to ready-for-builder. Only the owner reply GREEN FLAG authorizes approval. After this transition succeeds, call maestro_run_builder in the foreground.',
+    'Approve the current spec.md only from drafting-spec after the owner replies GREEN FLAG, then move to ready-for-builder. Only the owner reply GREEN FLAG authorizes approval. After this transition succeeds, call maestro_run_builder in the foreground.',
 } as const;
 
 const MarkSpecReadyToolParameters = Type.Object(

@@ -1,6 +1,6 @@
 /**
  * Objective: Register owner resolution of every current builder escalation.
- * Used: When the owner keeps the approved contract and resolves all current questions.
+ * Used: When the owner resolves all current questions, including spec revision decisions.
  */
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
@@ -17,12 +17,13 @@ export const RESOLVE_ESCALATIONS_TOOL = {
   NAME: 'maestro_resolve_escalations',
   LABEL: 'Resolve Escalations',
   DESCRIPTION:
-    'Record the explicit owner decision for every current builder escalation when the approved contract remains valid. Save the resolution and workflow transition, then return ready-for-builder without running the builder. If the contract must change, edit spec.md and use maestro_mark_spec_ready instead.',
+    'Record the complete owner decision batch in the active builder handoff before changing phase. Set specChangeRequired to false for ready-for-builder, or true for drafting-spec when any answer requires revision. For each revision answer, identify escalationId and describe the agreed spec change in decision. In drafting-spec, revise the same spec and obtain renewed GREEN FLAG before a separate maestro_mark_spec_ready call. This tool neither approves a spec nor runs an agent.',
 } as const;
 
 const ResolveEscalationsToolParameters = Type.Object(
   {
     specId: Type.String({ pattern: SPEC_ID_PATTERN.source }),
+    specChangeRequired: Type.Boolean(),
     decisions: Type.Array(
       Type.Object(
         {
@@ -44,26 +45,32 @@ export const registerResolveEscalationsTool = (pi: ExtensionAPI): void => {
     description: RESOLVE_ESCALATIONS_TOOL.DESCRIPTION,
     parameters: ResolveEscalationsToolParameters,
     async execute(_toolCallId, params, _signal, _onUpdate, context) {
-      const { specId, decisions } = params;
+      const { specId, specChangeRequired, decisions } = params;
       const { paths } = await resolveToolRunContext(context.cwd);
 
       const resolved = await resolveEscalations({
         paths,
         specId,
+        specChangeRequired,
         decisions,
       });
+
+      const nextAction = specChangeRequired
+        ? 'Revise the same spec with the owner and obtain renewed GREEN FLAG. Then call maestro_mark_spec_ready separately before running the builder.'
+        : 'Run the builder separately. No renewed approval is required.';
 
       return {
         content: [
           {
             type: 'text',
-            text: `All current escalations resolved. Spec ${resolved.state.specId} is ready-for-builder. Run the builder separately.`,
+            text: `All current escalations resolved. Spec ${resolved.state.specId} is ${resolved.state.phase}. ${nextAction}`,
           },
         ],
         details: {
           specId: resolved.state.specId,
           handoff: resolved.handoff,
           phase: resolved.state.phase,
+          nextAction,
           projectRoot: resolved.projectRoot,
         },
       };

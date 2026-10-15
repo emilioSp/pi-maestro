@@ -17,7 +17,7 @@ export const getWorkflowEventByBuilderHandoff = ({
   }
 
   if (status === BUILDER_HANDOFF_STATUSES.ESCALATION) {
-    return WORKFLOW_EVENTS.OPEN_ESCALATION;
+    return WORKFLOW_EVENTS.BUILDER_OPEN_ESCALATIONS;
   }
 
   throw new Error(`Unexpected builder handoff status: "${status}".`);

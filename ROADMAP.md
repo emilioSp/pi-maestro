@@ -60,7 +60,7 @@ Renamed `test/` to `tests/` at the owner's request. Updated imports, fixture pat
 
 #### Evidence
 
-[Test support](tests/support/), [fixtures](tests/fixtures/), [lint configuration](biome.json), and [project instructions](AGENTS.md#tests).
+[Test support](tests/support/), [fixtures](tests/fixtures/), and [lint configuration](biome.json).
 
 ### R-16: Verify code quality against AGENTS.md instructions
 
@@ -109,6 +109,49 @@ Later changes requested by the `owner` extracted the shared check and replaced r
 #### Evidence
 
 [Specification](.specs/20261013-211629-match-handoff-criteria-to-the-approved-spec/spec.md), [verifier report](.specs/20261013-211629-match-handoff-criteria-to-the-approved-spec/handoffs/verifier/V1.json), and [merged PR #37](https://github.com/emilioSp/pi-maestro/pull/37).
+
+### R-17: Record escalation resolutions when the spec changes
+
+#### Objective
+
+Save every current `escalation` answer in the original `builder` `handoff`, whether the `spec` stays unchanged or requires revision.
+Each `resolution` records the owner's chosen solution and reason. A decision requiring revision also identifies the `escalation` and describes the agreed `spec` change.
+
+#### Agreed flow
+
+`Maestro` records the complete decision batch through `maestro_resolve_escalations` before changing phase.
+
+| Decision | Next phase and action |
+|---|---|
+| No `spec` change | `escalation-decisions` → `ready-for-builder`. The `builder` continues under the approved `spec`, without renewed approval. |
+| `Spec` change required | `escalation-decisions` → `drafting-spec`. The `owner` and `Maestro` revise and review the same `spec`. |
+| Revised `spec` receives renewed `GREEN FLAG` | `drafting-spec` → `ready-for-builder` through separate `maestro_mark_spec_ready` approval. |
+
+Direct `spec` approval from `escalation-decisions` is rejected. Recording answers does not move to `ready-for-verifier`; that phase requires a completed `builder` `pass`.
+
+#### Implementation boundaries
+
+Reuse the existing resolution operation and `handoff` fields. Do not add a parallel decision store, tool, or workflow phase.
+Define both resolution transitions explicitly in `src/workflow/transitions.ts` and apply them through `transitionWorkflow`. Direct phase assignment elsewhere is banned.
+Preserve initial `spec` approval, `verifier` `finding` decisions, existing batch validation, and historical `handoffs`.
+
+#### Completed when
+
+Saved `resolutions`, workflow phases, tool results, agent instructions, and human documentation follow the agreed flow.
+Verification checks both observable behavior and use of the central transition definitions for each resolution branch. Passing behavior tests alone is not enough.
+The new `spec` includes coverage labels and omits `acceptance criteria` already covered by tests of the same scenario.
+
+### R-20: Route finding-driven spec revisions through drafting-spec
+
+Implemented the approved revision route. `Maestro` records every current `finding` decision before returning to `drafting-spec` when revision is required.
+The `owner` reviews the same revised `spec` and gives renewed `GREEN FLAG` before separate approval and another `builder` `run`.
+Revision takes priority in mixed batches. Direct approval from `finding-decisions` is rejected.
+
+Later event naming cleanup identifies `builder` and `owner` actions explicitly. Both revision routes use `OWNER_REQUEST_SPEC_REVISION` without changing the phase flow. Batch resolution uses `RESOLVE_ESCALATIONS`, and the status label refers to `escalations` in the plural. The saved decision phases are named `escalation-decisions` and `finding-decisions`.
+
+#### Evidence
+
+[Specification](.specs/20261015-154812-route-finding-driven-spec-revisions-through-drafting-spec/spec.md) and [resolution integration tests](src/tools/main/resolve-findings.integration.test.ts).
 
 ## Now
 
@@ -160,14 +203,28 @@ Explore how `Maestro` can reconcile saved `artifacts` and workflow state. The re
 
 Not yet defined. The `owner` must define the intended outcome, recovery boundaries, and completion condition before this item can move forward.
 
-### R-17: Record escalation resolutions when the spec changes
+### R-18: Label acceptance criterion coverage
 
 #### Objective
 
-Record the owner's chosen solution in each `escalation`'s `resolution`, including when that decision requires a `spec` revision. The current revision path leaves this field `null` in the original `builder` `handoff`.
-
-When an `escalation` causes a `spec` revision, its `resolution` must state that the `spec` was revised because of that `escalation` and describe the agreed change.
+Label each `acceptance criterion` in a `spec` as success, failure, or keep current behavior unchanged.
+The label makes the purpose of its `probe` clear. Failure means an invalid action is correctly rejected.
 
 #### Completed when
 
-Before another `builder` `run` starts, every current `escalation` has a non-null `resolution` containing the chosen solution and reason. This applies whether the `spec` stays unchanged or is revised. The original `handoff` preserves the decision and its link to any resulting `spec` revision.
+The `spec` template and `Maestro` guidance require a coverage label for every `acceptance criterion`. 
+Each label matches the scenario and `expected result`. A `spec` does not need all three categories when they do not apply.
+
+### R-19: Avoid acceptance criteria already covered by tests
+
+#### Objective
+
+Do not add an `acceptance criterion` when an existing test already covers the same starting conditions, action, and `expected result`.
+
+Similar tests do not count if they miss the proposed scenario.
+
+#### Completed when
+
+`Maestro` guidance requires inspection of existing tests before adding `acceptance criteria`. 
+During `spec` review, `Maestro` removes criteria already covered by tests and keeps numbering continuous. 
+Required behavior remains documented in the `spec`.

@@ -24,10 +24,10 @@ import {
   SPEC_ID,
 } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
+import { registerMarkSpecReadyTool } from '#tools/main/mark-spec-ready.ts';
 import { registerResolveFindingsTool } from '#tools/main/resolve-findings.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
-import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
@@ -39,6 +39,7 @@ type FindingResolutionDetails = {
   projectRoot: string;
   rejectedFindingIds: string[];
   findingsRequiringFixIds: string[];
+  findingsRequiringSpecRevisionIds: string[];
 };
 
 const createFinding = (id: string): VerifierFinding => ({
@@ -435,35 +436,86 @@ describe('resolve findings tool', () => {
     await expect(readFile(handoffPath, 'utf8')).resolves.toBe(handoffBefore);
   });
 
-  it('given unresolved findings when the owner approves a revised spec then finding resolution is bypassed', async () => {
-    const { paths } = await createFindingsDecisionWorkflow([
-      createFinding('F1'),
+  it('given an archived-row finding when revision is recorded then drafting requires separate renewed approval of the same spec', async () => {
+    const { paths, repository } = await createFindingsDecisionWorkflow([
+      { ...createFinding('F1'), summary: 'Exports omit archived rows.' },
     ]);
 
-    const handoffBefore = await readCurrentHandoff(paths);
-    const revisedSpec = '# Revised contract\n';
+    const handoffPath = await paths.getActiveVerifierHandoffPath(SPEC_ID);
+    const specBefore = await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8');
 
-    await writeFile(paths.getSpecFilePath(SPEC_ID), revisedSpec, 'utf8');
-
-    const stateAfter = await markSpecReady({
-      paths,
-      specId: SPEC_ID,
-      activeWorkflowSpecId: SPEC_ID,
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveFindingsTool,
     });
 
-    expect(stateAfter.phase).toBe(WORKFLOW_PHASES.READY_FOR_BUILDER);
-    await expect(
-      readFile(paths.getSpecFilePath(SPEC_ID), 'utf8'),
-    ).resolves.toBe(revisedSpec);
-    await expect(
-      readVerifierHandoff({
-        path: paths.getVerifierHandoffPath({
-          specId: SPEC_ID,
-          handoffPassNumber: 1,
-        }),
-        specId: SPEC_ID,
-      }),
-    ).resolves.toEqual(handoffBefore);
+    const result = await tool.execute('revision-choice', {
+      specId: SPEC_ID,
+      decisions: [
+        {
+          findingId: 'F1',
+          decision: FINDING_DECISIONS.REVISE_SPEC,
+          reason: 'Exports must show current records only',
+          specChange: 'Exclude archived rows from exports',
+        },
+      ],
+    });
+
+    expect(result.details).toMatchObject({
+      specId: SPEC_ID,
+      phase: WORKFLOW_PHASES.DRAFTING_SPEC,
+      findingsRequiringSpecRevisionIds: ['F1'],
+      findingsRequiringFixIds: [],
+      rejectedFindingIds: [],
+    });
+    expect(result.content).toEqual([
+      {
+        type: 'text',
+        text: 'Recorded rejections for none. Findings requiring code fixes: none. Findings requiring spec revision: F1. The workflow is drafting-spec. Revise the same spec with the owner and obtain renewed GREEN FLAG. Then call maestro_mark_spec_ready separately before running the builder.',
+      },
+    ]);
+    expect(
+      await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
+    ).toMatchObject({
+      specId: SPEC_ID,
+      phase: WORKFLOW_PHASES.DRAFTING_SPEC,
+    });
+    expect(await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8')).toBe(
+      specBefore,
+    );
+    expect((await readCurrentHandoff(paths)).findings[0].decision).toEqual({
+      decision: FINDING_DECISIONS.REVISE_SPEC,
+      reason: 'Exports must show current records only',
+      specChange: 'Exclude archived rows from exports',
+    });
+    const resolvedHandoff = await readFile(handoffPath, 'utf8');
+
+    const revisedSpec =
+      '# Export current rows\n\n### AC1: Export current rows\nExclude archived rows from exports.\n';
+
+    await writeFile(paths.getSpecFilePath(SPEC_ID), revisedSpec);
+
+    // Simulate the separate approval call after the owner gives renewed GREEN FLAG.
+    const { tool: approval } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerMarkSpecReadyTool,
+    });
+
+    const approved = await approval.execute('renewed-approval', {
+      specId: SPEC_ID,
+    });
+
+    expect(approved.details).toMatchObject({
+      specId: SPEC_ID,
+      phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
+    });
+    expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toEqual(
+      approved.details,
+    );
+    expect(await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8')).toBe(
+      revisedSpec,
+    );
+    expect(await readFile(handoffPath, 'utf8')).toBe(resolvedHandoff);
   });
 
   it('given an unknown finding when resolution is requested then a domain error is returned without changes', async () => {

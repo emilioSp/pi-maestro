@@ -1,0 +1,44 @@
+{
+  "status": "done",
+  "summary": "Recorded all escalation answers before routing through central transitions. Added the required boolean routing flag, separate revision approval, updated guidance and documentation, and regression coverage.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npm run check: resolve-escalations.integration.test.ts mixed revision batch test saves the exact archived-row and UTF-8 resolutions in B2, compares all other B2 content, and checks B1 remains byte-for-byte unchanged.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "npm run check: mixed revision batch integration test checks drafting-spec in saved workflow, structured result, and response text, including revision of the same spec and renewed GREEN FLAG before separate approval. extensions/maestro.integration.test.ts also exercises a single-question revision batch through the registered extension.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "npm run check: mixed revision batch integration test revises the same spec with continuous AC numbering, simulates renewed owner approval through a separate registered maestro_mark_spec_ready call, verifies ready-for-builder, and confirms saved resolutions remain unchanged.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Inspected src/workflow/transitions.ts and traced src/workflow/builder/resolveEscalations.ts: both resolution events are centrally defined and selected through transitionWorkflow, with no direct phase assignment. npm run check runs both central-transition unit scenarios and both routing integration branches.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Read src/tools/main/resolve-escalations.ts, src/tools/main/mark-spec-ready.ts, src/maestro/instructions/getMaestroInstructions.ts, README.md, and docs/workflow.md. Confirmed complete answer recording before drafting-spec, revision of the same spec, renewed GREEN FLAG, separate approval, unchanged-contract routing, and rejection of direct escalation-decision approval are consistent.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "npm run check: parameterized routing-flag integration test submits an otherwise valid single-question compiler resolution with specChangeRequired omitted, string \"true\", number 1, and null. Each call rejects; spec.md, workflow.json, and handoff contents remain unchanged.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "Final npm run check passed all 233 tests across 38 files, lint, typecheck, and coverage thresholds. Coverage: statements 95.23%, branches 86.88%, functions 99.39%, lines 95.25%. git diff --check passed.",
+    "The routing flag is not persisted. Existing handoff resolution fields and workflow schema fields remain unchanged; existing batch validation and finding-decision behavior remain covered.",
+    "Preserved pre-existing AGENTS.md and ROADMAP.md changes. Updated the R-17 implementation state without claiming independent verification. No dependencies or structural files were added."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261015-140755-record-escalation-resolutions-when-the-spec-changes"
+}

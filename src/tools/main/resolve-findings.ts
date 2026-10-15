@@ -16,7 +16,7 @@ export const RESOLVE_FINDINGS_TOOL = {
   NAME: 'maestro_resolve_findings',
   LABEL: 'Resolve Findings',
   DESCRIPTION:
-    'Record the explicit owner decision for every current verifier finding when the approved contract remains valid. Save the resolution and workflow transition. If the contract must change, edit spec.md and use maestro_mark_spec_ready instead.',
+    'Record the complete explicit owner decision batch for current verifier findings before changing phase. Any revise-spec decision returns to drafting-spec without approval or an agent run. Then revise the same spec with the owner, obtain renewed GREEN FLAG, and call maestro_mark_spec_ready separately before running the builder.',
 } as const;
 
 const FindingDecisionFields = {
@@ -44,9 +44,20 @@ const FixCodeFindingDecisionSchema = Type.Object(
   },
 );
 
+const ReviseSpecFindingDecisionSchema = Type.Object(
+  {
+    ...FindingDecisionFields,
+    decision: StringEnum([FINDING_DECISIONS.REVISE_SPEC] as const),
+    reason: Type.String({ minLength: 1, pattern: '\\S' }),
+    specChange: Type.String({ minLength: 1, pattern: '\\S' }),
+  },
+  { additionalProperties: false },
+);
+
 const FindingDecisionSchema = Type.Union([
   RejectFindingDecisionSchema,
   FixCodeFindingDecisionSchema,
+  ReviseSpecFindingDecisionSchema,
 ]);
 
 const ResolveFindingsToolParameters = Type.Object(
@@ -63,6 +74,7 @@ type FindingResolutionDetails = {
   projectRoot: string;
   rejectedFindingIds: string[];
   findingsRequiringFixIds: string[];
+  findingsRequiringSpecRevisionIds: string[];
 };
 
 const formatFindingIds = (findingIds: string[]): string =>
@@ -71,6 +83,14 @@ const formatFindingIds = (findingIds: string[]): string =>
 const formatResolution = (details: FindingResolutionDetails): string => {
   const rejected = formatFindingIds(details.rejectedFindingIds);
   const requiringFix = formatFindingIds(details.findingsRequiringFixIds);
+
+  if (details.phase === WORKFLOW_PHASES.DRAFTING_SPEC) {
+    const requiringRevision = formatFindingIds(
+      details.findingsRequiringSpecRevisionIds,
+    );
+
+    return `Recorded rejections for ${rejected}. Findings requiring code fixes: ${requiringFix}. Findings requiring spec revision: ${requiringRevision}. The workflow is drafting-spec. Revise the same spec with the owner and obtain renewed GREEN FLAG. Then call maestro_mark_spec_ready separately before running the builder.`;
+  }
 
   if (details.phase === WORKFLOW_PHASES.READY_FOR_BUILDER) {
     return `Recorded rejections for ${rejected}. Findings requiring code fixes: ${requiringFix}. The workflow is ready-for-builder. Run the builder separately.`;
@@ -107,6 +127,12 @@ export const registerResolveFindingsTool = (pi: ExtensionAPI): void => {
         rejectedFindingIds: resolved.findings
           .filter(
             ({ decision }) => decision?.decision === FINDING_DECISIONS.REJECT,
+          )
+          .map(({ id }) => id),
+        findingsRequiringSpecRevisionIds: resolved.findings
+          .filter(
+            ({ decision }) =>
+              decision?.decision === FINDING_DECISIONS.REVISE_SPEC,
           )
           .map(({ id }) => id),
         findingsRequiringFixIds: resolved.findings

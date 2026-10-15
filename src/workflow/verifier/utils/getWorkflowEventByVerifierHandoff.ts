@@ -13,7 +13,7 @@ export const getWorkflowEventByVerifierHandoff = (
   handoff: VerifierHandoff,
 ): WorkflowEvent => {
   if (handoff.findings.length === 0) {
-    return WORKFLOW_EVENTS.VERIFIER_APPROVED;
+    return WORKFLOW_EVENTS.VERIFIER_DONE;
   }
 
   if (handoff.findings.every(({ decision }) => decision === null)) {
@@ -22,10 +22,18 @@ export const getWorkflowEventByVerifierHandoff = (
 
   if (
     handoff.findings.some(
+      ({ decision }) => decision?.decision === FINDING_DECISIONS.REVISE_SPEC,
+    )
+  ) {
+    return WORKFLOW_EVENTS.OWNER_REQUEST_SPEC_REVISION;
+  }
+
+  if (
+    handoff.findings.some(
       ({ decision }) => decision?.decision === FINDING_DECISIONS.FIX_CODE,
     )
   ) {
-    return WORKFLOW_EVENTS.REQUEST_FIXES;
+    return WORKFLOW_EVENTS.OWNER_REQUEST_FIXES;
   }
 
   if (
@@ -33,7 +41,7 @@ export const getWorkflowEventByVerifierHandoff = (
       ({ decision }) => decision?.decision === FINDING_DECISIONS.REJECT,
     )
   ) {
-    return WORKFLOW_EVENTS.REJECT_FINDINGS;
+    return WORKFLOW_EVENTS.OWNER_REJECT_FINDINGS;
   }
 
   throw new Error('Unexpected verifier finding decisions.');

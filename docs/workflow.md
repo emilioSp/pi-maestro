@@ -61,16 +61,16 @@ flowchart TD
     findings -->|None| candidate
 
     buildOutcome -->|Escalation| ownerEscalation{Owner decides every question}
-    ownerEscalation -->|Spec unchanged| recordEscalation[Maestro records all answers]
-    recordEscalation --> build
-    ownerEscalation -->|Spec changes| reviseSpec[Owner and Maestro revise the spec]
+    ownerEscalation --> recordEscalation[Maestro records all answers]
+    recordEscalation -->|Spec unchanged| build
+    recordEscalation -->|Spec changes| reviseSpec[Owner and Maestro revise the spec]
     reviseSpec --> approval
 
     findings -->|One or more| ownerFindings[Owner decides every finding]
-    ownerFindings -->|Reject all with reasons| candidate
-    ownerFindings -->|Fix code| recordFixes[Maestro records the decisions]
-    recordFixes --> build
-    ownerFindings -->|Revise spec| reviseSpec
+    ownerFindings --> recordFindings[Maestro records all decisions]
+    recordFindings -->|Reject all with reasons| candidate
+    recordFindings -->|Fix code without spec changes| build
+    recordFindings -->|Spec changes| reviseSpec
 
     candidate --> summary
     summary --> review
@@ -86,13 +86,13 @@ The default path is `.specs/<spec-id>/workflow.json`. The `spec` directory is [c
 
 | Phase | Meaning |
 |---|---|
-| `drafting-spec` | The `owner` and `Maestro` are preparing the initial `spec`. |
+| `drafting-spec` | The `owner` and `Maestro` prepare the initial `spec` or revise it after recorded `escalation` answers or `finding` decisions. |
 | `ready-for-builder` | The approved `spec` or recorded `owner` decisions permit a `builder` `run`. |
 | `builder-running` | A `builder` `run` is active. |
-| `escalation-decision` | The `owner` must decide how to handle every `escalation` question. |
+| `escalation-decisions` | The `owner` must decide how to handle every `escalation` question. |
 | `ready-for-verifier` | The `builder` completed the work and the `verifier` can start. |
 | `verifier-running` | A `verifier` `run` is active. |
-| `findings-decision` | The `owner` must decide how to handle every current `finding`. |
+| `finding-decisions` | The `owner` must decide how to handle every current `finding`. |
 | `candidate-ready` | The `verifier` reported no `findings`, or the `owner` rejected every `finding` with a reason. The workflow is complete. |
 
 ## Spec approval
@@ -104,7 +104,7 @@ For the initial `spec`:
 3. `Maestro` asks the `owner` to inspect the current `spec.md` and reply `GREEN FLAG` to approve it and start the `builder`.
 4. After that reply, `Maestro` saves `ready-for-builder` and starts the `builder` in the foreground.
 
-Approval freezes the `spec`. The `spec` and its visual prototypes remain unchanged during `builder` and `verifier` execution. `Spec` revisions are limited to the decision phases described in [Spec revision](#spec-revision).
+Approval freezes the `spec`. The `spec` and its visual prototypes remain unchanged during `builder` and `verifier` execution. See [Spec revision](#spec-revision) for permitted revisions.
 
 ## Acceptance criteria
 
@@ -125,14 +125,17 @@ For instance a technical failure, an undefined behavior, a conflict with the `sp
 
 The `builder` saves all questions from one `pass` in the `escalations` list of its numbered `handoff`. `Maestro` identifies each question with both report and `escalation` IDs, such as `B1/E1`. See [Escalation references](glossary.md#escalation-references) for their scope.
 
-`Maestro` presents each question, evidence, options, consequences, and next steps. The workflow pauses in `escalation-decision` while the `owner` decides how to proceed.
+`Maestro` presents each question, evidence, options, consequences, and next steps. The workflow pauses in `escalation-decisions` while the `owner` decides how to proceed.
 
-If the `spec` stays unchanged, the `owner` gives `Maestro` an answer and reason for every current question. The `owner` can select a listed option or give a different decision.
+The `owner` gives `Maestro` an answer and reason for every current question, whether or not the `spec` must change.
+The `owner` can select a listed option or give a different decision.
+
+`Maestro` saves all answers in the current `builder` `handoff` before the workflow continues.
 
 | `Owner` choice | Result |
 |---|---|
-| Keep the current `spec` | `Maestro` saves all answers and reasons together in the active `builder` `handoff`, returns to `ready-for-builder`, and starts another `builder` `run`. |
-| Change the `spec` | The `owner` and `Maestro` revise the same `spec` and obtain renewed approval before another `builder` `run`. |
+| Keep the current `spec` | `Maestro` starts another `builder` `run` without renewed approval. |
+| Change the `spec` | The `owner` and `Maestro` revise the same `spec`. The `owner` reviews it and replies `GREEN FLAG` before another `builder` `run`. |
 
 `Owner` decisions update only the questions' `resolution` fields. The handoff's other content and earlier `handoffs` remain unchanged.
 
@@ -147,19 +150,27 @@ Every current `finding` requires an `owner` decision, regardless of severity. `M
 | Decision | Result |
 |---|---|
 | `reject` | Records the owner's reason. If every `finding` is rejected, the workflow reaches `candidate-ready`. |
-| `fix-code` | Keeps the current `spec` and returns to `ready-for-builder` for code fixes. |
+| `fix-code` | Keeps the current `spec` and returns to `ready-for-builder` for code fixes when no decision requires revision. |
+| `revise-spec` | Records the owner's reason and agreed requirement change, then returns to `drafting-spec`. |
 
-Any `fix-code` decision requires another `builder` `run`, including when other `findings` are rejected. After the `builder` completes the fixes, the `verifier` checks the work again.
+`Maestro` saves every current decision together before the phase changes.
+If any `finding` requires revision, revision takes priority over code fixes and rejections. See [Spec revision](#spec-revision).
 
-If the `spec` must change, the `owner` and `Maestro` use [Spec revision](#spec-revision) instead. Earlier `findings` then become historical context.
+Without revision, any `fix-code` decision requires another `builder` `run`, including when other `findings` are rejected.
+After the `builder` completes the fixes, the `verifier` checks the work again.
 
 ## Spec revision
 
-`Spec` revisions are allowed only in `escalation-decision` or `findings-decision`. `Maestro` revises the same `spec` with the `owner`, including its prototypes when needed.
+For either `escalation` answers or `finding` decisions, `Maestro` records the complete batch before the workflow returns to `drafting-spec`.
+This decision does not approve the `spec` or start an agent.
+The `owner` and `Maestro` then revise the same `spec` together in `drafting-spec`.
 
-After review and cleanup, `Maestro` asks the `owner` to inspect the revised `spec` and reply `GREEN FLAG` again. `Maestro` then records `ready-for-builder` and starts another `builder` `run`.
+The `owner` reviews the changes and replies `GREEN FLAG` again.
+`Maestro` records that renewed approval separately, moves to `ready-for-builder`, and starts another `builder` `run`.
+Approval is permitted only in `drafting-spec`, not directly from either decision phase.
 
-Previous `escalations`, `findings`, and `handoffs` remain as historical context. The revised `spec` defines the requirements for subsequent work.
+The revised `spec` controls subsequent work.
+Earlier `escalations`, `findings`, and their decisions remain historical context.
 
 ## Verification boundary
 

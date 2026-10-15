@@ -96,34 +96,6 @@ describe('markSpecReady', () => {
   });
 
   it.each([
-    WORKFLOW_PHASES.ESCALATION_DECISION,
-    WORKFLOW_PHASES.FINDINGS_DECISION,
-  ])(
-    'given the %s phase when the spec is approved then it becomes ready without changing its content',
-    async (phase) => {
-      const { created, paths, repository } = await createWorkflow(phase);
-      const originalContent = `${await readFile(created.specFilePath, 'utf8')}\n### AC2: Another criterion\n`;
-      await writeFile(created.specFilePath, originalContent, 'utf8');
-
-      await expect(
-        markSpecReady({
-          paths,
-          specId: SPEC_ID,
-          activeWorkflowSpecId: SPEC_ID,
-        }),
-      ).resolves.toMatchObject({
-        specId: SPEC_ID,
-        phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
-      });
-
-      await expect(readFile(created.specFilePath, 'utf8')).resolves.toBe(
-        originalContent,
-      );
-      expect(paths.getProjectRoot()).toBe(repository.path);
-    },
-  );
-
-  it.each([
     {
       phase: WORKFLOW_PHASES.DRAFTING_SPEC,
       numbers: [2],
@@ -139,14 +111,6 @@ describe('markSpecReady', () => {
     {
       phase: WORKFLOW_PHASES.DRAFTING_SPEC,
       numbers: [1, 3, 2],
-    },
-    {
-      phase: WORKFLOW_PHASES.ESCALATION_DECISION,
-      numbers: [1, 3],
-    },
-    {
-      phase: WORKFLOW_PHASES.FINDINGS_DECISION,
-      numbers: [1, 3],
     },
   ])(
     'given criteria $numbers in $phase when approved then an ordering error leaves all saved files unchanged',
@@ -228,6 +192,8 @@ describe('markSpecReady', () => {
   );
 
   it.each([
+    WORKFLOW_PHASES.ESCALATION_DECISIONS,
+    WORKFLOW_PHASES.FINDING_DECISIONS,
     WORKFLOW_PHASES.READY_FOR_BUILDER,
     WORKFLOW_PHASES.BUILDER_RUNNING,
     WORKFLOW_PHASES.READY_FOR_VERIFIER,

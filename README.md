@@ -79,7 +79,11 @@ The `owner` must not edit product files while the workflow runs.
 `Maestro` can perform temporary experiments with `owner` agreement during `spec` preparation and permitted revisions. See [Workflow](docs/workflow.md#spec-approval).
 
 An `escalation` asks the `owner` to decide an implementation question, and a `finding` records a technical issue reported by the `verifier`. The `owner` discusses both with `Maestro`, never directly with the `builder` or `verifier`.
-If a `spec` change is needed during an `escalation` or `finding` decision, the `owner` reviews the revised `spec` and replies `GREEN FLAG` again. `Maestro` then starts another `builder` `run`.
+`Maestro` records all current `escalation` answers or `finding` decisions in the active `handoff` before changing phase.
+
+If any decision requires a `spec` change, the workflow returns to `drafting-spec` before the `owner` and `Maestro` revise the same `spec`.
+The `owner` reviews the revised `spec` and replies `GREEN FLAG` again.
+`Maestro` records renewed approval separately before another `builder` `run`.
 
 The workflow ends at `candidate-ready`. Rejected `findings` retain their reasons. Later changes are outside the completed verification. The `owner` controls any later Git use, pull request, and merge.
 

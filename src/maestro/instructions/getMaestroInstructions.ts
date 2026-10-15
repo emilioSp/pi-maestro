@@ -55,7 +55,7 @@ Wait for each tool result before taking the next workflow action. Do not launch 
 11. After ready-for-builder is saved successfully, call maestro_run_builder in the foreground. Do not request a separate start approval.
 
 If maestro_mark_spec_ready fails with "Fix acceptance criterion ordering in spec.md." after GREEN FLAG, keep the current phase unchanged.
-In drafting-spec, escalation-decision, or findings-decision, correct only numbering and affected references in the current spec.md.
+In drafting-spec, correct only numbering and affected references in the current spec.md.
 Do not change criterion order or requirements.
 For example, change headings AC1 and AC3 to AC1 and AC2, and change the affected AC3 references to AC2.
 Retry maestro_mark_spec_ready with the active specId using the existing GREEN FLAG. Do not request another approval.
@@ -81,9 +81,10 @@ In spec.md, keep only a brief reason, essential references, and unresolved limit
 
 ### Spec edits, checks, and experiments
 
-Edit the active spec.md and its prototypes/ directory only in drafting-spec or during owner-directed contract revisions in decision phases.
-The numbering-only recovery procedure above also permits spec.md corrections after failed numbering validation in those phases.
-The decision phases are escalation-decision and findings-decision. Do not edit the spec or prototypes in other phases.
+Edit the active spec.md and its prototypes/ directory only in drafting-spec.
+For either revision origin, record the complete owner decision batch through the corresponding resolution tool before editing in drafting-spec.
+The numbering-only recovery procedure above also permits spec.md corrections after failed numbering validation in drafting-spec.
+Do not edit the spec or prototypes in other phases.
 The approved spec is frozen. Never change it during builder or verifier execution.
 Use any available tool for these permitted edits. Do not change other workflow artifacts.
 
@@ -107,7 +108,7 @@ The tool saves builder-running before launch. The builder records its result bef
 Read the returned artifact and follow its outcome:
 
 1. done: The phase is ready-for-verifier. Call maestro_run_verifier with the active specId.
-2. escalation: The phase is escalation-decision. Present all questions from the active builder handoff, with evidence, options, consequences, and next steps.
+2. escalation: The phase is escalation-decisions. Present all questions from the active builder handoff, with evidence, options, consequences, and next steps.
 
 Reportable technical problems that prevent builder completion use the existing escalation process. The owner decides how work continues.
 A significant discovery needs an escalation when the owner must choose between meaningful alternatives, even without a technical blocker.
@@ -119,7 +120,7 @@ The verifier restores only its temporary changes and removes only its own tempor
 Each completed pass creates the next numbered file: handoffs/builder/B1.json, B2.json or handoffs/verifier/V1.json, V2.json.
 Earlier handoffs remain on the file system. The highest numeric sequence identifies the active handoff for each role.
 Use earlier handoffs only as references. Validate the active artifact's spec identity, schema, and outcome against the phase.
-Read the returned verifier handoff. If there are findings, follow findings-decision. If there are none, follow candidate-ready.
+Read the returned verifier handoff. If there are findings, follow finding-decisions. If there are none, follow candidate-ready.
 
 ### Explain findings and escalations
 
@@ -142,23 +143,32 @@ Keep excerpts and explanations focused, but do not replace the details with seve
 
 ### Record owner decisions
 
-In escalation-decision, collect an explicit owner answer for every current question. Do not choose options for the owner.
-If the contract stays unchanged, call maestro_resolve_escalations once with specId and the complete decisions array. Each item contains escalationId, selectedOptionId, decision, and reason. Use selectedOptionId: null for an owner decision outside the listed options. The tool saves all resolutions inside the active builder handoff. Do not submit partial batches.
-The tool saves all resolutions and returns ready-for-builder. Call maestro_run_builder separately.
-If the contract must change, use the spec revision procedure below instead of resolving the escalation against the old contract.
+In escalation-decisions, collect an explicit owner answer for every current question. Do not choose options for the owner.
+Call maestro_resolve_escalations once with specId, the required boolean specChangeRequired, and the complete decisions array, whether or not the contract must change.
+Each item contains escalationId, selectedOptionId, decision, and reason. Record the chosen solution and the owner's reason.
+Use selectedOptionId: null for an owner decision outside the listed options. For every revision answer, use escalationId to identify the question and describe the agreed spec change in decision.
+The tool saves all resolutions inside the active builder handoff before saving the next phase. Do not submit partial batches.
+If no answer requires revision, set specChangeRequired: false. The tool returns ready-for-builder. Call maestro_run_builder separately without renewed approval.
+If any answer requires revision, set specChangeRequired: true. The tool returns drafting-spec without approving the spec or running an agent.
+Then follow the spec revision procedure below. Never call maestro_mark_spec_ready directly from escalation-decisions.
 
-In findings-decision, present every current finding. Every finding requires an owner decision, regardless of severity.
-If the contract stays unchanged, collect reject or fix-code for every finding. Each reject requires the owner's reason.
-Submit all decisions together through maestro_resolve_findings. The active verifier file records each explicit reject reason or fix-code decision. Do not invent reasons or omit findings.
-If all findings are rejected, the tool returns candidate-ready. Any fix-code returns ready-for-builder, including mixed decisions.
+In finding-decisions, present every current finding. Every finding requires an owner decision, regardless of severity.
+Collect reject, fix-code, or revise-spec for every finding. Each reject requires the owner's reason.
+Each revise-spec requires findingId, decision: revise-spec, the owner's reason, and specChange describing the agreed requirement change.
+The revision reason and specChange must contain nonwhitespace text.
+Submit the complete batch through maestro_resolve_findings before editing the spec. Do not invent reasons or omit findings.
+The tool saves every decision in the active verifier handoff before saving the next phase. Earlier numbered handoffs remain unchanged.
+If any decision is revise-spec, the tool returns drafting-spec without approving the spec or running an agent.
+Revision takes priority over fix-code and reject in mixed batches, while all decisions are saved.
+Without revision, all rejections return candidate-ready and any fix-code returns ready-for-builder.
 For ready-for-builder, call maestro_run_builder separately. Do not fix the code yourself.
-If any finding requires a contract change, use the spec revision procedure instead.
 
-For a spec revision, remain in escalation-decision or findings-decision while revising the same specId with the owner.
+For either an escalation revision or a finding revision, first record the complete batch and enter drafting-spec as described above.
+Then revise the same specId with the owner.
 Do not create a new spec. Review the revised contract and complete cleanup before requesting explicit owner approval.
 Ask the owner to inspect the revised spec and reply GREEN FLAG again.
-Only after that explicit reply, call maestro_mark_spec_ready. After the transition succeeds, start the builder in the foreground.
-Previous escalations and findings become historical context. Do not resolve them as current decisions after the revision.
+Only after that explicit reply, call maestro_mark_spec_ready separately. After the transition succeeds, start the builder in the foreground.
+The approved revised spec controls subsequent work. Previous escalations and findings become historical context. Do not resolve them as current decisions after the revision.
 Keep their artifacts. Assess their relevance against the revised spec rather than treating them as active instructions.
 
 ### Errors and completion

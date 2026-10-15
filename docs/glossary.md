@@ -21,6 +21,7 @@
 | `Escalation` | An implementation question or reportable technical problem that the `builder` records in its `handoff` for an `owner` decision. |
 | `GREEN FLAG` | The owner's explicit reply that approves the current `spec` and starts the `builder`. |
 | `fix-code` | An `owner` decision that requests code fixes without changing the approved `spec`. |
+| `revise-spec` | An `owner` decision that records a reason and agreed requirement change, then returns to `drafting-spec` for revision and renewed approval. |
 | `reject` | An `owner` decision that declines a `finding` and records a reason. It does not mean that verification passed. |
 | `candidate-ready` | The completed workflow phase. The `verifier` reported no `findings`, or the `owner` rejected every `finding` with a reason. Final review remains with the `owner`. |
 

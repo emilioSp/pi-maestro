@@ -246,8 +246,8 @@ describe('run verifier tool', () => {
     const result = await tool.execute('test-call', { specId: SPEC_ID });
 
     expect(result.details).toMatchObject({
-      outcome: WORKFLOW_PHASES.FINDINGS_DECISION,
-      phase: WORKFLOW_PHASES.FINDINGS_DECISION,
+      outcome: WORKFLOW_PHASES.FINDING_DECISIONS,
+      phase: WORKFLOW_PHASES.FINDING_DECISIONS,
       handoff: { findings: [{ id: 'F1' }] },
     });
     expect(on).toHaveBeenLastCalledWith(
