@@ -23,6 +23,11 @@ import {
   PROBE_STATUSES,
 } from '#artifacts/builder-handoff/schema.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
+import {
+  FINDING_DECISIONS,
+  FINDING_SEVERITIES,
+  VERIFIER_HANDOFF_VERSION,
+} from '#artifacts/verifier-handoff/schema.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import {
   AGENTS,
@@ -40,6 +45,7 @@ import { unavailableCompilerEscalation } from '#tests/fixtures/unavailable-compi
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
+  doneHandoff,
   SPEC_ID,
 } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
@@ -57,7 +63,8 @@ import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
-import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
+import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
+import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 
 const successfulPingExtension = (pi: ExtensionAPI): void => {
   pi.events.on(SUBAGENT_PING.REQUEST_EVENT, (payload) => {
@@ -809,13 +816,11 @@ describe('main Maestro extension', () => {
 
   type PrepareSpecRevisionPhaseInput = {
     paths: MaestroPaths;
-    current: WorkflowState;
     phase: WorkflowState['phase'];
   };
 
   const prepareSpecRevisionPhase = async ({
     paths,
-    current,
     phase,
   }: PrepareSpecRevisionPhaseInput): Promise<void> => {
     if (phase === WORKFLOW_PHASES.ESCALATION_DECISION) {
@@ -830,9 +835,39 @@ describe('main Maestro extension', () => {
     }
 
     // phase === WORKFLOW_PHASES.FINDINGS_DECISION
-    await writeWorkflowState({
-      path: paths.getWorkflowPath(SPEC_ID),
-      state: { ...current, phase },
+    await prepareBuilderRun({ paths, specId: SPEC_ID });
+    await completeBuilderPass({
+      paths,
+      specId: SPEC_ID,
+      handoff: doneHandoff(),
+    });
+    await prepareVerifierRun({ paths, specId: SPEC_ID });
+    await completeVerifierPass({
+      paths,
+      specId: SPEC_ID,
+      handoff: {
+        version: VERIFIER_HANDOFF_VERSION,
+        specId: SPEC_ID,
+        summary: 'The compiler is unavailable.',
+        acceptanceCriteria: doneHandoff().acceptanceCriteria,
+        findings: [
+          {
+            id: 'F1',
+            acceptanceCriterion: null,
+            severity: FINDING_SEVERITIES.MEDIUM,
+            confidence: 1,
+            summary: 'The required compiler cannot run in this environment.',
+            evidence: [
+              {
+                source: 'Compiler check',
+                observation: 'The compiler is unavailable.',
+              },
+            ],
+            decision: null,
+          },
+        ],
+        notes: [],
+      },
     });
   };
 
@@ -846,7 +881,7 @@ describe('main Maestro extension', () => {
 
       const current = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
 
-      await prepareSpecRevisionPhase({ paths, current, phase });
+      await prepareSpecRevisionPhase({ paths, phase });
 
       const { session, setStatus } = await piTestSessions.create({
         extensions: [
@@ -889,6 +924,35 @@ describe('main Maestro extension', () => {
         await expect(
           readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
         ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.DRAFTING_SPEC });
+      }
+
+      if (phase === WORKFLOW_PHASES.FINDINGS_DECISION) {
+        const resolveTool = session.agent.state.tools.find(
+          (tool) => tool.name === RESOLVE_FINDINGS_TOOL.NAME,
+        );
+
+        assertToolRegistered(resolveTool);
+
+        const resolution = await resolveTool.execute('revision-decision', {
+          specId: SPEC_ID,
+          decisions: [
+            {
+              findingId: 'F1',
+              decision: FINDING_DECISIONS.REVISE_SPEC,
+              reason: 'The required compiler cannot run in this environment',
+              specChange:
+                'Use a local check instead of the unavailable compiler',
+            },
+          ],
+        });
+
+        expect(resolution.details).toMatchObject({
+          specId: SPEC_ID,
+          phase: WORKFLOW_PHASES.DRAFTING_SPEC,
+        });
+        expect(
+          await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
+        ).toMatchObject({ phase: WORKFLOW_PHASES.DRAFTING_SPEC });
       }
 
       await writeFile(
