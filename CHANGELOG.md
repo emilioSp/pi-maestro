@@ -2,16 +2,14 @@
 
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries; GitHub Releases are not required. Version-only changes and routine maintenance are omitted.
 
-## Unreleased
+## 0.10.0
 
-1. Add `revise-spec` decisions for `verifier` `findings`, with the owner's reason and agreed requirement change saved in the active `handoff`.
-2. Route any revision batch to `drafting-spec` before revision, with priority over code fixes and rejections.
-3. Require separate renewed approval from `drafting-spec` and reject direct approval from `finding-decisions`.
-
-4. Require the boolean `specChangeRequired` in `maestro_resolve_escalations`. Save every current answer in the active `builder` `handoff` before changing phase.
-5. Route revision decisions to `drafting-spec`. Revise the same `spec` and obtain renewed `GREEN FLAG` before a separate approval and `builder` `run`.
-6. Reject direct `spec` approval from `escalation-decisions`. Decisions without revision still return to `ready-for-builder` without renewed approval.
-7. Breaking: rename the saved decision phases to `escalation-decisions` and `finding-decisions`. Existing workflows using the previous names require manual `owner` handling.
+1. Saved complete `owner` decision batches in their original `handoffs` before changing phase, including when the `spec` requires revision. See [PR #38](https://github.com/emilioSp/pi-maestro/pull/38).
+2. Added `revise-spec` decisions for `verifier` `findings`, with the owner's reason and agreed requirement change. Revision takes priority over code fixes and rejections.
+3. Unified both revision paths through `drafting-spec`, with renewed `GREEN FLAG` before separate approval and another `builder` `run`. Approval is allowed only from `drafting-spec`.
+4. Renamed workflow events to identify `builder` and `owner` actions. Both revision paths share `OWNER_REQUEST_SPEC_REVISION`.
+5. Breaking: supply the required boolean `specChangeRequired` when calling `maestro_resolve_escalations`.
+6. Breaking: saved decision phases are now `escalation-decisions` and `finding-decisions`. Existing workflows using older names require manual `owner` handling. No automatic migration is provided.
 
 ## 0.9.5
 
