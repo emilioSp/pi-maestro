@@ -840,19 +840,13 @@ describe('main Maestro extension', () => {
     WORKFLOW_PHASES.ESCALATION_DECISION,
     WORKFLOW_PHASES.FINDINGS_DECISION,
   ])(
-    'given %s when the owner approves a spec revision then the registered tool returns ready-for-builder on the same project',
+    'given %s when the owner follows the revision route and approves then the registered tools return ready-for-builder on the same project',
     async (phase) => {
       const { paths, repository } = await createApprovedWorkflow();
 
       const current = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
 
       await prepareSpecRevisionPhase({ paths, current, phase });
-
-      await writeFile(
-        paths.getSpecFilePath(SPEC_ID),
-        '# Owner-approved revised contract\nUse a local check instead of the unavailable compiler.\n',
-        'utf8',
-      );
 
       const { session, setStatus } = await piTestSessions.create({
         extensions: [
@@ -866,6 +860,42 @@ describe('main Maestro extension', () => {
       await session.prompt('/maestro');
       const theme = session.extensionRunner.createContext().ui.theme;
       maestroSessionState.setActiveSpecId(SPEC_ID);
+
+      if (phase === WORKFLOW_PHASES.ESCALATION_DECISION) {
+        const resolveTool = session.agent.state.tools.find(
+          (tool) => tool.name === RESOLVE_ESCALATIONS_TOOL.NAME,
+        );
+
+        assertToolRegistered(resolveTool);
+
+        const resolution = await resolveTool.execute('revision-decision', {
+          specId: SPEC_ID,
+          specChangeRequired: true,
+          decisions: [
+            {
+              escalationId: 'E1',
+              selectedOptionId: null,
+              decision:
+                'Revise the spec to use a local check instead of the unavailable compiler',
+              reason: 'The required compiler cannot run in this environment',
+            },
+          ],
+        });
+
+        expect(resolution.details).toMatchObject({
+          specId: SPEC_ID,
+          phase: WORKFLOW_PHASES.DRAFTING_SPEC,
+        });
+        await expect(
+          readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
+        ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.DRAFTING_SPEC });
+      }
+
+      await writeFile(
+        paths.getSpecFilePath(SPEC_ID),
+        '# Owner-approved revised contract\nUse a local check instead of the unavailable compiler.\n',
+        'utf8',
+      );
 
       const markSpecReadyTool = session.agent.state.tools.find(
         (tool) => tool.name === MARK_SPEC_READY_TOOL.NAME,
