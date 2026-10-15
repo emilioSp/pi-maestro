@@ -33,15 +33,6 @@ import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
 import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 
-type FindingResolutionDetails = {
-  specId: string;
-  phase: string;
-  projectRoot: string;
-  rejectedFindingIds: string[];
-  findingsRequiringFixIds: string[];
-  findingsRequiringSpecRevisionIds: string[];
-};
-
 const createFinding = (id: string): VerifierFinding => ({
   id,
   acceptanceCriterion: null,
@@ -208,16 +199,13 @@ describe('resolve findings tool', () => {
       ],
     });
 
-    // JUSTIFICATION: The adapter returns this exact structured details shape.
-    const details = result.details as FindingResolutionDetails;
-
     expect(result.content).toEqual([
       {
         type: 'text',
         text: expect.stringContaining('F2'),
       },
     ]);
-    expect(details).toMatchObject({
+    expect(result.details).toMatchObject({
       specId: SPEC_ID,
       phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
       projectRoot: repository.path,
@@ -265,16 +253,13 @@ describe('resolve findings tool', () => {
       ],
     });
 
-    // JUSTIFICATION: The adapter returns this exact structured details shape.
-    const details = result.details as FindingResolutionDetails;
-
     expect(result.content).toEqual([
       {
         type: 'text',
         text: expect.stringContaining(WORKFLOW_PHASES.CANDIDATE_READY),
       },
     ]);
-    expect(details).toMatchObject({
+    expect(result.details).toMatchObject({
       specId: SPEC_ID,
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
       rejectedFindingIds: ['F1', 'F2'],

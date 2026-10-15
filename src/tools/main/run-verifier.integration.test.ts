@@ -1,5 +1,9 @@
+/**
+ * Objective: Check verifier delegation, saved results, and execution errors.
+ * Used: In integration tests for the registered verifier run tool.
+ */
+
 import { access } from 'node:fs/promises';
-import { join } from 'node:path';
 import {
   SUBAGENT_DELEGATION_REQUEST_EVENT,
   SUBAGENT_DELEGATION_RESPONSE_EVENT,
@@ -61,25 +65,6 @@ const createReadyForVerifierWorkflow = async () => {
   return workflow;
 };
 
-type VerifierHandoffInput = {
-  findings?: readonly unknown[];
-};
-
-const createVerifierHandoff = ({ findings = [] }: VerifierHandoffInput) => ({
-  version: VERIFIER_HANDOFF_VERSION,
-  specId: SPEC_ID,
-  summary: 'The candidate was independently verified.',
-  acceptanceCriteria: [
-    {
-      id: 'AC1',
-      probe: 'Acceptance check',
-      probeStatus: PROBE_STATUSES.PASSED,
-    },
-  ],
-  findings,
-  notes: [],
-});
-
 type RecordVerifierHandoffInput = {
   paths: MaestroPaths;
   findings?: readonly unknown[];
@@ -92,20 +77,21 @@ const recordVerifierHandoff = async ({
   await completeVerifierPass({
     paths,
     specId: SPEC_ID,
-    handoff: createVerifierHandoff({
+    handoff: {
+      version: VERIFIER_HANDOFF_VERSION,
+      specId: SPEC_ID,
+      summary: 'The candidate was independently verified.',
+      acceptanceCriteria: [
+        {
+          id: 'AC1',
+          probe: 'Acceptance check',
+          probeStatus: PROBE_STATUSES.PASSED,
+        },
+      ],
       findings,
-    }),
+      notes: [],
+    },
   });
-};
-
-const fileExists = async (path: string) => {
-  try {
-    await access(path);
-
-    return true;
-  } catch {
-    return false;
-  }
 };
 
 afterEach(async () => {
@@ -192,19 +178,16 @@ describe('run verifier tool', () => {
     });
 
     await expect(
-      fileExists(
-        join(workflow.repository.path, `.specs/${SPEC_ID}/handoffs/verifier`),
-      ),
-    ).resolves.toBe(true);
-
+      access(workflow.paths.getVerifierHandoffsPath(SPEC_ID)),
+    ).resolves.toBeUndefined();
     await expect(
-      fileExists(
-        join(
-          workflow.repository.path,
-          `.specs/${SPEC_ID}/handoffs/verifier/V1.json`,
-        ),
+      access(
+        workflow.paths.getVerifierHandoffPath({
+          specId: SPEC_ID,
+          handoffPassNumber: 1,
+        }),
       ),
-    ).resolves.toBe(true);
+    ).resolves.toBeUndefined();
   });
 
   it('given a verifier handoff with findings when delegation completes then findings are returned and the response listener is cleaned', async () => {
@@ -309,53 +292,44 @@ describe('run verifier tool', () => {
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
   });
 
-  it('given verifier delegation timeouts and interruptions when responses are received then distinct errors are returned', async () => {
-    const timeoutWorkflow = await createReadyForVerifierWorkflow();
+  it.each([
+    {
+      status: DELEGATION_STATUSES.TIMED_OUT,
+      error: 'The verifier exceeded its timeout.',
+      expectedMessage: 'Delegation timeout: The verifier exceeded its timeout.',
+    },
+    {
+      status: DELEGATION_STATUSES.INTERRUPTED,
+      error: 'The verifier was interrupted.',
+      expectedMessage: 'Delegation interruption: The verifier was interrupted.',
+    },
+  ])(
+    'given a $status verifier response when received then the tool reports $expectedMessage',
+    async ({ status, error, expectedMessage }) => {
+      const workflow = await createReadyForVerifierWorkflow();
 
-    const timeoutTool = await piTestSessions.createRegisteredTool({
-      cwd: timeoutWorkflow.repository.path,
-      extension: registerRunVerifierTool,
-    });
-
-    timeoutTool.events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-      // JUSTIFICATION: The run tool emits a delegation request on this channel.
-      const request = payload as SubagentDelegationRequest;
-      timeoutTool.events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: request.requestId,
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.TIMED_OUT,
-        error: 'The verifier exceeded its timeout.',
+      const { tool, events } = await piTestSessions.createRegisteredTool({
+        cwd: workflow.repository.path,
+        extension: registerRunVerifierTool,
       });
-    });
 
-    await expect(
-      timeoutTool.tool.execute('test-call', { specId: SPEC_ID }),
-    ).rejects.toThrow('Delegation timeout: The verifier exceeded its timeout.');
-
-    const interruptionWorkflow = await createReadyForVerifierWorkflow();
-
-    const interruptionTool = await piTestSessions.createRegisteredTool({
-      cwd: interruptionWorkflow.repository.path,
-      extension: registerRunVerifierTool,
-    });
-
-    interruptionTool.events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-      // JUSTIFICATION: The run tool emits a delegation request on this channel.
-      const request = payload as SubagentDelegationRequest;
-      interruptionTool.events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: request.requestId,
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.INTERRUPTED,
-        error: 'The verifier was interrupted.',
+      events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
+        // JUSTIFICATION: The run tool emits a delegation request on this channel.
+        const request = payload as SubagentDelegationRequest;
+        events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
+          requestId: request.requestId,
+          ownerRunId: request.ownerRunId,
+          nodeId: request.nodeId,
+          status,
+          error,
+        });
       });
-    });
 
-    await expect(
-      interruptionTool.tool.execute('test-call', { specId: SPEC_ID }),
-    ).rejects.toThrow('Delegation interruption: The verifier was interrupted.');
-  });
+      await expect(
+        tool.execute('test-call', { specId: SPEC_ID }),
+      ).rejects.toThrow(expectedMessage);
+    },
+  );
 
   it('given a completed verifier response without a handoff when processed then a protocol error is returned', async () => {
     const workflow = await createReadyForVerifierWorkflow();

@@ -1,3 +1,8 @@
+/**
+ * Objective: Check verifier completion, saved handoffs, and rejected submissions.
+ * Used: In workflow integration tests with a running verifier.
+ */
+
 import { access, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -53,7 +58,7 @@ const approvedHandoff = {
 const prepareRunningVerifier = async () => {
   const workflow = await createApprovedWorkflow();
 
-  const builderRun = await prepareBuilderRun({
+  await prepareBuilderRun({
     paths: workflow.paths,
     specId: SPEC_ID,
   });
@@ -76,12 +81,12 @@ const prepareRunningVerifier = async () => {
     },
   });
 
-  const verifierRun = await prepareVerifierRun({
+  await prepareVerifierRun({
     paths: workflow.paths,
     specId: SPEC_ID,
   });
 
-  return { ...workflow, builderRun, verifierRun };
+  return workflow;
 };
 
 describe('verifier completion', () => {
@@ -129,14 +134,10 @@ describe('verifier completion', () => {
   it('given a running verifier when a valid handoff is submitted then one verifier handoff is saved in the current project', async () => {
     const { paths, repository } = await prepareRunningVerifier();
 
-    const handoff = {
-      ...approvedHandoff,
-    };
-
     const completed = await completeVerifierPass({
       paths,
       specId: SPEC_ID,
-      handoff,
+      handoff: approvedHandoff,
     });
 
     expect(completed.projectRoot).toBe(repository.path);
