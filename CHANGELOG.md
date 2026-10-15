@@ -2,6 +2,12 @@
 
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries; GitHub Releases are not required. Version-only changes and routine maintenance are omitted.
 
+## Unreleased
+
+1. Require the boolean `specChangeRequired` in `maestro_resolve_escalations`. Save every current answer in the active `builder` `handoff` before changing phase.
+2. Route revision decisions to `drafting-spec`. Revise the same `spec` and obtain renewed `GREEN FLAG` before a separate approval and `builder` `run`.
+3. Reject direct `spec` approval from `escalation-decision`. Decisions without revision still return to `ready-for-builder` without renewed approval.
+
 ## 0.9.5
 
 1. Added a shared check that requires every approved `spec` criterion ID in `builder` and `verifier` `handoffs`. See [PR #37](https://github.com/emilioSp/pi-maestro/pull/37).
