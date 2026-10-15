@@ -6,6 +6,30 @@ This roadmap records planned outcomes, not permission to implement them. The `ow
 
 Item identifiers remain stable when priorities change. The `owner` approves changes to priorities and scope.
 
+## Overview
+
+| ID | Title | Status | Summary |
+|---|---|---|---|
+| R-01 | [Improve status presentation and activation feedback](#r-01-improve-status-presentation-and-activation-feedback) | Completed | Show clearer status and configured agent details without adding model context. |
+| R-02 | [Store escalations and owner decisions in builder handoffs](#r-02-store-escalations-and-owner-decisions-in-builder-handoffs) | Completed | Keep `escalation` questions and `owner` answers together in numbered `builder` `handoffs`. |
+| R-03 | [Route builder failures through owner escalations](#r-03-route-builder-failures-through-owner-escalations) | Completed | Route reportable `builder` problems through `owner` `escalations` instead of a terminal failure phase. |
+| R-12 | [Format glossary terms consistently](#r-12-format-glossary-terms-consistently) | Completed | Apply glossary formatting across documentation and record its exclusions. |
+| R-14 | [Introduce Maestro at activation](#r-14-introduce-maestro-at-activation) | Completed | Introduce `Maestro` at activation and load relevant documentation only when needed. |
+| R-15 | [Rename the test support directory](#r-15-rename-the-test-support-directory) | Completed | Rename `test/` to `tests/` and update affected references. |
+| R-16 | [Verify code quality against AGENTS.md instructions](#r-16-verify-code-quality-against-agentsmd-instructions) | Completed | Require the `verifier` to review affected code against applicable `AGENTS.md` code-quality directives. |
+| R-06 | [Check subagent extensions at activation](#r-06-check-subagent-extensions-at-activation) | Completed | Require a successful parent `pi-subagents` availability reply before activation. |
+| R-05 | [Keep acceptance criterion numbering continuous](#r-05-keep-acceptance-criterion-numbering-continuous) | Completed | Reject gaps in `acceptance criterion` numbering before approving a `spec`. |
+| R-10 | [Match handoff criteria to the approved spec](#r-10-match-handoff-criteria-to-the-approved-spec) | Completed | Require every approved `spec` criterion ID in each submitted `builder` and `verifier` `handoff`. |
+| R-17 | [Record escalation resolutions when the spec changes](#r-17-record-escalation-resolutions-when-the-spec-changes) | Completed | Save all current `escalation` answers before changing phase, including when the `spec` requires revision. |
+| R-20 | [Route finding-driven spec revisions through drafting-spec](#r-20-route-finding-driven-spec-revisions-through-drafting-spec) | Completed | Record `finding` decisions before `spec` revision and require renewed `GREEN FLAG` before another `builder` `run`. |
+| R-04 | [Rename the npm package](#r-04-rename-the-npm-package) | Later | Rename `@emiliosp/pi-maestro` to `pi-maestro-sdd` with compatibility decisions defined in the `spec`. |
+| R-07 | [Guide initial configuration](#r-07-guide-initial-configuration) | Later | Help the `owner` create valid `Maestro` configuration through an interview. |
+| R-08 | [Change agent models before a builder run](#r-08-change-agent-models-before-a-builder-run) | Later | Let the `owner` change `builder` and `verifier` models before subsequent `runs`. |
+| R-09 | [Define workflow reconciliation](#r-09-define-workflow-reconciliation) | Later | Define how `Maestro` can reconcile saved `artifacts` and workflow state. |
+| R-18 | [Label acceptance criterion coverage](#r-18-label-acceptance-criterion-coverage) | Later | Label each `acceptance criterion` as success, failure, or unchanged behavior. |
+| R-19 | [Avoid acceptance criteria already covered by tests](#r-19-avoid-acceptance-criteria-already-covered-by-tests) | Later | Omit `acceptance criteria` whose exact scenarios already have test coverage. |
+| R-21 | [Add a simplifier with one clear purpose per agent](#r-21-add-a-simplifier-with-one-clear-purpose-per-agent) | Later | Add a simplifier after successful verification to reduce complexity without changing behavior. |
+
 ## Completed
 
 ### R-01: Improve status presentation and activation feedback
