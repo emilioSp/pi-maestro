@@ -83,20 +83,21 @@ const formatFindingIds = (findingIds: string[]): string =>
 const formatResolution = (details: FindingResolutionDetails): string => {
   const rejected = formatFindingIds(details.rejectedFindingIds);
   const requiringFix = formatFindingIds(details.findingsRequiringFixIds);
+  const summary = `Recorded rejections for ${rejected}. Findings requiring code fixes: ${requiringFix}.`;
 
   if (details.phase === WORKFLOW_PHASES.DRAFTING_SPEC) {
     const requiringRevision = formatFindingIds(
       details.findingsRequiringSpecRevisionIds,
     );
 
-    return `Recorded rejections for ${rejected}. Findings requiring code fixes: ${requiringFix}. Findings requiring spec revision: ${requiringRevision}. The workflow is drafting-spec. Revise the same spec with the owner and obtain renewed GREEN FLAG. Then call maestro_mark_spec_ready separately before running the builder.`;
+    return `${summary} Findings requiring spec revision: ${requiringRevision}. The workflow is drafting-spec. Revise the same spec with the owner and obtain renewed GREEN FLAG. Then call maestro_mark_spec_ready separately before running the builder.`;
   }
 
   if (details.phase === WORKFLOW_PHASES.READY_FOR_BUILDER) {
-    return `Recorded rejections for ${rejected}. Findings requiring code fixes: ${requiringFix}. The workflow is ready-for-builder. Run the builder separately.`;
+    return `${summary} The workflow is ready-for-builder. Run the builder separately.`;
   }
 
-  return `Recorded rejections for ${rejected}. Findings requiring code fixes: ${requiringFix}. The workflow is candidate-ready.`;
+  return `${summary} The workflow is candidate-ready.`;
 };
 
 export const registerResolveFindingsTool = (pi: ExtensionAPI): void => {
