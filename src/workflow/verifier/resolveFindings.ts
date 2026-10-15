@@ -29,7 +29,17 @@ type FindingDecisionApproved = {
   decision: typeof FINDING_DECISIONS.FIX_CODE;
 };
 
-export type FindingDecision = FindingDecisionApproved | FindingDecisionRejected;
+type FindingDecisionRevision = {
+  findingId: string;
+  decision: typeof FINDING_DECISIONS.REVISE_SPEC;
+  reason: string;
+  specChange: string;
+};
+
+export type FindingDecision =
+  | FindingDecisionApproved
+  | FindingDecisionRejected
+  | FindingDecisionRevision;
 
 export type ResolvedFindings = {
   findings: VerifierFinding[];
@@ -142,6 +152,17 @@ const buildFindingWorkflow = ({
 
   const findings = handoff.findings.map((finding) => {
     const decision = decisionsById.get(finding.id);
+
+    if (decision?.decision === FINDING_DECISIONS.REVISE_SPEC) {
+      return {
+        ...finding,
+        decision: {
+          decision: FINDING_DECISIONS.REVISE_SPEC,
+          reason: decision.reason,
+          specChange: decision.specChange,
+        },
+      };
+    }
 
     if (decision?.decision === FINDING_DECISIONS.REJECT) {
       return {
