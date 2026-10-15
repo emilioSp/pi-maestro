@@ -2,7 +2,7 @@
 
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries; GitHub Releases are not required. Version-only changes and routine maintenance are omitted.
 
-## Unreleased
+## 0.10.1
 
 1. Added `success`, `failure`, and `unchanged` coverage labels to the `spec` template and `Maestro` guidance. Approval validation and `handoff` formats remain unchanged.
 2. Required `Maestro` to inspect existing tests before writing `acceptance criteria` and remove criteria whose exact scenarios already have coverage. Requirements remain documented in the `spec`.
