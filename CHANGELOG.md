@@ -4,9 +4,13 @@ This file summarizes meaningful changes to the codebase, including behavior, dat
 
 ## Unreleased
 
-1. Require the boolean `specChangeRequired` in `maestro_resolve_escalations`. Save every current answer in the active `builder` `handoff` before changing phase.
-2. Route revision decisions to `drafting-spec`. Revise the same `spec` and obtain renewed `GREEN FLAG` before a separate approval and `builder` `run`.
-3. Reject direct `spec` approval from `escalation-decision`. Decisions without revision still return to `ready-for-builder` without renewed approval.
+1. Add `revise-spec` decisions for `verifier` `findings`, with the owner's reason and agreed requirement change saved in the active `handoff`.
+2. Route any revision batch to `drafting-spec` before revision, with priority over code fixes and rejections.
+3. Require separate renewed approval from `drafting-spec` and reject direct approval from `findings-decision`.
+
+4. Require the boolean `specChangeRequired` in `maestro_resolve_escalations`. Save every current answer in the active `builder` `handoff` before changing phase.
+5. Route revision decisions to `drafting-spec`. Revise the same `spec` and obtain renewed `GREEN FLAG` before a separate approval and `builder` `run`.
+6. Reject direct `spec` approval from `escalation-decision`. Decisions without revision still return to `ready-for-builder` without renewed approval.
 
 ## 0.9.5
 
