@@ -11,13 +11,13 @@ import {
 } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { registerRecordBuilderHandoffTool } from '#tools/child/record-builder-handoff.ts';
+import { registerMarkSpecReadyTool } from '#tools/main/mark-spec-ready.ts';
 import { registerResolveEscalationsTool } from '#tools/main/resolve-escalations.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import {
   type EscalationDecision,
   resolveEscalations,
 } from '#workflow/builder/resolveEscalations.ts';
-import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
@@ -66,19 +66,28 @@ describe('resolve escalations tool', () => {
       extension: registerResolveEscalationsTool,
     });
 
-    expect(Value.Check(tool.parameters, { specId: SPEC_ID, decisions })).toBe(
-      true,
-    );
+    expect(
+      Value.Check(tool.parameters, {
+        specId: SPEC_ID,
+        specChangeRequired: false,
+        decisions,
+      }),
+    ).toBe(true);
 
     for (const params of [
-      { specId: SPEC_ID, decisions: [] },
-      { specId: SPEC_ID, decisions: [{ ...decisions[0], reason: undefined }] },
+      { specId: SPEC_ID, specChangeRequired: false, decisions: [] },
       {
         specId: SPEC_ID,
+        specChangeRequired: false,
+        decisions: [{ ...decisions[0], reason: undefined }],
+      },
+      {
+        specId: SPEC_ID,
+        specChangeRequired: false,
         decisions,
         phase: WORKFLOW_PHASES.ESCALATION_DECISION,
       },
-      { specId: SPEC_ID, ...decisions[0] },
+      { specId: SPEC_ID, specChangeRequired: false, ...decisions[0] },
     ])
       expect(Value.Check(tool.parameters, params)).toBe(false);
   });
@@ -105,14 +114,23 @@ describe('resolve escalations tool', () => {
 
     const result = await tool.execute('owner-batch', {
       specId: SPEC_ID,
+      specChangeRequired: false,
       decisions,
     });
 
     expect(result.details).toMatchObject({
       specId: SPEC_ID,
       phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
+      nextAction:
+        'Run the builder separately. No renewed approval is required.',
       projectRoot: repository.path,
     });
+    expect(result.content).toEqual([
+      {
+        type: 'text',
+        text: `All current escalations resolved. Spec ${SPEC_ID} is ready-for-builder. Run the builder separately. No renewed approval is required.`,
+      },
+    ]);
     expect(
       (await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).phase,
     ).toBe(WORKFLOW_PHASES.READY_FOR_BUILDER);
@@ -176,15 +194,15 @@ describe('resolve escalations tool', () => {
     expect(await readFile(handoffPath, 'utf8')).toBe(savedB1);
   });
 
-  it('given a revised spec and B2 escalations when owner resolutions are recorded then B1 stays unchanged and only B2 resolution fields change', async () => {
+  it('given B1 history and a mixed revision batch in B2 when resolved then only B2 resolutions change and separate renewed approval is required', async () => {
     const { paths, repository, handoffPath } = await openEscalations();
-    const b1Before = await readFile(handoffPath, 'utf8');
-    await writeFile(paths.getSpecFilePath(SPEC_ID), '# Revised contract\n');
-    await markSpecReady({
+    await resolveEscalations({
       paths,
       specId: SPEC_ID,
-      activeWorkflowSpecId: SPEC_ID,
+      specChangeRequired: false,
+      decisions,
     });
+    const b1Before = await readFile(handoffPath, 'utf8');
     await prepareBuilderRun({ paths, specId: SPEC_ID });
 
     const { tool: builder } = await piTestSessions.createRegisteredTool({
@@ -195,25 +213,154 @@ describe('resolve escalations tool', () => {
     await builder.execute('next-pass', {
       specId: SPEC_ID,
       ...csvExportEscalation,
+      escalations: [
+        csvExportEscalation.escalations[0],
+        {
+          id: 'E2',
+          question: 'Which encoding must exports use?',
+          context: 'The spec requires UTF-8.',
+          options: [
+            {
+              id: 'utf8',
+              description: 'Use UTF-8.',
+              consequences: 'The encoding stays unchanged.',
+              nextStep: 'Keep the existing encoding.',
+            },
+          ],
+          recommendation: null,
+          notes: [],
+          resolution: null,
+        },
+      ],
     });
     const b2 = await paths.getActiveBuilderHandoffPath(SPEC_ID);
     const before = await readBuilderHandoff({ path: b2, specId: SPEC_ID });
+
+    const revisionDecisions = [
+      {
+        escalationId: 'E1',
+        selectedOptionId: null,
+        decision: 'Revise the spec to include archived rows',
+        reason: 'Audit exports need complete history',
+      },
+      {
+        escalationId: 'E2',
+        selectedOptionId: 'utf8',
+        decision: 'Use UTF-8',
+        reason: 'Keep the existing encoding requirement',
+      },
+    ];
+
+    const specBefore = await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8');
 
     const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
       extension: registerResolveEscalationsTool,
     });
 
-    await tool.execute('owner-batch', { specId: SPEC_ID, decisions });
+    const result = await tool.execute('revision-batch', {
+      specId: SPEC_ID,
+      specChangeRequired: true,
+      decisions: revisionDecisions,
+    });
+
+    expect(result.details).toMatchObject({
+      specId: SPEC_ID,
+      phase: WORKFLOW_PHASES.DRAFTING_SPEC,
+      nextAction: expect.stringContaining('renewed GREEN FLAG'),
+    });
+    expect(result.content).toEqual([
+      {
+        type: 'text',
+        text: expect.stringContaining(
+          `is drafting-spec. Revise the same spec with the owner and obtain renewed GREEN FLAG. Then call maestro_mark_spec_ready separately before running the builder.`,
+        ),
+      },
+    ]);
+    expect(
+      await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
+    ).toMatchObject({
+      specId: SPEC_ID,
+      phase: WORKFLOW_PHASES.DRAFTING_SPEC,
+    });
+    expect(await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8')).toBe(
+      specBefore,
+    );
     expect(await readFile(handoffPath, 'utf8')).toBe(b1Before);
     expect(await readBuilderHandoff({ path: b2, specId: SPEC_ID })).toEqual({
       ...before,
-      escalations: csvExportEscalation.escalations.map((entry, index) => {
-        const { escalationId: _id, ...resolution } = decisions[index];
+      escalations: before.escalations.map((entry, index) => {
+        const { escalationId: _id, ...resolution } = revisionDecisions[index];
 
         return { ...entry, resolution };
       }),
     });
+    const resolvedB2 = await readFile(b2, 'utf8');
+    await writeFile(
+      paths.getSpecFilePath(SPEC_ID),
+      '# Revised spec\n\n### AC1: Include archived rows\nExports include archived rows.\n',
+    );
+
+    // Simulate the separate approval call after the owner gives renewed GREEN FLAG.
+    const { tool: approval } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerMarkSpecReadyTool,
+    });
+
+    const approved = await approval.execute('renewed-approval', {
+      specId: SPEC_ID,
+    });
+
+    expect(approved.details).toMatchObject({
+      specId: SPEC_ID,
+      phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
+    });
+    expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toEqual(
+      approved.details,
+    );
+    expect(await readFile(b2, 'utf8')).toBe(resolvedB2);
+    expect(await readFile(handoffPath, 'utf8')).toBe(b1Before);
+  });
+
+  it.each([undefined, 'true', 1, null])(
+    'given specChangeRequired %s when the tool schema is checked then the invalid routing flag is rejected',
+    async (specChangeRequired) => {
+      const { tool } = await piTestSessions.createRegisteredTool({
+        extension: registerResolveEscalationsTool,
+      });
+
+      expect(
+        Value.Check(tool.parameters, {
+          specId: SPEC_ID,
+          decisions,
+          ...(specChangeRequired === undefined ? {} : { specChangeRequired }),
+        }),
+      ).toBe(false);
+    },
+  );
+
+  it('given unresolved escalations when direct spec approval is requested then all saved files remain unchanged', async () => {
+    const { paths, repository, handoffPath } = await openEscalations();
+
+    const savedPaths = [
+      paths.getWorkflowPath(SPEC_ID),
+      paths.getSpecFilePath(SPEC_ID),
+      handoffPath,
+    ];
+
+    const before = await Promise.all(savedPaths.map((path) => readFile(path)));
+
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerMarkSpecReadyTool,
+    });
+
+    await expect(
+      tool.execute('premature-approval', { specId: SPEC_ID }),
+    ).rejects.toThrow('is not allowed from phase "escalation-decision"');
+    expect(await Promise.all(savedPaths.map((path) => readFile(path)))).toEqual(
+      before,
+    );
   });
 
   it.each([
@@ -246,6 +393,7 @@ describe('resolve escalations tool', () => {
       await expect(
         tool.execute('invalid-owner-batch', {
           specId: SPEC_ID,
+          specChangeRequired: false,
           decisions: invalidDecisions,
         }),
       ).rejects.toThrow();
@@ -255,6 +403,7 @@ describe('resolve escalations tool', () => {
         resolveEscalations({
           paths,
           specId: SPEC_ID,
+          specChangeRequired: false,
           decisions: invalidDecisions,
         }),
       ).rejects.toThrow();
@@ -277,7 +426,12 @@ describe('resolve escalations tool', () => {
       const { paths, repository, handoffPath } = await openEscalations();
 
       if (scenario.startsWith('resolved'))
-        await resolveEscalations({ paths, specId: SPEC_ID, decisions });
+        await resolveEscalations({
+          paths,
+          specId: SPEC_ID,
+          specChangeRequired: false,
+          decisions,
+        });
 
       if (
         scenario === 'wrong-phase' ||
@@ -322,7 +476,11 @@ describe('resolve escalations tool', () => {
       });
 
       await expect(
-        tool.execute('invalid-owner-batch', { specId: SPEC_ID, decisions }),
+        tool.execute('invalid-owner-batch', {
+          specId: SPEC_ID,
+          specChangeRequired: false,
+          decisions,
+        }),
       ).rejects.toThrow();
 
       expect(await readFile(handoffPath, 'utf8')).toBe(handoffBefore);

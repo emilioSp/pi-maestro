@@ -61,9 +61,9 @@ flowchart TD
     findings -->|None| candidate
 
     buildOutcome -->|Escalation| ownerEscalation{Owner decides every question}
-    ownerEscalation -->|Spec unchanged| recordEscalation[Maestro records all answers]
-    recordEscalation --> build
-    ownerEscalation -->|Spec changes| reviseSpec[Owner and Maestro revise the spec]
+    ownerEscalation --> recordEscalation[Maestro records all answers]
+    recordEscalation -->|Spec unchanged| build
+    recordEscalation -->|Spec changes| reviseSpec[Owner and Maestro revise the spec]
     reviseSpec --> approval
 
     findings -->|One or more| ownerFindings[Owner decides every finding]
@@ -86,7 +86,7 @@ The default path is `.specs/<spec-id>/workflow.json`. The `spec` directory is [c
 
 | Phase | Meaning |
 |---|---|
-| `drafting-spec` | The `owner` and `Maestro` are preparing the initial `spec`. |
+| `drafting-spec` | The `owner` and `Maestro` prepare the initial `spec` or revise it after recorded `escalation` answers. |
 | `ready-for-builder` | The approved `spec` or recorded `owner` decisions permit a `builder` `run`. |
 | `builder-running` | A `builder` `run` is active. |
 | `escalation-decision` | The `owner` must decide how to handle every `escalation` question. |
@@ -104,7 +104,7 @@ For the initial `spec`:
 3. `Maestro` asks the `owner` to inspect the current `spec.md` and reply `GREEN FLAG` to approve it and start the `builder`.
 4. After that reply, `Maestro` saves `ready-for-builder` and starts the `builder` in the foreground.
 
-Approval freezes the `spec`. The `spec` and its visual prototypes remain unchanged during `builder` and `verifier` execution. `Spec` revisions are limited to the decision phases described in [Spec revision](#spec-revision).
+Approval freezes the `spec`. The `spec` and its visual prototypes remain unchanged during `builder` and `verifier` execution. See [Spec revision](#spec-revision) for permitted revisions.
 
 ## Acceptance criteria
 
@@ -127,12 +127,15 @@ The `builder` saves all questions from one `pass` in the `escalations` list of i
 
 `Maestro` presents each question, evidence, options, consequences, and next steps. The workflow pauses in `escalation-decision` while the `owner` decides how to proceed.
 
-If the `spec` stays unchanged, the `owner` gives `Maestro` an answer and reason for every current question. The `owner` can select a listed option or give a different decision.
+The `owner` gives `Maestro` an answer and reason for every current question, whether or not the `spec` must change.
+The `owner` can select a listed option or give a different decision.
+
+`Maestro` saves all answers in the current `builder` `handoff` before the workflow continues.
 
 | `Owner` choice | Result |
 |---|---|
-| Keep the current `spec` | `Maestro` saves all answers and reasons together in the active `builder` `handoff`, returns to `ready-for-builder`, and starts another `builder` `run`. |
-| Change the `spec` | The `owner` and `Maestro` revise the same `spec` and obtain renewed approval before another `builder` `run`. |
+| Keep the current `spec` | `Maestro` starts another `builder` `run` without renewed approval. |
+| Change the `spec` | The `owner` and `Maestro` revise the same `spec`. The `owner` reviews it and replies `GREEN FLAG` before another `builder` `run`. |
 
 `Owner` decisions update only the questions' `resolution` fields. The handoff's other content and earlier `handoffs` remain unchanged.
 
@@ -155,11 +158,9 @@ If the `spec` must change, the `owner` and `Maestro` use [Spec revision](#spec-r
 
 ## Spec revision
 
-`Spec` revisions are allowed only in `escalation-decision` or `findings-decision`. `Maestro` revises the same `spec` with the `owner`, including its prototypes when needed.
-
-After review and cleanup, `Maestro` asks the `owner` to inspect the revised `spec` and reply `GREEN FLAG` again. `Maestro` then records `ready-for-builder` and starts another `builder` `run`.
-
-Previous `escalations`, `findings`, and `handoffs` remain as historical context. The revised `spec` defines the requirements for subsequent work.
+The `owner` and `Maestro` revise the same `spec` together.
+The `owner` reviews the changes and replies `GREEN FLAG` to approve them.
+`Maestro` then starts another `builder` `run` under the revised `spec`.
 
 ## Verification boundary
 
