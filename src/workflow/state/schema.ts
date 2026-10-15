@@ -23,16 +23,15 @@ export const WORKFLOW_PHASES = {
 export const WORKFLOW_EVENTS = {
   MARK_SPEC_READY: 'mark-spec-ready',
   RUN_BUILDER: 'run-builder',
-  OPEN_ESCALATION: 'open-escalation',
+  BUILDER_OPEN_ESCALATIONS: 'builder-open-escalations',
   RESOLVE_ESCALATION: 'resolve-escalation',
-  RESOLVE_ESCALATION_WITH_SPEC_CHANGE: 'resolve-escalation-with-spec-change',
+  OWNER_REQUEST_SPEC_REVISION: 'owner-request-spec-revision',
   BUILDER_DONE: 'builder-done',
   RUN_VERIFIER: 'run-verifier',
   VERIFIER_FOUND_FINDINGS: 'verifier-found-findings',
-  VERIFIER_APPROVED: 'verifier-approved',
-  REJECT_FINDINGS: 'reject-findings',
-  REQUEST_FIXES: 'request-fixes',
-  REQUEST_SPEC_REVISION: 'request-spec-revision',
+  VERIFIER_DONE: 'verifier-done',
+  OWNER_REJECT_FINDINGS: 'owner-reject-findings',
+  OWNER_REQUEST_FIXES: 'owner-request-fixes',
 } as const;
 
 export const WorkflowPhaseSchema = Type.Union([

@@ -1,0 +1,44 @@
+{
+  "version": "1.0.0",
+  "specId": "20261015-140755-record-escalation-resolutions-when-the-spec-changes",
+  "summary": "Verified all six criteria against live files and independently reran the checks. No findings.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Ran npm run check after inspecting resolve-escalations.integration.test.ts. The mixed B2 revision batch stores the exact archived-row and UTF-8 resolutions, compares all other B2 content, and confirms B1 bytes remain unchanged.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Ran npm run check. The mixed revision integration scenario verifies drafting-spec in saved workflow, structured result, and text, with revision of the same spec and renewed GREEN FLAG before separate approval. The extension integration scenario also exercises the revision route.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "Ran npm run check. The mixed batch scenario updates the same spec with continuous numbering and simulates renewed GREEN FLAG using a separate registered approval call; ready-for-builder is saved and both handoffs retain their saved contents.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Inspected src/workflow/transitions.ts and traced src/workflow/builder/resolveEscalations.ts. Both routes select central events through transitionWorkflow, with handoff writing awaited before workflow writing and no direct phase assignment. npm run check executes both transition unit cases and routing integration cases.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Read both affected tool descriptions, getMaestroInstructions.ts, README.md, docs/workflow.md, and searched agents/templates for revision guidance. They consistently require complete answer recording before drafting-spec, same-spec revision, renewed GREEN FLAG, and separate approval; direct escalation-decision approval is prohibited.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "Ran npm run check. The routing-flag integration cases reject omitted, string \"true\", numeric, and null flags in otherwise valid batches and compare spec, workflow, and handoff bytes before and after each rejection.",
+      "probeStatus": "passed"
+    }
+  ],
+  "findings": [],
+  "notes": [
+    "Confirmed the supplied spec workflow was verifier-running. B1 was the only prior handoff; no prototypes were present.",
+    "Non-mutating lint, Oxlint, and typecheck passed before npm run check. The full check passed 233 tests in 38 files and all coverage thresholds. git diff --check passed.",
+    "Reviewed affected code against applicable AGENTS.md directives. No supported instruction violations found.",
+    "Retained exact pre-check file contents. Check scripts applied no source fixes; regenerated coverage files were restored byte-for-byte. No temporary product files remain. Pre-existing changes were preserved."
+  ]
+}

@@ -3,7 +3,7 @@
  * Used: When testing finding decisions and spec revisions.
  */
 
-import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
 import {

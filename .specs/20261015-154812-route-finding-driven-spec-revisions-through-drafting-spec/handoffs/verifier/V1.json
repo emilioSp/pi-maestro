@@ -1,0 +1,49 @@
+{
+  "version": "1.0.0",
+  "specId": "20261015-154812-route-finding-driven-spec-revisions-through-drafting-spec",
+  "summary": "Verified all seven criteria against live files and reran repository checks. No findings.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Ran npm run check after inspecting the archived-row integration scenario in src/tools/main/resolve-findings.integration.test.ts. Saved and returned phases were drafting-spec; F1 was identified for revision with renewed approval instructions and unchanged spec content.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Ran npm run check: direct registered approval with unresolved F1 and valid AC1 numbering rejected findings-decision and preserved workflow, spec, handoffs, and directory entries.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "Ran npm run check: archived-row scenario revised the same spec after resolution, simulated renewed owner approval, then called the registered approval tool separately. The same workflow reached ready-for-builder and retained the revision decision. Inspected explicit GREEN FLAG guidance.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Ran npm run check: mixed-batch integration scenarios created V1 and V2, compared saved V2 with only decision fields replaced, and verified byte-identical V1 and unchanged spec.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Ran npm run check: mixed-batch scenarios placed revision first and last; both saved and returned drafting-spec and separate decision categories. Inspected REQUEST_SPEC_REVISION in transitions.ts and its application through transitionWorkflow in resolveFindings.ts.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "Ran npm run check: four incomplete revision cases omitted reason or specChange or supplied whitespace. Schema checks, registered execution, and direct domain calls rejected each case without changing saved files or directory entries.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "Read both resolution tool descriptions, approval description, complete Maestro guidance, builder/verifier guidance, README.md, docs/workflow.md, and glossary. Both revision origins record the complete batch before drafting, require renewed GREEN FLAG and separate approval, and retain earlier findings as historical context. Human documentation describes events without internal tool arguments.",
+      "probeStatus": "passed"
+    }
+  ],
+  "findings": [],
+  "notes": [
+    "npm run check passed all 237 tests in 38 files, type checking, lint, and coverage thresholds. git diff --check passed.",
+    "Reviewed affected code against applicable AGENTS.md directives and confirmed centralized phase transitions, validation before writes, and handoff persistence before workflow persistence.",
+    "Checks applied no source fixes. Restored generated coverage HTML to exact pre-check contents and confirmed all inspected project files matched the pre-check backup before removing it.",
+    "Approval scenarios simulate the owner's reply; no live model requests or dependency installations were used."
+  ]
+}

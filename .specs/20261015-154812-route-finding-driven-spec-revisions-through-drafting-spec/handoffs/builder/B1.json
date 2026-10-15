@@ -1,0 +1,49 @@
+{
+  "status": "done",
+  "summary": "Added revise-spec finding decisions, preserved complete decision batches, routed revisions through drafting-spec, and restricted approval to drafting-spec. Updated guidance, documentation, and regression tests.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npm run check: resolve-findings.integration.test.ts archived-row scenario records F1 revision, verifies saved and returned drafting-spec, unchanged spec, revision IDs, and renewed approval instructions.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "npm run check: resolve-findings.integration.test.ts direct approval scenario uses valid AC1 numbering and unresolved F1, verifies phase rejection and byte-identical workflow, spec, builder/verifier handoffs, and directory entries.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "npm run check: archived-row scenario revises the same spec after entering drafting-spec, simulates renewed GREEN FLAG with a separate registered approval call, and verifies ready-for-builder plus unchanged saved revision decision. Main extension tests exercise both revision origins.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "npm run check: mixed revision integration scenarios create V1 history and unresolved V2, then compare the entire saved V2 with only submitted decision fields replaced and verify V1 remains byte-identical.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "npm run check: mixed revision integration scenarios place revision first and last among revision, code-fix, and rejection decisions; both saved workflows and tool responses identify drafting-spec and distinguish decision categories. Inspected central REQUEST_SPEC_REVISION transition and transitionWorkflow usage.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "npm run check: four incomplete revision scenarios omit specChange, use whitespace specChange, omit reason, and use whitespace reason. Tool schema, registered execution, and direct domain execution reject each case without changing saved files or directory entries.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "Read approval and both resolution tool descriptions, Maestro instructions, builder/verifier guidance, README.md, docs/workflow.md, and glossary. Ran Python assertions comparing both origins for complete decision recording before drafting, renewed GREEN FLAG, separate approval, historical findings, and absence of internal tool calls in human workflow documentation. No affected guidance permits revision or approval in findings-decision.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "npm run check passed: 237 tests across 38 files, with lint, type checking, and coverage thresholds satisfied. git diff --check passed.",
+    "Revision details are validated by the existing verifier handoff assertion before any protocol write. Existing rejection and code-fix calls remain covered by passing regression tests.",
+    "Approval tests simulate the owner's renewed GREEN FLAG before separate approval calls. No live model calls or package installations were used."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261015-154812-route-finding-driven-spec-revisions-through-drafting-spec"
+}

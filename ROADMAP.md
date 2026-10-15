@@ -147,6 +147,7 @@ Implemented the approved revision route. `Maestro` records every current `findin
 The `owner` reviews the same revised `spec` and gives renewed `GREEN FLAG` before separate approval and another `builder` `run`.
 Revision takes priority in mixed batches. Direct approval from `findings-decision` is rejected.
 
+Later event naming cleanup identifies `builder` and `owner` actions explicitly. Both revision routes use `OWNER_REQUEST_SPEC_REVISION` without changing the phase flow.
 #### Evidence
 
 [Specification](.specs/20261015-154812-route-finding-driven-spec-revisions-through-drafting-spec/spec.md) and [resolution integration tests](src/tools/main/resolve-findings.integration.test.ts).

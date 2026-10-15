@@ -15,6 +15,21 @@ const state = (phase: WorkflowPhase): WorkflowState => ({
 });
 
 describe('workflow transitions', () => {
+  it.each([
+    WORKFLOW_PHASES.ESCALATION_DECISION,
+    WORKFLOW_PHASES.FINDINGS_DECISION,
+  ])(
+    'given %s when the owner requests a spec revision then the workflow returns to drafting-spec',
+    (phase) => {
+      expect(
+        transitionWorkflow({
+          state: state(phase),
+          event: WORKFLOW_EVENTS.OWNER_REQUEST_SPEC_REVISION,
+        }),
+      ).toEqual(state(WORKFLOW_PHASES.DRAFTING_SPEC));
+    },
+  );
+
   it('given candidate-ready when any event is requested then the workflow stays concluded', () => {
     for (const event of Object.values(WORKFLOW_EVENTS)) {
       expect(() =>
