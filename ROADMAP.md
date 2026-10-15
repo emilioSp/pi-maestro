@@ -22,12 +22,12 @@ Item identifiers remain stable when priorities change. The `owner` approves chan
 | R-10 | [Match handoff criteria to the approved spec](#r-10-match-handoff-criteria-to-the-approved-spec) | Completed | Require every approved `spec` criterion ID in each submitted `builder` and `verifier` `handoff`. |
 | R-17 | [Record escalation resolutions when the spec changes](#r-17-record-escalation-resolutions-when-the-spec-changes) | Completed | Save all current `escalation` answers before changing phase, including when the `spec` requires revision. |
 | R-20 | [Route finding-driven spec revisions through drafting-spec](#r-20-route-finding-driven-spec-revisions-through-drafting-spec) | Completed | Record `finding` decisions before `spec` revision and require renewed `GREEN FLAG` before another `builder` `run`. |
+| R-18 | [Label acceptance criterion coverage](#r-18-label-acceptance-criterion-coverage) | Completed | Label each `acceptance criterion` as success, failure, or unchanged behavior. |
+| R-19 | [Avoid acceptance criteria already covered by tests](#r-19-avoid-acceptance-criteria-already-covered-by-tests) | Completed | Omit `acceptance criteria` whose exact scenarios already have test coverage. |
 | R-04 | [Rename the npm package](#r-04-rename-the-npm-package) | Later | Rename `@emiliosp/pi-maestro` to `pi-maestro-sdd` with compatibility decisions defined in the `spec`. |
 | R-07 | [Guide initial configuration](#r-07-guide-initial-configuration) | Later | Help the `owner` create valid `Maestro` configuration through an interview. |
 | R-08 | [Change agent models before a builder run](#r-08-change-agent-models-before-a-builder-run) | Later | Let the `owner` change `builder` and `verifier` models before subsequent `runs`. |
 | R-09 | [Define workflow reconciliation](#r-09-define-workflow-reconciliation) | Later | Define how `Maestro` can reconcile saved `artifacts` and workflow state. |
-| R-18 | [Label acceptance criterion coverage](#r-18-label-acceptance-criterion-coverage) | Later | Label each `acceptance criterion` as success, failure, or unchanged behavior. |
-| R-19 | [Avoid acceptance criteria already covered by tests](#r-19-avoid-acceptance-criteria-already-covered-by-tests) | Later | Omit `acceptance criteria` whose exact scenarios already have test coverage. |
 | R-21 | [Add a simplifier with one clear purpose per agent](#r-21-add-a-simplifier-with-one-clear-purpose-per-agent) | Later | Add a simplifier after successful verification to reduce complexity without changing behavior. |
 
 ## Completed
@@ -177,6 +177,46 @@ Later event naming cleanup identifies `builder` and `owner` actions explicitly. 
 
 [Specification](.specs/20261015-154812-route-finding-driven-spec-revisions-through-drafting-spec/spec.md) and [resolution integration tests](src/tools/main/resolve-findings.integration.test.ts).
 
+### R-18: Label acceptance criterion coverage
+
+Implemented with R-19 as one task, as selected by the `owner`.
+The `spec` template and `Maestro` guidance require one `Coverage` label per `acceptance criterion`:
+
+| Label | Purpose |
+|---|---|
+| `success` | A valid action produces the required result. |
+| `failure` | An invalid action is correctly rejected. |
+| `unchanged` | The change preserves existing behavior. |
+
+Use `unchanged` when the criterion explicitly checks behavior that the change must preserve.
+Labels describe scenarios, not test outcomes. A `failure` scenario passes when the invalid action is correctly rejected.
+A `spec` does not need all three categories.
+`Maestro` includes labels when presenting criteria to the `owner` and checks them against scenarios and `expected results` during review.
+Approval validation and `handoff` formats remain unchanged.
+
+The existing creation integration test now checks that the generated `spec` includes the coverage field.
+The final `npm run check` passed all 238 tests and coverage thresholds. No model trials were performed.
+
+#### Evidence
+
+[Spec template](templates/spec.md), [Maestro guidance](src/maestro/instructions/getMaestroInstructions.ts), [creation integration test](src/specs/create.integration.test.ts), and [workflow documentation](docs/workflow.md#acceptance-criteria).
+
+### R-19: Avoid acceptance criteria already covered by tests
+
+Implemented with R-18. `Maestro` inspects existing tests before writing `acceptance criteria`.
+It omits a criterion only when a test covers the same starting conditions, action, and `expected result`.
+Partial or uncertain coverage does not justify omission. Similar tests do not count.
+
+During `spec` review, `Maestro` removes criteria whose exact scenarios already have test coverage.
+It keeps numbering continuous from `AC1` and updates affected references. Required behavior remains documented in the requirements and constraints.
+The same rules apply during `spec` revisions. No automatic approval check was added.
+
+Verification consisted of inspecting the written guidance and running `npm run check`. No model trials were performed.
+
+#### Evidence
+
+[Maestro guidance](src/maestro/instructions/getMaestroInstructions.ts), [spec template](templates/spec.md), and [workflow documentation](docs/workflow.md#acceptance-criteria).
+
 ## Now
 
 ## Next
@@ -226,32 +266,6 @@ Explore how `Maestro` can reconcile saved `artifacts` and workflow state. The re
 #### Completed when
 
 Not yet defined. The `owner` must define the intended outcome, recovery boundaries, and completion condition before this item can move forward.
-
-### R-18: Label acceptance criterion coverage
-
-#### Objective
-
-Label each `acceptance criterion` in a `spec` as success, failure, or keep current behavior unchanged.
-The label makes the purpose of its `probe` clear. Failure means an invalid action is correctly rejected.
-
-#### Completed when
-
-The `spec` template and `Maestro` guidance require a coverage label for every `acceptance criterion`. 
-Each label matches the scenario and `expected result`. A `spec` does not need all three categories when they do not apply.
-
-### R-19: Avoid acceptance criteria already covered by tests
-
-#### Objective
-
-Do not add an `acceptance criterion` when an existing test already covers the same starting conditions, action, and `expected result`.
-
-Similar tests do not count if they miss the proposed scenario.
-
-#### Completed when
-
-`Maestro` guidance requires inspection of existing tests before adding `acceptance criteria`. 
-During `spec` review, `Maestro` removes criteria already covered by tests and keeps numbering continuous. 
-Required behavior remains documented in the `spec`.
 
 ### R-21: Add a simplifier with one clear purpose per agent
 

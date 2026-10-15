@@ -4,7 +4,7 @@
 
 The approved `spec.md` defines behavior, scope, constraints, technical decisions, and `acceptance criteria` for the change.
 
-An `acceptance criterion` contains a `probe`, an `expected result`, and an example. A `probe` is a scenario used to test behavior.
+An `acceptance criterion` contains a coverage label, a `probe`, an `expected result`, and an example. A `probe` is a scenario used to test behavior.
 
 A `handoff` is a saved report from a `builder` or `verifier` `run`. It records the result, `probe` outcomes, and notes.
 
@@ -114,6 +114,7 @@ Each criterion contains these parts:
 
 | Part | Content |
 |---|---|
+| Coverage | One label that states the scenario's purpose: `success`, `failure`, or `unchanged`. |
 | `Probe` | Starting conditions and the action or observation that checks the behavior. |
 | `Expected result` | The measurable result the `probe` observes. |
 | Example | Concrete starting conditions, an input or action, and the exact `expected result`. |

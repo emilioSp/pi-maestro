@@ -25,7 +25,7 @@ Leave local implementation choices, test code, fixtures, mocks, and commands to 
 
 ### Edge cases and error handling
 
-<Describe boundary conditions, failures, and required recovery behavior not already covered above. Cover each required case in the acceptance criteria.>
+<Describe boundary conditions, failures, and required recovery behavior not already covered above. Keep these requirements even when existing tests cover their scenarios.>
 
 ## 3. Technical decisions and prototypes
 
@@ -45,16 +45,20 @@ Leave local implementation choices, test code, fixtures, mocks, and commands to 
 
 ## 4. Acceptance criteria
 
-<Give each criterion a unique ID and one observable claim. A probe is the scenario used to check that claim. Describe it in plain language.>
+<Inspect existing tests before writing criteria. Omit a criterion only if a test covers the same starting conditions, action, and expected result. Keep criteria when coverage is partial or uncertain. During review, remove criteria already covered by tests. Keep numbering continuous from AC1 and update affected references. Keep required behavior in section 2 even when its criterion is omitted.>
+
+<Give each criterion a unique ID, one observable claim, and one coverage label. A probe is the scenario used to check that claim. Describe it in plain language. Use success for a valid action that produces the required result. Use failure for an invalid action that is correctly rejected. Use unchanged when the criterion explicitly checks existing behavior that the change must preserve. The label describes the scenario, not the test outcome. A failure scenario passes when the invalid action is correctly rejected. Do not require all three categories.>
 
 ### AC1: <short observable claim>
 
-1. Probe: <starting conditions and action or observation, without prescribing test implementation>
-2. Expected result: <observable and measurable outcome>
-3. Example: <specific starting conditions, concrete input or action, and exact expected result for this probe, not a restatement of the claim>
+1. Coverage: <success | failure | unchanged>
+2. Probe: <starting conditions and action or observation, without prescribing test implementation>
+3. Expected result: <observable and measurable outcome>
+4. Example: <specific starting conditions, concrete input or action, and exact expected result for this probe, not a restatement of the claim>
 
 <!--
 Example:
+Coverage: success
 Probe: Save a change to an item's title, then reopen the item.
 Expected result: The saved title is still present.
 Example: An item's title is "Draft". Change it to "Ready", save, and reopen the item. The title is "Ready".
