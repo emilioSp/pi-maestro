@@ -18,28 +18,11 @@ import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 import { getWorkflowEventByVerifierHandoff } from '#workflow/verifier/utils/getWorkflowEventByVerifierHandoff.ts';
 
-type FindingDecisionRejected = {
-  findingId: string;
-  decision: typeof FINDING_DECISIONS.REJECT;
-  reason: string;
-};
+type SavedFindingDecision = NonNullable<VerifierFinding['decision']>;
 
-type FindingDecisionApproved = {
+export type FindingDecision = SavedFindingDecision & {
   findingId: string;
-  decision: typeof FINDING_DECISIONS.FIX_CODE;
 };
-
-type FindingDecisionRevision = {
-  findingId: string;
-  decision: typeof FINDING_DECISIONS.REVISE_SPEC;
-  reason: string;
-  specChange: string;
-};
-
-export type FindingDecision =
-  | FindingDecisionApproved
-  | FindingDecisionRejected
-  | FindingDecisionRevision;
 
 export type ResolvedFindings = {
   findings: VerifierFinding[];
@@ -134,6 +117,27 @@ const readFindingWorkflow = async ({
   return { state, handoff };
 };
 
+const getSavedFindingDecision = (
+  decision: FindingDecision | undefined,
+): SavedFindingDecision => {
+  if (decision?.decision === FINDING_DECISIONS.REVISE_SPEC) {
+    return {
+      decision: FINDING_DECISIONS.REVISE_SPEC,
+      reason: decision.reason.trim(),
+      specChange: decision.specChange,
+    };
+  }
+
+  if (decision?.decision === FINDING_DECISIONS.REJECT) {
+    return {
+      decision: FINDING_DECISIONS.REJECT,
+      reason: decision.reason.trim(),
+    };
+  }
+
+  return { decision: FINDING_DECISIONS.FIX_CODE };
+};
+
 type BuildFindingWorkflowInput = {
   workflow: FindingWorkflow;
   decisions: FindingDecision[];
@@ -150,32 +154,10 @@ const buildFindingWorkflow = ({
     decisions.map((decision) => [decision.findingId, decision]),
   );
 
-  const findings = handoff.findings.map((finding) => {
-    const decision = decisionsById.get(finding.id);
-
-    if (decision?.decision === FINDING_DECISIONS.REVISE_SPEC) {
-      return {
-        ...finding,
-        decision: {
-          decision: FINDING_DECISIONS.REVISE_SPEC,
-          reason: decision.reason,
-          specChange: decision.specChange,
-        },
-      };
-    }
-
-    if (decision?.decision === FINDING_DECISIONS.REJECT) {
-      return {
-        ...finding,
-        decision: {
-          decision: FINDING_DECISIONS.REJECT,
-          reason: decision.reason.trim(),
-        },
-      };
-    }
-
-    return { ...finding, decision: { decision: FINDING_DECISIONS.FIX_CODE } };
-  });
+  const findings = handoff.findings.map((finding) => ({
+    ...finding,
+    decision: getSavedFindingDecision(decisionsById.get(finding.id)),
+  }));
 
   const nextHandoff = { ...handoff, findings };
 
