@@ -10,5 +10,10 @@
     "model": "openai-codex/gpt-6-astra",
     "thinking": "medium",
     "timeoutMinutes": 120
+  },
+  "simplifier": {
+    "model": "openai-codex/gpt-6.1-sol",
+    "thinking": "high",
+    "timeoutMinutes": 120
   }
 }
