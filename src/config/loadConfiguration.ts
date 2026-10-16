@@ -16,6 +16,7 @@ const resolveConfiguration = (input: PartialMaestroConfig): MaestroConfig => ({
   specDirectory: input.specDirectory ?? DEFAULT_CONFIG.specDirectory,
   builder: { ...DEFAULT_CONFIG.builder, ...input.builder },
   verifier: { ...DEFAULT_CONFIG.verifier, ...input.verifier },
+  simplifier: { ...DEFAULT_CONFIG.simplifier, ...input.simplifier },
 });
 
 type ResolveSpecDirectoryInput = {

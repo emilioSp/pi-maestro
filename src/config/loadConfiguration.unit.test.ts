@@ -46,6 +46,7 @@ describe('configuration loading', () => {
       await expect(loadConfiguration(workspace.path)).resolves.toEqual({
         version: SUPPORTED_CONFIG_VERSION,
         specDirectory: join(workspace.path, 'custom-specs'),
+        simplifier: DEFAULT_CONFIG.simplifier,
         builder: {
           model: 'anthropic/claude-3-7-sonnet',
           thinking: THINKING_LEVELS.MAX,
@@ -57,6 +58,51 @@ describe('configuration loading', () => {
           timeoutMinutes: 30,
         },
       });
+    } finally {
+      await workspace.cleanup();
+    }
+  });
+
+  it.each([
+    { simplifier: undefined, timeoutMinutes: 60 },
+    { simplifier: { timeoutMinutes: 90 }, timeoutMinutes: 90 },
+  ])(
+    'given a version-only or partial simplifier configuration when loaded then defaults resolve independently with timeout $timeoutMinutes',
+    async ({ simplifier, timeoutMinutes }) => {
+      const workspace = await createTemporaryProject();
+
+      try {
+        await mkdir(join(workspace.path, '.pi'));
+        await writeFile(
+          join(workspace.path, '.pi/maestro.json'),
+          JSON.stringify({ version: '1.0.0', simplifier }),
+        );
+        const config = await loadConfiguration(workspace.path);
+        expect(config.simplifier).toEqual({
+          model: 'openai-codex/gpt-6.1-sol',
+          thinking: 'high',
+          timeoutMinutes,
+        });
+        expect(config.builder).toEqual(DEFAULT_CONFIG.builder);
+        expect(config.verifier).toEqual(DEFAULT_CONFIG.verifier);
+      } finally {
+        await workspace.cleanup();
+      }
+    },
+  );
+
+  it('given a zero simplifier timeout when loaded then validation reports the invalid simplifier timeout', async () => {
+    const workspace = await createTemporaryProject();
+
+    try {
+      await mkdir(join(workspace.path, '.pi'));
+      await writeFile(
+        join(workspace.path, '.pi/maestro.json'),
+        JSON.stringify({ version: '1.0.0', simplifier: { timeoutMinutes: 0 } }),
+      );
+      await expect(loadConfiguration(workspace.path)).rejects.toThrow(
+        'Invalid timeout at "simplifier.timeoutMinutes"',
+      );
     } finally {
       await workspace.cleanup();
     }
@@ -160,6 +206,7 @@ describe('configuration loading', () => {
           specDirectory: join(workspace.path, specDirectory),
           builder,
           verifier: DEFAULT_CONFIG.verifier,
+          simplifier: DEFAULT_CONFIG.simplifier,
         });
       } finally {
         await workspace.cleanup();

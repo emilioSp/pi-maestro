@@ -8,14 +8,15 @@
 | `Maestro` | The coordinator that prepares the `spec`, runs the agents, and records `owner` decisions. |
 | `Builder` | The agent that implements the approved `spec` and runs its `probes`. |
 | `Verifier` | The independent agent that checks the implementation and reports technical issues. |
+| `Simplifier` | The agent that refactors accepted code for clarity without changing behavior or introducing check failures. |
 | `Spec` | A `specification` that describes one change, its scope, and its `acceptance criteria`. The approved `spec` defines the required behavior. It is saved as `spec.md`. |
 | `Acceptance criterion` (`AC`) | One required, observable result defined in the `spec`. |
 | `Probe` | A scenario used to test an `acceptance criterion`. Reports record the actual command or procedure and its outcome. |
 | `Expected result` | The observable result that a `probe` must produce. |
 | `Artifact` | A saved workflow file, such as a `spec`, or a `handoff` between agents. |
-| `Handoff` | A saved `builder` or `verifier` report with results, `probe` outcomes, and notes. |
+| `Handoff` | A saved agent report. `Builder` and `verifier` reports include `probe` outcomes. A `simplifier` report includes refactored files, a summary, and notes. |
 | `Observability` | The owner's ability to inspect workflow progress and reported results. |
-| `Run` or `pass` | One execution of the `builder` or `verifier` with a fresh conversation. |
+| `Run` or `pass` | One agent execution with a fresh conversation. |
 | `Candidate` | The project files created by agents after a workflow `run` |
 | `Finding` | A technical issue that the `verifier` records for an `owner` decision. |
 | `Escalation` | An implementation question or reportable technical problem that the `builder` records in its `handoff` for an `owner` decision. |
@@ -23,7 +24,7 @@
 | `fix-code` | An `owner` decision that requests code fixes without changing the approved `spec`. |
 | `revise-spec` | An `owner` decision that records a reason and agreed requirement change, then returns to `drafting-spec` for revision and renewed approval. |
 | `reject` | An `owner` decision that declines a `finding` and records a reason. It does not mean that verification passed. |
-| `candidate-ready` | The completed workflow phase. The `verifier` reported no `findings`, or the `owner` rejected every `finding` with a reason. Final review remains with the `owner`. |
+| `candidate-ready` | The completed workflow phase. Final review remains with the `owner`. |
 
 ## Identifiers and file names
 
@@ -34,6 +35,7 @@ An ID is an identifier that names one record. These labels refer to records with
 | `<spec-id>` | The identifier shared by the `spec` and its workflow `artifacts`. | The directory name under `<project-root>/.specs/` by default. |
 | `B1`, `B2` | `Builder` `handoff` 1, `builder` `handoff` 2. | `handoffs/builder/B1.json`, `handoffs/builder/B2.json`. |
 | `V1`, `V2` | `Verifier` `handoff` 1, `verifier` `handoff` 2. | `handoffs/verifier/V1.json`, `handoffs/verifier/V2.json`. |
+| `S.json` | The fixed, unnumbered `simplifier` `handoff`. | `handoffs/simplifier/S.json`. |
 | `E1`, `E2` | `Escalation` 1, `escalation` 2 within one `builder` report. | Entries in that report's `escalations` list. |
 | `F1`, `F2` | `Finding` 1, `finding` 2 within one `verifier` report. | Entries in that report's `findings` list. |
 | `AC1`, `AC2` | `Acceptance criterion` 1, `acceptance criterion` 2. | Criteria in `spec.md` and the matching `acceptanceCriteria` entries in reports. |
