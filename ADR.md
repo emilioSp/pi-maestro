@@ -11,7 +11,7 @@ When a new decision replaces an accepted decision, add a new record, mark the ea
 
 ### Status
 
-Accepted. Recorded date: 2026-10-07. Implemented in `0.6.0`.
+Superseded by [ADR-004](#adr-004-require-git-only-for-the-simplifier). Recorded date: 2026-10-07. Implemented in `0.6.0`.
 
 ### Context
 
@@ -87,3 +87,35 @@ This breaking MVP change has no migrations, compatibility readers, deprecated al
 ### Evidence
 
 [Specification](.specs/20261013-101454-route-builder-failures-through-owner-escalations/spec.md) and [R-03](ROADMAP.md#r-03-route-builder-failures-through-owner-escalations).
+
+## ADR-004: Require Git only for the simplifier
+
+### Status
+
+Accepted. The simplifier is planned in R-21 and is not implemented yet.
+Supersedes [ADR-001](#adr-001-keep-the-workflow-independent-of-git).
+
+### Context
+
+The future simplifier needs a list of changed code files. Git can supply that list without adding file tracking to `builder` `handoffs`.
+
+### Decision
+
+Only the simplifier requires Git and a Git repository to discover changed files. It has no non-Git fallback.
+
+Activation, `spec` preparation, the `builder`, and the `verifier` remain independent of Git. Their existing behavior stays unchanged.
+`Maestro` does not create automatic commits or Git checkpoints. The `owner` retains control of commits, pull requests, and merging.
+
+### Consequences
+
+If Git is unavailable or the project is not a Git repository:
+- Report a warning and skip the simplifier.
+- After successful verification, the workflow moves directly from `verifier-running` to `candidate-ready` without an error. 
+ 
+Existing handling of `verifier` `findings` remains unchanged. Other workflow components remain independent of Git.
+
+R-21 will define and implement file discovery. This decision adds no runtime Git checks to the current workflow.
+
+### Evidence
+
+[R-21](ROADMAP.md#r-21-add-a-simplifier-with-one-clear-purpose-per-agent) and the owner's decision to require Git only for the simplifier.
