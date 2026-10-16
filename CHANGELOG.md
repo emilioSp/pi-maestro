@@ -3,7 +3,7 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
-## Unreleased
+## 0.11.0
 
 1. Added the `simplifier` after successful verification or rejection of all current `findings`, without another approval or verification cycle.
 2. Added Git-only readiness and file discovery for simplification. If Git is unavailable, the workflow warns and completes without delegation.
