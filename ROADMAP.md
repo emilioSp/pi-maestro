@@ -28,7 +28,7 @@ Item identifiers remain stable when priorities change. The `owner` approves chan
 | R-07 | [Guide initial configuration](#r-07-guide-initial-configuration) | Later | Help the `owner` create valid `Maestro` configuration through an interview. |
 | R-08 | [Change agent models before a builder run](#r-08-change-agent-models-before-a-builder-run) | Later | Let the `owner` change `builder` and `verifier` models before subsequent `runs`. |
 | R-09 | [Define workflow reconciliation](#r-09-define-workflow-reconciliation) | Later | Define how `Maestro` can reconcile saved `artifacts` and workflow state. |
-| R-21 | [Add a simplifier with one clear purpose per agent](#r-21-add-a-simplifier-with-one-clear-purpose-per-agent) | Later | Add a simplifier after successful verification to reduce complexity without changing behavior. |
+| R-21 | [Add a simplifier with one clear purpose per agent](#r-21-add-a-simplifier-with-one-clear-purpose-per-agent) | Implemented | Run the `simplifier` after accepted verification, with a Git-only file scope and separate report. |
 
 ## Completed
 
@@ -219,6 +219,24 @@ Verification consisted of inspecting the written guidance and running `npm run c
 
 ## Now
 
+### R-21: Add a simplifier with one clear purpose per agent
+
+Implemented under the [specification](.specs/20261016-090319-add-a-dedicated-simplifier-after-verification/spec.md). Independent review is pending.
+The `builder` implements the approved `spec`. The `verifier` checks its `acceptance criteria`. The `simplifier` refactors accepted code for clarity.
+The extra code-quality review introduced in R-16 is removed from the verifier's instructions.
+
+Successful verification and rejection of all current `findings` save `simplifier-running`.
+`Maestro` calls `maestro_run_simplifier` without another approval or verification cycle.
+Only that tool checks Git readiness. If Git is unavailable, it warns and saves `candidate-ready` without delegation or a `simplifier` `handoff`.
+
+The `simplifier` selects all uncommitted code changes, including pre-existing staged, unstaged, and untracked files.
+It preserves observable behavior and the accepted check baseline. Rejected `findings` remain rejected, not passed.
+Required caller updates can include initially unchanged files. Unrelated refactoring, index changes, and automatic commits are excluded.
+
+A completed `pass` saves the fixed, unnumbered `handoffs/simplifier/S.json`, then saves `candidate-ready`.
+The report contains refactored files, a summary, and notes. No refactoring is required when selected code is already clear.
+Maestro's final summary separates this report from independent `verifier` evidence.
+
 ## Next
 
 ## Later
@@ -266,25 +284,3 @@ Explore how `Maestro` can reconcile saved `artifacts` and workflow state. The re
 #### Completed when
 
 Not yet defined. The `owner` must define the intended outcome, recovery boundaries, and completion condition before this item can move forward.
-
-### R-21: Add a simplifier with one clear purpose per agent
-
-#### Objective
-
-Each agent has exactly one purpose. The `builder` implements the approved `spec`. The `verifier` independently checks its `acceptance criteria`. The simplifier refactors verified code.
-
-Add the simplifier after the `verifier`. It receives code built by the `builder` only after verification confirms that all checks defined in the `acceptance criteria` pass.
-
-The simplifier reduces complexity while preserving exact behavior. The goal is code that is easier to read, understand, modify, and debug, not fewer lines.
-Every simplification must pass this test: "Would a new team member understand this faster than the original?"
-
-#### Scope boundaries
-
-Remove the "Review code quality" section from `agents/verifier.md`. This replaces the additional review introduced in R-16, not independent verification of `acceptance criteria`.
-
-The simplifier's detailed instructions will be defined during `spec` preparation. This roadmap item does not define them.
-
-#### Completed when
-
-The workflow includes the simplifier after successful verification. Agent instructions keep implementation, verification, and simplification as separate responsibilities.
-The simplifier preserves exact behavior and follows the instructions agreed in the approved `spec`.

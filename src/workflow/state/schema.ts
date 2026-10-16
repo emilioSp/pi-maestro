@@ -17,6 +17,7 @@ export const WORKFLOW_PHASES = {
   READY_FOR_VERIFIER: 'ready-for-verifier',
   VERIFIER_RUNNING: 'verifier-running',
   FINDING_DECISIONS: 'finding-decisions',
+  SIMPLIFIER_RUNNING: 'simplifier-running',
   CANDIDATE_READY: 'candidate-ready',
 } as const;
 
@@ -30,6 +31,8 @@ export const WORKFLOW_EVENTS = {
   RUN_VERIFIER: 'run-verifier',
   VERIFIER_FOUND_FINDINGS: 'verifier-found-findings',
   VERIFIER_DONE: 'verifier-done',
+  SIMPLIFIER_DONE: 'simplifier-done',
+  SIMPLIFIER_SKIPPED: 'simplifier-skipped',
   OWNER_REJECT_FINDINGS: 'owner-reject-findings',
   OWNER_REQUEST_FIXES: 'owner-request-fixes',
 } as const;
@@ -42,6 +45,7 @@ export const WorkflowPhaseSchema = Type.Union([
   Type.Literal(WORKFLOW_PHASES.READY_FOR_VERIFIER),
   Type.Literal(WORKFLOW_PHASES.VERIFIER_RUNNING),
   Type.Literal(WORKFLOW_PHASES.FINDING_DECISIONS),
+  Type.Literal(WORKFLOW_PHASES.SIMPLIFIER_RUNNING),
   Type.Literal(WORKFLOW_PHASES.CANDIDATE_READY),
 ]);
 
