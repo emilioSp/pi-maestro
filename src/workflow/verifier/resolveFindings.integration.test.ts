@@ -134,7 +134,7 @@ describe('finding resolution', () => {
       },
     });
 
-    expect(secondVerifier.state.phase).toBe(WORKFLOW_PHASES.CANDIDATE_READY);
+    expect(secondVerifier.state.phase).toBe(WORKFLOW_PHASES.SIMPLIFIER_RUNNING);
     expect(secondBuilder.handoffPath).toBe(
       paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber: 2 }),
     );

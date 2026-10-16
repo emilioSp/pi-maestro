@@ -172,10 +172,19 @@ describe('run verifier tool', () => {
     );
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
     expect(result.details).toMatchObject({
-      outcome: WORKFLOW_PHASES.CANDIDATE_READY,
+      outcome: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
       specId: SPEC_ID,
-      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+      phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
     });
+
+    expect(result.content).toEqual([
+      {
+        type: 'text',
+        text: expect.stringContaining(
+          'Call maestro_run_simplifier next with this specId, without another approval or verifier pass.',
+        ),
+      },
+    ]);
 
     await expect(
       access(workflow.paths.getVerifierHandoffsPath(SPEC_ID)),

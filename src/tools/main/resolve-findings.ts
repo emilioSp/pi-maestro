@@ -97,7 +97,7 @@ const formatResolution = (details: FindingResolutionDetails): string => {
     return `${summary} The workflow is ready-for-builder. Run the builder separately.`;
   }
 
-  return `${summary} The workflow is candidate-ready.`;
+  return `${summary} The workflow is simplifier-running. Call maestro_run_simplifier next with this specId, without another approval or verifier pass.`;
 };
 
 export const registerResolveFindingsTool = (pi: ExtensionAPI): void => {

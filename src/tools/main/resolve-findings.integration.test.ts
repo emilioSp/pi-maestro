@@ -226,7 +226,46 @@ describe('resolve findings tool', () => {
     ]);
   });
 
-  it('given all findings rejected when decisions are recorded then rejections are saved and the workflow becomes candidate-ready', async () => {
+  it('given one finding when the owner rejects it then the workflow moves to simplifier-running', async () => {
+    const { paths, repository } = await createFindingsDecisionWorkflow([
+      createFinding('F1'),
+    ]);
+
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveFindingsTool,
+    });
+
+    const result = await tool.execute('reject', {
+      specId: SPEC_ID,
+      decisions: [
+        {
+          findingId: 'F1',
+          decision: FINDING_DECISIONS.REJECT,
+          reason: 'Outside approved scope',
+        },
+      ],
+    });
+
+    expect(
+      await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
+    ).toMatchObject({ phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING });
+    expect(result.content).toEqual([
+      {
+        type: 'text',
+        text: expect.stringContaining(
+          'Call maestro_run_simplifier next with this specId, without another approval or verifier pass.',
+        ),
+      },
+    ]);
+    const handoff = await readCurrentHandoff(paths);
+    expect(handoff.findings[0].decision).toEqual({
+      decision: FINDING_DECISIONS.REJECT,
+      reason: 'Outside approved scope',
+    });
+  });
+
+  it('given all findings rejected when decisions are recorded then rejections are saved and the workflow becomes simplifier-running', async () => {
     const { paths, repository } = await createFindingsDecisionWorkflow([
       createFinding('F1'),
       createFinding('F2'),
@@ -256,12 +295,12 @@ describe('resolve findings tool', () => {
     expect(result.content).toEqual([
       {
         type: 'text',
-        text: expect.stringContaining(WORKFLOW_PHASES.CANDIDATE_READY),
+        text: expect.stringContaining(WORKFLOW_PHASES.SIMPLIFIER_RUNNING),
       },
     ]);
     expect(result.details).toMatchObject({
       specId: SPEC_ID,
-      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+      phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
       rejectedFindingIds: ['F1', 'F2'],
       findingsRequiringFixIds: [],
     });
