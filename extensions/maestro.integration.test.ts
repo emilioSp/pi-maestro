@@ -129,7 +129,7 @@ afterEach(async () => {
 });
 
 describe('main Maestro extension', () => {
-  it('given startup when the extension loads then only main tools register once and Maestro stays silent and off', async () => {
+  it('given a new Pi session when Maestro loads then its tools register once but stay inactive, with no notice, status, or added instructions', async () => {
     const { session, notify, setStatus } = await piTestSessions.create({
       extensions: [foreignExtension, maestroExtension, successfulPingExtension],
       maestroAgentsAvailable: false,
@@ -159,7 +159,7 @@ describe('main Maestro extension', () => {
     });
   });
 
-  it('given valid checks when Maestro activates then tools instructions and status become available', async () => {
+  it('given valid activation checks when Maestro is enabled and later re-enabled then its tools, instructions, and status are available without duplicate registration, automatic model calls, or new session history', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 
@@ -252,7 +252,7 @@ describe('main Maestro extension', () => {
     expect(modelContext).not.toContain('Verifier (');
   });
 
-  it('given explicit agent settings when Maestro activates then its notice shows the configured providers models and thinking levels', async () => {
+  it('given custom agent configuration when Maestro is enabled then the activation notice lists the provider, model, and thinking level for each agent', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await mkdir(join(repository.path, '.pi'));
@@ -293,7 +293,7 @@ describe('main Maestro extension', () => {
     );
   });
 
-  it('given an unavailable simplifier model when Maestro activates then activation fails with a model availability error', async () => {
+  it('given an unavailable simplifier model when activation is requested then Maestro stays disabled and reports which model is unavailable', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await mkdir(join(repository.path, '.pi'));
@@ -318,7 +318,7 @@ describe('main Maestro extension', () => {
     );
   });
 
-  it('given active Maestro when its agents become unavailable then turning off succeeds and the next activation fails', async () => {
+  it('given Maestro is active and its agents are no longer available when Maestro is disabled then it skips availability checks and the next activation reports the missing builder', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 
@@ -369,17 +369,29 @@ describe('main Maestro extension', () => {
 
   it.each([
     {
-      label: 'unsuccessful',
+      label: 'an unsuccessful ping reply',
       reply: { success: false, error: { message: 'Unavailable' } },
     },
-    { label: 'null', reply: null },
-    { label: 'wrong envelope version', reply: { version: 2 } },
-    { label: 'wrong method', reply: { method: 'status' } },
-    { label: 'missing data', reply: { data: undefined } },
-    { label: 'wrong data version', reply: { data: { version: 2 } } },
-    { label: 'missing request ID', reply: { requestId: undefined } },
+    { label: 'a null ping reply', reply: null },
+    {
+      label: 'a ping reply with a bad message version',
+      reply: { version: 2 },
+    },
+    {
+      label: 'a ping reply with the wrong method',
+      reply: { method: 'status' },
+    },
+    { label: 'a ping reply without data', reply: { data: undefined } },
+    {
+      label: 'a ping reply with a bad data version',
+      reply: { data: { version: 2 } },
+    },
+    {
+      label: 'a ping reply without a request ID',
+      reply: { requestId: undefined },
+    },
   ])(
-    'given a $label matching reply when Maestro activates then it stays off with the installation error',
+    'given pi-subagents sends $label when activation is requested then Maestro stays disabled and reports that pi-subagents must be installed',
     async ({ reply }) => {
       const { session, events, notify } = await piTestSessions.create({
         extensions: [maestroExtension],
@@ -413,7 +425,7 @@ describe('main Maestro extension', () => {
     },
   );
 
-  it('given an emission error when Maestro sends its ping then activation stays off with the installation error', async () => {
+  it('given the event bus cannot send the pi-subagents availability request when activation is requested then Maestro stays disabled and reports the installation requirement and bus error', async () => {
     const { session, events, notify } = await piTestSessions.create({
       extensions: [maestroExtension],
     });
@@ -436,7 +448,7 @@ describe('main Maestro extension', () => {
     );
   });
 
-  it('given a failed check when activation is retried then Maestro stays off and reports each error', async () => {
+  it('given an untrusted project when activation is retried then each attempt reports a trust error until the project is trusted and Maestro can activate', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 
@@ -469,7 +481,7 @@ describe('main Maestro extension', () => {
     expect(notify).toHaveBeenCalledTimes(3);
   });
 
-  it('given an active spec when Maestro turns off then live state clears and files remain unchanged', async () => {
+  it('given Maestro has an active spec when it is disabled and enabled again then saved files stay unchanged and the previous spec is no longer active', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { session, notify, setStatus, settingsManager } =
@@ -537,7 +549,7 @@ describe('main Maestro extension', () => {
     ]);
   });
 
-  it('given an active workflow when a session resumes then Maestro stays off without recovering the workflow', async () => {
+  it('given a saved workflow when Pi resumes the session then Maestro stays disabled, leaves the workflow unchanged, and does not select an active spec', async () => {
     const { paths, repository } = await createApprovedWorkflow();
     const workflow = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
 
@@ -558,7 +570,7 @@ describe('main Maestro extension', () => {
     );
   });
 
-  it('given an approved spec when builder, verifier and simplifier run then status follows running and completed phases', async () => {
+  it('given an approved spec in a Git repository when builder, verifier, and simplifier finish then status follows each phase and the workflow ends at candidate-ready with saved reports', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await execFileAsync('git', ['init', '-q', repository.path]);
@@ -977,7 +989,7 @@ describe('main Maestro extension', () => {
     WORKFLOW_PHASES.ESCALATION_DECISIONS,
     WORKFLOW_PHASES.FINDING_DECISIONS,
   ])(
-    'given %s when the owner follows the revision route and approves then the registered tools return ready-for-builder on the same project',
+    'given a workflow in %s when the owner records a decision to revise the spec and approves the revision then the same workflow returns to ready-for-builder',
     async (phase) => {
       const { paths, repository } = await createApprovedWorkflow();
 
@@ -1098,7 +1110,7 @@ describe('main Maestro extension', () => {
     },
   );
 
-  it('given a saved technical-problem escalation when the registered run tool returns then the owner receives the problem and status updates', async () => {
+  it('given the builder reports an unavailable compiler when its run finishes then Maestro returns the escalation and shows that an owner decision is needed', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { session, events, setStatus } = await piTestSessions.create({
@@ -1190,7 +1202,7 @@ describe('main Maestro extension', () => {
     );
   });
 
-  it('given a missing active workflow when status refreshes then it reports an error without blocking instructions', async () => {
+  it('given the active spec has no workflow file when Maestro prepares the next prompt then it reports the missing file, clears its status, and still adds its instructions', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 

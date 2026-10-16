@@ -48,7 +48,7 @@ afterEach(async () => {
 });
 
 describe('record simplifier handoff', () => {
-  it('given a selected file and coordinated caller update when submitted then exactly the agreed S.json is saved before completion', async () => {
+  it('given verification has passed when the simplifier submits changed files, a summary, and notes then S.json preserves those fields and the workflow becomes candidate-ready', async () => {
     const { paths, repository } = await createRunningVerifier();
     await completeVerifierPass({
       paths,

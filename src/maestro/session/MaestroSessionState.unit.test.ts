@@ -6,12 +6,12 @@ const SPEC_ID = '20260321-143052-add-weather-alerts';
 afterEach(() => maestroSessionState.deactivate());
 
 describe('Maestro session state', () => {
-  it('given an inactive session when session state is read then no active spec is stored', () => {
+  it('given an inactive session when its state is read then Maestro is disabled and no spec is selected', () => {
     expect(maestroSessionState.isActive()).toBe(false);
     expect(maestroSessionState.getActiveSpecId()).toBeNull();
   });
 
-  it('given an active spec when the selection clears then Maestro stays active without a spec', () => {
+  it('given Maestro is active with a selected spec when the spec selection is cleared then Maestro stays active with no selected spec', () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -21,7 +21,7 @@ describe('Maestro session state', () => {
     expect(maestroSessionState.getActiveSpecId()).toBeNull();
   });
 
-  it('given an active spec when a different spec ID is selected then the replacement is rejected', () => {
+  it('given a spec is already selected when a different spec is selected then an error prevents replacing the active spec', () => {
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
     expect(() =>

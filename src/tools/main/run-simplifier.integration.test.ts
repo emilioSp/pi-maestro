@@ -67,7 +67,7 @@ afterEach(async () => {
 });
 
 describe('run simplifier', () => {
-  it('given Git is unavailable when simplification runs then a warning concludes without delegation or handoff', async () => {
+  it('given Git reports no repository when simplification is requested then Maestro warns, skips the agent, saves candidate-ready, and creates no simplifier report', async () => {
     const { paths, repository } = await createSimplifierWorkflow();
     // The entry route succeeds in a project with no Git repository.
     expect(
@@ -121,7 +121,7 @@ describe('run simplifier', () => {
     ).rejects.toMatchObject({ code: 'ENOENT' });
   });
 
-  it('given a Git project when the simplifier saves its result then one configured fresh foreground request completes the workflow', async () => {
+  it('given a Git project ready for simplification when the simplifier saves its report then one run uses its configured model and project and returns candidate-ready with that report', async () => {
     const { paths, repository } = await createSimplifierWorkflow();
     await execFileAsync('git', ['init', '-q', repository.path]);
 
@@ -196,7 +196,7 @@ describe('run simplifier', () => {
     DELEGATION_STATUSES.TIMED_OUT,
     DELEGATION_STATUSES.INTERRUPTED,
   ])(
-    'given a %s response without a saved handoff when the run returns then the workflow stops with an error',
+    'given a simplifier response marked %s without a saved report when the run tool receives it then the call fails and the workflow stays in simplifier-running',
     async (status) => {
       const { paths, repository } = await createSimplifierWorkflow();
       await execFileAsync('git', ['init', '-q', repository.path]);
@@ -232,7 +232,7 @@ describe('run simplifier', () => {
     },
   );
 
-  it('given a ready-for-builder workflow when simplification is requested then validation rejects before checking Git', async () => {
+  it('given a workflow in ready-for-builder when simplification is requested then a phase error stops the call before any Git check or agent request', async () => {
     const { repository } = await createApprovedWorkflow();
 
     const extension = (pi: ExtensionAPI): void => {

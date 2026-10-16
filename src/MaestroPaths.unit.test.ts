@@ -18,7 +18,7 @@ afterEach(async () => {
 });
 
 describe('Maestro paths', () => {
-  it('given handoffs numbered 1 through 10 for both roles when active and next paths are requested then active handoffs are 10 and next handoffs are 11', async () => {
+  it('given builder and verifier reports numbered 1 through 10 when report paths are requested then report 10 is active and report 11 is next for each agent', async () => {
     const project = await createTemporaryProject();
     temporaryPaths.push(project.path);
 
@@ -63,7 +63,7 @@ describe('Maestro paths', () => {
     );
   });
 
-  it('given a custom spec directory when workflow paths are built then every path uses the current project root', () => {
+  it('given a custom spec directory when spec, workflow, and report paths are requested then all paths use that directory inside the project', () => {
     const projectRoot = '/repo';
 
     const paths = new MaestroPaths({
@@ -99,7 +99,7 @@ describe('Maestro paths', () => {
     );
   });
 
-  it('given artifact paths when generated then they stay inside the project and escaping paths are rejected', () => {
+  it('given spec and prototype paths when Maestro builds their full paths then valid paths stay inside the project and attempts to leave their allowed directories throw errors', () => {
     const projectRoot = '/repo';
 
     const paths = new MaestroPaths({
@@ -140,7 +140,7 @@ describe('Maestro paths', () => {
     ).toThrow('Prototype path must stay inside the prototypes directory.');
   });
 
-  it('given a spec directory outside the project root when Maestro paths are created then the directory is rejected', () => {
+  it('given a spec directory outside the project when MaestroPaths is created then it throws an error that the path leaves the project root', () => {
     expect(
       () =>
         new MaestroPaths({

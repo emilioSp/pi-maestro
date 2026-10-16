@@ -33,7 +33,7 @@ afterEach(async () => {
 });
 
 describe('run builder tool', () => {
-  it('given ready-for-verifier and an escalation active builder handoff when delegation completes then the parent reports a protocol error', async () => {
+  it('given a ready-for-verifier workflow whose builder report still contains escalations when the builder reports completion then the run fails because the report status and phase disagree', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { tool, events } = await piTestSessions.createRegisteredTool({
@@ -69,9 +69,22 @@ describe('run builder tool', () => {
     );
   });
 
-  it.each(['missing', 'wrong-status', 'resolved-question'])(
-    'given a %s saved escalation result when delegation completes then a protocol error is reported',
-    async (scenario) => {
+  it.each([
+    {
+      scenario: 'missing',
+      description: 'no saved escalation report',
+    },
+    {
+      scenario: 'wrong-status',
+      description: 'a done report in escalation-decisions',
+    },
+    {
+      scenario: 'resolved-question',
+      description: 'an answered escalation question',
+    },
+  ])(
+    'given $description when the builder reports completion then the run fails with a protocol error',
+    async ({ scenario }) => {
       const { paths, repository } = await createApprovedWorkflow();
 
       const { tool, events } = await piTestSessions.createRegisteredTool({
@@ -124,7 +137,7 @@ describe('run builder tool', () => {
     },
   );
 
-  it('given the builder run tool when registered then its closed schema accepts only a spec ID', async () => {
+  it('given builder run inputs when the tool schema is checked then a spec ID is required and extra fields are rejected', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerRunBuilderTool,
     });
@@ -139,7 +152,7 @@ describe('run builder tool', () => {
     ).toBe(false);
   });
 
-  it('given an approved workflow when the builder records a done handoff then it runs in the current project and returns the saved result', async () => {
+  it('given an approved workflow when the builder saves a done report then the run uses the configured agent and current project and returns that report in ready-for-verifier', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { tool, events, emit, on } =
@@ -227,7 +240,7 @@ describe('run builder tool', () => {
     });
   });
 
-  it('given an approved workflow when the builder records an escalation then the saved escalation result is returned', async () => {
+  it('given an approved workflow when the builder saves an escalation report then the run returns that report and the workflow waits in escalation-decisions', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { tool, events } = await piTestSessions.createRegisteredTool({
@@ -277,7 +290,7 @@ describe('run builder tool', () => {
     });
   });
 
-  it('given a builder delegation failure when the response is received then an error is returned without advancing the workflow', async () => {
+  it('given the builder provider is unavailable when the failed run response arrives then the tool reports the provider error, removes its listener, and leaves builder-running unchanged', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { tool, events, on } = await piTestSessions.createRegisteredTool({
@@ -312,7 +325,7 @@ describe('run builder tool', () => {
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
   });
 
-  it('given request emission fails when running then reports the error and removes the response listener', async () => {
+  it('given the event bus cannot send the builder request when a run is started then the tool reports the request error and removes its response listener', async () => {
     const { repository } = await createApprovedWorkflow();
 
     const { tool, emit, on } = await piTestSessions.createRegisteredTool({
@@ -334,7 +347,7 @@ describe('run builder tool', () => {
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
   });
 
-  it('given a builder delegation timeout when the response is received then a timeout is returned without advancing the workflow', async () => {
+  it('given the builder exceeds its timeout when the timeout response arrives then the run fails with a timeout error and the workflow stays in builder-running', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { tool, events } = await piTestSessions.createRegisteredTool({
@@ -362,7 +375,7 @@ describe('run builder tool', () => {
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_RUNNING });
   });
 
-  it('given a builder delegation interruption when the response is received then an interruption is returned without advancing the workflow', async () => {
+  it('given the builder is interrupted when the interruption response arrives then the run fails with an interruption error and the workflow stays in builder-running', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { tool, events } = await piTestSessions.createRegisteredTool({
@@ -390,7 +403,7 @@ describe('run builder tool', () => {
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_RUNNING });
   });
 
-  it('given a running workflow without a handoff when delegation completes then the unexpected phase is reported before reading the handoff', async () => {
+  it('given the builder saved no report and left builder-running unchanged when it reports completion then the run fails with an unexpected workflow phase error', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { tool, events } = await piTestSessions.createRegisteredTool({
@@ -422,7 +435,7 @@ describe('run builder tool', () => {
     ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_RUNNING });
   });
 
-  it('given a completed builder response without a handoff when processed then a protocol error is returned without advancing the workflow', async () => {
+  it('given a builder response with an unsupported status when the run tool receives it then a protocol error identifies that status and the workflow stays in builder-running', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { tool, events } = await piTestSessions.createRegisteredTool({

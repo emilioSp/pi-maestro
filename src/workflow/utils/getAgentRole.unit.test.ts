@@ -15,7 +15,7 @@ describe('getAgentRole', () => {
     [WORKFLOW_PHASES.DRAFTING_SPEC, null],
     [WORKFLOW_PHASES.READY_FOR_BUILDER, null],
   ])(
-    'given phase %s when the agent role is requested then the expected role is returned',
+    'given a workflow in %s when its associated agent is requested then the result is %s',
     (phase, role) => {
       expect(getAgentRole(phase)).toBe(role);
     },

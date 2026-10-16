@@ -24,7 +24,7 @@ afterEach(async () => {
 });
 
 describe('partial spec creation failure', () => {
-  it('given a spec creation write failure when creation is retried then the partial directory remains and the retry is blocked', async () => {
+  it('given saving workflow state fails during spec creation when creation is retried then the spec file and directory remain and the retry fails because the directory already exists', async () => {
     const projectRoot = await mkdtemp(
       join(tmpdir(), 'pi-maestro-spec-failure-'),
     );

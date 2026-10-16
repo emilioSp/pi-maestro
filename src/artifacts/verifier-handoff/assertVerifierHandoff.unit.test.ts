@@ -41,7 +41,7 @@ const finding = (): VerifierHandoff['findings'][number] => ({
 
 describe('verifier handoff validation', () => {
   it.each([PROBE_STATUSES.FAILED, PROBE_STATUSES.NOT_RUN])(
-    'given a passed probe and a second %s probe when validated without a related finding then the handoff is rejected',
+    'given a verifier report with a probe marked %s when validated then a finding linked to that probe is required for the report to pass validation',
     (probeStatus) => {
       const input = handoff();
       input.acceptanceCriteria.push({
@@ -61,7 +61,7 @@ describe('verifier handoff validation', () => {
     },
   );
 
-  it('given findings linked to incomplete checks and other spec rules when the verifier handoff is validated then it is accepted', () => {
+  it('given a verifier report with a failed probe when it includes a finding for that criterion and a separate finding without a criterion then validation succeeds', () => {
     expect(() =>
       assertVerifierHandoff({
         handoff: {
@@ -89,10 +89,12 @@ describe('verifier handoff validation', () => {
 
   it.each([
     {
+      scenario: 'an unsupported version',
       handoff: { ...handoff(), version: '2.0.0' },
       message: 'Invalid verifier handoff',
     },
     {
+      scenario: 'duplicate acceptance criterion IDs',
       handoff: {
         ...handoff(),
         acceptanceCriteria: [
@@ -103,10 +105,12 @@ describe('verifier handoff validation', () => {
       message: 'acceptance criterion IDs must be unique',
     },
     {
+      scenario: 'finding IDs starting at F2 instead of F1',
       handoff: { ...handoff(), findings: [{ ...finding(), id: 'F2' }] },
       message: 'finding IDs must be sequential',
     },
     {
+      scenario: 'a finding linked to an absent criterion',
       handoff: {
         ...handoff(),
         findings: [{ ...finding(), acceptanceCriterion: 'AC2' }],
@@ -114,6 +118,7 @@ describe('verifier handoff validation', () => {
       message: 'references unknown acceptance criterion',
     },
     {
+      scenario: 'a failed probe without a related finding',
       handoff: {
         ...handoff(),
         acceptanceCriteria: [
@@ -126,18 +131,22 @@ describe('verifier handoff validation', () => {
       message: 'requires a finding',
     },
     {
+      scenario: 'finding confidence above 1',
       handoff: { ...handoff(), findings: [{ ...finding(), confidence: 1.1 }] },
       message: 'Invalid verifier handoff',
     },
     {
+      scenario: 'a finding without evidence',
       handoff: { ...handoff(), findings: [{ ...finding(), evidence: [] }] },
       message: 'Invalid verifier handoff',
     },
     {
+      scenario: 'an unknown report field',
       handoff: { ...handoff(), extra: true },
       message: 'Invalid verifier handoff',
     },
     {
+      scenario: 'an unknown finding field',
       handoff: {
         ...handoff(),
         findings: [{ ...finding(), extra: true }],
@@ -145,6 +154,7 @@ describe('verifier handoff validation', () => {
       message: 'Invalid verifier handoff',
     },
     {
+      scenario: 'an unknown evidence field',
       handoff: {
         ...handoff(),
         findings: [
@@ -157,7 +167,7 @@ describe('verifier handoff validation', () => {
       message: 'Invalid verifier handoff',
     },
   ])(
-    'given invalid verifier handoff data %# when validated then it is rejected',
+    'given a verifier report with $scenario when validated then it is rejected with the corresponding report error',
     ({ handoff: input, message }) => {
       expect(() => assertVerifierHandoff({ handoff: input, specId })).toThrow(
         message,

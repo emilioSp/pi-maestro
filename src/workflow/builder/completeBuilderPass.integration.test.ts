@@ -26,7 +26,7 @@ afterEach(async () => {
 });
 
 describe('builder completion', () => {
-  it('given a running builder when a done handoff is submitted then the handoff and state are saved in the current project', async () => {
+  it('given the builder is running when it submits a done report with passed probes then the current project workflow moves to ready-for-verifier', async () => {
     const { paths, repository } = await createApprovedWorkflow();
     await prepareBuilderRun({ paths, specId: SPEC_ID });
 
@@ -60,7 +60,7 @@ describe('builder completion', () => {
     });
   });
   it.each([PROBE_STATUSES.NOT_RUN, PROBE_STATUSES.PASSED])(
-    'given a technical escalation with a %s probe when resolved and followed by a done handoff then B2 is saved in ready-for-verifier',
+    'given a compiler escalation with a probe marked %s when the owner answers it and the next builder run succeeds then B1 keeps the answer, B2 records success, and the workflow becomes ready-for-verifier',
     async (probeStatus) => {
       const { paths, repository } = await createApprovedWorkflow();
       await prepareBuilderRun({ paths, specId: SPEC_ID });
@@ -182,7 +182,7 @@ describe('builder completion', () => {
     },
   );
 
-  it('given a technical escalation with mixed probe results when saved then each supplied result is preserved', async () => {
+  it('given a compiler escalation with passed, failed, and unrun probes when the builder submits its report then every probe result is preserved and the workflow enters escalation-decisions', async () => {
     const { paths, repository } = await createApprovedWorkflow();
     await prepareBuilderRun({ paths, specId: SPEC_ID });
 
@@ -229,13 +229,16 @@ describe('builder completion', () => {
   });
 
   it.each([
-    ['empty escalations', { ...csvExportEscalation, escalations: [] }],
     [
-      'done with escalations',
+      'an escalation report with no questions',
+      { ...csvExportEscalation, escalations: [] },
+    ],
+    [
+      'a done report containing escalation questions',
       { ...csvExportEscalation, status: BUILDER_HANDOFF_STATUSES.DONE },
     ],
     [
-      'nonsequential IDs',
+      'escalation IDs that skip E2',
       {
         ...csvExportEscalation,
         escalations: [
@@ -245,21 +248,21 @@ describe('builder completion', () => {
       },
     ],
     [
-      'first ID not E1',
+      'escalation IDs starting at E2 instead of E1',
       {
         ...csvExportEscalation,
         escalations: [{ ...csvExportEscalation.escalations[0], id: 'E2' }],
       },
     ],
     [
-      'empty options',
+      'an escalation question with no options',
       {
         ...csvExportEscalation,
         escalations: [{ ...csvExportEscalation.escalations[0], options: [] }],
       },
     ],
     [
-      'duplicate options',
+      'an escalation question with duplicate options',
       {
         ...csvExportEscalation,
         escalations: [
@@ -274,7 +277,7 @@ describe('builder completion', () => {
       },
     ],
     [
-      'unknown recommendation',
+      'a recommendation for an option absent from the question',
       {
         ...csvExportEscalation,
         escalations: [
@@ -286,7 +289,7 @@ describe('builder completion', () => {
       },
     ],
     [
-      'owner resolution',
+      'a new escalation question already containing an owner answer',
       {
         ...csvExportEscalation,
         escalations: [
@@ -302,7 +305,7 @@ describe('builder completion', () => {
       },
     ],
     [
-      'done with failed probe',
+      'a done report with a failed probe',
       {
         ...csvExportEscalation,
         status: BUILDER_HANDOFF_STATUSES.DONE,
@@ -313,7 +316,7 @@ describe('builder completion', () => {
       },
     ],
     [
-      'done with not-run probe',
+      'a done report with an unrun probe',
       {
         ...csvExportEscalation,
         status: BUILDER_HANDOFF_STATUSES.DONE,
@@ -321,7 +324,7 @@ describe('builder completion', () => {
       },
     ],
     [
-      'done with passed and incomplete probes',
+      'a done report with one passed probe and one unrun probe',
       {
         ...csvExportEscalation,
         status: BUILDER_HANDOFF_STATUSES.DONE,
@@ -337,7 +340,7 @@ describe('builder completion', () => {
       },
     ],
     [
-      'done with duplicate criterion IDs',
+      'a done report with duplicate acceptance criterion IDs',
       {
         ...csvExportEscalation,
         status: BUILDER_HANDOFF_STATUSES.DONE,
@@ -349,7 +352,7 @@ describe('builder completion', () => {
       },
     ],
   ])(
-    'given a %s builder submission when recorded then it is rejected without writing a handoff or workflow state',
+    'given %s when a builder report is submitted then submission fails without saving a report or changing the workflow',
     async (_name, handoff) => {
       const { paths, repository } = await createApprovedWorkflow();
       await prepareBuilderRun({ paths, specId: SPEC_ID });
@@ -375,7 +378,7 @@ describe('builder completion', () => {
 });
 
 describe('builder spec criterion presence', () => {
-  it('given AC1 and AC2 in the spec when a done submission contains only AC1 then no report or phase change is saved', async () => {
+  it('given the spec requires AC1 and AC2 when a done builder report covers only AC1 then submission fails naming AC2 without saving a report or changing the workflow', async () => {
     const { paths, repository } = await createApprovedWorkflow();
     await writeFile(
       paths.getSpecFilePath(SPEC_ID),

@@ -8,10 +8,10 @@ Pi extension for a spec-driven multiagent development workflow.
 
 ## The idea
 
-A `specification` (`spec`) describes one reversible change. 
-The `builder` implements it. 
-An independent `verifier` checks every `acceptance criterion`. 
-A `simplifier` then refactors accepted code without changing behavior. 
+A `specification` (`spec`) describes one reversible change.
+The `builder` implements it.
+An independent `verifier` checks every `acceptance criterion`.
+A `simplifier` then refactors accepted code without changing behavior.
 The `owner` performs the final review.
 
 Five principles hold the workflow together:
@@ -24,15 +24,16 @@ Five principles hold the workflow together:
 
 ## The roles
 
-| Role | Responsibility |
-|---|---|
-| `Owner` | Brings the problem, approves the `spec`, decides questions and `findings`, and reviews the final code. |
-| `Maestro` | Works directly with the `owner`, prepares the `spec`, runs the other agents, records decisions, and summarizes results. |
-| `Builder` | Implements the approved `spec` and checks each `acceptance criterion`. |
-| `Verifier` | Independently checks the project files against the `spec` and reports technical issues. |
-| `Simplifier` | Refactors accepted code for clarity without changing behavior or introducing check failures. |
+| Role         | Responsibility                                                                                                          |
+|--------------|-------------------------------------------------------------------------------------------------------------------------|
+| `Owner`      | Brings the problem, approves the `spec`, decides questions and `findings`, and reviews the final code.                  |
+| `Maestro`    | Works directly with the `owner`, prepares the `spec`, runs the other agents, records decisions, and summarizes results. |
+| `Builder`    | Implements the approved `spec` and checks each `acceptance criterion`.                                                  |
+| `Verifier`   | Independently checks the project files against the `spec` and reports technical issues.                                 |
+| `Simplifier` | Refactors accepted code for clarity without changing behavior or introducing check failures.                            |
 
-An `escalation` asks the `owner` to decide an implementation question. A `finding` records a technical issue reported by the `verifier`. The `owner` discusses both with `Maestro`, not directly with the `builder` or `verifier`.
+An `escalation` asks the `owner` to decide an implementation question. A `finding` records a technical issue reported by the `verifier`. The `owner` discusses both with
+`Maestro`, not directly with the `builder` or `verifier`.
 
 ## Prerequisites
 
@@ -79,12 +80,14 @@ The `owner` follows this workflow:
 6. Reads Maestro's summary at `candidate-ready` and performs the final review.
 
 `Maestro` starts the `verifier` after a successful `builder` `run`.
-All three agents run in the foreground: Pi waits for each `run` to finish and `Maestro` shows the current phase in Pi's status, while `pi-subagents` FleetView and `/subagents-fleet` show agent activity and transcripts.
+All three agents run in the foreground: Pi waits for each `run` to finish and `Maestro` shows the current phase in Pi's status, while `pi-subagents` FleetView and
+`/subagents-fleet` show agent activity and transcripts.
 
 The `owner` must not edit product files while the workflow runs.
 `Maestro` can perform temporary experiments with `owner` agreement during `spec` preparation and permitted revisions. See [Workflow](docs/workflow.md#spec-approval).
 
-An `escalation` asks the `owner` to decide an implementation question, and a `finding` records a technical issue reported by the `verifier`. The `owner` discusses both with `Maestro`, never directly with the `builder` or `verifier`.
+An `escalation` asks the `owner` to decide an implementation question, and a `finding` records a technical issue reported by the `verifier`. The `owner` discusses both
+with `Maestro`, never directly with the `builder` or `verifier`.
 `Maestro` records all current `escalation` answers or `finding` decisions in the active `handoff` before changing phase.
 
 If any decision requires a `spec` change, the workflow returns to `drafting-spec` before the `owner` and `Maestro` revise the same `spec`.
@@ -99,12 +102,13 @@ The workflow ends at `candidate-ready`. Rejected `findings` retain their reasons
 Maestro's summary separates independent verification from the later simplifier's report.
 The `owner` controls later review, commits, pull requests, and merging.
 
-The same `/maestro` command disables `Maestro` and leaves project files unchanged. Disabling `Maestro`, restarting Pi, or using `/resume` clears live session state. 
+The same `/maestro` command disables `Maestro` and leaves project files unchanged. Disabling `Maestro`, restarting Pi, or using `/resume` clears live session state.
 Saved files do not automatically restore or resume an incomplete workflow. The `owner` handles it manually.
 
 ## Configuration
 
-`Maestro` uses default values when `.pi/maestro.json` is absent from the project root. The `owner` can add this file to change the `spec` directory, models, thinking levels, or timeouts. See [Configuration](docs/configuration.md).
+`Maestro` uses default values when `.pi/maestro.json` is absent from the project root. The `owner` can add this file to change the `spec` directory, models, thinking
+levels, or timeouts. See [Configuration](docs/configuration.md).
 
 ## Documentation
 
