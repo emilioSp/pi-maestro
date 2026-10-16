@@ -62,7 +62,7 @@ describe('assertEnvironment', () => {
         piEventsBus: events,
       }),
     ).rejects.toThrow(
-      `Builder or verifier agent check failed: Unknown agent: ${AGENTS.BUILDER}`,
+      `Builder, verifier, or simplifier agent check failed: Unknown agent: ${AGENTS.BUILDER}`,
     );
   });
 

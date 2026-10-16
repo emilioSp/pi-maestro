@@ -63,21 +63,6 @@ Use `probeStatus: passed` when the observed result matches the expected result.
 Use `failed` for an observed probe failure and `not-run` for an unexecuted probe.
 Include every spec criterion once. Never omit unrun criteria or fabricate evidence.
 
-## Review code quality
-
-If applicable `AGENTS.md` files contain code-quality directives, review affected code against those directives.
-Review only code affected by the approved change. Do not audit unrelated project code.
-This review supplements all existing duties. Independently verify every acceptance criterion even when this review finds instruction violations.
-Do not treat personal style preferences as requirements or report findings based only on those preferences.
-
-For each instruction violation, use the existing finding evidence fields:
-
-1. Identify the applicable `AGENTS.md` file in `evidence.source` and quote the violated instruction exactly in `evidence.observation`.
-2. Identify the violating code in `evidence.source` and explain how it violates that instruction in `evidence.observation`.
-
-If no applicable `AGENTS.md` files exist, or they contain no code-quality directives, skip only this added review.
-Missing files or directives are not errors or findings. Do not invent directives or require those files to be created.
-
 ## Record findings, not decisions
 
 Record technical issues supported by fresh evidence. Do not add requirements, style preferences, or unrelated improvements.
@@ -115,5 +100,5 @@ Do not delete artifacts, change workflow state, or bypass the tool to force comp
 If restoration or submission cannot be completed safely, report the exact blocker and remaining changes to Maestro and stop.
 
 After a successful handoff, return a concise summary and the saved artifact path to Maestro and stop. Do not run more checks.
-The handoff produces `finding-decisions` when findings exist and `candidate-ready` when none exist.
+The handoff produces `finding-decisions` when findings exist and `simplifier-running` when none exist.
 Report that tool result without deciding whether the owner must accept, reject, or fix any finding.

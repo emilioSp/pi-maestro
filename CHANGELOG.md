@@ -2,6 +2,13 @@
 
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries; GitHub Releases are not required.
 
+## Unreleased
+
+1. Added the `simplifier` after successful verification or rejection of all current `findings`, without another approval or verification cycle.
+2. Added Git-only readiness and file discovery for simplification. If Git is unavailable, the workflow warns and completes without delegation.
+3. Added independent `simplifier` configuration, activation checks and presentation, running status, and the fixed `handoffs/simplifier/S.json` result.
+4. Removed the extra code-quality review from the verifier's instructions. The `simplifier` preserves accepted behavior without introducing check failures.
+
 ## 0.10.1
 
 1. Added `success`, `failure`, and `unchanged` coverage labels to the `spec` template and `Maestro` guidance. Approval validation and `handoff` formats remain unchanged.

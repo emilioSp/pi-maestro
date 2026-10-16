@@ -63,7 +63,11 @@ function assertModelsAvailable({
 }: AssertModelsAvailableInput): void {
   const availableModels = context.modelRegistry.getAvailable();
 
-  for (const model of [config.builder.model, config.verifier.model]) {
+  for (const model of [
+    config.builder.model,
+    config.verifier.model,
+    config.simplifier.model,
+  ]) {
     const [provider, id] = model.split('/');
 
     if (
@@ -77,7 +81,7 @@ function assertModelsAvailable({
 }
 
 async function assertAgentsAvailable(projectRoot: string): Promise<void> {
-  for (const agent of [AGENTS.BUILDER, AGENTS.VERIFIER]) {
+  for (const agent of [AGENTS.BUILDER, AGENTS.VERIFIER, AGENTS.SIMPLIFIER]) {
     const result = await resolveSubagentLaunchContract({
       agent,
       cwd: projectRoot,
@@ -171,7 +175,7 @@ export async function assertEnvironment({
     await assertAgentsAvailable(projectRoot);
   } catch (error) {
     throw new Error(
-      `Builder or verifier agent check failed: ${getErrorMessage(error)}`,
+      `Builder, verifier, or simplifier agent check failed: ${getErrorMessage(error)}`,
     );
   }
 
