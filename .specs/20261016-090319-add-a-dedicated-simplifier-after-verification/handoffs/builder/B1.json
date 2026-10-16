@@ -1,0 +1,124 @@
+{
+  "status": "done",
+  "summary": "Implemented the dedicated simplifier, its Git-only run/skip route, fixed handoff, configuration, activation checks, status, agent guidance, and documentation. All 22 acceptance criteria passed.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npm run check: completeVerifierPass.integration.test.ts and run-simplifier.integration.test.ts complete verification in temporary projects without Git repositories and assert simplifier-running.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "npm run check: resolve-findings.integration.test.ts rejects the sole V1/F1 outside Git with reason Outside approved scope and asserts saved simplifier-running and preserved rejection.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "npm run check: run-simplifier.integration.test.ts covers unavailable Git execution, failed Git, false output, and a real non-repository; each returns the exact skip warning.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "npm run check: all four Git skip scenarios assert saved candidate-ready without an execution error.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "npm run check: run-simplifier.integration.test.ts initializes a real Git repository, captures one scripted foreground delegation request, and checks agent, spec, canonical cwd, fresh context, model, thinking, and 60-minute timeout.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "npm run check: record-simplifier-handoff.integration.test.ts submits src/counts.ts and src/report.ts with the agreed summary and caller note; saved handoffs/simplifier/S.json equals exactly the submitted fields plus version.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "npm run check: the successful scripted simplifier run records No simplification needed with empty refactoredFiles and notes, then asserts candidate-ready.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "npm run check: record-simplifier-handoff.integration.test.ts independently rejects an escaping path, extra findings field, mismatched saved identity, different submitted spec, and verifier-running phase; workflow bytes remain unchanged and no S.json appears.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC9",
+      "probe": "npm run check: run-simplifier.integration.test.ts returns completed without saving a handoff and asserts a protocol error, unchanged simplifier-running, and absent S.json.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC10",
+      "probe": "npm run check: run-simplifier.integration.test.ts scripts failed, timed_out, and interrupted responses before handoff; each reports a delegation error without advancing or saving a result.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC11",
+      "probe": "npm run check: loadConfiguration.unit.test.ts loads version-only configuration and asserts simplifier defaults openai-codex/gpt-6.1-sol, high, and 60 minutes.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC12",
+      "probe": "npm run check: loadConfiguration.unit.test.ts loads only simplifier.timeoutMinutes: 90 and checks unchanged simplifier model/thinking and builder/verifier defaults.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC13",
+      "probe": "npm run check: loadConfiguration.unit.test.ts loads simplifier.timeoutMinutes: 0 and asserts Invalid timeout at simplifier.timeoutMinutes.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC14",
+      "probe": "Inspected agents/verifier.md and executed Python assertions confirming removal of Review code quality and its instruction-violation procedure while retaining acceptance verification.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC15",
+      "probe": "Executed Python comparison of the five retained guidance sections against .agents/skills/simplifier/SKILL.md, allowing only the agreed check-baseline adaptation and coordinated result.a.count to result.get(\"a\") clarification; examples and tables match.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC16",
+      "probe": "Inspected agents/simplifier.md and executed Python assertions for the accepted V1/F1 translation-check example, permission for that failure to remain, and prohibitions on fixing rejected findings, changing tests to pass, or introducing failures.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC17",
+      "probe": "Executed Python assertions on Maestro guidance and inspected both entry-tool messages. npm run check asserts both successful verification and all-rejected finding results direct maestro_run_simplifier next without another approval or verifier pass.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC18",
+      "probe": "Inspected final-summary guidance and executed Python assertions requiring the saved S.json summary and notes as the simplifier report, explicitly excluding attribution to independent verifier checks.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC19",
+      "probe": "npm run check: during the active scripted simplifier delegation, run-simplifier.integration.test.ts observes saved simplifier-running and the real Pi setStatus call with the broom icon and Simplifier running.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC20",
+      "probe": "npm run check: extensions/maestro.integration.test.ts activates outside a Git repository, checks the UI-only default simplifier notice and custom thinking override, and preserves session history without model requests or Git skip predictions.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC21",
+      "probe": "npm run check: extensions/maestro.integration.test.ts separately activates outside Git with an unavailable simplifier model and with only builder/verifier agents available; activation stays disabled and identifies each missing dependency.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC22",
+      "probe": "npm run check: every Git skip scenario asserts no simplifier delegation request and no simplifier handoff.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "Final npm run check passed all 262 tests and coverage thresholds. npm run lint and git diff --check also passed.",
+    "Delegation scenarios use scripted responses with real Pi tool registration and filesystem operations. No real model refactoring or independent verification of refactored code is claimed.",
+    "Git discovery scope is defined in the bundled simplifier guidance: all current staged, unstaged, and untracked code changes, including pre-existing changes and necessary caller updates. No spec-specific starting commit or builder file list was added."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261016-090319-add-a-dedicated-simplifier-after-verification"
+}
