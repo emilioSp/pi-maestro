@@ -92,20 +92,20 @@ This breaking MVP change has no migrations, compatibility readers, deprecated al
 
 ### Status
 
-Accepted. The simplifier is planned in R-21 and is not implemented yet.
+Accepted. Implemented through R-21.
 Supersedes [ADR-001](#adr-001-keep-the-workflow-independent-of-git).
 
 ### Context
 
-The future simplifier needs a list of changed code files. Git can supply that list without adding file tracking to `builder` `handoffs`.
+The `simplifier` needs a list of changed code files. Git can supply that list without adding file tracking to `builder` `handoffs`.
 
 ### Decision
 
-Only the simplifier requires Git and a Git repository to discover changed files. It has no non-Git fallback.
+Only the `simplifier` requires Git and a Git repository to discover changed files. It has no non-Git fallback.
 
 The Git readiness decision belongs only inside `maestro_run_simplifier`, before delegation. The tool checks readiness with `git rev-parse --is-inside-work-tree` in the project directory. Only a successful result of `true` enables simplification.
 
-Activation, `spec` preparation, `builder` execution, `verifier` completion, and `finding` resolution do not check Git readiness. Both simplifier entry routes save `simplifier-running` before `Maestro` calls `maestro_run_simplifier`.
+Activation, `spec` preparation, `builder` execution, `verifier` completion, and `finding` resolution do not check Git readiness. Both `simplifier` entry routes save `simplifier-running` before `Maestro` calls `maestro_run_simplifier`.
 
 `Maestro` does not create automatic commits or Git checkpoints. The `owner` retains control of commits, pull requests, and merging.
 
@@ -115,8 +115,9 @@ If Git readiness cannot be confirmed, `maestro_run_simplifier` reports a warning
 
 Activation does not predict whether simplification will be skipped. The same readiness decision applies after successful verification and after the `owner` rejects all current `findings`. Rejected `findings` retain their reasons and do not become passed verification.
 
-R-21 will define and implement file discovery. This decision adds no runtime Git checks to the current workflow.
+The `simplifier` uses Git to select all staged, unstaged, and untracked code changes, including pre-existing changes.
+There is no spec-specific starting commit or `builder` file list. Required caller updates can include initially unchanged files.
 
 ### Evidence
 
-[R-21](ROADMAP.md#r-21-add-a-simplifier-with-one-clear-purpose-per-agent) and the owner's decisions to require Git only for the simplifier and place the readiness decision inside `maestro_run_simplifier`.
+[R-21](ROADMAP.md#r-21-add-a-simplifier-with-one-clear-purpose-per-agent) and the [specification](.specs/20261016-090319-add-a-dedicated-simplifier-after-verification/spec.md).
