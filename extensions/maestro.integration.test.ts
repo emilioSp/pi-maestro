@@ -3,8 +3,10 @@
  * Used: In integration tests with real Pi sessions and scripted child work.
  */
 
+import { execFile } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { promisify } from 'node:util';
 import type {
   ExtensionAPI,
   wrapRegisteredTool,
@@ -22,6 +24,7 @@ import {
   BUILDER_HANDOFF_STATUSES,
   PROBE_STATUSES,
 } from '#artifacts/builder-handoff/schema.ts';
+import { readSimplifierHandoff } from '#artifacts/simplifier-handoff/readSimplifierHandoff.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import {
   FINDING_DECISIONS,
@@ -51,12 +54,14 @@ import {
 import piTestSessions from '#tests/support/pi-session.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { BUILDER_HANDOFF_TOOL } from '#tools/child/record-builder-handoff.ts';
+import { SIMPLIFIER_HANDOFF_TOOL } from '#tools/child/record-simplifier-handoff.ts';
 import { VERIFIER_HANDOFF_TOOL } from '#tools/child/record-verifier-handoff.ts';
 import { CREATE_SPEC_TOOL } from '#tools/main/create-spec.ts';
 import { MARK_SPEC_READY_TOOL } from '#tools/main/mark-spec-ready.ts';
 import { RESOLVE_ESCALATIONS_TOOL } from '#tools/main/resolve-escalations.ts';
 import { RESOLVE_FINDINGS_TOOL } from '#tools/main/resolve-findings.ts';
 import { RUN_BUILDER_TOOL } from '#tools/main/run-builder.ts';
+import { RUN_SIMPLIFIER_TOOL } from '#tools/main/run-simplifier.ts';
 import { RUN_VERIFIER_TOOL } from '#tools/main/run-verifier.ts';
 import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
@@ -65,6 +70,8 @@ import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
 import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
 import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
+
+const execFileAsync = promisify(execFile);
 
 const successfulPingExtension = (pi: ExtensionAPI): void => {
   pi.events.on(SUBAGENT_PING.REQUEST_EVENT, (payload) => {
@@ -89,6 +96,7 @@ const MAIN_TOOL_NAMES = [
   RESOLVE_ESCALATIONS_TOOL.NAME,
   RUN_VERIFIER_TOOL.NAME,
   RESOLVE_FINDINGS_TOOL.NAME,
+  RUN_SIMPLIFIER_TOOL.NAME,
 ];
 
 const BASE_TOOLS = ['read', 'bash', 'edit', 'write', FOREIGN_TOOL];
@@ -183,7 +191,7 @@ describe('main Maestro extension', () => {
     expect(notify).toHaveBeenCalledOnce();
     expect(notify.mock.calls[0][1]).toBe('info');
     expect(stripTerminalSequences(notify.mock.calls[0][0])).toBe(
-      `Maestro active\nMaestro helps the owner define a spec, then coordinates implementation and independent verification.\nAsk how Maestro works for a short explanation.\nBuilder (${DEFAULT_CONFIG.builder.model} ${DEFAULT_CONFIG.builder.thinking})\nVerifier (${DEFAULT_CONFIG.verifier.model} ${DEFAULT_CONFIG.verifier.thinking})`,
+      `Maestro active\nMaestro helps the owner define a spec, then coordinates implementation and independent verification.\nAsk how Maestro works for a short explanation.\nBuilder (${DEFAULT_CONFIG.builder.model} ${DEFAULT_CONFIG.builder.thinking})\nVerifier (${DEFAULT_CONFIG.verifier.model} ${DEFAULT_CONFIG.verifier.thinking})\nSimplifier (${DEFAULT_CONFIG.simplifier.model} ${DEFAULT_CONFIG.simplifier.thinking})`,
     );
 
     const event = await session.extensionRunner.emitBeforeAgentStart(
@@ -260,6 +268,7 @@ describe('main Maestro extension', () => {
           model: 'openai-codex/gpt-6.1-sol',
           thinking: THINKING_LEVELS.HIGH,
         },
+        simplifier: { thinking: THINKING_LEVELS.MEDIUM },
       }),
     );
 
@@ -278,8 +287,34 @@ describe('main Maestro extension', () => {
         'Ask how Maestro works for a short explanation.',
         theme.fg('accent', 'Builder (openai-codex/gpt-6.1-sol xhigh)'),
         theme.fg('accent', 'Verifier (openai-codex/gpt-6.1-sol high)'),
+        theme.fg('accent', 'Simplifier (openai-codex/gpt-6.1-sol medium)'),
       ].join('\n'),
       'info',
+    );
+  });
+
+  it('given an unavailable simplifier model when Maestro activates then activation fails with a model availability error', async () => {
+    const repository = await createTemporaryProject();
+    cleanupFunctions.push(repository.cleanup);
+    await mkdir(join(repository.path, '.pi'));
+    await writeFile(
+      join(repository.path, '.pi/maestro.json'),
+      JSON.stringify({
+        version: '1.0.0',
+        simplifier: { model: 'openai-codex/missing' },
+      }),
+    );
+
+    const { session, notify } = await piTestSessions.create({
+      cwd: repository.path,
+      extensions: [maestroExtension, successfulPingExtension],
+    });
+
+    await session.prompt('/maestro');
+    expect(maestroSessionState.isActive()).toBe(false);
+    expect(notify).toHaveBeenCalledExactlyOnceWith(
+      'Configured model is not available: "openai-codex/missing".',
+      'error',
     );
   });
 
@@ -523,9 +558,10 @@ describe('main Maestro extension', () => {
     );
   });
 
-  it('given an approved spec when builder and verifier run then status follows running and completed phases without a final transition', async () => {
+  it('given an approved spec when builder, verifier and simplifier run then status follows running and completed phases', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
+    await execFileAsync('git', ['init', '-q', repository.path]);
 
     const { session, events, setStatus } = await piTestSessions.create({
       extensions: [foreignExtension, maestroExtension, successfulPingExtension],
@@ -613,6 +649,51 @@ describe('main Maestro extension', () => {
       },
     ];
 
+    const scriptedRuns = [
+      {
+        agent: AGENTS.BUILDER,
+        runningPhase: WORKFLOW_PHASES.BUILDER_RUNNING,
+        statusIcon: '🛠️',
+        statusLabel: 'Builder running',
+        handoffToolName: BUILDER_HANDOFF_TOOL.NAME,
+        handoff: {
+          specId,
+          status: BUILDER_HANDOFF_STATUSES.DONE,
+          summary: 'The weather alert message passed the probe.',
+          acceptanceCriteria,
+          escalations: [],
+          notes: [],
+        },
+      },
+      {
+        agent: AGENTS.VERIFIER,
+        runningPhase: WORKFLOW_PHASES.VERIFIER_RUNNING,
+        statusIcon: '🔍',
+        statusLabel: 'Verifier running',
+        handoffToolName: VERIFIER_HANDOFF_TOOL.NAME,
+        handoff: {
+          specId,
+          summary: 'The weather alert message passed the probe.',
+          acceptanceCriteria,
+          findings: [],
+          notes: [],
+        },
+      },
+      {
+        agent: AGENTS.SIMPLIFIER,
+        runningPhase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
+        statusIcon: '🧹',
+        statusLabel: 'Simplifier running',
+        handoffToolName: SIMPLIFIER_HANDOFF_TOOL.NAME,
+        handoff: {
+          specId,
+          refactoredFiles: [],
+          summary: 'No simplification needed.',
+          notes: [],
+        },
+      },
+    ];
+
     const requests: SubagentDelegationRequest[] = [];
 
     // Script only the AI work and completion response. Pi sessions, tools, and file operations are real.
@@ -622,67 +703,39 @@ describe('main Maestro extension', () => {
       requests.push(request);
 
       try {
-        const runningPhase =
-          request.agent === AGENTS.BUILDER
-            ? WORKFLOW_PHASES.BUILDER_RUNNING
-            : WORKFLOW_PHASES.VERIFIER_RUNNING;
-
-        const runningIcon = request.agent === AGENTS.BUILDER ? '🛠️' : '🔍';
-
-        const runningLabel =
-          request.agent === AGENTS.BUILDER
-            ? 'Builder running'
-            : 'Verifier running';
-
-        await expect(readWorkflowState(workflowPath)).resolves.toMatchObject({
-          phase: runningPhase,
-        });
-        expect(setStatus).toHaveBeenLastCalledWith(
-          MAESTRO_STATUS_KEY,
-          theme.fg('muted', `Maestro active · ${specId.slice(0, 26)}... · `) +
-            `${runningIcon} ` +
-            theme.fg('accent', runningLabel),
-        );
-
         const { session: child } = await piTestSessions.create({
           cwd: request.cwd,
           extensions: [maestroSubagentExtension],
         });
 
-        expect([AGENTS.BUILDER, AGENTS.VERIFIER]).toContain(request.agent);
+        const scriptedRun = scriptedRuns.find(
+          ({ agent }) => agent === request.agent,
+        );
+
+        if (scriptedRun === undefined) {
+          throw new Error(`Unexpected agent: ${request.agent}`);
+        }
+
+        await expect(readWorkflowState(workflowPath)).resolves.toMatchObject({
+          phase: scriptedRun.runningPhase,
+        });
+        expect(setStatus).toHaveBeenLastCalledWith(
+          MAESTRO_STATUS_KEY,
+          theme.fg('muted', `Maestro active · ${specId.slice(0, 26)}... · `) +
+            `${scriptedRun.statusIcon} ` +
+            theme.fg('accent', scriptedRun.statusLabel),
+        );
 
         if (request.agent === AGENTS.BUILDER) {
           await writeFile(productPath, productContents);
         }
 
-        const toolName =
-          request.agent === AGENTS.BUILDER
-            ? BUILDER_HANDOFF_TOOL.NAME
-            : VERIFIER_HANDOFF_TOOL.NAME;
-
         const tool = child.agent.state.tools.find(
-          (tool) => tool.name === toolName,
+          (tool) => tool.name === scriptedRun.handoffToolName,
         );
 
         assertToolRegistered(tool);
-
-        const handoffResult = await tool.execute(request.requestId, {
-          specId,
-          summary: 'The weather alert message passed the probe.',
-          acceptanceCriteria,
-          notes: [],
-          ...(request.agent === AGENTS.BUILDER
-            ? { status: BUILDER_HANDOFF_STATUSES.DONE, escalations: [] }
-            : { findings: [] }),
-        });
-
-        expect(handoffResult.details).toMatchObject({
-          specId,
-          phase:
-            request.agent === AGENTS.BUILDER
-              ? WORKFLOW_PHASES.READY_FOR_VERIFIER
-              : WORKFLOW_PHASES.CANDIDATE_READY,
-        });
+        await tool.execute(request.requestId, scriptedRun.handoff);
 
         events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
           requestId: request.requestId,
@@ -751,8 +804,39 @@ describe('main Maestro extension', () => {
 
     expect(verified.details).toMatchObject({
       specId,
-      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+      phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
       handoff: { specId, acceptanceCriteria, findings: [] },
+    });
+    expect(setStatus).toHaveBeenLastCalledWith(
+      MAESTRO_STATUS_KEY,
+      theme.fg('muted', `Maestro active · ${specId.slice(0, 26)}... · `) +
+        '🧹 ' +
+        theme.fg('accent', 'Simplifier running'),
+    );
+
+    const runSimplifierTool = session.agent.state.tools.find(
+      (tool) => tool.name === RUN_SIMPLIFIER_TOOL.NAME,
+    );
+
+    assertToolRegistered(runSimplifierTool);
+    const simplified = await runSimplifierTool.execute('test-call', { specId });
+    expect(simplified.details).toMatchObject({
+      specId,
+      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+      handoff: {
+        specId,
+        refactoredFiles: [],
+        summary: 'No simplification needed.',
+        notes: [],
+      },
+    });
+    await session.extensionRunner.emitToolResult({
+      type: 'tool_result',
+      toolName: RUN_SIMPLIFIER_TOOL.NAME,
+      toolCallId: 'test-call',
+      input: { specId },
+      ...simplified,
+      isError: false,
     });
     expect(requests).toMatchObject([
       {
@@ -763,6 +847,12 @@ describe('main Maestro extension', () => {
       },
       {
         agent: AGENTS.VERIFIER,
+        cwd: repository.path,
+        context: 'fresh',
+        task: expect.stringContaining(specId),
+      },
+      {
+        agent: AGENTS.SIMPLIFIER,
         cwd: repository.path,
         context: 'fresh',
         task: expect.stringContaining(specId),
@@ -794,6 +884,18 @@ describe('main Maestro extension', () => {
         specId,
       }),
     ).toMatchObject({ specId });
+    expect(
+      await readSimplifierHandoff({
+        path: join(specPath, 'handoffs', 'simplifier', 'S.json'),
+        specId,
+        projectRoot: repository.path,
+      }),
+    ).toMatchObject({
+      specId,
+      refactoredFiles: [],
+      summary: 'No simplification needed.',
+      notes: [],
+    });
     expect(await readFile(specFilePath, 'utf8')).toBe(approvedSpec);
     expect(await readFile(productPath, 'utf8')).toBe(productContents);
 
