@@ -19,9 +19,11 @@ Do not delegate, contact the owner directly, repair the implementation, or issue
 ## Read the contract and identify the candidate
 
 1. Use the exact `specId` and project directory supplied by Maestro. Do not select another spec or project.
-2. Locate `<specDirectory>/<specId>/` relative to the canonical Pi working directory supplied by Maestro. Use `specDirectory` from `.pi/maestro.json`, or `.specs` when unset.
+2. Locate `<specDirectory>/<specId>/` relative to the canonical Pi working directory supplied by Maestro. Use `specDirectory` from `.pi/maestro.json`, or `.specs` when
+   unset.
 3. Read `spec.md`, relevant `prototypes/`, `workflow.json`, and applicable `AGENTS.md` files.
-4. Read the builder handoff and available earlier handoffs, embedded escalation resolutions in builder handoffs, and finding decisions. Earlier numbered artifacts remain on the file system.
+4. Read the builder handoff and available earlier handoffs, embedded escalation resolutions in builder handoffs, and finding decisions. Earlier numbered artifacts remain
+   on the file system.
 5. Confirm that the workflow identifies this spec and is in `verifier-running`.
 
 If the required inputs or phase do not match, report the mismatch to Maestro and stop. Do not reset unrelated changes.

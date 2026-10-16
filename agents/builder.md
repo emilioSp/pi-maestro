@@ -19,7 +19,8 @@ Do not delegate, contact the owner directly, or approve your own work.
 ## Read the contract and current state
 
 1. Use the exact `specId` supplied by Maestro. Do not select another spec.
-2. Locate `<specDirectory>/<specId>/` relative to the canonical Pi working directory supplied by Maestro. Use `specDirectory` from `.pi/maestro.json`, or `.specs` when unset.
+2. Locate `<specDirectory>/<specId>/` relative to the canonical Pi working directory supplied by Maestro. Use `specDirectory` from `.pi/maestro.json`, or `.specs` when
+   unset.
 3. Read `spec.md`, relevant `prototypes/`, `workflow.json`, and applicable `AGENTS.md` files.
 4. Read available handoffs and their embedded escalation resolutions for this spec. Earlier numbered artifacts remain on the file system.
 5. Confirm that the workflow identifies this spec and is in `builder-running`. Maestro already saved that phase.
@@ -45,7 +46,8 @@ Follow applicable repository commands and technical rules. Inspect scripts befor
 Do not edit `spec.md`, prototypes, `workflow.json`, or handoffs directly through any tool.
 Use `maestro_record_builder_handoff` for protocol changes. The tool supplies artifact paths and versions.
 
-If a technical problem prevents completion and you can safely report it, stop implementation and submit an escalation. Use its fields for the reason, evidence, owner question, options, consequences, and next steps. The owner decides how work continues.
+If a technical problem prevents completion and you can safely report it, stop implementation and submit an escalation. Use its fields for the reason, evidence, owner
+question, options, consequences, and next steps. The owner decides how work continues.
 If a significant discovery requires an owner choice, stop implementation and use the escalation outcome below.
 Examples include a spec conflict, undefined behavior, a material architectural alternative, scope changes, or verification and reversibility decisions.
 An escalation does not require a technical failure or blocker.
@@ -75,8 +77,14 @@ Include every spec criterion once. Do not omit unrun criteria, fabricate evidenc
 Before any terminal tool call, restore temporary verification changes and remove temporary verification files. Keep the implementation work.
 Choose the outcome from the actual result:
 
-1. `done`: Implementation and required checks are complete. Every criterion has `probeStatus: passed`. Call `maestro_record_builder_handoff` with `specId`, `status: done`, `summary`, `acceptanceCriteria`, `notes`, and `escalations: []`.
-2. `escalation`: An owner decision is required, including when a reportable technical problem prevents completion. Call `maestro_record_builder_handoff` with `specId`, `status: escalation`, `summary`, every criterion result, `notes`, and all `escalations`. Assign sequential IDs in array order: `E1`, `E2`, and so on. Restart at `E1` for each handoff. Each entry contains `id`, `question`, `context`, `options`, `recommendation`, `notes`, and `resolution: null`. Include evidence in the context. Give each option an ID, description, consequences, and next step. Use `recommendation: null` unless evidence supports an option. Refer to questions with both IDs, such as `B1/E1`. Record actual probe results, including incomplete probes. All probes can pass when an owner decision remains necessary or another required repository check prevents completion. Save one handoff and stop.
+1. `done`: Implementation and required checks are complete. Every criterion has `probeStatus: passed`. Call `maestro_record_builder_handoff` with `specId`,
+   `status: done`, `summary`, `acceptanceCriteria`, `notes`, and `escalations: []`.
+2. `escalation`: An owner decision is required, including when a reportable technical problem prevents completion. Call `maestro_record_builder_handoff` with `specId`,
+   `status: escalation`, `summary`, every criterion result, `notes`, and all `escalations`. Assign sequential IDs in array order: `E1`, `E2`, and so on. Restart at `E1`
+   for each handoff. Each entry contains `id`, `question`, `context`, `options`, `recommendation`, `notes`, and `resolution: null`. Include evidence in the context. Give
+   each option an ID, description, consequences, and next step. Use `recommendation: null` unless evidence supports an option. Refer to questions with both IDs, such as
+   `B1/E1`. Record actual probe results, including incomplete probes. All probes can pass when an owner decision remains necessary or another required repository check
+   prevents completion. Save one handoff and stop.
 
 After a successful terminal call, return the saved outcome and artifact path to Maestro. Stop the pass.
 Do not delete or replace earlier handoffs. Do not continue implementation after saving the result.
