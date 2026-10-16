@@ -4,7 +4,7 @@
 
 ## Project root
 
-The project root is the current Pi working directory. `Builder` and `verifier` `runs` use this same directory.
+The project root is the current Pi working directory. `Builder`, `verifier`, and `simplifier` `runs` use this same directory.
 
 For example, if Pi starts in `/work/app/src`, `Maestro` reads `/work/app/src/.pi/maestro.json`. A configuration file in `/work/app/.pi/maestro.json` does not apply.
 
@@ -19,6 +19,11 @@ For example, if Pi starts in `/work/app/src`, `Maestro` reads `/work/app/src/.pi
     "thinking": "max",
     "timeoutMinutes": 60
   },
+  "simplifier": {
+    "model": "openai-codex/gpt-6.1-sol",
+    "thinking": "high",
+    "timeoutMinutes": 60
+  },
   "verifier": {
     "model": "openai-codex/gpt-6.1-sol",
     "thinking": "high",
@@ -29,18 +34,22 @@ For example, if Pi starts in `/work/app/src`, `Maestro` reads `/work/app/src/.pi
 
 ## Fields
 
-| Field | Required | Default | Rules |
-|---|---:|---|---|
-| `version` | Yes, when the file exists | `1.0.0` | Configuration format version. Only `1.0.0` is supported. |
-| `specDirectory` | No | `.specs` | Relative path below the project root. |
-| `builder` | No | `Builder` defaults | Overrides supported `builder` fields. |
-| `builder.model` | No | `openai-codex/gpt-5.6-luna` | Full `provider/model` identifier. |
-| `builder.thinking` | No | `max` | One supported thinking level. |
-| `builder.timeoutMinutes` | No | `60` | Integer from `1` to `1440`. Applies to each `builder` `run`. |
-| `verifier` | No | `Verifier` defaults | Overrides supported `verifier` fields. |
-| `verifier.model` | No | `openai-codex/gpt-6.1-sol` | Full `provider/model` identifier. |
-| `verifier.thinking` | No | `high` | One supported thinking level. |
-| `verifier.timeoutMinutes` | No | `60` | Integer from `1` to `1440`. Applies to each `verifier` `run`. |
+| Field                       |                  Required | Default                     | Rules                                                           |
+|-----------------------------|--------------------------:|-----------------------------|-----------------------------------------------------------------|
+| `version`                   | Yes, when the file exists | `1.0.0`                     | Configuration format version. Only `1.0.0` is supported.        |
+| `specDirectory`             |                        No | `.specs`                    | Relative path below the project root.                           |
+| `builder`                   |                        No | `Builder` defaults          | Overrides supported `builder` fields.                           |
+| `builder.model`             |                        No | `openai-codex/gpt-5.6-luna` | Full `provider/model` identifier.                               |
+| `builder.thinking`          |                        No | `max`                       | One supported thinking level.                                   |
+| `builder.timeoutMinutes`    |                        No | `60`                        | Integer from `1` to `1440`. Applies to each `builder` `run`.    |
+| `verifier`                  |                        No | `Verifier` defaults         | Overrides supported `verifier` fields.                          |
+| `verifier.model`            |                        No | `openai-codex/gpt-6.1-sol`  | Full `provider/model` identifier.                               |
+| `verifier.thinking`         |                        No | `high`                      | One supported thinking level.                                   |
+| `verifier.timeoutMinutes`   |                        No | `60`                        | Integer from `1` to `1440`. Applies to each `verifier` `run`.   |
+| `simplifier`                |                        No | `Simplifier` defaults       | Overrides supported `simplifier` fields.                        |
+| `simplifier.model`          |                        No | `openai-codex/gpt-6.1-sol`  | Full `provider/model` identifier.                               |
+| `simplifier.thinking`       |                        No | `high`                      | One supported thinking level.                                   |
+| `simplifier.timeoutMinutes` |                        No | `60`                        | Integer from `1` to `1440`. Applies to each `simplifier` `run`. |
 
 Model identifiers use the full `provider/model` form shown in the defaults. `Maestro` accepts these thinking levels:
 
@@ -81,10 +90,12 @@ This example keeps every default except the `builder` timeout.
 2. The path stays below that root after `.` and `..` are resolved.
 3. The path is not the project root itself.
 
-For example, `specDirectory: "planning/specs"` places `specs` in `<project-root>/planning/specs/`. Absolute paths and paths outside the project root are rejected. The `owner` is responsible for directory permissions that allow `Maestro` to save `artifacts`.
+For example, `specDirectory: "planning/specs"` places `specs` in `<project-root>/planning/specs/`. Absolute paths and paths outside the project root are rejected. The
+`owner` is responsible for directory permissions that allow `Maestro` to save `artifacts`.
 
 ## Model access
 
-`Maestro` checks both configured models during activation. Each model must exist and have valid authentication.
+`Maestro` checks all three configured models during activation. Each model must exist and have valid authentication.
 
-A model error stops activation and identifies the affected model. The `owner` can correct the model identifier or authenticate the provider, then run `/maestro` again. Agent names and context are described in [Subagent integration](subagent-integration.md#roles-and-context).
+A model error stops activation and identifies the affected model. The `owner` can correct the model identifier or authenticate the provider, then run `/maestro` again.
+Agent names and context are described in [Subagent integration](subagent-integration.md#roles-and-context).

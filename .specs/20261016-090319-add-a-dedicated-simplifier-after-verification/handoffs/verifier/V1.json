@@ -1,0 +1,124 @@
+{
+  "version": "1.0.0",
+  "specId": "20261016-090319-add-a-dedicated-simplifier-after-verification",
+  "summary": "Independently checked all 22 criteria. Repository checks passed: 262 tests and coverage thresholds. No technical findings.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npm run check: inspected and ran completeVerifierPass.integration.test.ts and run-simplifier.integration.test.ts; no-findings completion in a non-repository saves simplifier-running.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "npm run check: resolve-findings.integration.test.ts rejects the sole finding outside Git, preserves Outside approved scope, and saves simplifier-running.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "npm run check: run-simplifier.integration.test.ts covers unavailable command, failed command, false output, and actual non-repository; exact skip warning observed.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "npm run check: all four Git skip scenarios save candidate-ready without execution error; inspected centralized SIMPLIFIER_SKIPPED transition.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "npm run check: real Git temporary repository with scripted delegation asserts one fresh foreground maestro.simplifier request, canonical cwd, specId, default model/thinking, and 60-minute timeout.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "npm run check: record-simplifier-handoff.integration.test.ts submits counts.ts and report.ts with agreed summary/note and compares exact fixed S.json contents.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "npm run check: scripted successful simplifier records empty refactoredFiles and No simplification needed; saved phase is candidate-ready.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "npm run check: registered handoff tool rejects escaping path, extra findings field, wrong saved/submitted identity, and wrong phase; workflow bytes unchanged and S.json absent.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC9",
+      "probe": "npm run check: successful delegation response without saved result raises Simplifier protocol error and leaves simplifier-running.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC10",
+      "probe": "npm run check: failed, timed_out, and interrupted scripted responses raise delegation errors, leave simplifier-running, and create no handoff.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC11",
+      "probe": "npm run check: loadConfiguration.unit.test.ts version-only input resolves simplifier defaults to openai-codex/gpt-6.1-sol, high, 60.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC12",
+      "probe": "npm run check: timeout-only simplifier override resolves 90 while model, thinking, builder, and verifier retain defaults.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC13",
+      "probe": "npm run check: zero simplifier timeout rejects with Invalid timeout at simplifier.timeoutMinutes.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC14",
+      "probe": "Read agents/verifier.md and its diff: Review code quality and the extra instruction-violation procedure are absent; independent acceptance verification remains.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC15",
+      "probe": "Read both guidance files and ran Python exact comparison of all five retained sections after removing only the approved caller clarification and normalizing the accepted-baseline sentence; examples and tables match.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC16",
+      "probe": "Read agents/simplifier.md: rejected V1/F1 translation failure may remain; repairing rejected findings, changing tests to pass, and new check failures are explicitly prohibited.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC17",
+      "probe": "Inspected getMaestroInstructions.ts and entry-tool messages; npm run check asserts both entry routes direct maestro_run_simplifier next without approval or another verifier pass.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC18",
+      "probe": "Inspected final-summary instructions: read fixed S.json summary and notes, attribute them to simplifier, and do not claim independent verification of later refactoring.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC19",
+      "probe": "npm run check: during scripted active delegation, real Pi setStatus assertion shows broom icon and Simplifier running, with saved simplifier-running.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC20",
+      "probe": "npm run check: activation integration tests outside Git assert UI-only default and overridden simplifier model/thinking notice, unchanged history, and no skip prediction.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC21",
+      "probe": "npm run check: separate activation tests outside Git reject unavailable simplifier model and unavailable maestro.simplifier agent, identifying the missing dependency.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC22",
+      "probe": "npm run check: all four Git skip cases assert no delegation event and no simplifier handoff.",
+      "probeStatus": "passed"
+    }
+  ],
+  "findings": [],
+  "notes": [
+    "Maestro confirmed the frozen spec was approved by GREEN FLAG; its Draft banner is stale. The banner was not edited.",
+    "Delegation evidence uses scripted responses, not real model refactoring, as permitted by the spec.",
+    "npm run check passed all 262 tests with 96% statement and 88.34% branch coverage. Its automatic lint steps changed no candidate files. Generated coverage HTML was restored to its exact prior contents.",
+    "All retained project files matched their original contents before submission. Temporary backup and log files were removed. git diff --check passed."
+  ]
+}

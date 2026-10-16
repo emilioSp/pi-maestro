@@ -61,7 +61,7 @@ afterEach(async () => {
 });
 
 describe('resolve escalations tool', () => {
-  it('given the escalation resolution tool when registered then its closed schema requires a nonempty owner decision batch', async () => {
+  it('given escalation resolution inputs when the tool schema is checked then a nonempty decision batch with reasons is required and extra fields are rejected', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerResolveEscalationsTool,
     });
@@ -92,7 +92,7 @@ describe('resolve escalations tool', () => {
       expect(Value.Check(tool.parameters, params)).toBe(false);
   });
 
-  it('given open escalations when all owner resolutions are recorded then the workflow becomes ready-for-builder and IDs restart in B2', async () => {
+  it('given unanswered builder questions when the owner answers all without a spec change then answers are saved in B1, the builder can run again, and new questions restart at E1 in B2', async () => {
     const { paths, repository, handoffPath } = await openEscalations();
 
     const before = await readBuilderHandoff({
@@ -194,7 +194,7 @@ describe('resolve escalations tool', () => {
     expect(await readFile(handoffPath, 'utf8')).toBe(savedB1);
   });
 
-  it('given B1 history and a mixed revision batch in B2 when resolved then only B2 resolutions change and separate renewed approval is required', async () => {
+  it('given earlier builder report B1 and new questions in B2 when the owner answers them with a spec revision then only B2 changes and separate approval returns the workflow to ready-for-builder', async () => {
     const { paths, repository, handoffPath } = await openEscalations();
     await resolveEscalations({
       paths,
@@ -323,7 +323,7 @@ describe('resolve escalations tool', () => {
   });
 
   it.each([undefined, 'true', 1, null])(
-    'given specChangeRequired %s when the tool schema is checked then the invalid routing flag is rejected',
+    'given specChangeRequired is %j instead of a boolean when resolution inputs are checked then the tool schema rejects the request',
     async (specChangeRequired) => {
       const { tool } = await piTestSessions.createRegisteredTool({
         extension: registerResolveEscalationsTool,
@@ -339,7 +339,7 @@ describe('resolve escalations tool', () => {
     },
   );
 
-  it('given unresolved escalations when direct spec approval is requested then all saved files remain unchanged', async () => {
+  it('given unanswered builder questions when direct spec approval is requested then approval fails and the spec, workflow, and builder report stay unchanged', async () => {
     const { paths, repository, handoffPath } = await openEscalations();
 
     const savedPaths = [
@@ -364,18 +364,30 @@ describe('resolve escalations tool', () => {
   });
 
   it.each([
-    ['missing', [decisions[0]]],
-    ['duplicate', [decisions[0], decisions[0], decisions[1]]],
-    ['unknown', [decisions[0], { ...decisions[1], escalationId: 'E3' }]],
+    ['missing the decision for E2', [decisions[0]]],
     [
-      'unknown option',
+      'with duplicate decisions for E1',
+      [decisions[0], decisions[0], decisions[1]],
+    ],
+    [
+      'naming an unknown escalation E3',
+      [decisions[0], { ...decisions[1], escalationId: 'E3' }],
+    ],
+    [
+      'selecting an option absent from the question',
       [{ ...decisions[0], selectedOptionId: 'other' }, decisions[1]],
     ],
-    ['blank decision', [{ ...decisions[0], decision: ' \n\t' }, decisions[1]]],
-    ['blank reason', [decisions[0], { ...decisions[1], reason: ' \n\t' }]],
-    ['empty', []],
+    [
+      'with a decision containing only whitespace',
+      [{ ...decisions[0], decision: ' \n\t' }, decisions[1]],
+    ],
+    [
+      'with a reason containing only whitespace',
+      [decisions[0], { ...decisions[1], reason: ' \n\t' }],
+    ],
+    ['with no decisions', []],
   ])(
-    'given a %s batch when escalations are resolved then it is rejected without changing protocol files',
+    'given an escalation decision batch %s when submitted then resolution fails without changing the builder report or workflow',
     async (_name, invalidDecisions) => {
       const { paths, repository, handoffPath } = await openEscalations();
       const handoffBefore = await readFile(handoffPath, 'utf8');
@@ -416,13 +428,25 @@ describe('resolve escalations tool', () => {
   );
 
   it.each([
-    'wrong-phase',
-    'incompatible-handoff',
-    'resolved',
-    'resolved-in-decision-phase',
+    {
+      scenario: 'wrong-phase',
+      description: 'a workflow in builder-running',
+    },
+    {
+      scenario: 'incompatible-handoff',
+      description: 'a done report instead of an escalation',
+    },
+    {
+      scenario: 'resolved',
+      description: 'answered questions in ready-for-builder',
+    },
+    {
+      scenario: 'resolved-in-decision-phase',
+      description: 'answered questions in decision phase',
+    },
   ])(
-    'given %s when escalations are resolved then resolution is rejected without writes',
-    async (scenario) => {
+    'given $description when escalation decisions are submitted then resolution fails without changing the builder report or workflow',
+    async ({ scenario }) => {
       const { paths, repository, handoffPath } = await openEscalations();
 
       if (scenario.startsWith('resolved'))

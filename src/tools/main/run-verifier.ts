@@ -40,7 +40,7 @@ const RunVerifierToolParameters = Type.Object(
 const MILLISECONDS_PER_MINUTE = 60_000;
 
 type VerifierTerminalPhase =
-  | typeof WORKFLOW_PHASES.CANDIDATE_READY
+  | typeof WORKFLOW_PHASES.SIMPLIFIER_RUNNING
   | typeof WORKFLOW_PHASES.FINDING_DECISIONS;
 
 type VerifierRunResult = {
@@ -62,7 +62,7 @@ const readTerminalVerifierResult = async ({
   state,
 }: ReadTerminalVerifierResultInput): Promise<VerifierRunResult> => {
   if (
-    state.phase !== WORKFLOW_PHASES.CANDIDATE_READY &&
+    state.phase !== WORKFLOW_PHASES.SIMPLIFIER_RUNNING &&
     state.phase !== WORKFLOW_PHASES.FINDING_DECISIONS
   ) {
     throw new Error(
@@ -78,7 +78,7 @@ const readTerminalVerifierResult = async ({
   const expectedPhase =
     handoff.findings.length > 0
       ? WORKFLOW_PHASES.FINDING_DECISIONS
-      : WORKFLOW_PHASES.CANDIDATE_READY;
+      : WORKFLOW_PHASES.SIMPLIFIER_RUNNING;
 
   if (state.phase !== expectedPhase) {
     throw new Error(
@@ -131,8 +131,8 @@ const readVerifierResult = async ({
 };
 
 const formatVerifierResult = (result: VerifierRunResult): string => {
-  if (result.outcome === WORKFLOW_PHASES.CANDIDATE_READY) {
-    return `Verifier completed spec ${result.specId}. The workflow is candidate-ready.`;
+  if (result.outcome === WORKFLOW_PHASES.SIMPLIFIER_RUNNING) {
+    return `Verifier completed spec ${result.specId}. The workflow is simplifier-running. Call maestro_run_simplifier next with this specId, without another approval or verifier pass.`;
   }
 
   return `Verifier found ${result.handoff.findings.length} finding(s) for spec ${result.specId}. The workflow is waiting for owner decisions.`;

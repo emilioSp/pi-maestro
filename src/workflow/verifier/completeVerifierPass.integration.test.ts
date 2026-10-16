@@ -90,7 +90,7 @@ const prepareRunningVerifier = async () => {
 };
 
 describe('verifier completion', () => {
-  it('given a saved V2 handoff when the phase write fails then V2 remains for inspection', async () => {
+  it('given verifier report V1 already exists when saving the next report succeeds but saving its workflow phase fails then the error is reported and V2 remains readable', async () => {
     const { paths } = await prepareRunningVerifier();
     await mkdir(paths.getVerifierHandoffsPath(SPEC_ID), { recursive: true });
     await writeVerifierHandoff({
@@ -131,7 +131,7 @@ describe('verifier completion', () => {
     });
   });
 
-  it('given a running verifier when a valid handoff is submitted then one verifier handoff is saved in the current project', async () => {
+  it('given the verifier is running when it submits a valid report with no findings then the current project workflow moves to simplifier-running', async () => {
     const { paths, repository } = await prepareRunningVerifier();
 
     const completed = await completeVerifierPass({
@@ -141,14 +141,14 @@ describe('verifier completion', () => {
     });
 
     expect(completed.projectRoot).toBe(repository.path);
-    expect(completed.state.phase).toBe(WORKFLOW_PHASES.CANDIDATE_READY);
+    expect(completed.state.phase).toBe(WORKFLOW_PHASES.SIMPLIFIER_RUNNING);
 
     await expect(
       readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
+    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING });
   });
 
-  it('given an invalid handoff specId when the verifier submits it then no protocol write occurs', async () => {
+  it('given a verifier report names a different spec when it is submitted then submission fails without saving a report or changing the workflow', async () => {
     const { paths } = await prepareRunningVerifier();
     const workflowPath = paths.getWorkflowPath(SPEC_ID);
     const workflowBefore = await readFile(workflowPath, 'utf8');
@@ -174,7 +174,7 @@ describe('verifier completion', () => {
 });
 
 describe('verifier spec criterion presence', () => {
-  it('given AC1 and AC2 in the spec when a verifier submission contains only AC1 then no report or phase change is saved', async () => {
+  it('given the spec requires AC1 and AC2 when a verifier report covers only AC1 then submission fails naming AC2 without saving a report or changing the workflow', async () => {
     const { paths, repository } = await prepareRunningVerifier();
     await writeFile(
       paths.getSpecFilePath(SPEC_ID),

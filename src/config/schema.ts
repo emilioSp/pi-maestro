@@ -8,6 +8,7 @@ import { type Static, Type } from 'typebox';
 export const AGENTS = {
   BUILDER: 'maestro.builder',
   VERIFIER: 'maestro.verifier',
+  SIMPLIFIER: 'maestro.simplifier',
 } as const;
 
 export const THINKING_LEVELS = {
@@ -61,6 +62,7 @@ export const MaestroConfigInputSchema = Type.Object(
     specDirectory: Type.Optional(Type.String({ minLength: 1 })),
     builder: Type.Optional(PartialAgentConfigSchema),
     verifier: Type.Optional(PartialAgentConfigSchema),
+    simplifier: Type.Optional(PartialAgentConfigSchema),
   },
   { additionalProperties: false },
 );
@@ -83,6 +85,7 @@ export const ResolvedMaestroConfigSchema = Type.Object(
     specDirectory: Type.String({ minLength: 1 }),
     builder: ResolvedAgentConfigSchema,
     verifier: ResolvedAgentConfigSchema,
+    simplifier: ResolvedAgentConfigSchema,
   },
   { additionalProperties: false },
 );

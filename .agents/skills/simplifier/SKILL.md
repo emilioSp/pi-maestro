@@ -7,7 +7,8 @@ description: Simplifies code for clarity. Use when refactoring code for clarity 
 
 ## Overview
 
-Simplify code by reducing complexity while preserving exact behavior. The goal is not fewer lines — it's code that is easier to read, understand, modify, and debug. Every simplification must pass a simple test: "Would a new team member understand this faster than the original?"
+Simplify code by reducing complexity while preserving exact behavior. The goal is not fewer lines — it's code that is easier to read, understand, modify, and debug. Every
+simplification must pass a simple test: "Would a new team member understand this faster than the original?"
 
 ## When to Use
 
@@ -29,7 +30,8 @@ Simplify code by reducing complexity while preserving exact behavior. The goal i
 
 ### 1. Preserve Behavior Exactly
 
-Don't change what the code does — only how it expresses it. All inputs, outputs, side effects, error behavior, and edge cases must remain identical. If you're not sure a simplification preserves behavior, don't make it.
+Don't change what the code does — only how it expresses it. All inputs, outputs, side effects, error behavior, and edge cases must remain identical. If you're not sure a
+simplification preserves behavior, don't make it.
 
 ```
 ASK BEFORE EVERY CHANGE:
@@ -77,7 +79,7 @@ function getStatusLabel(item: Item): string {
 // UNCLEAR: Chained reduces with inline logic
 const result = items.reduce((acc, item) => ({
   ...acc,
-  [item.id]: { ...acc[item.id], count: (acc[item.id]?.count ?? 0) + 1 }
+  [item.id]: {...acc[item.id], count: (acc[item.id]?.count ?? 0) + 1}
 }), {});
 
 // CLEAR: Named intermediate step
@@ -98,13 +100,15 @@ Simplification has a failure mode: over-simplification. Watch for these traps:
 
 ### 5. Scope to What Changed
 
-Default to simplifying recently modified code. Avoid drive-by refactors of unrelated code unless explicitly asked to broaden scope. Unscoped simplification creates noise in diffs and risks unintended regressions.
+Default to simplifying recently modified code. Avoid drive-by refactors of unrelated code unless explicitly asked to broaden scope. Unscoped simplification creates noise
+in diffs and risks unintended regressions.
 
 ## The Simplification Process
 
 ### Step 1: Understand Before Touching (Chesterton's Fence)
 
-Before changing or removing anything, understand why it exists. This is Chesterton's Fence: if you see a fence across a road and don't understand why it's there, don't tear it down. First understand the reason, then decide if the reason still applies.
+Before changing or removing anything, understand why it exists. This is Chesterton's Fence: if you see a fence across a road and don't understand why it's there, don't
+tear it down. First understand the reason, then decide if the reason still applies.
 
 ```
 BEFORE SIMPLIFYING, ANSWER:
@@ -124,33 +128,33 @@ Scan for these patterns — each one is a concrete signal, not a vague smell:
 
 **Structural complexity:**
 
-| Pattern | Signal | Simplification |
-|---------|--------|----------------|
-| Deep nesting (3+ levels) | Hard to follow control flow | Extract conditions into guard clauses or helper functions |
-| Long functions (50+ lines) | Multiple responsibilities | Split into focused functions with descriptive names |
-| Nested ternaries | Requires mental stack to parse | Replace with if/else chains, switch, or lookup objects |
-| Boolean parameter flags | `doThing(true, false, true)` | Replace with options objects or separate functions |
-| Repeated conditionals | Same `if` check in multiple places | Extract to a well-named predicate function |
+| Pattern                    | Signal                             | Simplification                                            |
+|----------------------------|------------------------------------|-----------------------------------------------------------|
+| Deep nesting (3+ levels)   | Hard to follow control flow        | Extract conditions into guard clauses or helper functions |
+| Long functions (50+ lines) | Multiple responsibilities          | Split into focused functions with descriptive names       |
+| Nested ternaries           | Requires mental stack to parse     | Replace with if/else chains, switch, or lookup objects    |
+| Boolean parameter flags    | `doThing(true, false, true)`       | Replace with options objects or separate functions        |
+| Repeated conditionals      | Same `if` check in multiple places | Extract to a well-named predicate function                |
 
 **Naming and readability:**
 
-| Pattern | Signal | Simplification |
-|---------|--------|----------------|
-| Generic names | `data`, `result`, `temp`, `val`, `item` | Rename to describe the content: `userProfile`, `validationErrors` |
-| Abbreviated names | `usr`, `cfg`, `btn`, `evt` | Use full words unless the abbreviation is universal (`id`, `url`, `api`) |
-| Misleading names | Function named `get` that also mutates state | Rename to reflect actual behavior |
-| Comments explaining "what" | `// increment counter` above `count++` | Delete the comment — the code is clear enough |
-| Comments explaining "why" | `// Retry because the API is flaky under load` | Keep these — they carry intent the code can't express |
+| Pattern                    | Signal                                         | Simplification                                                           |
+|----------------------------|------------------------------------------------|--------------------------------------------------------------------------|
+| Generic names              | `data`, `result`, `temp`, `val`, `item`        | Rename to describe the content: `userProfile`, `validationErrors`        |
+| Abbreviated names          | `usr`, `cfg`, `btn`, `evt`                     | Use full words unless the abbreviation is universal (`id`, `url`, `api`) |
+| Misleading names           | Function named `get` that also mutates state   | Rename to reflect actual behavior                                        |
+| Comments explaining "what" | `// increment counter` above `count++`         | Delete the comment — the code is clear enough                            |
+| Comments explaining "why"  | `// Retry because the API is flaky under load` | Keep these — they carry intent the code can't express                    |
 
 **Redundancy:**
 
-| Pattern | Signal | Simplification |
-|---------|--------|----------------|
-| Duplicated logic | Same 5+ lines in multiple places | Extract to a shared function |
-| Dead code | Unreachable branches, unused variables, commented-out blocks | Remove (after confirming it's truly dead) |
-| Unnecessary abstractions | Wrapper that adds no value | Inline the wrapper, call the underlying function directly |
-| Over-engineered patterns | Factory-for-a-factory, strategy-with-one-strategy | Replace with the simple direct approach |
-| Redundant type assertions | Casting to a type that's already inferred | Remove the assertion |
+| Pattern                   | Signal                                                       | Simplification                                            |
+|---------------------------|--------------------------------------------------------------|-----------------------------------------------------------|
+| Duplicated logic          | Same 5+ lines in multiple places                             | Extract to a shared function                              |
+| Dead code                 | Unreachable branches, unused variables, commented-out blocks | Remove (after confirming it's truly dead)                 |
+| Unnecessary abstractions  | Wrapper that adds no value                                   | Inline the wrapper, call the underlying function directly |
+| Over-engineered patterns  | Factory-for-a-factory, strategy-with-one-strategy            | Replace with the simple direct approach                   |
+| Redundant type assertions | Casting to a type that's already inferred                    | Remove the assertion                                      |
 
 ### Step 3: Verify the Result
 
@@ -168,15 +172,15 @@ If the "simplified" version is harder to understand or review, revert. Not every
 
 ## Common Rationalizations
 
-| Rationalization | Reality |
-|---|---|
-| "It's working, no need to touch it" | Working code that's hard to read will be hard to fix when it breaks. Simplifying now saves time on every future change. |
-| "Fewer lines is always simpler" | A 1-line nested ternary is not simpler than a 5-line if/else. Simplicity is about comprehension speed, not line count. |
-| "I'll just quickly simplify this unrelated code too" | Unscoped simplification creates noisy diffs and risks regressions in code you didn't intend to change. Stay focused. |
-| "The types make it self-documenting" | Types document structure, not intent. A well-named function explains *why* better than a type signature explains *what*. |
-| "This abstraction might be useful later" | Don't preserve speculative abstractions. If it's not used now, it's complexity without value. Remove it and re-add when needed. |
-| "The original author must have had a reason" | Maybe. Check git blame — apply Chesterton's Fence. But accumulated complexity often has no reason; it's just the residue of iteration under pressure. |
-| "I'll refactor while adding this feature" | Separate refactoring from feature work. Mixed changes are harder to review, revert, and understand in history. |
+| Rationalization                                      | Reality                                                                                                                                               |
+|------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| "It's working, no need to touch it"                  | Working code that's hard to read will be hard to fix when it breaks. Simplifying now saves time on every future change.                               |
+| "Fewer lines is always simpler"                      | A 1-line nested ternary is not simpler than a 5-line if/else. Simplicity is about comprehension speed, not line count.                                |
+| "I'll just quickly simplify this unrelated code too" | Unscoped simplification creates noisy diffs and risks regressions in code you didn't intend to change. Stay focused.                                  |
+| "The types make it self-documenting"                 | Types document structure, not intent. A well-named function explains *why* better than a type signature explains *what*.                              |
+| "This abstraction might be useful later"             | Don't preserve speculative abstractions. If it's not used now, it's complexity without value. Remove it and re-add when needed.                       |
+| "The original author must have had a reason"         | Maybe. Check git blame — apply Chesterton's Fence. But accumulated complexity often has no reason; it's just the residue of iteration under pressure. |
+| "I'll refactor while adding this feature"            | Separate refactoring from feature work. Mixed changes are harder to review, revert, and understand in history.                                        |
 
 ## Red Flags
 

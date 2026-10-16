@@ -27,7 +27,7 @@ const doneHandoff = (): BuilderHandoff => ({
 
 describe('builder handoff validation', () => {
   it.each([PROBE_STATUSES.FAILED, PROBE_STATUSES.NOT_RUN])(
-    'given a passed probe and a second %s probe when a done handoff is validated then it is rejected',
+    'given a done builder report with one passed probe and another marked %s when validated then it is rejected because every probe must pass',
     (probeStatus) => {
       const handoff = doneHandoff();
       handoff.acceptanceCriteria.push({
@@ -44,10 +44,12 @@ describe('builder handoff validation', () => {
 
   it.each([
     {
+      scenario: 'an unsupported version',
       handoff: { ...doneHandoff(), version: '2.0.0' },
       message: 'Invalid builder handoff',
     },
     {
+      scenario: 'duplicate acceptance criterion IDs',
       handoff: {
         ...doneHandoff(),
         acceptanceCriteria: [
@@ -58,6 +60,7 @@ describe('builder handoff validation', () => {
       message: 'acceptance criterion IDs must be unique',
     },
     {
+      scenario: 'an unknown probe status',
       handoff: {
         ...doneHandoff(),
         acceptanceCriteria: [
@@ -67,14 +70,17 @@ describe('builder handoff validation', () => {
       message: 'Invalid builder handoff',
     },
     {
+      scenario: 'an empty summary',
       handoff: { ...doneHandoff(), summary: '' },
       message: 'Invalid builder handoff',
     },
     {
+      scenario: 'an unknown report field',
       handoff: { ...doneHandoff(), extra: true },
       message: 'Invalid builder handoff',
     },
     {
+      scenario: 'an unknown acceptance criterion field',
       handoff: {
         ...doneHandoff(),
         acceptanceCriteria: [
@@ -84,13 +90,13 @@ describe('builder handoff validation', () => {
       message: 'Invalid builder handoff',
     },
   ])(
-    'given invalid builder handoff data %# when validated then it is rejected',
+    'given a builder report with $scenario when validated then it is rejected with the corresponding report error',
     ({ handoff, message }) => {
       expect(() => assertBuilderHandoff({ handoff, specId })).toThrow(message);
     },
   );
 
-  it('given a builder handoff with an invalid UTC date in its spec ID when validated then it is rejected', () => {
+  it('given a builder report whose spec ID contains February 30 when validated then it is rejected with an invalid spec ID error', () => {
     expect(() =>
       assertBuilderHandoff({
         handoff: {

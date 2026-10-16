@@ -24,20 +24,20 @@ const theme: Pick<Theme, 'fg'> = {
 const SPEC_ID = '20250101-000000-status-test';
 
 describe('Maestro status', () => {
-  it('given inactive Maestro when status is formatted then status is hidden', () => {
+  it('given Maestro is disabled when status text is requested then no status text is returned', () => {
     expect(
       formatMaestroStatus({ active: false, workflow: null, theme }),
     ).toBeUndefined();
   });
 
-  it('given active Maestro without a workflow when status is formatted then active mode is shown', () => {
+  it('given Maestro is active without a workflow when status text is requested then it shows Maestro active and No active spec', () => {
     expect(formatMaestroStatus({ active: true, workflow: null, theme })).toBe(
       '<muted>Maestro active · </muted><accent>No active spec</accent>',
     );
   });
 
   it.each(Object.values(WORKFLOW_PHASES))(
-    'given the %s phase when status is formatted then its icon color and label are shown',
+    'given a workflow in %s when status text is requested then it shows the spec ID and the icon, color, and label for that phase',
     (phase) => {
       const state: WorkflowState = {
         version: WORKFLOW_STATE_VERSION,
@@ -63,21 +63,28 @@ describe('Maestro status', () => {
 
   it.each([
     {
+      scenario: 'an ID much longer than 26 characters',
       specId:
         '20261007-170438-update-maestro-status-bar-with-agent-models-theme-colors-and-phase-icons',
       display: '20261007-170438-update-mae...',
     },
-    { specId: '20250101-000000-fix', display: '20250101-000000-fix' },
     {
+      scenario: 'a short ID',
+      specId: '20250101-000000-fix',
+      display: '20250101-000000-fix',
+    },
+    {
+      scenario: 'an ID shorter than 26 characters',
       specId: '20250101-000000-status-fix',
       display: '20250101-000000-status-fix',
     },
     {
+      scenario: 'an ID just over 26 characters',
       specId: '20250101-000000-fix-1234567-more',
       display: '20250101-000000-fix-123456...',
     },
   ])(
-    'given $specId when formatted then only the display becomes $display',
+    'given $scenario when status text is requested then it displays $display without changing the stored spec ID',
     ({ specId, display }) => {
       const state: WorkflowState = {
         version: WORKFLOW_STATE_VERSION,

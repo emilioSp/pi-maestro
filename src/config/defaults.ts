@@ -21,6 +21,8 @@ export const DEFAULT_VERIFIER_MODEL = 'openai-codex/gpt-6.1-sol';
 
 export const DEFAULT_VERIFIER_THINKING = THINKING_LEVELS.HIGH;
 
+export const DEFAULT_SIMPLIFIER_MODEL = 'openai-codex/gpt-6.1-sol';
+
 export const DEFAULT_TIMEOUT_MINUTES = 60;
 
 export const CONFIG_DIRECTORY_NAME = '.pi';
@@ -35,6 +37,11 @@ export const DEFAULT_CONFIG: MaestroConfig = {
   builder: {
     model: DEFAULT_BUILDER_MODEL,
     thinking: DEFAULT_BUILDER_THINKING,
+    timeoutMinutes: DEFAULT_TIMEOUT_MINUTES,
+  },
+  simplifier: {
+    model: DEFAULT_SIMPLIFIER_MODEL,
+    thinking: THINKING_LEVELS.HIGH,
     timeoutMinutes: DEFAULT_TIMEOUT_MINUTES,
   },
   verifier: {

@@ -1,66 +1,74 @@
 # Roadmap
 
-This roadmap records planned outcomes, not permission to implement them. The `owner` selects work and approves its `specification` before implementation starts. Detailed requirements, technical decisions, and `acceptance criteria` belong in that `specification`.
+This roadmap records planned outcomes, not permission to implement them. The `owner` selects work and approves its `specification` before implementation starts. Detailed
+requirements, technical decisions, and `acceptance criteria` belong in that `specification`.
 
-"Now" is the current priority. "Next" follows it. “Later” contains uncommitted ideas with no promised order or date.
+"Now" is the current priority. "Next" follows it. "Later" contains uncommitted ideas with no promised order or date.
 
 Item identifiers remain stable when priorities change. The `owner` approves changes to priorities and scope.
 
 ## Overview
 
-| ID | Title | Status | Summary |
-|---|---|---|---|
-| R-01 | [Improve status presentation and activation feedback](#r-01-improve-status-presentation-and-activation-feedback) | Completed | Show clearer status and configured agent details without adding model context. |
-| R-02 | [Store escalations and owner decisions in builder handoffs](#r-02-store-escalations-and-owner-decisions-in-builder-handoffs) | Completed | Keep `escalation` questions and `owner` answers together in numbered `builder` `handoffs`. |
-| R-03 | [Route builder failures through owner escalations](#r-03-route-builder-failures-through-owner-escalations) | Completed | Route reportable `builder` problems through `owner` `escalations` instead of a terminal failure phase. |
-| R-12 | [Format glossary terms consistently](#r-12-format-glossary-terms-consistently) | Completed | Apply glossary formatting across documentation and record its exclusions. |
-| R-14 | [Introduce Maestro at activation](#r-14-introduce-maestro-at-activation) | Completed | Introduce `Maestro` at activation and load relevant documentation only when needed. |
-| R-15 | [Rename the test support directory](#r-15-rename-the-test-support-directory) | Completed | Rename `test/` to `tests/` and update affected references. |
-| R-16 | [Verify code quality against AGENTS.md instructions](#r-16-verify-code-quality-against-agentsmd-instructions) | Completed | Require the `verifier` to review affected code against applicable `AGENTS.md` code-quality directives. |
-| R-06 | [Check subagent extensions at activation](#r-06-check-subagent-extensions-at-activation) | Completed | Require a successful parent `pi-subagents` availability reply before activation. |
-| R-05 | [Keep acceptance criterion numbering continuous](#r-05-keep-acceptance-criterion-numbering-continuous) | Completed | Reject gaps in `acceptance criterion` numbering before approving a `spec`. |
-| R-10 | [Match handoff criteria to the approved spec](#r-10-match-handoff-criteria-to-the-approved-spec) | Completed | Require every approved `spec` criterion ID in each submitted `builder` and `verifier` `handoff`. |
-| R-17 | [Record escalation resolutions when the spec changes](#r-17-record-escalation-resolutions-when-the-spec-changes) | Completed | Save all current `escalation` answers before changing phase, including when the `spec` requires revision. |
-| R-20 | [Route finding-driven spec revisions through drafting-spec](#r-20-route-finding-driven-spec-revisions-through-drafting-spec) | Completed | Record `finding` decisions before `spec` revision and require renewed `GREEN FLAG` before another `builder` `run`. |
-| R-18 | [Label acceptance criterion coverage](#r-18-label-acceptance-criterion-coverage) | Completed | Label each `acceptance criterion` as success, failure, or unchanged behavior. |
-| R-19 | [Avoid acceptance criteria already covered by tests](#r-19-avoid-acceptance-criteria-already-covered-by-tests) | Completed | Omit `acceptance criteria` whose exact scenarios already have test coverage. |
-| R-04 | [Rename the npm package](#r-04-rename-the-npm-package) | Later | Rename `@emiliosp/pi-maestro` to `pi-maestro-sdd` with compatibility decisions defined in the `spec`. |
-| R-07 | [Guide initial configuration](#r-07-guide-initial-configuration) | Later | Help the `owner` create valid `Maestro` configuration through an interview. |
-| R-08 | [Change agent models before a builder run](#r-08-change-agent-models-before-a-builder-run) | Later | Let the `owner` change `builder` and `verifier` models before subsequent `runs`. |
-| R-09 | [Define workflow reconciliation](#r-09-define-workflow-reconciliation) | Later | Define how `Maestro` can reconcile saved `artifacts` and workflow state. |
-| R-21 | [Add a simplifier with one clear purpose per agent](#r-21-add-a-simplifier-with-one-clear-purpose-per-agent) | Later | Add a simplifier after successful verification to reduce complexity without changing behavior. |
+| ID   | Title                                                                                                                        | Status      | Summary                                                                                                            |
+|------|------------------------------------------------------------------------------------------------------------------------------|-------------|--------------------------------------------------------------------------------------------------------------------|
+| R-01 | [Improve status presentation and activation feedback](#r-01-improve-status-presentation-and-activation-feedback)             | Completed   | Show clearer status and configured agent details without adding model context.                                     |
+| R-02 | [Store escalations and owner decisions in builder handoffs](#r-02-store-escalations-and-owner-decisions-in-builder-handoffs) | Completed   | Keep `escalation` questions and `owner` answers together in numbered `builder` `handoffs`.                         |
+| R-03 | [Route builder failures through owner escalations](#r-03-route-builder-failures-through-owner-escalations)                   | Completed   | Route reportable `builder` problems through `owner` `escalations` instead of a terminal failure phase.             |
+| R-12 | [Format glossary terms consistently](#r-12-format-glossary-terms-consistently)                                               | Completed   | Apply glossary formatting across documentation and record its exclusions.                                          |
+| R-14 | [Introduce Maestro at activation](#r-14-introduce-maestro-at-activation)                                                     | Completed   | Introduce `Maestro` at activation and load relevant documentation only when needed.                                |
+| R-15 | [Rename the test support directory](#r-15-rename-the-test-support-directory)                                                 | Completed   | Rename `test/` to `tests/` and update affected references.                                                         |
+| R-16 | [Verify code quality against AGENTS.md instructions](#r-16-verify-code-quality-against-agentsmd-instructions)                | Completed   | Require the `verifier` to review affected code against applicable `AGENTS.md` code-quality directives.             |
+| R-06 | [Check subagent extensions at activation](#r-06-check-subagent-extensions-at-activation)                                     | Completed   | Require a successful parent `pi-subagents` availability reply before activation.                                   |
+| R-05 | [Keep acceptance criterion numbering continuous](#r-05-keep-acceptance-criterion-numbering-continuous)                       | Completed   | Reject gaps in `acceptance criterion` numbering before approving a `spec`.                                         |
+| R-10 | [Match handoff criteria to the approved spec](#r-10-match-handoff-criteria-to-the-approved-spec)                             | Completed   | Require every approved `spec` criterion ID in each submitted `builder` and `verifier` `handoff`.                   |
+| R-17 | [Record escalation resolutions when the spec changes](#r-17-record-escalation-resolutions-when-the-spec-changes)             | Completed   | Save all current `escalation` answers before changing phase, including when the `spec` requires revision.          |
+| R-20 | [Route finding-driven spec revisions through drafting-spec](#r-20-route-finding-driven-spec-revisions-through-drafting-spec) | Completed   | Record `finding` decisions before `spec` revision and require renewed `GREEN FLAG` before another `builder` `run`. |
+| R-18 | [Label acceptance criterion coverage](#r-18-label-acceptance-criterion-coverage)                                             | Completed   | Label each `acceptance criterion` as success, failure, or unchanged behavior.                                      |
+| R-19 | [Avoid acceptance criteria already covered by tests](#r-19-avoid-acceptance-criteria-already-covered-by-tests)               | Completed   | Omit `acceptance criteria` whose exact scenarios already have test coverage.                                       |
+| R-04 | [Rename the npm package](#r-04-rename-the-npm-package)                                                                       | Later       | Rename `@emiliosp/pi-maestro` to `pi-maestro-sdd` with compatibility decisions defined in the `spec`.              |
+| R-07 | [Guide initial configuration](#r-07-guide-initial-configuration)                                                             | Later       | Help the `owner` create valid `Maestro` configuration through an interview.                                        |
+| R-08 | [Change agent models before a builder run](#r-08-change-agent-models-before-a-builder-run)                                   | Later       | Let the `owner` change `builder` and `verifier` models before subsequent `runs`.                                   |
+| R-09 | [Define workflow reconciliation](#r-09-define-workflow-reconciliation)                                                       | Later       | Define how `Maestro` can reconcile saved `artifacts` and workflow state.                                           |
+| R-21 | [Add a simplifier with one clear purpose per agent](#r-21-add-a-simplifier-with-one-clear-purpose-per-agent)                 | Implemented | Run the `simplifier` after accepted verification, with a Git-only file scope and separate report.                  |
 
 ## Completed
 
 ### R-01: Improve status presentation and activation feedback
 
-The status bar uses phase icons, theme colors, and shortened `spec` IDs. Successful activation shows the configured `builder` and `verifier` settings without adding the notice to session history or model context. All 12 `acceptance criteria` passed with no `verifier` `findings`. The saved workflow reached `candidate-ready`.
+The status bar uses phase icons, theme colors, and shortened `spec` IDs. Successful activation shows the configured `builder` and `verifier` settings without adding the
+notice to session history or model context. All 12 `acceptance criteria` passed with no `verifier` `findings`. The saved workflow reached `candidate-ready`.
 
 #### Evidence
 
-[Specification](.specs/20261007-170438-update-maestro-status-bar-with-agent-models-theme-colors-and-phase-icons/spec.md), [verifier report](.specs/20261007-170438-update-maestro-status-bar-with-agent-models-theme-colors-and-phase-icons/handoffs/verifier/V1.json), and [merged PR #26](https://github.com/emilioSp/pi-maestro/pull/26).
+[Specification](.specs/20261007-170438-update-maestro-status-bar-with-agent-models-theme-colors-and-phase-icons/spec.md), [verifier report](.specs/20261007-170438-update-maestro-status-bar-with-agent-models-theme-colors-and-phase-icons/handoffs/verifier/V1.json),
+and [merged PR #26](https://github.com/emilioSp/pi-maestro/pull/26).
 
 ### R-02: Store escalations and owner decisions in builder handoffs
 
-Numbered `builder` `handoffs` contain multiple `escalation` questions and their `owner` resolutions. The `owner` resolves all current questions in one batch. Earlier `handoffs` remain available as history. All 10 `acceptance criteria` passed with no `verifier` `findings`. The saved workflow reached `candidate-ready`.
+Numbered `builder` `handoffs` contain multiple `escalation` questions and their `owner` resolutions. The `owner` resolves all current questions in one batch. Earlier
+`handoffs` remain available as history. All 10 `acceptance criteria` passed with no `verifier` `findings`. The saved workflow reached `candidate-ready`.
 
 #### Evidence
 
-[Specification](.specs/20261008-132344-store-escalations-in-builder-handoffs/spec.md), [verifier report](.specs/20261008-132344-store-escalations-in-builder-handoffs/handoffs/verifier/V1.json), and [merged PR #27](https://github.com/emilioSp/pi-maestro/pull/27).
+[Specification](.specs/20261008-132344-store-escalations-in-builder-handoffs/spec.md), [verifier report](.specs/20261008-132344-store-escalations-in-builder-handoffs/handoffs/verifier/V1.json),
+and [merged PR #27](https://github.com/emilioSp/pi-maestro/pull/27).
 
 ### R-03: Route builder failures through owner escalations
 
-Released in `0.9.0`. The `builder` reports only `done` or `escalation`. Reportable technical problems use the existing `owner` `escalation` process. Individual `probe` results retain `failed`. Execution errors and missing or invalid saved results still stop the workflow without automatic recovery.
+Released in `0.9.0`. The `builder` reports only `done` or `escalation`. Reportable technical problems use the existing `owner` `escalation` process. Individual `probe`
+results retain `failed`. Execution errors and missing or invalid saved results still stop the workflow without automatic recovery.
 
 All 8 `acceptance criteria` passed with no `verifier` `findings`. The saved workflow reached `candidate-ready`.
 
 #### Evidence
 
-[Specification](.specs/20261013-101454-route-builder-failures-through-owner-escalations/spec.md), [verifier report](.specs/20261013-101454-route-builder-failures-through-owner-escalations/handoffs/verifier/V1.json), and [merged PR #32](https://github.com/emilioSp/pi-maestro/pull/32).
+[Specification](.specs/20261013-101454-route-builder-failures-through-owner-escalations/spec.md), [verifier report](.specs/20261013-101454-route-builder-failures-through-owner-escalations/handoffs/verifier/V1.json),
+and [merged PR #32](https://github.com/emilioSp/pi-maestro/pull/32).
 
 ### R-12: Format glossary terms consistently
 
-Applied glossary formatting across the documentation and recorded its exclusions in `AGENTS.md` and the documentation audit skill. The approved change document uses the term `spec`. The `owner` confirmed completion.
+Applied glossary formatting across the documentation and recorded its exclusions in `AGENTS.md` and the documentation audit skill. The approved change document uses the
+term `spec`. The `owner` confirmed completion.
 
 #### Evidence
 
@@ -68,19 +76,23 @@ Applied glossary formatting across the documentation and recorded its exclusions
 
 ### R-14: Introduce Maestro at activation
 
-Implemented in `0.9.1`. Successful activation introduces `Maestro` and invites the `owner` to ask how it works. The UI-only notice retains the configured agent details and does not add session history or start a model request.
+Implemented in `0.9.1`. Successful activation introduces `Maestro` and invites the `owner` to ask how it works. The UI-only notice retains the configured agent details
+and does not add session history or start a model request.
 
-Active instructions identify absolute paths to the installed README and documentation directory. `Maestro` reads relevant documentation on demand without automatically loading its contents.
+Active instructions identify absolute paths to the installed README and documentation directory. `Maestro` reads relevant documentation on demand without automatically
+loading its contents.
 
 All 6 `acceptance criteria` passed with no `verifier` `findings`. The saved workflow reached `candidate-ready`.
 
 #### Evidence
 
-[Specification](.specs/20261013-171954-introduce-maestro-at-activation/spec.md), [verifier report](.specs/20261013-171954-introduce-maestro-at-activation/handoffs/verifier/V1.json), and [merged PR #33](https://github.com/emilioSp/pi-maestro/pull/33).
+[Specification](.specs/20261013-171954-introduce-maestro-at-activation/spec.md), [verifier report](.specs/20261013-171954-introduce-maestro-at-activation/handoffs/verifier/V1.json),
+and [merged PR #33](https://github.com/emilioSp/pi-maestro/pull/33).
 
 ### R-15: Rename the test support directory
 
-Renamed `test/` to `tests/` at the owner's request. Updated imports, fixture paths, lint configuration, and project instructions. This follows the global instruction to keep fixtures under `tests/fixtures`. Source tests remain next to their source files. Historical `handoffs` retain their recorded paths.
+Renamed `test/` to `tests/` at the owner's request. Updated imports, fixture paths, lint configuration, and project instructions. This follows the global instruction to
+keep fixtures under `tests/fixtures`. Source tests remain next to their source files. Historical `handoffs` retain their recorded paths.
 
 #### Evidence
 
@@ -88,51 +100,65 @@ Renamed `test/` to `tests/` at the owner's request. Updated imports, fixture pat
 
 ### R-16: Verify code quality against AGENTS.md instructions
 
-Implemented in `0.9.2`. `Verifier` guidance now requires code-quality review only for code affected by the approved change when applicable `AGENTS.md` directives exist. All existing duties remain unchanged, including independent verification of every `acceptance criterion`.
+Implemented in `0.9.2`. `Verifier` guidance now requires code-quality review only for code affected by the approved change when applicable `AGENTS.md` directives exist.
+All existing duties remain unchanged, including independent verification of every `acceptance criterion`.
 
-Instruction-violation `findings` identify the instruction file, quote the rule, and explain the violating code through existing evidence fields. Missing files or code-quality directives cause only the added review to be skipped. Personal style preferences are not requirements.
+Instruction-violation `findings` identify the instruction file, quote the rule, and explain the violating code through existing evidence fields. Missing files or
+code-quality directives cause only the added review to be skipped. Personal style preferences are not requirements.
 
-All 5 `acceptance criteria` passed through independent inspection of the written guidance, with no `verifier` `findings`. No additional model trials were performed. The saved workflow reached `candidate-ready`.
+All 5 `acceptance criteria` passed through independent inspection of the written guidance, with no `verifier` `findings`. No additional model trials were performed. The
+saved workflow reached `candidate-ready`.
 
 #### Evidence
 
-[Specification](.specs/20261013-185941-verify-code-quality-against-agents-md-instructions/spec.md), [verifier report](.specs/20261013-185941-verify-code-quality-against-agents-md-instructions/handoffs/verifier/V1.json), and [merged PR #34](https://github.com/emilioSp/pi-maestro/pull/34).
+[Specification](.specs/20261013-185941-verify-code-quality-against-agents-md-instructions/spec.md), [verifier report](.specs/20261013-185941-verify-code-quality-against-agents-md-instructions/handoffs/verifier/V1.json),
+and [merged PR #34](https://github.com/emilioSp/pi-maestro/pull/34).
 
 ### R-06: Check subagent extensions at activation
 
-Implemented in `0.9.3`. Activation requires a matching successful version 1 `ping` reply from the parent `pi-subagents` extension within 2000 ms. A failed or invalid reply, emission error, or timeout prevents activation and reports the installation requirement. The check starts no agent and makes no model request. It confirms parent extension availability, not child execution readiness.
+Implemented in `0.9.3`. Activation requires a matching successful version 1 `ping` reply from the parent `pi-subagents` extension within 2000 ms. A failed or invalid
+reply, emission error, or timeout prevents activation and reports the installation requirement. The check starts no agent and makes no model request. It confirms parent
+extension availability, not child execution readiness.
 
 All 7 `acceptance criteria` passed using controlled replies and code inspection, with no `verifier` `findings`. The saved workflow reached `candidate-ready`.
 
-A later integration test requested by the `owner` directly checks the environment check's failed-reply error. This test addition is outside the completed independent verification.
+A later integration test requested by the `owner` directly checks the environment check's failed-reply error. This test addition is outside the completed independent
+verification.
 
 #### Evidence
 
-[Specification](.specs/20261013-194407-check-pi-subagents-availability-with-ping-at-activation/spec.md), [verifier report](.specs/20261013-194407-check-pi-subagents-availability-with-ping-at-activation/handoffs/verifier/V1.json), and [merged PR #35](https://github.com/emilioSp/pi-maestro/pull/35).
+[Specification](.specs/20261013-194407-check-pi-subagents-availability-with-ping-at-activation/spec.md), [verifier report](.specs/20261013-194407-check-pi-subagents-availability-with-ping-at-activation/handoffs/verifier/V1.json),
+and [merged PR #35](https://github.com/emilioSp/pi-maestro/pull/35).
 
 ### R-05: Keep acceptance criterion numbering continuous
 
-Implemented in `0.9.4`. `Spec` approval rejects numbered `acceptance criterion` headings that do not start at `AC1` and continue without gaps. Rejection leaves saved files unchanged.
+Implemented in `0.9.4`. `Spec` approval rejects numbered `acceptance criterion` headings that do not start at `AC1` and continue without gaps. Rejection leaves saved
+files unchanged.
 
-`Maestro` corrects numbering and affected references without changing criterion order or requirements, then retries with the existing `GREEN FLAG`. No additional `owner` approval is required.
+`Maestro` corrects numbering and affected references without changing criterion order or requirements, then retries with the existing `GREEN FLAG`. No additional `owner`
+approval is required.
 
 All 3 `acceptance criteria` passed with no `verifier` `findings`. The saved workflow reached `candidate-ready`.
 
 #### Evidence
 
-[Specification](.specs/20261013-202811-check-acceptance-criterion-numbering-before-builder-execution/spec.md), [verifier report](.specs/20261013-202811-check-acceptance-criterion-numbering-before-builder-execution/handoffs/verifier/V1.json), and [merged PR #36](https://github.com/emilioSp/pi-maestro/pull/36).
+[Specification](.specs/20261013-202811-check-acceptance-criterion-numbering-before-builder-execution/spec.md), [verifier report](.specs/20261013-202811-check-acceptance-criterion-numbering-before-builder-execution/handoffs/verifier/V1.json),
+and [merged PR #36](https://github.com/emilioSp/pi-maestro/pull/36).
 
 ### R-10: Match handoff criteria to the approved spec
 
-Implemented in `0.9.5` with the narrower scope approved by the `owner`. Both `handoff` submissions require every `acceptance criterion` ID from the approved `spec` before saving a report or changing phase. Extra report IDs remain allowed. Existing report validation is unchanged, and no new check rejects duplicate `spec` IDs.
+Implemented in `0.9.5` with the narrower scope approved by the `owner`. Both `handoff` submissions require every `acceptance criterion` ID from the approved `spec` before
+saving a report or changing phase. Extra report IDs remain allowed. Existing report validation is unchanged, and no new check rejects duplicate `spec` IDs.
 
 Both `acceptance criteria` passed independent verification with no `findings`. The saved workflow reached `candidate-ready`.
 
-Later changes requested by the `owner` extracted the shared check and replaced repeated integration scenarios with unit tests. One missing-ID integration test remains per role. These changes are outside the completed independent verification. The final `npm run check` passed all 227 tests and coverage thresholds.
+Later changes requested by the `owner` extracted the shared check and replaced repeated integration scenarios with unit tests. One missing-ID integration test remains per
+role. These changes are outside the completed independent verification. The final `npm run check` passed all 227 tests and coverage thresholds.
 
 #### Evidence
 
-[Specification](.specs/20261013-211629-match-handoff-criteria-to-the-approved-spec/spec.md), [verifier report](.specs/20261013-211629-match-handoff-criteria-to-the-approved-spec/handoffs/verifier/V1.json), and [merged PR #37](https://github.com/emilioSp/pi-maestro/pull/37).
+[Specification](.specs/20261013-211629-match-handoff-criteria-to-the-approved-spec/spec.md), [verifier report](.specs/20261013-211629-match-handoff-criteria-to-the-approved-spec/handoffs/verifier/V1.json),
+and [merged PR #37](https://github.com/emilioSp/pi-maestro/pull/37).
 
 ### R-17: Record escalation resolutions when the spec changes
 
@@ -145,11 +171,11 @@ Each `resolution` records the owner's chosen solution and reason. A decision req
 
 `Maestro` records the complete decision batch through `maestro_resolve_escalations` before changing phase.
 
-| Decision | Next phase and action |
-|---|---|
-| No `spec` change | `escalation-decisions` → `ready-for-builder`. The `builder` continues under the approved `spec`, without renewed approval. |
-| `Spec` change required | `escalation-decisions` → `drafting-spec`. The `owner` and `Maestro` revise and review the same `spec`. |
-| Revised `spec` receives renewed `GREEN FLAG` | `drafting-spec` → `ready-for-builder` through separate `maestro_mark_spec_ready` approval. |
+| Decision                                     | Next phase and action                                                                                                      |
+|----------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| No `spec` change                             | `escalation-decisions` → `ready-for-builder`. The `builder` continues under the approved `spec`, without renewed approval. |
+| `Spec` change required                       | `escalation-decisions` → `drafting-spec`. The `owner` and `Maestro` revise and review the same `spec`.                     |
+| Revised `spec` receives renewed `GREEN FLAG` | `drafting-spec` → `ready-for-builder` through separate `maestro_mark_spec_ready` approval.                                 |
 
 Direct `spec` approval from `escalation-decisions` is rejected. Recording answers does not move to `ready-for-verifier`; that phase requires a completed `builder` `pass`.
 
@@ -171,22 +197,25 @@ Implemented the approved revision route. `Maestro` records every current `findin
 The `owner` reviews the same revised `spec` and gives renewed `GREEN FLAG` before separate approval and another `builder` `run`.
 Revision takes priority in mixed batches. Direct approval from `finding-decisions` is rejected.
 
-Later event naming cleanup identifies `builder` and `owner` actions explicitly. Both revision routes use `OWNER_REQUEST_SPEC_REVISION` without changing the phase flow. Batch resolution uses `RESOLVE_ESCALATIONS`, and the status label refers to `escalations` in the plural. The saved decision phases are named `escalation-decisions` and `finding-decisions`.
+Later event naming cleanup identifies `builder` and `owner` actions explicitly. Both revision routes use `OWNER_REQUEST_SPEC_REVISION` without changing the phase flow.
+Batch resolution uses `RESOLVE_ESCALATIONS`, and the status label refers to `escalations` in the plural. The saved decision phases are named `escalation-decisions` and
+`finding-decisions`.
 
 #### Evidence
 
-[Specification](.specs/20261015-154812-route-finding-driven-spec-revisions-through-drafting-spec/spec.md) and [resolution integration tests](src/tools/main/resolve-findings.integration.test.ts).
+[Specification](.specs/20261015-154812-route-finding-driven-spec-revisions-through-drafting-spec/spec.md)
+and [resolution integration tests](src/tools/main/resolve-findings.integration.test.ts).
 
 ### R-18: Label acceptance criterion coverage
 
 Implemented with R-19 as one task, as selected by the `owner`.
 The `spec` template and `Maestro` guidance require one `Coverage` label per `acceptance criterion`:
 
-| Label | Purpose |
-|---|---|
-| `success` | A valid action produces the required result. |
-| `failure` | An invalid action is correctly rejected. |
-| `unchanged` | The change preserves existing behavior. |
+| Label       | Purpose                                      |
+|-------------|----------------------------------------------|
+| `success`   | A valid action produces the required result. |
+| `failure`   | An invalid action is correctly rejected.     |
+| `unchanged` | The change preserves existing behavior.      |
 
 Use `unchanged` when the criterion explicitly checks behavior that the change must preserve.
 Labels describe scenarios, not test outcomes. A `failure` scenario passes when the invalid action is correctly rejected.
@@ -199,7 +228,8 @@ The final `npm run check` passed all 238 tests and coverage thresholds. No model
 
 #### Evidence
 
-[Spec template](templates/spec.md), [Maestro guidance](src/maestro/instructions/getMaestroInstructions.ts), [creation integration test](src/specs/create.integration.test.ts), and [workflow documentation](docs/workflow.md#acceptance-criteria).
+[Spec template](templates/spec.md), [Maestro guidance](src/maestro/instructions/getMaestroInstructions.ts), [creation integration test](src/specs/create.integration.test.ts),
+and [workflow documentation](docs/workflow.md#acceptance-criteria).
 
 ### R-19: Avoid acceptance criteria already covered by tests
 
@@ -215,21 +245,42 @@ Verification consisted of inspecting the written guidance and running `npm run c
 
 #### Evidence
 
-[Maestro guidance](src/maestro/instructions/getMaestroInstructions.ts), [spec template](templates/spec.md), and [workflow documentation](docs/workflow.md#acceptance-criteria).
+[Maestro guidance](src/maestro/instructions/getMaestroInstructions.ts), [spec template](templates/spec.md),
+and [workflow documentation](docs/workflow.md#acceptance-criteria).
 
 ## Now
+
+### R-21: Add a simplifier with one clear purpose per agent
+
+Implemented under the [specification](.specs/20261016-090319-add-a-dedicated-simplifier-after-verification/spec.md). Independent review is pending.
+The `builder` implements the approved `spec`. The `verifier` checks its `acceptance criteria`. The `simplifier` refactors accepted code for clarity.
+The extra code-quality review introduced in R-16 is removed from the verifier's instructions.
+
+Successful verification and rejection of all current `findings` save `simplifier-running`.
+`Maestro` calls `maestro_run_simplifier` without another approval or verification cycle.
+Only that tool checks Git readiness. If Git is unavailable, it warns and saves `candidate-ready` without delegation or a `simplifier` `handoff`.
+
+The `simplifier` selects all uncommitted code changes, including pre-existing staged, unstaged, and untracked files.
+It preserves observable behavior and the accepted check baseline. Rejected `findings` remain rejected, not passed.
+Required caller updates can include initially unchanged files. Unrelated refactoring, index changes, and automatic commits are excluded.
+
+A completed `pass` saves the fixed, unnumbered `handoffs/simplifier/S.json`, then saves `candidate-ready`.
+The report contains refactored files, a summary, and notes. No refactoring is required when selected code is already clear.
+Maestro's final summary separates this report from independent `verifier` evidence.
 
 ## Next
 
 ## Later
 
-These items need scope review before `specification` approval. Existing behavior must be checked before adding new code. Dependencies between these items are not yet agreed.
+These items need scope review before `specification` approval. Existing behavior must be checked before adding new code. Dependencies between these items are not yet
+agreed.
 
 ### R-04: Rename the npm package
 
 #### Objective
 
-Rename `@emiliosp/pi-maestro` to `pi-maestro-sdd`. The `owner` installs the package under the new name. This item changes the package identity, not the development workflow.
+Rename `@emiliosp/pi-maestro` to `pi-maestro-sdd`. The `owner` installs the package under the new name. This item changes the package identity, not the development
+workflow.
 
 Compatibility with installations under the old name must be decided in the `specification`. No `specification` is approved yet.
 
@@ -266,25 +317,3 @@ Explore how `Maestro` can reconcile saved `artifacts` and workflow state. The re
 #### Completed when
 
 Not yet defined. The `owner` must define the intended outcome, recovery boundaries, and completion condition before this item can move forward.
-
-### R-21: Add a simplifier with one clear purpose per agent
-
-#### Objective
-
-Each agent has exactly one purpose. The `builder` implements the approved `spec`. The `verifier` independently checks its `acceptance criteria`. The simplifier refactors verified code.
-
-Add the simplifier after the `verifier`. It receives code built by the `builder` only after verification confirms that all checks defined in the `acceptance criteria` pass.
-
-The simplifier reduces complexity while preserving exact behavior. The goal is code that is easier to read, understand, modify, and debug, not fewer lines.
-Every simplification must pass this test: "Would a new team member understand this faster than the original?"
-
-#### Scope boundaries
-
-Remove the "Review code quality" section from `agents/verifier.md`. This replaces the additional review introduced in R-16, not independent verification of `acceptance criteria`.
-
-The simplifier's detailed instructions will be defined during `spec` preparation. This roadmap item does not define them.
-
-#### Completed when
-
-The workflow includes the simplifier after successful verification. Agent instructions keep implementation, verification, and simplification as separate responsibilities.
-The simplifier preserves exact behavior and follows the instructions agreed in the approved `spec`.

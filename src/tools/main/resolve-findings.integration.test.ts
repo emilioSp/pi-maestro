@@ -110,7 +110,7 @@ afterEach(async () => {
 });
 
 describe('resolve findings tool', () => {
-  it('given the finding resolution tool when registered then its closed schema requires reasons for rejections', async () => {
+  it('given finding decision inputs when the tool schema is checked then rejection requires a reason, code fixes forbid a reason, and empty or unknown decisions are rejected', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerResolveFindingsTool,
     });
@@ -173,7 +173,7 @@ describe('resolve findings tool', () => {
     ).toBe(false);
   });
 
-  it('given mixed owner decisions when findings are resolved then decisions are saved and code fixes take priority', async () => {
+  it('given two findings when the owner rejects one and requests a code fix for the other then both decisions are saved and the workflow returns to ready-for-builder', async () => {
     const { paths, repository } = await createFindingsDecisionWorkflow([
       createFinding('F1'),
       createFinding('F2'),
@@ -226,7 +226,46 @@ describe('resolve findings tool', () => {
     ]);
   });
 
-  it('given all findings rejected when decisions are recorded then rejections are saved and the workflow becomes candidate-ready', async () => {
+  it('given a single finding when the owner rejects it with a reason then the rejection is saved and Maestro requests simplification without another approval or verification', async () => {
+    const { paths, repository } = await createFindingsDecisionWorkflow([
+      createFinding('F1'),
+    ]);
+
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveFindingsTool,
+    });
+
+    const result = await tool.execute('reject', {
+      specId: SPEC_ID,
+      decisions: [
+        {
+          findingId: 'F1',
+          decision: FINDING_DECISIONS.REJECT,
+          reason: 'Outside approved scope',
+        },
+      ],
+    });
+
+    expect(
+      await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
+    ).toMatchObject({ phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING });
+    expect(result.content).toEqual([
+      {
+        type: 'text',
+        text: expect.stringContaining(
+          'Call maestro_run_simplifier next with this specId, without another approval or verifier pass.',
+        ),
+      },
+    ]);
+    const handoff = await readCurrentHandoff(paths);
+    expect(handoff.findings[0].decision).toEqual({
+      decision: FINDING_DECISIONS.REJECT,
+      reason: 'Outside approved scope',
+    });
+  });
+
+  it('given two findings when the owner rejects both with reasons then both rejections are saved and the workflow moves to simplifier-running', async () => {
     const { paths, repository } = await createFindingsDecisionWorkflow([
       createFinding('F1'),
       createFinding('F2'),
@@ -256,12 +295,12 @@ describe('resolve findings tool', () => {
     expect(result.content).toEqual([
       {
         type: 'text',
-        text: expect.stringContaining(WORKFLOW_PHASES.CANDIDATE_READY),
+        text: expect.stringContaining(WORKFLOW_PHASES.SIMPLIFIER_RUNNING),
       },
     ]);
     expect(result.details).toMatchObject({
       specId: SPEC_ID,
-      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+      phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
       rejectedFindingIds: ['F1', 'F2'],
       findingsRequiringFixIds: [],
     });
@@ -285,7 +324,7 @@ describe('resolve findings tool', () => {
     ]);
   });
 
-  it('given incomplete or duplicate finding decisions when resolved then the workflow and handoff are unchanged', async () => {
+  it('given two findings when a decision batch omits a finding or repeats its ID then resolution fails and the workflow and verifier report stay unchanged', async () => {
     const { paths, repository } = await createFindingsDecisionWorkflow([
       createFinding('F1'),
       createFinding('F2'),
@@ -340,7 +379,7 @@ describe('resolve findings tool', () => {
     await expect(readCurrentHandoff(paths)).resolves.toEqual(handoffBefore);
   });
 
-  it('given an invalid handoff specId when all findings are rejected then no protocol write occurs', async () => {
+  it('given the saved verifier report names a different spec when the owner rejects its finding then resolution fails without changing the report or workflow', async () => {
     const { paths, repository } = await createFindingsDecisionWorkflow([
       createFinding('F1'),
     ]);
@@ -384,7 +423,7 @@ describe('resolve findings tool', () => {
     await expect(readFile(handoffPath, 'utf8')).resolves.toBe(handoffBefore);
   });
 
-  it('given an empty rejection reason when resolving findings then no protocol write occurs', async () => {
+  it('given a rejection reason containing only whitespace when finding decisions are submitted then resolution fails without changing the verifier report or workflow', async () => {
     const { paths, repository } = await createFindingsDecisionWorkflow([
       createFinding('F1'),
     ]);
@@ -421,7 +460,7 @@ describe('resolve findings tool', () => {
     await expect(readFile(handoffPath, 'utf8')).resolves.toBe(handoffBefore);
   });
 
-  it('given an archived-row finding when revision is recorded then drafting requires separate renewed approval of the same spec', async () => {
+  it('given a finding about archived exports when the owner chooses spec revision then the decision is saved in drafting-spec and separate approval returns the same spec to ready-for-builder', async () => {
     const { paths, repository } = await createFindingsDecisionWorkflow([
       { ...createFinding('F1'), summary: 'Exports omit archived rows.' },
     ]);
@@ -503,7 +542,7 @@ describe('resolve findings tool', () => {
     expect(await readFile(handoffPath, 'utf8')).toBe(resolvedHandoff);
   });
 
-  it('given an unknown finding when resolution is requested then a domain error is returned without changes', async () => {
+  it('given a decision names a finding absent from the verifier report when it is submitted then resolution fails without changing the report or workflow', async () => {
     const { paths, repository } = await createFindingsDecisionWorkflow([
       createFinding('F1'),
     ]);

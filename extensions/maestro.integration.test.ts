@@ -3,8 +3,10 @@
  * Used: In integration tests with real Pi sessions and scripted child work.
  */
 
+import { execFile } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { promisify } from 'node:util';
 import type {
   ExtensionAPI,
   wrapRegisteredTool,
@@ -22,6 +24,7 @@ import {
   BUILDER_HANDOFF_STATUSES,
   PROBE_STATUSES,
 } from '#artifacts/builder-handoff/schema.ts';
+import { readSimplifierHandoff } from '#artifacts/simplifier-handoff/readSimplifierHandoff.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import {
   FINDING_DECISIONS,
@@ -51,12 +54,14 @@ import {
 import piTestSessions from '#tests/support/pi-session.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { BUILDER_HANDOFF_TOOL } from '#tools/child/record-builder-handoff.ts';
+import { SIMPLIFIER_HANDOFF_TOOL } from '#tools/child/record-simplifier-handoff.ts';
 import { VERIFIER_HANDOFF_TOOL } from '#tools/child/record-verifier-handoff.ts';
 import { CREATE_SPEC_TOOL } from '#tools/main/create-spec.ts';
 import { MARK_SPEC_READY_TOOL } from '#tools/main/mark-spec-ready.ts';
 import { RESOLVE_ESCALATIONS_TOOL } from '#tools/main/resolve-escalations.ts';
 import { RESOLVE_FINDINGS_TOOL } from '#tools/main/resolve-findings.ts';
 import { RUN_BUILDER_TOOL } from '#tools/main/run-builder.ts';
+import { RUN_SIMPLIFIER_TOOL } from '#tools/main/run-simplifier.ts';
 import { RUN_VERIFIER_TOOL } from '#tools/main/run-verifier.ts';
 import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
@@ -65,6 +70,8 @@ import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
 import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
 import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
+
+const execFileAsync = promisify(execFile);
 
 const successfulPingExtension = (pi: ExtensionAPI): void => {
   pi.events.on(SUBAGENT_PING.REQUEST_EVENT, (payload) => {
@@ -89,6 +96,7 @@ const MAIN_TOOL_NAMES = [
   RESOLVE_ESCALATIONS_TOOL.NAME,
   RUN_VERIFIER_TOOL.NAME,
   RESOLVE_FINDINGS_TOOL.NAME,
+  RUN_SIMPLIFIER_TOOL.NAME,
 ];
 
 const BASE_TOOLS = ['read', 'bash', 'edit', 'write', FOREIGN_TOOL];
@@ -121,7 +129,7 @@ afterEach(async () => {
 });
 
 describe('main Maestro extension', () => {
-  it('given startup when the extension loads then only main tools register once and Maestro stays silent and off', async () => {
+  it('given a new Pi session when Maestro loads then its tools register once but stay inactive, with no notice, status, or added instructions', async () => {
     const { session, notify, setStatus } = await piTestSessions.create({
       extensions: [foreignExtension, maestroExtension, successfulPingExtension],
       maestroAgentsAvailable: false,
@@ -151,7 +159,7 @@ describe('main Maestro extension', () => {
     });
   });
 
-  it('given valid checks when Maestro activates then tools instructions and status become available', async () => {
+  it('given valid activation checks when Maestro is enabled and later re-enabled then its tools, instructions, and status are available without duplicate registration, automatic model calls, or new session history', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 
@@ -183,7 +191,7 @@ describe('main Maestro extension', () => {
     expect(notify).toHaveBeenCalledOnce();
     expect(notify.mock.calls[0][1]).toBe('info');
     expect(stripTerminalSequences(notify.mock.calls[0][0])).toBe(
-      `Maestro active\nMaestro helps the owner define a spec, then coordinates implementation and independent verification.\nAsk how Maestro works for a short explanation.\nBuilder (${DEFAULT_CONFIG.builder.model} ${DEFAULT_CONFIG.builder.thinking})\nVerifier (${DEFAULT_CONFIG.verifier.model} ${DEFAULT_CONFIG.verifier.thinking})`,
+      `Maestro active\nMaestro helps the owner define a spec, then coordinates implementation and independent verification.\nAsk how Maestro works for a short explanation.\nBuilder (${DEFAULT_CONFIG.builder.model} ${DEFAULT_CONFIG.builder.thinking})\nVerifier (${DEFAULT_CONFIG.verifier.model} ${DEFAULT_CONFIG.verifier.thinking})\nSimplifier (${DEFAULT_CONFIG.simplifier.model} ${DEFAULT_CONFIG.simplifier.thinking})`,
     );
 
     const event = await session.extensionRunner.emitBeforeAgentStart(
@@ -244,7 +252,7 @@ describe('main Maestro extension', () => {
     expect(modelContext).not.toContain('Verifier (');
   });
 
-  it('given explicit agent settings when Maestro activates then its notice shows the configured providers models and thinking levels', async () => {
+  it('given custom agent configuration when Maestro is enabled then the activation notice lists the provider, model, and thinking level for each agent', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await mkdir(join(repository.path, '.pi'));
@@ -260,6 +268,7 @@ describe('main Maestro extension', () => {
           model: 'openai-codex/gpt-6.1-sol',
           thinking: THINKING_LEVELS.HIGH,
         },
+        simplifier: { thinking: THINKING_LEVELS.MEDIUM },
       }),
     );
 
@@ -278,12 +287,38 @@ describe('main Maestro extension', () => {
         'Ask how Maestro works for a short explanation.',
         theme.fg('accent', 'Builder (openai-codex/gpt-6.1-sol xhigh)'),
         theme.fg('accent', 'Verifier (openai-codex/gpt-6.1-sol high)'),
+        theme.fg('accent', 'Simplifier (openai-codex/gpt-6.1-sol medium)'),
       ].join('\n'),
       'info',
     );
   });
 
-  it('given active Maestro when its agents become unavailable then turning off succeeds and the next activation fails', async () => {
+  it('given an unavailable simplifier model when activation is requested then Maestro stays disabled and reports which model is unavailable', async () => {
+    const repository = await createTemporaryProject();
+    cleanupFunctions.push(repository.cleanup);
+    await mkdir(join(repository.path, '.pi'));
+    await writeFile(
+      join(repository.path, '.pi/maestro.json'),
+      JSON.stringify({
+        version: '1.0.0',
+        simplifier: { model: 'openai-codex/missing' },
+      }),
+    );
+
+    const { session, notify } = await piTestSessions.create({
+      cwd: repository.path,
+      extensions: [maestroExtension, successfulPingExtension],
+    });
+
+    await session.prompt('/maestro');
+    expect(maestroSessionState.isActive()).toBe(false);
+    expect(notify).toHaveBeenCalledExactlyOnceWith(
+      'Configured model is not available: "openai-codex/missing".',
+      'error',
+    );
+  });
+
+  it('given Maestro is active and its agents are no longer available when Maestro is disabled then it skips availability checks and the next activation reports the missing builder', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 
@@ -334,17 +369,29 @@ describe('main Maestro extension', () => {
 
   it.each([
     {
-      label: 'unsuccessful',
+      label: 'an unsuccessful ping reply',
       reply: { success: false, error: { message: 'Unavailable' } },
     },
-    { label: 'null', reply: null },
-    { label: 'wrong envelope version', reply: { version: 2 } },
-    { label: 'wrong method', reply: { method: 'status' } },
-    { label: 'missing data', reply: { data: undefined } },
-    { label: 'wrong data version', reply: { data: { version: 2 } } },
-    { label: 'missing request ID', reply: { requestId: undefined } },
+    { label: 'a null ping reply', reply: null },
+    {
+      label: 'a ping reply with a bad message version',
+      reply: { version: 2 },
+    },
+    {
+      label: 'a ping reply with the wrong method',
+      reply: { method: 'status' },
+    },
+    { label: 'a ping reply without data', reply: { data: undefined } },
+    {
+      label: 'a ping reply with a bad data version',
+      reply: { data: { version: 2 } },
+    },
+    {
+      label: 'a ping reply without a request ID',
+      reply: { requestId: undefined },
+    },
   ])(
-    'given a $label matching reply when Maestro activates then it stays off with the installation error',
+    'given pi-subagents sends $label when activation is requested then Maestro stays disabled and reports that pi-subagents must be installed',
     async ({ reply }) => {
       const { session, events, notify } = await piTestSessions.create({
         extensions: [maestroExtension],
@@ -378,7 +425,7 @@ describe('main Maestro extension', () => {
     },
   );
 
-  it('given an emission error when Maestro sends its ping then activation stays off with the installation error', async () => {
+  it('given the event bus cannot send the pi-subagents availability request when activation is requested then Maestro stays disabled and reports the installation requirement and bus error', async () => {
     const { session, events, notify } = await piTestSessions.create({
       extensions: [maestroExtension],
     });
@@ -401,7 +448,7 @@ describe('main Maestro extension', () => {
     );
   });
 
-  it('given a failed check when activation is retried then Maestro stays off and reports each error', async () => {
+  it('given an untrusted project when activation is retried then each attempt reports a trust error until the project is trusted and Maestro can activate', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 
@@ -434,7 +481,7 @@ describe('main Maestro extension', () => {
     expect(notify).toHaveBeenCalledTimes(3);
   });
 
-  it('given an active spec when Maestro turns off then live state clears and files remain unchanged', async () => {
+  it('given Maestro has an active spec when it is disabled and enabled again then saved files stay unchanged and the previous spec is no longer active', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { session, notify, setStatus, settingsManager } =
@@ -502,7 +549,7 @@ describe('main Maestro extension', () => {
     ]);
   });
 
-  it('given an active workflow when a session resumes then Maestro stays off without recovering the workflow', async () => {
+  it('given a saved workflow when Pi resumes the session then Maestro stays disabled, leaves the workflow unchanged, and does not select an active spec', async () => {
     const { paths, repository } = await createApprovedWorkflow();
     const workflow = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
 
@@ -523,9 +570,10 @@ describe('main Maestro extension', () => {
     );
   });
 
-  it('given an approved spec when builder and verifier run then status follows running and completed phases without a final transition', async () => {
+  it('given an approved spec in a Git repository when builder, verifier, and simplifier finish then status follows each phase and the workflow ends at candidate-ready with saved reports', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
+    await execFileAsync('git', ['init', '-q', repository.path]);
 
     const { session, events, setStatus } = await piTestSessions.create({
       extensions: [foreignExtension, maestroExtension, successfulPingExtension],
@@ -613,6 +661,51 @@ describe('main Maestro extension', () => {
       },
     ];
 
+    const scriptedRuns = [
+      {
+        agent: AGENTS.BUILDER,
+        runningPhase: WORKFLOW_PHASES.BUILDER_RUNNING,
+        statusIcon: '🛠️',
+        statusLabel: 'Builder running',
+        handoffToolName: BUILDER_HANDOFF_TOOL.NAME,
+        handoff: {
+          specId,
+          status: BUILDER_HANDOFF_STATUSES.DONE,
+          summary: 'The weather alert message passed the probe.',
+          acceptanceCriteria,
+          escalations: [],
+          notes: [],
+        },
+      },
+      {
+        agent: AGENTS.VERIFIER,
+        runningPhase: WORKFLOW_PHASES.VERIFIER_RUNNING,
+        statusIcon: '🔍',
+        statusLabel: 'Verifier running',
+        handoffToolName: VERIFIER_HANDOFF_TOOL.NAME,
+        handoff: {
+          specId,
+          summary: 'The weather alert message passed the probe.',
+          acceptanceCriteria,
+          findings: [],
+          notes: [],
+        },
+      },
+      {
+        agent: AGENTS.SIMPLIFIER,
+        runningPhase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
+        statusIcon: '🧹',
+        statusLabel: 'Simplifier running',
+        handoffToolName: SIMPLIFIER_HANDOFF_TOOL.NAME,
+        handoff: {
+          specId,
+          refactoredFiles: [],
+          summary: 'No simplification needed.',
+          notes: [],
+        },
+      },
+    ];
+
     const requests: SubagentDelegationRequest[] = [];
 
     // Script only the AI work and completion response. Pi sessions, tools, and file operations are real.
@@ -622,67 +715,39 @@ describe('main Maestro extension', () => {
       requests.push(request);
 
       try {
-        const runningPhase =
-          request.agent === AGENTS.BUILDER
-            ? WORKFLOW_PHASES.BUILDER_RUNNING
-            : WORKFLOW_PHASES.VERIFIER_RUNNING;
-
-        const runningIcon = request.agent === AGENTS.BUILDER ? '🛠️' : '🔍';
-
-        const runningLabel =
-          request.agent === AGENTS.BUILDER
-            ? 'Builder running'
-            : 'Verifier running';
-
-        await expect(readWorkflowState(workflowPath)).resolves.toMatchObject({
-          phase: runningPhase,
-        });
-        expect(setStatus).toHaveBeenLastCalledWith(
-          MAESTRO_STATUS_KEY,
-          theme.fg('muted', `Maestro active · ${specId.slice(0, 26)}... · `) +
-            `${runningIcon} ` +
-            theme.fg('accent', runningLabel),
-        );
-
         const { session: child } = await piTestSessions.create({
           cwd: request.cwd,
           extensions: [maestroSubagentExtension],
         });
 
-        expect([AGENTS.BUILDER, AGENTS.VERIFIER]).toContain(request.agent);
+        const scriptedRun = scriptedRuns.find(
+          ({ agent }) => agent === request.agent,
+        );
+
+        if (scriptedRun === undefined) {
+          throw new Error(`Unexpected agent: ${request.agent}`);
+        }
+
+        await expect(readWorkflowState(workflowPath)).resolves.toMatchObject({
+          phase: scriptedRun.runningPhase,
+        });
+        expect(setStatus).toHaveBeenLastCalledWith(
+          MAESTRO_STATUS_KEY,
+          theme.fg('muted', `Maestro active · ${specId.slice(0, 26)}... · `) +
+            `${scriptedRun.statusIcon} ` +
+            theme.fg('accent', scriptedRun.statusLabel),
+        );
 
         if (request.agent === AGENTS.BUILDER) {
           await writeFile(productPath, productContents);
         }
 
-        const toolName =
-          request.agent === AGENTS.BUILDER
-            ? BUILDER_HANDOFF_TOOL.NAME
-            : VERIFIER_HANDOFF_TOOL.NAME;
-
         const tool = child.agent.state.tools.find(
-          (tool) => tool.name === toolName,
+          (tool) => tool.name === scriptedRun.handoffToolName,
         );
 
         assertToolRegistered(tool);
-
-        const handoffResult = await tool.execute(request.requestId, {
-          specId,
-          summary: 'The weather alert message passed the probe.',
-          acceptanceCriteria,
-          notes: [],
-          ...(request.agent === AGENTS.BUILDER
-            ? { status: BUILDER_HANDOFF_STATUSES.DONE, escalations: [] }
-            : { findings: [] }),
-        });
-
-        expect(handoffResult.details).toMatchObject({
-          specId,
-          phase:
-            request.agent === AGENTS.BUILDER
-              ? WORKFLOW_PHASES.READY_FOR_VERIFIER
-              : WORKFLOW_PHASES.CANDIDATE_READY,
-        });
+        await tool.execute(request.requestId, scriptedRun.handoff);
 
         events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
           requestId: request.requestId,
@@ -751,8 +816,39 @@ describe('main Maestro extension', () => {
 
     expect(verified.details).toMatchObject({
       specId,
-      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+      phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
       handoff: { specId, acceptanceCriteria, findings: [] },
+    });
+    expect(setStatus).toHaveBeenLastCalledWith(
+      MAESTRO_STATUS_KEY,
+      theme.fg('muted', `Maestro active · ${specId.slice(0, 26)}... · `) +
+        '🧹 ' +
+        theme.fg('accent', 'Simplifier running'),
+    );
+
+    const runSimplifierTool = session.agent.state.tools.find(
+      (tool) => tool.name === RUN_SIMPLIFIER_TOOL.NAME,
+    );
+
+    assertToolRegistered(runSimplifierTool);
+    const simplified = await runSimplifierTool.execute('test-call', { specId });
+    expect(simplified.details).toMatchObject({
+      specId,
+      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+      handoff: {
+        specId,
+        refactoredFiles: [],
+        summary: 'No simplification needed.',
+        notes: [],
+      },
+    });
+    await session.extensionRunner.emitToolResult({
+      type: 'tool_result',
+      toolName: RUN_SIMPLIFIER_TOOL.NAME,
+      toolCallId: 'test-call',
+      input: { specId },
+      ...simplified,
+      isError: false,
     });
     expect(requests).toMatchObject([
       {
@@ -763,6 +859,12 @@ describe('main Maestro extension', () => {
       },
       {
         agent: AGENTS.VERIFIER,
+        cwd: repository.path,
+        context: 'fresh',
+        task: expect.stringContaining(specId),
+      },
+      {
+        agent: AGENTS.SIMPLIFIER,
         cwd: repository.path,
         context: 'fresh',
         task: expect.stringContaining(specId),
@@ -794,6 +896,18 @@ describe('main Maestro extension', () => {
         specId,
       }),
     ).toMatchObject({ specId });
+    expect(
+      await readSimplifierHandoff({
+        path: join(specPath, 'handoffs', 'simplifier', 'S.json'),
+        specId,
+        projectRoot: repository.path,
+      }),
+    ).toMatchObject({
+      specId,
+      refactoredFiles: [],
+      summary: 'No simplification needed.',
+      notes: [],
+    });
     expect(await readFile(specFilePath, 'utf8')).toBe(approvedSpec);
     expect(await readFile(productPath, 'utf8')).toBe(productContents);
 
@@ -875,7 +989,7 @@ describe('main Maestro extension', () => {
     WORKFLOW_PHASES.ESCALATION_DECISIONS,
     WORKFLOW_PHASES.FINDING_DECISIONS,
   ])(
-    'given %s when the owner follows the revision route and approves then the registered tools return ready-for-builder on the same project',
+    'given a workflow in %s when the owner records a decision to revise the spec and approves the revision then the same workflow returns to ready-for-builder',
     async (phase) => {
       const { paths, repository } = await createApprovedWorkflow();
 
@@ -996,7 +1110,7 @@ describe('main Maestro extension', () => {
     },
   );
 
-  it('given a saved technical-problem escalation when the registered run tool returns then the owner receives the problem and status updates', async () => {
+  it('given the builder reports an unavailable compiler when its run finishes then Maestro returns the escalation and shows that an owner decision is needed', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { session, events, setStatus } = await piTestSessions.create({
@@ -1088,7 +1202,7 @@ describe('main Maestro extension', () => {
     );
   });
 
-  it('given a missing active workflow when status refreshes then it reports an error without blocking instructions', async () => {
+  it('given the active spec has no workflow file when Maestro prepares the next prompt then it reports the missing file, clears its status, and still adds its instructions', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 

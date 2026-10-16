@@ -65,7 +65,7 @@ afterEach(async () => {
 });
 
 describe('markSpecReady', () => {
-  it('given an approved drafting spec when marked ready then the workflow becomes ready without changing the spec', async () => {
+  it('given an owner-approved draft when approval is requested then the wrong spec ID is rejected and the active spec becomes ready-for-builder without content changes', async () => {
     const { paths, created } = await createWorkflow();
     const markdown = '# Owner-approved content\n';
     await writeFile(created.specFilePath, markdown, 'utf8');
@@ -100,7 +100,7 @@ describe('markSpecReady', () => {
     { numbers: [1, 1] },
     { numbers: [1, 3, 2] },
   ])(
-    'given criteria $numbers in drafting-spec when approved then an ordering error leaves all saved files unchanged',
+    'given a draft with acceptance criterion numbers $numbers when approval is requested then a numbering error prevents approval and leaves all saved files unchanged',
     async ({ numbers }) => {
       const { created, paths } = await createWorkflow();
       await writeFile(
@@ -187,7 +187,7 @@ describe('markSpecReady', () => {
     WORKFLOW_PHASES.VERIFIER_RUNNING,
     WORKFLOW_PHASES.CANDIDATE_READY,
   ])(
-    'given the %s phase when a spec revision is approved then the revision is rejected',
+    'given a workflow in %s rather than drafting-spec when approval is requested then approval fails and the workflow keeps its current phase',
     async (phase) => {
       const { created, paths } = await createWorkflow(phase);
 
@@ -209,7 +209,7 @@ describe('markSpecReady', () => {
     },
   );
 
-  it('given a workflow spec ID mismatch when the spec is marked ready then approval is rejected', async () => {
+  it('given the saved workflow names a different spec when approval is requested then approval fails with a workflow spec ID mismatch error', async () => {
     const { created, paths } = await createWorkflow();
     await writeFile(
       created.workflowPath,
@@ -232,7 +232,7 @@ describe('markSpecReady', () => {
     );
   });
 
-  it('given a missing spec.md when the spec is marked ready then approval is rejected', async () => {
+  it('given spec.md is missing when approval is requested then approval fails with the missing file path and leaves the workflow unchanged', async () => {
     const { paths, created } = await createWorkflow();
     await rm(created.specFilePath);
 

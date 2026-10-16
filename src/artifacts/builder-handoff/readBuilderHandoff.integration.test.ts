@@ -46,7 +46,7 @@ afterEach(async () => {
 });
 
 describe('builder handoff reads', () => {
-  it('given malformed, invalid, or mismatched builder handoffs when read then each handoff is rejected', async () => {
+  it('given builder reports with broken JSON, an unknown field, or a different spec ID when read then each report fails with the corresponding error', async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, 'B1.json');
 

@@ -1,7 +1,7 @@
 # Architecture decision records
 
-An Architecture Decision Record (ADR) explains an important architectural choice, its context, and its consequences. 
-This file contains one numbered record per decision. 
+An Architecture Decision Record (ADR) explains an important architectural choice, its context, and its consequences.
+This file contains one numbered record per decision.
 
 Requirements and routine project rules belong in the [roadmap](ROADMAP.md) or other relevant documentation.
 
@@ -11,11 +11,12 @@ When a new decision replaces an accepted decision, add a new record, mark the ea
 
 ### Status
 
-Accepted. Recorded date: 2026-10-07. Implemented in `0.6.0`.
+Superseded by [ADR-004](#adr-004-require-git-only-for-the-simplifier). Recorded date: 2026-10-07. Implemented in `0.6.0`.
 
 ### Context
 
-The previous workflow required Git and used checkpoints and automatic commits. The recorded reason for removing that approach was to simplify the project. Other evaluated alternatives were not recorded.
+The previous workflow required Git and used checkpoints and automatic commits. The recorded reason for removing that approach was to simplify the project. Other evaluated
+alternatives were not recorded.
 
 ### Decision
 
@@ -25,11 +26,13 @@ The `verifier` checks live project files. The `owner` controls later Git use, pu
 
 ### Consequences
 
-Workflow execution no longer depends on Git. Revision and commit fields were removed without migration or compatibility readers. Interrupted and older workflows require manual `owner` handling.
+Workflow execution no longer depends on Git. Revision and commit fields were removed without migration or compatibility readers. Interrupted and older workflows require
+manual `owner` handling.
 
 ### Evidence
 
-[Commit deae41c](https://github.com/emilioSp/pi-maestro/commit/deae41ce66a3f2c76859209c44165e7ddd0f3a72), [Changelog 0.6.0](CHANGELOG.md#060), and [workflow completion](docs/workflow.md#workflow-completion).
+[Commit deae41c](https://github.com/emilioSp/pi-maestro/commit/deae41ce66a3f2c76859209c44165e7ddd0f3a72), [Changelog 0.6.0](CHANGELOG.md#060),
+and [workflow completion](docs/workflow.md#workflow-completion).
 
 ## ADR-002: Store escalation decisions in builder handoffs
 
@@ -39,7 +42,8 @@ Accepted. Recorded date: 2026-10-08. Implemented in `0.7.0`.
 
 ### Context
 
-The previous approach stored `escalations` in standalone files and used singular resolution tools. The recorded reason for replacing it was to use the same storage, local ID, and batch decision model as `verifier` `findings`. Other evaluated alternatives were not recorded.
+The previous approach stored `escalations` in standalone files and used singular resolution tools. The recorded reason for replacing it was to use the same storage, local
+ID, and batch decision model as `verifier` `findings`. Other evaluated alternatives were not recorded.
 
 ### Decision
 
@@ -55,7 +59,8 @@ There are no migration procedures, fallback readers, or deprecated aliases. `Art
 
 ### Evidence
 
-[Repository-only specification](.specs/20261008-132344-store-escalations-in-builder-handoffs/spec.md), [Commit dda6eb5](https://github.com/emilioSp/pi-maestro/commit/dda6eb5b3ab76ba175112c3c565c70be747d7344), and [escalation workflow](docs/workflow.md#escalations).
+[Repository-only specification](.specs/20261008-132344-store-escalations-in-builder-handoffs/spec.md), [Commit dda6eb5](https://github.com/emilioSp/pi-maestro/commit/dda6eb5b3ab76ba175112c3c565c70be747d7344),
+and [escalation workflow](docs/workflow.md#escalations).
 
 ## ADR-003: Route builder failures through owner escalations
 
@@ -86,4 +91,43 @@ This breaking MVP change has no migrations, compatibility readers, deprecated al
 
 ### Evidence
 
-[Specification](.specs/20261013-101454-route-builder-failures-through-owner-escalations/spec.md) and [R-03](ROADMAP.md#r-03-route-builder-failures-through-owner-escalations).
+[Specification](.specs/20261013-101454-route-builder-failures-through-owner-escalations/spec.md)
+and [R-03](ROADMAP.md#r-03-route-builder-failures-through-owner-escalations).
+
+## ADR-004: Require Git only for the simplifier
+
+### Status
+
+Accepted. Implemented through R-21.
+Supersedes [ADR-001](#adr-001-keep-the-workflow-independent-of-git).
+
+### Context
+
+The `simplifier` needs a list of changed code files. Git can supply that list without adding file tracking to `builder` `handoffs`.
+
+### Decision
+
+Only the `simplifier` requires Git and a Git repository to discover changed files. It has no non-Git fallback.
+
+The Git readiness decision belongs only inside `maestro_run_simplifier`, before delegation. The tool checks readiness with `git rev-parse --is-inside-work-tree` in the
+project directory. Only a successful result of `true` enables simplification.
+
+Activation, `spec` preparation, `builder` execution, `verifier` completion, and `finding` resolution do not check Git readiness. Both `simplifier` entry routes save
+`simplifier-running` before `Maestro` calls `maestro_run_simplifier`.
+
+`Maestro` does not create automatic commits or Git checkpoints. The `owner` retains control of commits, pull requests, and merging.
+
+### Consequences
+
+If Git readiness cannot be confirmed, `maestro_run_simplifier` reports a warning and skips delegation. The workflow moves from `simplifier-running` to `candidate-ready`
+without an error. The skip transition is defined in `src/workflow/transitions.ts` and applied through `transitionWorkflow`.
+
+Activation does not predict whether simplification will be skipped. The same readiness decision applies after successful verification and after the `owner` rejects all
+current `findings`. Rejected `findings` retain their reasons and do not become passed verification.
+
+The `simplifier` uses Git to select all staged, unstaged, and untracked code changes, including pre-existing changes.
+There is no spec-specific starting commit or `builder` file list. Required caller updates can include initially unchanged files.
+
+### Evidence
+
+[R-21](ROADMAP.md#r-21-add-a-simplifier-with-one-clear-purpose-per-agent) and the [specification](.specs/20261016-090319-add-a-dedicated-simplifier-after-verification/spec.md).

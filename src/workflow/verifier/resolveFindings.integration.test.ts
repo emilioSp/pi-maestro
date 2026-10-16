@@ -24,7 +24,7 @@ import { resolveFindings } from '#workflow/verifier/resolveFindings.ts';
 afterEach(cleanupBuilderWorkflows);
 
 describe('finding resolution', () => {
-  it('given mixed owner decisions when the fix cycle completes then earlier handoffs and both decisions survive', async () => {
+  it('given one finding is rejected and another requires a code fix when the builder and verifier run again then new numbered reports are saved and earlier reports retain both decisions', async () => {
     const { paths } = await createApprovedWorkflow();
     await prepareBuilderRun({ paths, specId: SPEC_ID });
 
@@ -134,7 +134,7 @@ describe('finding resolution', () => {
       },
     });
 
-    expect(secondVerifier.state.phase).toBe(WORKFLOW_PHASES.CANDIDATE_READY);
+    expect(secondVerifier.state.phase).toBe(WORKFLOW_PHASES.SIMPLIFIER_RUNNING);
     expect(secondBuilder.handoffPath).toBe(
       paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber: 2 }),
     );

@@ -28,7 +28,7 @@ afterEach(async () => {
 });
 
 describe('assertEnvironment', () => {
-  it('given an untrusted project when the environment is checked then activation is rejected', async () => {
+  it('given an untrusted project when activation requirements are checked then the check fails and identifies the untrusted project path', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 
@@ -46,7 +46,7 @@ describe('assertEnvironment', () => {
     ).rejects.toThrow(`Project is not trusted: "${repository.path}".`);
   });
 
-  it('given missing Maestro agents when the environment is checked then the agent error is reported', async () => {
+  it('given Maestro agents are unavailable when activation requirements are checked then the check fails and identifies the missing builder agent', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 
@@ -62,11 +62,11 @@ describe('assertEnvironment', () => {
         piEventsBus: events,
       }),
     ).rejects.toThrow(
-      `Builder or verifier agent check failed: Unknown agent: ${AGENTS.BUILDER}`,
+      `Builder, verifier, or simplifier agent check failed: Unknown agent: ${AGENTS.BUILDER}`,
     );
   });
 
-  it('given invalid configuration when the environment is checked then the configuration error is reported', async () => {
+  it('given configuration has a numeric version when activation requirements are checked then the check fails with a configuration error', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await mkdir(join(repository.path, CONFIG_DIRECTORY_NAME));
@@ -88,7 +88,7 @@ describe('assertEnvironment', () => {
     ).rejects.toThrow('Maestro configuration check failed:');
   });
 
-  it('given an unavailable configured model when the environment is checked then its exact name is reported', async () => {
+  it('given the configured builder model is unavailable when activation requirements are checked then the error names that model', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await mkdir(join(repository.path, CONFIG_DIRECTORY_NAME));
@@ -115,7 +115,7 @@ describe('assertEnvironment', () => {
     );
   });
 
-  it('given a failed subagents reply when the environment is checked then the installation requirement is reported', async () => {
+  it('given pi-subagents replies that its availability check failed when activation requirements are checked then the error reports the installation requirement and invalid reply', async () => {
     const { session, events } = await piTestSessions.create({
       extensions: [],
     });
@@ -142,7 +142,7 @@ describe('assertEnvironment', () => {
     );
   });
 
-  it('given a dirty repository and absent spec directory when checks pass then no files change', async () => {
+  it('given an edited README and no spec directory when activation requirements pass then the README stays unchanged and no spec directory is created', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await writeFile(join(repository.path, 'README.md'), '# Original\n');

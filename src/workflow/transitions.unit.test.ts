@@ -19,7 +19,7 @@ describe('workflow transitions', () => {
     WORKFLOW_PHASES.ESCALATION_DECISIONS,
     WORKFLOW_PHASES.FINDING_DECISIONS,
   ])(
-    'given %s when the owner requests a spec revision then the workflow returns to drafting-spec',
+    'given a workflow in %s when the owner requests a spec revision then the workflow returns to drafting-spec',
     (phase) => {
       expect(
         transitionWorkflow({
@@ -30,7 +30,7 @@ describe('workflow transitions', () => {
     },
   );
 
-  it('given candidate-ready when any event is requested then the workflow stays concluded', () => {
+  it('given a workflow in candidate-ready when any transition is requested then every request throws an error because the workflow is complete', () => {
     for (const event of Object.values(WORKFLOW_EVENTS)) {
       expect(() =>
         transitionWorkflow({
@@ -41,7 +41,7 @@ describe('workflow transitions', () => {
     }
   });
 
-  it('given ready-for-builder state when the builder run transition is applied then the input state is unchanged', () => {
+  it('given a workflow in ready-for-builder when the builder run transition is calculated then the original state object remains unchanged', () => {
     const current = state(WORKFLOW_PHASES.READY_FOR_BUILDER);
 
     transitionWorkflow({

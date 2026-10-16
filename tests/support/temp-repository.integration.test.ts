@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 
 describe('temporary project support', () => {
-  it('given a temporary project when a file is written and cleanup runs then the project is isolated and removed', async () => {
+  it('given a temporary project when a file is written and cleanup runs then the file is writable before cleanup and the project directory no longer exists afterward', async () => {
     const project = await createTemporaryProject();
 
     try {

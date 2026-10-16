@@ -100,7 +100,7 @@ afterEach(async () => {
 });
 
 describe('run verifier tool', () => {
-  it('given the verifier run tool when registered then its closed schema accepts only a spec ID', async () => {
+  it('given verifier run inputs when the tool schema is checked then a spec ID is required and extra fields are rejected', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerRunVerifierTool,
     });
@@ -117,7 +117,7 @@ describe('run verifier tool', () => {
     ).toBe(false);
   });
 
-  it('given a ready-for-verifier workflow when the verifier runs then it uses the current project and explicit spec identity', async () => {
+  it('given a ready-for-verifier workflow when verification finishes without findings then the verifier uses the configured agent and project, saves its report, and requests simplification', async () => {
     const workflow = await createReadyForVerifierWorkflow();
 
     const { tool, events, emit, on } =
@@ -172,10 +172,19 @@ describe('run verifier tool', () => {
     );
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
     expect(result.details).toMatchObject({
-      outcome: WORKFLOW_PHASES.CANDIDATE_READY,
+      outcome: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
       specId: SPEC_ID,
-      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+      phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
     });
+
+    expect(result.content).toEqual([
+      {
+        type: 'text',
+        text: expect.stringContaining(
+          'Call maestro_run_simplifier next with this specId, without another approval or verifier pass.',
+        ),
+      },
+    ]);
 
     await expect(
       access(workflow.paths.getVerifierHandoffsPath(SPEC_ID)),
@@ -190,7 +199,7 @@ describe('run verifier tool', () => {
     ).resolves.toBeUndefined();
   });
 
-  it('given a verifier handoff with findings when delegation completes then findings are returned and the response listener is cleaned', async () => {
+  it('given the verifier saves a report with findings when its run finishes then the tool returns those findings in finding-decisions and removes its response listener', async () => {
     const workflow = await createReadyForVerifierWorkflow();
 
     const { tool, events, on } = await piTestSessions.createRegisteredTool({
@@ -240,7 +249,7 @@ describe('run verifier tool', () => {
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
   });
 
-  it('given a workflow outside ready-for-verifier when the verifier run is requested then a workflow error is returned before delegation', async () => {
+  it('given a workflow in ready-for-builder when a verifier run is requested then it fails before sending a request or adding a response listener', async () => {
     const workflow = await createApprovedWorkflow();
 
     const { tool, emit, on } = await piTestSessions.createRegisteredTool({
@@ -257,7 +266,7 @@ describe('run verifier tool', () => {
     expect(on).not.toHaveBeenCalled();
   });
 
-  it('given a verifier delegation failure when the response is received then an error is returned without advancing the workflow', async () => {
+  it('given the verifier provider is unavailable when the failed run response arrives then the tool reports the provider error, removes its listener, and leaves verifier-running unchanged', async () => {
     const workflow = await createReadyForVerifierWorkflow();
 
     const { tool, events, on } = await piTestSessions.createRegisteredTool({
@@ -294,17 +303,19 @@ describe('run verifier tool', () => {
 
   it.each([
     {
+      failure: 'a timeout',
       status: DELEGATION_STATUSES.TIMED_OUT,
       error: 'The verifier exceeded its timeout.',
       expectedMessage: 'Delegation timeout: The verifier exceeded its timeout.',
     },
     {
+      failure: 'an interruption',
       status: DELEGATION_STATUSES.INTERRUPTED,
       error: 'The verifier was interrupted.',
       expectedMessage: 'Delegation interruption: The verifier was interrupted.',
     },
   ])(
-    'given a $status verifier response when received then the tool reports $expectedMessage',
+    'given the verifier reports $failure when the final response arrives then the run fails with the matching error message',
     async ({ status, error, expectedMessage }) => {
       const workflow = await createReadyForVerifierWorkflow();
 
@@ -331,7 +342,7 @@ describe('run verifier tool', () => {
     },
   );
 
-  it('given a completed verifier response without a handoff when processed then a protocol error is returned', async () => {
+  it('given the verifier reports completion without saving its report when the run tool receives the response then a protocol error is raised and the response listener is removed', async () => {
     const workflow = await createReadyForVerifierWorkflow();
 
     const { tool, events, on } = await piTestSessions.createRegisteredTool({
