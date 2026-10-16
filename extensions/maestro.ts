@@ -30,6 +30,10 @@ import {
   registerRunBuilderTool,
 } from '#tools/main/run-builder.ts';
 import {
+  RUN_SIMPLIFIER_TOOL,
+  registerRunSimplifierTool,
+} from '#tools/main/run-simplifier.ts';
+import {
   RUN_VERIFIER_TOOL,
   registerRunVerifierTool,
 } from '#tools/main/run-verifier.ts';
@@ -41,6 +45,7 @@ const MAIN_TOOL_NAMES: readonly string[] = [
   RESOLVE_ESCALATIONS_TOOL.NAME,
   RUN_VERIFIER_TOOL.NAME,
   RESOLVE_FINDINGS_TOOL.NAME,
+  RUN_SIMPLIFIER_TOOL.NAME,
 ];
 
 export default (pi: ExtensionAPI): void => {
@@ -50,6 +55,7 @@ export default (pi: ExtensionAPI): void => {
   registerResolveEscalationsTool(pi);
   registerRunVerifierTool(pi);
   registerResolveFindingsTool(pi);
+  registerRunSimplifierTool(pi);
 
   const syncMainTools = (): void => {
     const foreignTools = pi
@@ -103,6 +109,10 @@ export default (pi: ExtensionAPI): void => {
             context.ui.theme.fg(
               'accent',
               `Verifier (${config.verifier.model} ${config.verifier.thinking})`,
+            ),
+            context.ui.theme.fg(
+              'accent',
+              `Simplifier (${config.simplifier.model} ${config.simplifier.thinking})`,
             ),
           ].join('\n'),
           'info',

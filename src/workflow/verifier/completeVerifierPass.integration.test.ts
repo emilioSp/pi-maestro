@@ -141,11 +141,11 @@ describe('verifier completion', () => {
     });
 
     expect(completed.projectRoot).toBe(repository.path);
-    expect(completed.state.phase).toBe(WORKFLOW_PHASES.CANDIDATE_READY);
+    expect(completed.state.phase).toBe(WORKFLOW_PHASES.SIMPLIFIER_RUNNING);
 
     await expect(
       readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
+    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING });
   });
 
   it('given an invalid handoff specId when the verifier submits it then no protocol write occurs', async () => {
