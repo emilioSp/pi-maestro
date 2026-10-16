@@ -1,6 +1,6 @@
 /**
  * Objective: Resolve the agent responsible for a workflow phase.
- * Used: When workflow logic maps persisted phases to builder or verifier roles.
+ * Used: When workflow logic maps persisted phases to agent roles.
  */
 
 import type { WorkflowRole } from '#workflow/roles.ts';
@@ -27,6 +27,10 @@ export const getAgentRole = (
 
   if (VERIFIER_PHASES.includes(phase)) {
     return WORKFLOW_ROLES.VERIFIER;
+  }
+
+  if (phase === WORKFLOW_PHASES.SIMPLIFIER_RUNNING) {
+    return WORKFLOW_ROLES.SIMPLIFIER;
   }
 
   return null;
