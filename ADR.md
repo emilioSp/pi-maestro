@@ -103,19 +103,20 @@ The future simplifier needs a list of changed code files. Git can supply that li
 
 Only the simplifier requires Git and a Git repository to discover changed files. It has no non-Git fallback.
 
-Activation, `spec` preparation, the `builder`, and the `verifier` remain independent of Git. Their existing behavior stays unchanged.
+The Git readiness decision belongs only inside `maestro_run_simplifier`, before delegation. The tool checks readiness with `git rev-parse --is-inside-work-tree` in the project directory. Only a successful result of `true` enables simplification.
+
+Activation, `spec` preparation, `builder` execution, `verifier` completion, and `finding` resolution do not check Git readiness. Both simplifier entry routes save `simplifier-running` before `Maestro` calls `maestro_run_simplifier`.
+
 `Maestro` does not create automatic commits or Git checkpoints. The `owner` retains control of commits, pull requests, and merging.
 
 ### Consequences
 
-If Git is unavailable or the project is not a Git repository:
-- Report a warning and skip the simplifier.
-- After successful verification, the workflow moves directly from `verifier-running` to `candidate-ready` without an error. 
- 
-Existing handling of `verifier` `findings` remains unchanged. Other workflow components remain independent of Git.
+If Git readiness cannot be confirmed, `maestro_run_simplifier` reports a warning and skips delegation. The workflow moves from `simplifier-running` to `candidate-ready` without an error. The skip transition is defined in `src/workflow/transitions.ts` and applied through `transitionWorkflow`.
+
+Activation does not predict whether simplification will be skipped. The same readiness decision applies after successful verification and after the `owner` rejects all current `findings`. Rejected `findings` retain their reasons and do not become passed verification.
 
 R-21 will define and implement file discovery. This decision adds no runtime Git checks to the current workflow.
 
 ### Evidence
 
-[R-21](ROADMAP.md#r-21-add-a-simplifier-with-one-clear-purpose-per-agent) and the owner's decision to require Git only for the simplifier.
+[R-21](ROADMAP.md#r-21-add-a-simplifier-with-one-clear-purpose-per-agent) and the owner's decisions to require Git only for the simplifier and place the readiness decision inside `maestro_run_simplifier`.
