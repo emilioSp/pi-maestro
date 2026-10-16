@@ -186,6 +186,10 @@ export class MaestroPaths {
     });
   }
 
+  public getSimplifierHandoffPath(specId: string): string {
+    return resolve(this.getSpecPath(specId), 'handoffs/simplifier/S.json');
+  }
+
   public getPrototypesPath(specId: string): string {
     return resolve(this.getSpecPath(specId), PATHS.PROTOTYPES_PATH);
   }
