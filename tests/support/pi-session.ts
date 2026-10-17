@@ -3,6 +3,7 @@
  * Used: When tests need real extension registration, contexts, commands, or events.
  */
 
+import { deepStrictEqual, strictEqual } from 'node:assert';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -22,7 +23,7 @@ import {
   SettingsManager,
   wrapRegisteredTool,
 } from '@earendil-works/pi-coding-agent';
-import { expect, vi } from 'vitest';
+import { vi } from 'vitest';
 
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 
@@ -131,7 +132,7 @@ class PiTestSessions {
     });
 
     await resourceLoader.reload();
-    expect(resourceLoader.getExtensions().errors).toEqual([]);
+    deepStrictEqual(resourceLoader.getExtensions().errors, []);
 
     const { session } = await createAgentSession({
       cwd: cwd ?? directory,
@@ -167,7 +168,7 @@ class PiTestSessions {
     const createdSession = await this.create({ cwd, extensions: [extension] });
     const { session, events } = createdSession;
     const registeredTools = session.extensionRunner.getAllRegisteredTools();
-    expect(registeredTools).toHaveLength(1);
+    strictEqual(registeredTools.length, 1);
 
     const tool = wrapRegisteredTool(registeredTools[0], session.extensionRunner);
 
@@ -177,7 +178,7 @@ class PiTestSessions {
     // Observe cleanup while preserving the real EventBus subscription and unsubscribe.
     const on = vi
       .spyOn(events, 'on')
-      .mockImplementation((channel, handler) => vi.fn(subscribe(channel, handler)));
+      .mockImplementation((channel, handler) => vi.fn<() => void>(subscribe(channel, handler)));
 
     return { ...createdSession, tool, emit, on };
   };
@@ -191,7 +192,7 @@ class PiTestSessions {
         resources.map(({ directory }) => rm(directory, { recursive: true, force: true })),
       );
 
-      for (const { errors } of resources) expect(errors).toEqual([]);
+      for (const { errors } of resources) deepStrictEqual(errors, []);
     } finally {
       vi.restoreAllMocks();
       vi.unstubAllEnvs();

@@ -934,62 +934,52 @@ describe('main Maestro extension', () => {
       const theme = session.extensionRunner.createContext().ui.theme;
       maestroSessionState.setActiveSpecId(SPEC_ID);
 
-      if (phase === WORKFLOW_PHASES.ESCALATION_DECISIONS) {
-        const resolveTool = session.agent.state.tools.find(
-          (tool) => tool.name === RESOLVE_ESCALATIONS_TOOL.NAME,
-        );
+      const resolveTool = session.agent.state.tools.find(
+        (tool) =>
+          tool.name ===
+          (phase === WORKFLOW_PHASES.ESCALATION_DECISIONS
+            ? RESOLVE_ESCALATIONS_TOOL.NAME
+            : RESOLVE_FINDINGS_TOOL.NAME),
+      );
 
-        assertToolRegistered(resolveTool);
+      assertToolRegistered(resolveTool);
 
-        const resolution = await resolveTool.execute('revision-decision', {
-          specId: SPEC_ID,
-          specChangeRequired: true,
-          decisions: [
-            {
-              escalationId: 'E1',
-              selectedOptionId: null,
-              decision: 'Revise the spec to use a local check instead of the unavailable compiler',
-              reason: 'The required compiler cannot run in this environment',
+      const resolution = await resolveTool.execute(
+        'revision-decision',
+        phase === WORKFLOW_PHASES.ESCALATION_DECISIONS
+          ? {
+              specId: SPEC_ID,
+              specChangeRequired: true,
+              decisions: [
+                {
+                  escalationId: 'E1',
+                  selectedOptionId: null,
+                  decision:
+                    'Revise the spec to use a local check instead of the unavailable compiler',
+                  reason: 'The required compiler cannot run in this environment',
+                },
+              ],
+            }
+          : {
+              specId: SPEC_ID,
+              decisions: [
+                {
+                  findingId: 'F1',
+                  decision: FINDING_DECISIONS.REVISE_SPEC,
+                  reason: 'The required compiler cannot run in this environment',
+                  specChange: 'Use a local check instead of the unavailable compiler',
+                },
+              ],
             },
-          ],
-        });
+      );
 
-        expect(resolution.details).toMatchObject({
-          specId: SPEC_ID,
-          phase: WORKFLOW_PHASES.DRAFTING_SPEC,
-        });
-        await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
-          phase: WORKFLOW_PHASES.DRAFTING_SPEC,
-        });
-      }
-
-      if (phase === WORKFLOW_PHASES.FINDING_DECISIONS) {
-        const resolveTool = session.agent.state.tools.find(
-          (tool) => tool.name === RESOLVE_FINDINGS_TOOL.NAME,
-        );
-
-        assertToolRegistered(resolveTool);
-
-        const resolution = await resolveTool.execute('revision-decision', {
-          specId: SPEC_ID,
-          decisions: [
-            {
-              findingId: 'F1',
-              decision: FINDING_DECISIONS.REVISE_SPEC,
-              reason: 'The required compiler cannot run in this environment',
-              specChange: 'Use a local check instead of the unavailable compiler',
-            },
-          ],
-        });
-
-        expect(resolution.details).toMatchObject({
-          specId: SPEC_ID,
-          phase: WORKFLOW_PHASES.DRAFTING_SPEC,
-        });
-        expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
-          phase: WORKFLOW_PHASES.DRAFTING_SPEC,
-        });
-      }
+      expect(resolution.details).toMatchObject({
+        specId: SPEC_ID,
+        phase: WORKFLOW_PHASES.DRAFTING_SPEC,
+      });
+      await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
+        phase: WORKFLOW_PHASES.DRAFTING_SPEC,
+      });
 
       await writeFile(
         paths.getSpecFilePath(SPEC_ID),

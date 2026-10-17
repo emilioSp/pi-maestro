@@ -27,7 +27,7 @@ import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 vi.mock('node:fs/promises', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:fs/promises')>();
 
-  return { ...actual, writeFile: vi.fn(actual.writeFile) };
+  return { ...actual, writeFile: vi.fn<typeof actual.writeFile>(actual.writeFile) };
 });
 
 const { writeFile: originalWriteFile } =

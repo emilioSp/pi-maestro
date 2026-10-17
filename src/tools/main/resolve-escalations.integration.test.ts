@@ -355,25 +355,36 @@ describe('resolve escalations tool', () => {
   });
 
   it.each([
-    ['missing the decision for E2', [decisions[0]]],
-    ['with duplicate decisions for E1', [decisions[0], decisions[0], decisions[1]]],
-    ['naming an unknown escalation E3', [decisions[0], { ...decisions[1], escalationId: 'E3' }]],
+    ['missing the decision for E2', [decisions[0]], 'Missing decision for escalation "E2".'],
+    [
+      'with duplicate decisions for E1',
+      [decisions[0], decisions[0], decisions[1]],
+      'Duplicate decision for escalation "E1".',
+    ],
+    [
+      'naming an unknown escalation E3',
+      [decisions[0], { ...decisions[1], escalationId: 'E3' }],
+      'Unknown escalation ID: "E3".',
+    ],
     [
       'selecting an option absent from the question',
       [{ ...decisions[0], selectedOptionId: 'other' }, decisions[1]],
+      'Escalation resolution references unknown option.',
     ],
     [
       'with a decision containing only whitespace',
       [{ ...decisions[0], decision: ' \n\t' }, decisions[1]],
+      'Invalid builder handoff:',
     ],
     [
       'with a reason containing only whitespace',
       [decisions[0], { ...decisions[1], reason: ' \n\t' }],
+      'Invalid builder handoff:',
     ],
-    ['with no decisions', []],
+    ['with no decisions', [], 'At least one escalation decision is required.'],
   ])(
     'given an escalation decision batch %s when submitted then resolution fails without changing the builder report or workflow',
-    async (_name, invalidDecisions) => {
+    async (_name, invalidDecisions, message) => {
       const { paths, repository, handoffPath } = await openEscalations();
       const handoffBefore = await readFile(handoffPath, 'utf8');
 
@@ -390,7 +401,7 @@ describe('resolve escalations tool', () => {
           specChangeRequired: false,
           decisions: invalidDecisions,
         }),
-      ).rejects.toThrow();
+      ).rejects.toThrow(message);
 
       // Exercise domain validation too, including schema-invalid batches rejected by Pi.
       await expect(
@@ -400,7 +411,7 @@ describe('resolve escalations tool', () => {
           specChangeRequired: false,
           decisions: invalidDecisions,
         }),
-      ).rejects.toThrow();
+      ).rejects.toThrow(message);
 
       expect(await readFile(handoffPath, 'utf8')).toBe(handoffBefore);
       expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(workflowBefore);
@@ -411,22 +422,28 @@ describe('resolve escalations tool', () => {
     {
       scenario: 'wrong-phase',
       description: 'a workflow in builder-running',
+      message:
+        'Escalation resolution requires escalation-decisions state, found "builder-running".',
     },
     {
       scenario: 'incompatible-handoff',
       description: 'a done report instead of an escalation',
+      message: 'Escalation resolution requires an escalation handoff.',
     },
     {
       scenario: 'resolved',
       description: 'answered questions in ready-for-builder',
+      message:
+        'Escalation resolution requires escalation-decisions state, found "ready-for-builder".',
     },
     {
       scenario: 'resolved-in-decision-phase',
       description: 'answered questions in decision phase',
+      message: 'Current questions already contain an owner resolution.',
     },
   ])(
     'given $description when escalation decisions are submitted then resolution fails without changing the builder report or workflow',
-    async ({ scenario }) => {
+    async ({ scenario, message }) => {
       const { paths, repository, handoffPath } = await openEscalations();
 
       if (scenario.startsWith('resolved'))
@@ -479,7 +496,7 @@ describe('resolve escalations tool', () => {
           specChangeRequired: false,
           decisions,
         }),
-      ).rejects.toThrow();
+      ).rejects.toThrow(message);
 
       expect(await readFile(handoffPath, 'utf8')).toBe(handoffBefore);
 

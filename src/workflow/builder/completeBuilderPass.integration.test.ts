@@ -216,10 +216,15 @@ describe('builder completion', () => {
   });
 
   it.each([
-    ['an escalation report with no questions', { ...csvExportEscalation, escalations: [] }],
+    [
+      'an escalation report with no questions',
+      { ...csvExportEscalation, escalations: [] },
+      'Invalid builder submission:',
+    ],
     [
       'a done report containing escalation questions',
       { ...csvExportEscalation, status: BUILDER_HANDOFF_STATUSES.DONE },
+      'Invalid builder submission:',
     ],
     [
       'escalation IDs that skip E2',
@@ -230,6 +235,7 @@ describe('builder completion', () => {
           { ...csvExportEscalation.escalations[1], id: 'E3' },
         ],
       },
+      'Escalation IDs must be sequential in array order.',
     ],
     [
       'escalation IDs starting at E2 instead of E1',
@@ -237,6 +243,7 @@ describe('builder completion', () => {
         ...csvExportEscalation,
         escalations: [{ ...csvExportEscalation.escalations[0], id: 'E2' }],
       },
+      'Escalation IDs must be sequential in array order.',
     ],
     [
       'an escalation question with no options',
@@ -244,6 +251,7 @@ describe('builder completion', () => {
         ...csvExportEscalation,
         escalations: [{ ...csvExportEscalation.escalations[0], options: [] }],
       },
+      'Invalid builder submission:',
     ],
     [
       'an escalation question with duplicate options',
@@ -259,6 +267,7 @@ describe('builder completion', () => {
           },
         ],
       },
+      'Escalation option IDs must be unique.',
     ],
     [
       'a recommendation for an option absent from the question',
@@ -271,6 +280,7 @@ describe('builder completion', () => {
           },
         ],
       },
+      'Escalation recommendation references unknown option.',
     ],
     [
       'a new escalation question already containing an owner answer',
@@ -287,6 +297,7 @@ describe('builder completion', () => {
           },
         ],
       },
+      'Invalid builder submission:',
     ],
     [
       'a done report with a failed probe',
@@ -296,6 +307,7 @@ describe('builder completion', () => {
         escalations: [],
         acceptanceCriteria: [{ id: 'AC1', probe: 'CSV check', probeStatus: PROBE_STATUSES.FAILED }],
       },
+      'Done builder handoff requires every probe to pass.',
     ],
     [
       'a done report with an unrun probe',
@@ -304,6 +316,7 @@ describe('builder completion', () => {
         status: BUILDER_HANDOFF_STATUSES.DONE,
         escalations: [],
       },
+      'Done builder handoff requires every probe to pass.',
     ],
     [
       'a done report with one passed probe and one unrun probe',
@@ -320,6 +333,7 @@ describe('builder completion', () => {
           },
         ],
       },
+      'Done builder handoff requires every probe to pass.',
     ],
     [
       'a done report with duplicate acceptance criterion IDs',
@@ -332,10 +346,11 @@ describe('builder completion', () => {
           { id: 'AC1', probe: 'CSV check', probeStatus: PROBE_STATUSES.PASSED },
         ],
       },
+      'Builder handoff acceptance criterion IDs must be unique.',
     ],
   ])(
     'given %s when a builder report is submitted then submission fails without saving a report or changing the workflow',
-    async (_name, handoff) => {
+    async (_name, handoff, message) => {
       const { paths, repository } = await createApprovedWorkflow();
       await prepareBuilderRun({ paths, specId: SPEC_ID });
       const before = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
@@ -347,7 +362,7 @@ describe('builder completion', () => {
 
       await expect(
         tool.execute('invalid-handoff', { specId: SPEC_ID, ...handoff }),
-      ).rejects.toThrow();
+      ).rejects.toThrow(message);
       expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(before);
       // No protocol directory is created by rejected submissions.
       await expect(readdir(paths.getBuilderHandoffsPath(SPEC_ID))).rejects.toMatchObject({
