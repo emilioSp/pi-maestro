@@ -1,6 +1,9 @@
 ---
 name: docs-audit
-description: Audit README.md, docs/, and the project constitution (mission, tech stack, roadmap, changelog, and architecture decision records) against the current working tree without asking for a comparison baseline. Use when reviewing documentation consistency, stale references, broken links, roadmap state, or documentation-to-code mismatches.
+description:
+  Audit README.md, docs/, and the project constitution (mission, tech stack, roadmap, changelog, and architecture decision records) against the current working tree
+  without asking for a comparison baseline. Use when reviewing documentation consistency, stale references, broken links, roadmap state, or documentation-to-code
+  mismatches.
 ---
 
 # Documentation audit
