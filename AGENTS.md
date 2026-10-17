@@ -15,9 +15,8 @@ Run `npm run check` when finishing a coding task.
 
 ## Task constraints
 
-Add a new structural file or directory only after an explicit design decision.
-Do not create a shared `src/schemas/` directory.
-Direct workflow phase assignment outside `src/workflow/transitions.ts` is banned. Define every phase transition there and apply it through `transitionWorkflow`.
+Add a new structural file or directory only after an explicit design decision. Do not create a shared `src/schemas/` directory. Direct workflow phase assignment outside
+`src/workflow/transitions.ts` is banned. Define every phase transition there and apply it through `transitionWorkflow`.
 
 ## Documentation
 

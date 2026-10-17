@@ -1,7 +1,6 @@
 # Architecture decision records
 
-An Architecture Decision Record (ADR) explains an important architectural choice, its context, and its consequences.
-This file contains one numbered record per decision.
+An Architecture Decision Record (ADR) explains an important architectural choice, its context, and its consequences. This file contains one numbered record per decision.
 
 Requirements and routine project rules belong in the [roadmap](ROADMAP.md) or other relevant documentation.
 
@@ -31,8 +30,8 @@ manual `owner` handling.
 
 ### Evidence
 
-[Commit deae41c](https://github.com/emilioSp/pi-maestro/commit/deae41ce66a3f2c76859209c44165e7ddd0f3a72), [Changelog 0.6.0](CHANGELOG.md#060),
-and [workflow completion](docs/workflow.md#workflow-completion).
+[Commit deae41c](https://github.com/emilioSp/pi-maestro/commit/deae41ce66a3f2c76859209c44165e7ddd0f3a72), [Changelog 0.6.0](CHANGELOG.md#060), and
+[workflow completion](docs/workflow.md#workflow-completion).
 
 ## ADR-002: Store escalation decisions in builder handoffs
 
@@ -59,8 +58,8 @@ There are no migration procedures, fallback readers, or deprecated aliases. `Art
 
 ### Evidence
 
-[Repository-only specification](.specs/20261008-132344-store-escalations-in-builder-handoffs/spec.md), [Commit dda6eb5](https://github.com/emilioSp/pi-maestro/commit/dda6eb5b3ab76ba175112c3c565c70be747d7344),
-and [escalation workflow](docs/workflow.md#escalations).
+[Repository-only specification](.specs/20261008-132344-store-escalations-in-builder-handoffs/spec.md),
+[Commit dda6eb5](https://github.com/emilioSp/pi-maestro/commit/dda6eb5b3ab76ba175112c3c565c70be747d7344), and [escalation workflow](docs/workflow.md#escalations).
 
 ## ADR-003: Route builder failures through owner escalations
 
@@ -70,36 +69,31 @@ Accepted. Implemented.
 
 ### Context
 
-The `owner` must decide how work continues after a reportable technical problem.
-The workflow also needs a simpler model with two `builder` outcomes.
+The `owner` must decide how work continues after a reportable technical problem. The workflow also needs a simpler model with two `builder` outcomes.
 
 ### Decision
 
-The `builder` reports only `done` or `escalation`.
-Reportable technical failures use the existing `escalation` process.
-The `owner` decides how to proceed instead of reaching a terminal failure phase.
+The `builder` reports only `done` or `escalation`. Reportable technical failures use the existing `escalation` process. The `owner` decides how to proceed instead of
+reaching a terminal failure phase.
 
 ### Consequences
 
-Reuse the existing tools, numbered `handoffs`, and batch decisions.
-Individual `probe` results retain `failed` as a valid value.
+Reuse the existing tools, numbered `handoffs`, and batch decisions. Individual `probe` results retain `failed` as a valid value.
 
-Execution and protocol errors without a valid saved result still stop the workflow.
-This decision adds no automatic recovery.
+Execution and protocol errors without a valid saved result still stop the workflow. This decision adds no automatic recovery.
 
 This breaking MVP change has no migrations, compatibility readers, deprecated aliases, or dedicated legacy-format tests.
 
 ### Evidence
 
-[Specification](.specs/20261013-101454-route-builder-failures-through-owner-escalations/spec.md)
-and [R-03](ROADMAP.md#r-03-route-builder-failures-through-owner-escalations).
+[Specification](.specs/20261013-101454-route-builder-failures-through-owner-escalations/spec.md) and
+[R-03](ROADMAP.md#r-03-route-builder-failures-through-owner-escalations).
 
 ## ADR-004: Require Git only for the simplifier
 
 ### Status
 
-Accepted. Implemented through R-21.
-Supersedes [ADR-001](#adr-001-keep-the-workflow-independent-of-git).
+Accepted. Implemented through R-21. Supersedes [ADR-001](#adr-001-keep-the-workflow-independent-of-git).
 
 ### Context
 
@@ -125,9 +119,10 @@ without an error. The skip transition is defined in `src/workflow/transitions.ts
 Activation does not predict whether simplification will be skipped. The same readiness decision applies after successful verification and after the `owner` rejects all
 current `findings`. Rejected `findings` retain their reasons and do not become passed verification.
 
-The `simplifier` uses Git to select all staged, unstaged, and untracked code changes, including pre-existing changes.
-There is no spec-specific starting commit or `builder` file list. Required caller updates can include initially unchanged files.
+The `simplifier` uses Git to select all staged, unstaged, and untracked code changes, including pre-existing changes. There is no spec-specific starting commit or
+`builder` file list. Required caller updates can include initially unchanged files.
 
 ### Evidence
 
-[R-21](ROADMAP.md#r-21-add-a-simplifier-with-one-clear-purpose-per-agent) and the [specification](.specs/20261016-090319-add-a-dedicated-simplifier-after-verification/spec.md).
+[R-21](ROADMAP.md#r-21-add-a-simplifier-with-one-clear-purpose-per-agent) and the
+[specification](.specs/20261016-090319-add-a-dedicated-simplifier-after-verification/spec.md).
