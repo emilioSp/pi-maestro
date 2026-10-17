@@ -18,8 +18,8 @@ GitHub Releases are not required.
 
 ## 0.10.0
 
-1. Saved complete `owner` decision batches in their original `handoffs` before changing phase, including when the `spec` requires revision.
-   See [PR #38](https://github.com/emilioSp/pi-maestro/pull/38).
+1. Saved complete `owner` decision batches in their original `handoffs` before changing phase, including when the `spec` requires revision. See
+   [PR #38](https://github.com/emilioSp/pi-maestro/pull/38).
 2. Added `revise-spec` decisions for `verifier` `findings`, with the owner's reason and agreed requirement change. Revision takes priority over code fixes and rejections.
 3. Unified both revision paths through `drafting-spec`, with renewed `GREEN FLAG` before separate approval and another `builder` `run`. Approval is allowed only from
    `drafting-spec`.
@@ -30,24 +30,24 @@ GitHub Releases are not required.
 
 ## 0.9.5
 
-1. Added a shared check that requires every approved `spec` criterion ID in `builder` and `verifier` `handoffs`.
-   See [PR #37](https://github.com/emilioSp/pi-maestro/pull/37).
+1. Added a shared check that requires every approved `spec` criterion ID in `builder` and `verifier` `handoffs`. See
+   [PR #37](https://github.com/emilioSp/pi-maestro/pull/37).
 2. Missing IDs reject submission before saving a report or changing phase. Extra report IDs remain allowed, and existing report validation is unchanged.
 3. Reused the raw heading rule `^### AC(\d+):`, including leading zeros and matching lines inside code blocks. No matching headings impose no new restriction.
 4. Added unit tests for extraction and one missing-ID integration test per role.
 
 ## 0.9.4
 
-1. Added numbering validation to `spec` approval. Matched `acceptance criterion` headings must start at `AC1` and continue without gaps.
-   See [PR #36](https://github.com/emilioSp/pi-maestro/pull/36).
+1. Added numbering validation to `spec` approval. Matched `acceptance criterion` headings must start at `AC1` and continue without gaps. See
+   [PR #36](https://github.com/emilioSp/pi-maestro/pull/36).
 2. Invalid numbering rejects approval before saving the workflow and leaves all saved files unchanged. No matching headings still permits approval.
 3. Added `Maestro` guidance to correct only numbering and affected references, then retry with the existing `GREEN FLAG`. No additional `owner` approval is required
    before starting the `builder`.
 
 ## 0.9.3
 
-1. Added a parent `pi-subagents` availability check during activation. A matching successful version 1 `ping` reply is required within 2000 ms.
-   See [PR #35](https://github.com/emilioSp/pi-maestro/pull/35).
+1. Added a parent `pi-subagents` availability check during activation. A matching successful version 1 `ping` reply is required within 2000 ms. See
+   [PR #35](https://github.com/emilioSp/pi-maestro/pull/35).
 2. Failed or invalid replies, emission errors, and timeouts prevent activation. The error includes "Maestro flow requires pi-subagents installed in the Pi environment."
    The check makes no automatic retry.
 3. Preserved existing activation checks, UI-only notices, and unchanged session history. The availability check starts no agent, makes no model request, and does not run
@@ -55,23 +55,23 @@ GitHub Releases are not required.
 
 ## 0.9.2
 
-1. Added code-quality review to `verifier` guidance for code affected by the approved change when applicable `AGENTS.md` directives exist.
-   See [PR #34](https://github.com/emilioSp/pi-maestro/pull/34). All existing verification duties remain unchanged.
+1. Added code-quality review to `verifier` guidance for code affected by the approved change when applicable `AGENTS.md` directives exist. See
+   [PR #34](https://github.com/emilioSp/pi-maestro/pull/34). All existing verification duties remain unchanged.
 2. Required instruction-violation `findings` to identify the instruction file, quote the rule, and explain the violating code through existing evidence fields.
 3. Skip only the added review when files or code-quality directives are absent. Missing directives and personal style preferences do not produce `findings`.
 
 ## 0.9.1
 
-1. Added a brief introduction and an invitation to ask how `Maestro` works to the successful activation notice.
-   See [PR #33](https://github.com/emilioSp/pi-maestro/pull/33).
+1. Added a brief introduction and an invitation to ask how `Maestro` works to the successful activation notice. See
+   [PR #33](https://github.com/emilioSp/pi-maestro/pull/33).
 2. Preserved the configured agent details and UI-only activation. Activation does not add session history or start a model request.
 3. Added absolute paths to the installed README and documentation directory in active instructions. `Maestro` reads relevant documentation on demand without automatically
    loading its contents.
 
 ## 0.9.0
 
-1. Breaking: `builder` reports now support only `done` and `escalation`. Reportable technical problems use the existing `owner` `escalation` process.
-   See [PR #32](https://github.com/emilioSp/pi-maestro/pull/32).
+1. Breaking: `builder` reports now support only `done` and `escalation`. Reportable technical problems use the existing `owner` `escalation` process. See
+   [PR #32](https://github.com/emilioSp/pi-maestro/pull/32).
 2. Removed the terminal `builder` failure phase and event. Execution errors and missing or invalid saved results still stop the workflow without automatic recovery.
 3. No migrations, compatibility readers, or deprecated aliases are provided. `Artifact` versions remain `1.0.0`.
 
@@ -82,8 +82,8 @@ GitHub Releases are not required.
 
 ## 0.7.3
 
-1. Added Oxlint rules for `given ... when ... then ...` test titles, `const` usage, unnecessary `else` branches, type aliases, and ESM imports.
-   See [PR #31](https://github.com/emilioSp/pi-maestro/pull/31).
+1. Added Oxlint rules for `given ... when ... then ...` test titles, `const` usage, unnecessary `else` branches, type aliases, and ESM imports. See
+   [PR #31](https://github.com/emilioSp/pi-maestro/pull/31).
 2. Updated `oxlint-anti-slop` from `0.3.3` to `0.3.6`.
 3. Updated 106 test titles to match the naming rule without changing test logic.
 
@@ -96,15 +96,15 @@ GitHub Releases are not required.
 
 ## 0.7.1
 
-1. Documented the project mission, current tech stack, `owner` responsibilities, roadmap, and codebase change history.
-   See [PR #30](https://github.com/emilioSp/pi-maestro/pull/30).
+1. Documented the project mission, current tech stack, `owner` responsibilities, roadmap, and codebase change history. See
+   [PR #30](https://github.com/emilioSp/pi-maestro/pull/30).
 2. Replaced `TODO.md` with the roadmap and included the four project constitution documents in the npm package.
 3. Updated documentation audits to compare all current documentation and the project constitution with the working tree without requesting a comparison baseline.
 
 ## 0.7.0
 
-1. Stored multiple `escalation` questions and `owner` resolutions inside numbered `builder` `handoffs`. Earlier `handoffs` remain available as history.
-   See [PR #27](https://github.com/emilioSp/pi-maestro/pull/27).
+1. Stored multiple `escalation` questions and `owner` resolutions inside numbered `builder` `handoffs`. Earlier `handoffs` remain available as history. See
+   [PR #27](https://github.com/emilioSp/pi-maestro/pull/27).
 2. Breaking: replaced `maestro_open_escalation` and `maestro_resolve_escalation` with `maestro_record_builder_handoff` and `maestro_resolve_escalations`. Done `handoffs`
    require `escalations: []`. Standalone `escalation` storage was removed without migration or compatibility readers. `Artifact` versions remain `1.0.0`.
 3. Added LCOV coverage reports and Codecov uploads from CI. See [PR #28](https://github.com/emilioSp/pi-maestro/pull/28).
@@ -118,8 +118,8 @@ session history and model context. See [PR #26](https://github.com/emilioSp/pi-m
 
 ## 0.6.0
 
-1. Removed Git requirements, checkpoints, and automatic commits from the workflow. `Maestro` uses Pi's project directory and saved workflow phase.
-   See [PR #25](https://github.com/emilioSp/pi-maestro/pull/25).
+1. Removed Git requirements, checkpoints, and automatic commits from the workflow. `Maestro` uses Pi's project directory and saved workflow phase. See
+   [PR #25](https://github.com/emilioSp/pi-maestro/pull/25).
 2. Retained numbered `builder` and `verifier` `handoffs` and explicit `owner` `finding` decisions. Removed workflow revision counters and writer locks.
 3. Breaking: changed `artifact` formats, `handoff` paths, and tool results without migration or compatibility readers. Removed revision and commit fields. `Artifact`
    versions remain `1.0.0`. Interrupted and older workflows require manual `owner` handling.
@@ -171,8 +171,8 @@ Enabled inheritance of global instructions for `builder` and `verifier` agents, 
 
 ## 0.3.0
 
-Clarified `Maestro`, `builder`, and `verifier` responsibilities, `spec` and prototype revisions, permitted experiments, evidence requirements, and cleanup.
-See [PR #21](https://github.com/emilioSp/pi-maestro/pull/21).
+Clarified `Maestro`, `builder`, and `verifier` responsibilities, `spec` and prototype revisions, permitted experiments, evidence requirements, and cleanup. See
+[PR #21](https://github.com/emilioSp/pi-maestro/pull/21).
 
 ## 0.2.0
 
@@ -180,8 +180,8 @@ Moved TypeBox to peer dependencies and loosened Pi peer dependency version const
 
 ## 0.1.2
 
-Pinned `verifier` comparisons to a fixed `candidate` checkpoint rather than the current HEAD's parent. This checkpoint mechanism was later removed in `0.4.0`.
-See [PR #20](https://github.com/emilioSp/pi-maestro/pull/20).
+Pinned `verifier` comparisons to a fixed `candidate` checkpoint rather than the current HEAD's parent. This checkpoint mechanism was later removed in `0.4.0`. See
+[PR #20](https://github.com/emilioSp/pi-maestro/pull/20).
 
 Breaking: renamed `maestro_launch_builder` and `maestro_launch_verifier` to `maestro_run_builder` and `maestro_run_verifier`. Renamed the corresponding workflow events
 from `launch-*` to `run-*`.
@@ -189,5 +189,5 @@ from `launch-*` to `run-*`.
 ## 0.1.1
 
 First tagged baseline with `/maestro`, `spec` creation and approval, and foreground `builder` and `verifier` `runs`. The `owner` decides `escalation` questions and
-`verifier` `findings`. The workflow ends at `candidate-ready`, leaving final review to the `owner`. See [PR #14](https://github.com/emilioSp/pi-maestro/pull/14)
-and [PR #13](https://github.com/emilioSp/pi-maestro/pull/13).
+`verifier` `findings`. The workflow ends at `candidate-ready`, leaving final review to the `owner`. See [PR #14](https://github.com/emilioSp/pi-maestro/pull/14) and
+[PR #13](https://github.com/emilioSp/pi-maestro/pull/13).
