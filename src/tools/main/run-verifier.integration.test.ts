@@ -4,6 +4,7 @@
  */
 
 import { access } from 'node:fs/promises';
+
 import {
   SUBAGENT_DELEGATION_REQUEST_EVENT,
   SUBAGENT_DELEGATION_RESPONSE_EVENT,
@@ -11,10 +12,8 @@ import {
 } from 'pi-subagents/delegation';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  BUILDER_HANDOFF_STATUSES,
-  PROBE_STATUSES,
-} from '#artifacts/builder-handoff/schema.ts';
+
+import { BUILDER_HANDOFF_STATUSES, PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import {
   FINDING_SEVERITIES,
   VERIFIER_HANDOFF_VERSION,
@@ -120,11 +119,10 @@ describe('run verifier tool', () => {
   it('given a ready-for-verifier workflow when verification finishes without findings then the verifier uses the configured agent and project, saves its report, and requests simplification', async () => {
     const workflow = await createReadyForVerifierWorkflow();
 
-    const { tool, events, emit, on } =
-      await piTestSessions.createRegisteredTool({
-        cwd: workflow.repository.path,
-        extension: registerRunVerifierTool,
-      });
+    const { tool, events, emit, on } = await piTestSessions.createRegisteredTool({
+      cwd: workflow.repository.path,
+      extension: registerRunVerifierTool,
+    });
 
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
       // JUSTIFICATION: The run tool emits a delegation request on this channel.
@@ -166,10 +164,7 @@ describe('run verifier tool', () => {
     expect(receivedRequest).toMatchObject({
       task: expect.stringContaining(workflow.repository.path),
     });
-    expect(on).toHaveBeenLastCalledWith(
-      SUBAGENT_DELEGATION_RESPONSE_EVENT,
-      expect.any(Function),
-    );
+    expect(on).toHaveBeenLastCalledWith(SUBAGENT_DELEGATION_RESPONSE_EVENT, expect.any(Function));
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
     expect(result.details).toMatchObject({
       outcome: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
@@ -186,9 +181,7 @@ describe('run verifier tool', () => {
       },
     ]);
 
-    await expect(
-      access(workflow.paths.getVerifierHandoffsPath(SPEC_ID)),
-    ).resolves.toBeUndefined();
+    await expect(access(workflow.paths.getVerifierHandoffsPath(SPEC_ID))).resolves.toBeUndefined();
     await expect(
       access(
         workflow.paths.getVerifierHandoffPath({
@@ -219,9 +212,7 @@ describe('run verifier tool', () => {
             severity: FINDING_SEVERITIES.MEDIUM,
             confidence: 1,
             summary: 'The verifier found a problem.',
-            evidence: [
-              { source: 'test', observation: 'The problem was observed.' },
-            ],
+            evidence: [{ source: 'test', observation: 'The problem was observed.' }],
             decision: null,
           },
         ],
@@ -242,10 +233,7 @@ describe('run verifier tool', () => {
       phase: WORKFLOW_PHASES.FINDING_DECISIONS,
       handoff: { findings: [{ id: 'F1' }] },
     });
-    expect(on).toHaveBeenLastCalledWith(
-      SUBAGENT_DELEGATION_RESPONSE_EVENT,
-      expect.any(Function),
-    );
+    expect(on).toHaveBeenLastCalledWith(SUBAGENT_DELEGATION_RESPONSE_EVENT, expect.any(Function));
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
   });
 
@@ -257,9 +245,7 @@ describe('run verifier tool', () => {
       extension: registerRunVerifierTool,
     });
 
-    await expect(
-      tool.execute('test-call', { specId: SPEC_ID }),
-    ).rejects.toThrow(
+    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
       'Verifier run requires ready-for-verifier state, found "ready-for-builder".',
     );
     expect(emit).not.toHaveBeenCalled();
@@ -286,18 +272,13 @@ describe('run verifier tool', () => {
       });
     });
 
-    await expect(
-      tool.execute('test-call', { specId: SPEC_ID }),
-    ).rejects.toThrow(
+    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
       'Delegation error: The configured provider is unavailable.',
     );
-    await expect(
-      readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID)),
-    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.VERIFIER_RUNNING });
-    expect(on).toHaveBeenLastCalledWith(
-      SUBAGENT_DELEGATION_RESPONSE_EVENT,
-      expect.any(Function),
+    await expect(readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject(
+      { phase: WORKFLOW_PHASES.VERIFIER_RUNNING },
     );
+    expect(on).toHaveBeenLastCalledWith(SUBAGENT_DELEGATION_RESPONSE_EVENT, expect.any(Function));
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
   });
 
@@ -336,9 +317,7 @@ describe('run verifier tool', () => {
         });
       });
 
-      await expect(
-        tool.execute('test-call', { specId: SPEC_ID }),
-      ).rejects.toThrow(expectedMessage);
+      await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(expectedMessage);
     },
   );
 
@@ -362,15 +341,10 @@ describe('run verifier tool', () => {
       });
     });
 
-    await expect(
-      tool.execute('test-call', { specId: SPEC_ID }),
-    ).rejects.toThrow(
+    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
       'Verifier protocol error: The verifier returned without recording a valid terminal handoff.',
     );
-    expect(on).toHaveBeenLastCalledWith(
-      SUBAGENT_DELEGATION_RESPONSE_EVENT,
-      expect.any(Function),
-    );
+    expect(on).toHaveBeenLastCalledWith(SUBAGENT_DELEGATION_RESPONSE_EVENT, expect.any(Function));
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
     await expect(
       access(

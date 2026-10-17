@@ -4,7 +4,9 @@
  */
 
 import { isAbsolute, resolve } from 'node:path';
+
 import { Value } from 'typebox/value';
+
 import {
   type SimplifierHandoff,
   SimplifierHandoffSchema,
@@ -17,9 +19,7 @@ type AssertSimplifierHandoffInput<Handoff = unknown> = {
   projectRoot: string;
 };
 
-function assertSimplifierHandoffSchema(
-  input: unknown,
-): asserts input is SimplifierHandoff {
+function assertSimplifierHandoffSchema(input: unknown): asserts input is SimplifierHandoff {
   const [error] = Value.Errors(SimplifierHandoffSchema, input);
 
   if (error !== undefined) {

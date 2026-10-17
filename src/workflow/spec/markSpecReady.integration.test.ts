@@ -5,7 +5,9 @@
 
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+
 import { afterEach, describe, expect, it } from 'vitest';
+
 import { BUILDER_HANDOFF_VERSION } from '#artifacts/builder-handoff/schema.ts';
 import { writeBuilderHandoff } from '#artifacts/builder-handoff/writeBuilderHandoff.ts';
 import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
@@ -28,9 +30,7 @@ const OTHER_SPEC_ID = '20260322-143052-add-weather-alerts';
 
 const cleanupFunctions: Array<() => Promise<void>> = [];
 
-const createWorkflow = async (
-  phase: WorkflowPhase = WORKFLOW_PHASES.DRAFTING_SPEC,
-) => {
+const createWorkflow = async (phase: WorkflowPhase = WORKFLOW_PHASES.DRAFTING_SPEC) => {
   const repository = await createTemporaryProject();
   cleanupFunctions.push(repository.cleanup);
   await writeFile(join(repository.path, 'README.md'), '# Test\n', 'utf8');
@@ -89,17 +89,10 @@ describe('markSpecReady', () => {
       phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
     });
 
-    await expect(readFile(created.specFilePath, 'utf8')).resolves.toBe(
-      markdown,
-    );
+    await expect(readFile(created.specFilePath, 'utf8')).resolves.toBe(markdown);
   });
 
-  it.each([
-    { numbers: [2] },
-    { numbers: [1, 3] },
-    { numbers: [1, 1] },
-    { numbers: [1, 3, 2] },
-  ])(
+  it.each([{ numbers: [2] }, { numbers: [1, 3] }, { numbers: [1, 1] }, { numbers: [1, 3, 2] }])(
     'given a draft with acceptance criterion numbers $numbers when approval is requested then a numbering error prevents approval and leaves all saved files unchanged',
     async ({ numbers }) => {
       const { created, paths } = await createWorkflow();
@@ -150,9 +143,7 @@ describe('markSpecReady', () => {
         verifierHandoffPath,
       ];
 
-      const savedContents = await Promise.all(
-        savedPaths.map((path) => readFile(path)),
-      );
+      const savedContents = await Promise.all(savedPaths.map((path) => readFile(path)));
 
       const savedEntries = await readdir(created.specPath, { recursive: true });
 
@@ -164,15 +155,9 @@ describe('markSpecReady', () => {
         }),
       ).rejects.toThrow('Fix acceptance criterion ordering in spec.md.');
 
-      expect(
-        await Promise.all(savedPaths.map((path) => readFile(path))),
-      ).toEqual(savedContents);
-      expect(await readdir(created.specPath, { recursive: true })).toEqual(
-        savedEntries,
-      );
-      await expect(
-        readWorkflowState(created.workflowPath),
-      ).resolves.toMatchObject({
+      expect(await Promise.all(savedPaths.map((path) => readFile(path)))).toEqual(savedContents);
+      expect(await readdir(created.specPath, { recursive: true })).toEqual(savedEntries);
+      await expect(readWorkflowState(created.workflowPath)).resolves.toMatchObject({
         phase: WORKFLOW_PHASES.DRAFTING_SPEC,
       });
     },
@@ -197,13 +182,9 @@ describe('markSpecReady', () => {
           specId: SPEC_ID,
           activeWorkflowSpecId: SPEC_ID,
         }),
-      ).rejects.toThrow(
-        `Workflow event "mark-spec-ready" is not allowed from phase "${phase}".`,
-      );
+      ).rejects.toThrow(`Workflow event "mark-spec-ready" is not allowed from phase "${phase}".`);
 
-      await expect(
-        readWorkflowState(created.workflowPath),
-      ).resolves.toMatchObject({
+      await expect(readWorkflowState(created.workflowPath)).resolves.toMatchObject({
         phase,
       });
     },
@@ -213,11 +194,7 @@ describe('markSpecReady', () => {
     const { created, paths } = await createWorkflow();
     await writeFile(
       created.workflowPath,
-      `${JSON.stringify(
-        { ...created.state, specId: OTHER_SPEC_ID },
-        null,
-        2,
-      )}\n`,
+      `${JSON.stringify({ ...created.state, specId: OTHER_SPEC_ID }, null, 2)}\n`,
       'utf8',
     );
 
@@ -243,8 +220,6 @@ describe('markSpecReady', () => {
         activeWorkflowSpecId: SPEC_ID,
       }),
     ).rejects.toThrow(`Spec file is missing: ${created.specFilePath}.`);
-    await expect(readWorkflowState(created.workflowPath)).resolves.toEqual(
-      created.state,
-    );
+    await expect(readWorkflowState(created.workflowPath)).resolves.toEqual(created.state);
   });
 });

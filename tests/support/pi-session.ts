@@ -7,6 +7,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
 import {
   type AgentSession,
   createAgentSession,
@@ -22,6 +23,7 @@ import {
   wrapRegisteredTool,
 } from '@earendil-works/pi-coding-agent';
 import { expect, vi } from 'vitest';
+
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 
 type CreatePiSessionInput = {
@@ -88,17 +90,15 @@ class PiTestSessions {
       api: 'openai-completions',
       apiKey: 'offline-test-key',
       baseUrl: 'http://127.0.0.1:1',
-      models: [DEFAULT_CONFIG.builder.model, DEFAULT_CONFIG.verifier.model].map(
-        (model) => ({
-          id: model.split('/')[1],
-          name: model,
-          reasoning: true,
-          input: ['text'],
-          cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-          contextWindow: 4096,
-          maxTokens: 1024,
-        }),
-      ),
+      models: [DEFAULT_CONFIG.builder.model, DEFAULT_CONFIG.verifier.model].map((model) => ({
+        id: model.split('/')[1],
+        name: model,
+        reasoning: true,
+        input: ['text'],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 4096,
+        maxTokens: 1024,
+      })),
       streamSimple: () => {
         throw new Error('Live model calls are not allowed in tests.');
       },
@@ -139,10 +139,7 @@ class PiTestSessions {
       resourceLoader,
       settingsManager,
       modelRuntime,
-      model: modelRuntime.getModel(
-        'openai-codex',
-        DEFAULT_CONFIG.builder.model.split('/')[1],
-      ),
+      model: modelRuntime.getModel('openai-codex', DEFAULT_CONFIG.builder.model.split('/')[1]),
       sessionManager: SessionManager.inMemory(cwd ?? directory),
       sessionStartEvent,
     });
@@ -166,19 +163,13 @@ class PiTestSessions {
     };
   };
 
-  public createRegisteredTool = async ({
-    cwd,
-    extension,
-  }: CreateRegisteredToolInput) => {
+  public createRegisteredTool = async ({ cwd, extension }: CreateRegisteredToolInput) => {
     const createdSession = await this.create({ cwd, extensions: [extension] });
     const { session, events } = createdSession;
     const registeredTools = session.extensionRunner.getAllRegisteredTools();
     expect(registeredTools).toHaveLength(1);
 
-    const tool = wrapRegisteredTool(
-      registeredTools[0],
-      session.extensionRunner,
-    );
+    const tool = wrapRegisteredTool(registeredTools[0], session.extensionRunner);
 
     const emit = vi.spyOn(events, 'emit');
     const subscribe = events.on.bind(events);
@@ -186,9 +177,7 @@ class PiTestSessions {
     // Observe cleanup while preserving the real EventBus subscription and unsubscribe.
     const on = vi
       .spyOn(events, 'on')
-      .mockImplementation((channel, handler) =>
-        vi.fn(subscribe(channel, handler)),
-      );
+      .mockImplementation((channel, handler) => vi.fn(subscribe(channel, handler)));
 
     return { ...createdSession, tool, emit, on };
   };
@@ -199,9 +188,7 @@ class PiTestSessions {
     try {
       for (const resource of resources) resource.session?.dispose();
       await Promise.all(
-        resources.map(({ directory }) =>
-          rm(directory, { recursive: true, force: true }),
-        ),
+        resources.map(({ directory }) => rm(directory, { recursive: true, force: true })),
       );
 
       for (const { errors } of resources) expect(errors).toEqual([]);

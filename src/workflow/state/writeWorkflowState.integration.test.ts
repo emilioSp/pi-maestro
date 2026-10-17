@@ -1,7 +1,9 @@
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
   WORKFLOW_PHASES,
@@ -22,17 +24,13 @@ const state = (phase: WorkflowPhase): WorkflowState => ({
 afterEach(async () => {
   vi.clearAllMocks();
   await Promise.all(
-    temporaryDirectories
-      .splice(0)
-      .map((path) => rm(path, { force: true, recursive: true })),
+    temporaryDirectories.splice(0).map((path) => rm(path, { force: true, recursive: true })),
   );
 });
 
 describe('writeWorkflowState', () => {
   it('given a saved drafting-spec workflow when ready-for-builder state replaces it then the file contains the new state as formatted JSON', async () => {
-    const directory = await mkdtemp(
-      join(tmpdir(), 'pi-maestro-workflow-state-'),
-    );
+    const directory = await mkdtemp(join(tmpdir(), 'pi-maestro-workflow-state-'));
 
     temporaryDirectories.push(directory);
 
@@ -58,9 +56,7 @@ describe('writeWorkflowState', () => {
   });
 
   it('given an existing workflow file when a replacement uses an unsupported version then writing fails and the original file stays unchanged', async () => {
-    const directory = await mkdtemp(
-      join(tmpdir(), 'pi-maestro-workflow-state-'),
-    );
+    const directory = await mkdtemp(join(tmpdir(), 'pi-maestro-workflow-state-'));
 
     temporaryDirectories.push(directory);
 

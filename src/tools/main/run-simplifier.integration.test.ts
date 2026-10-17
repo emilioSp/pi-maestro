@@ -6,6 +6,7 @@
 import { execFile } from 'node:child_process';
 import { access } from 'node:fs/promises';
 import { promisify } from 'node:util';
+
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import {
   SUBAGENT_DELEGATION_REQUEST_EVENT,
@@ -14,6 +15,7 @@ import {
 } from 'pi-subagents/delegation';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { AGENTS } from '#config/schema.ts';
 import { MAESTRO_STATUS_KEY } from '#maestro/status/refreshMaestroStatus.ts';
@@ -70,9 +72,9 @@ describe('run simplifier', () => {
   it('given Git reports no repository when simplification is requested then Maestro warns, skips the agent, saves candidate-ready, and creates no simplifier report', async () => {
     const { paths, repository } = await createSimplifierWorkflow();
     // The entry route succeeds in a project with no Git repository.
-    expect(
-      await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).toMatchObject({ phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING });
+    expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
+      phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
+    });
 
     const extension = (pi: ExtensionAPI): void => {
       vi.spyOn(pi, 'exec').mockResolvedValue({
@@ -90,9 +92,7 @@ describe('run simplifier', () => {
     });
 
     expect(Value.Check(tool.parameters, { specId: SPEC_ID })).toBe(true);
-    expect(Value.Check(tool.parameters, { specId: SPEC_ID, files: [] })).toBe(
-      false,
-    );
+    expect(Value.Check(tool.parameters, { specId: SPEC_ID, files: [] })).toBe(false);
     const result = await tool.execute('skip', { specId: SPEC_ID });
     expect(result.content).toEqual([
       {
@@ -109,34 +109,30 @@ describe('run simplifier', () => {
       'Simplifier skipped: Git repository unavailable.',
       'warning',
     );
-    expect(emit).not.toHaveBeenCalledWith(
-      SUBAGENT_DELEGATION_REQUEST_EVENT,
-      expect.anything(),
-    );
-    expect(
-      await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
-    await expect(
-      access(paths.getSimplifierHandoffPath(SPEC_ID)),
-    ).rejects.toMatchObject({ code: 'ENOENT' });
+    expect(emit).not.toHaveBeenCalledWith(SUBAGENT_DELEGATION_REQUEST_EVENT, expect.anything());
+    expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
+      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+    });
+    await expect(access(paths.getSimplifierHandoffPath(SPEC_ID))).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
   });
 
   it('given a Git project ready for simplification when the simplifier saves its report then one run uses its configured model and project and returns candidate-ready with that report', async () => {
     const { paths, repository } = await createSimplifierWorkflow();
     await execFileAsync('git', ['init', '-q', repository.path]);
 
-    const { tool, events, emit, session, setStatus } =
-      await piTestSessions.createRegisteredTool({
-        cwd: repository.path,
-        extension: registerRunSimplifierTool,
-      });
+    const { tool, events, emit, session, setStatus } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerRunSimplifierTool,
+    });
 
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
       // JUSTIFICATION: The registered run tool emits this typed delegation request.
       const request = payload as SubagentDelegationRequest;
-      expect(
-        await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-      ).toMatchObject({ phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING });
+      expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
+        phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
+      });
       const theme = session.extensionRunner.createContext().ui.theme;
       expect(setStatus).toHaveBeenLastCalledWith(
         MAESTRO_STATUS_KEY,
@@ -216,19 +212,15 @@ describe('run simplifier', () => {
           result: { kind: 'text', text: 'No saved result' },
         });
       });
-      await expect(
-        tool.execute('failure', { specId: SPEC_ID }),
-      ).rejects.toThrow(
-        status === DELEGATION_STATUSES.COMPLETED
-          ? 'Simplifier protocol error'
-          : 'Delegation',
+      await expect(tool.execute('failure', { specId: SPEC_ID })).rejects.toThrow(
+        status === DELEGATION_STATUSES.COMPLETED ? 'Simplifier protocol error' : 'Delegation',
       );
-      expect(
-        await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-      ).toMatchObject({ phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING });
-      await expect(
-        access(paths.getSimplifierHandoffPath(SPEC_ID)),
-      ).rejects.toMatchObject({ code: 'ENOENT' });
+      expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
+        phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
+      });
+      await expect(access(paths.getSimplifierHandoffPath(SPEC_ID))).rejects.toMatchObject({
+        code: 'ENOENT',
+      });
     },
   );
 
@@ -247,9 +239,9 @@ describe('run simplifier', () => {
       extension,
     });
 
-    await expect(
-      tool.execute('wrong-phase', { specId: SPEC_ID }),
-    ).rejects.toThrow('Simplifier run requires simplifier-running');
+    await expect(tool.execute('wrong-phase', { specId: SPEC_ID })).rejects.toThrow(
+      'Simplifier run requires simplifier-running',
+    );
     expect(emit).not.toHaveBeenCalled();
   });
 });

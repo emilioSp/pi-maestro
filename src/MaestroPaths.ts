@@ -5,6 +5,7 @@
 
 import { readdir } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
+
 import type { MaestroConfig } from '#config/schema.ts';
 import { isValidSpecId } from '#ids/isValidSpecId.ts';
 import { isPathStrictlyWithin } from '#utils/path-strictly-within.ts';
@@ -25,9 +26,7 @@ const AGENTS_PREFIX = {
 
 function assertSpecId(specId: string): void {
   if (!isValidSpecId(specId)) {
-    throw new Error(
-      `Invalid spec ID: "${specId}". Expected YYYYMMDD-HHmmss-<slug>.`,
-    );
+    throw new Error(`Invalid spec ID: "${specId}". Expected YYYYMMDD-HHmmss-<slug>.`);
   }
 }
 
@@ -43,9 +42,7 @@ function assertSafeRelativePrototypePath(value: string): void {
   }
 
   if (isAbsolute(value)) {
-    throw new Error(
-      'Prototype path must be relative to the prototypes directory.',
-    );
+    throw new Error('Prototype path must be relative to the prototypes directory.');
   }
 }
 
@@ -119,10 +116,7 @@ export class MaestroPaths {
     return resolve(this.getSpecPath(specId), PATHS.VERIFIER_HANDOFFS_PATH);
   }
 
-  public getBuilderHandoffPath({
-    specId,
-    handoffPassNumber,
-  }: HandoffPathInput): string {
+  public getBuilderHandoffPath({ specId, handoffPassNumber }: HandoffPathInput): string {
     assertArtifactNumber(handoffPassNumber);
 
     return resolve(
@@ -131,10 +125,7 @@ export class MaestroPaths {
     );
   }
 
-  public getVerifierHandoffPath({
-    specId,
-    handoffPassNumber,
-  }: HandoffPathInput): string {
+  public getVerifierHandoffPath({ specId, handoffPassNumber }: HandoffPathInput): string {
     assertArtifactNumber(handoffPassNumber);
 
     return resolve(
@@ -144,9 +135,7 @@ export class MaestroPaths {
   }
 
   public async getActiveBuilderHandoffPath(specId: string): Promise<string> {
-    const handoffPassNumber = (
-      await readdir(this.getBuilderHandoffsPath(specId))
-    ).length;
+    const handoffPassNumber = (await readdir(this.getBuilderHandoffsPath(specId))).length;
 
     if (handoffPassNumber === 0) throw new Error('Builder handoff is missing.');
 
@@ -154,20 +143,15 @@ export class MaestroPaths {
   }
 
   public async getActiveVerifierHandoffPath(specId: string): Promise<string> {
-    const handoffPassNumber = (
-      await readdir(this.getVerifierHandoffsPath(specId))
-    ).length;
+    const handoffPassNumber = (await readdir(this.getVerifierHandoffsPath(specId))).length;
 
-    if (handoffPassNumber === 0)
-      throw new Error('Verifier handoff is missing.');
+    if (handoffPassNumber === 0) throw new Error('Verifier handoff is missing.');
 
     return this.getVerifierHandoffPath({ specId, handoffPassNumber });
   }
 
   public async getNextBuilderHandoffPath(specId: string): Promise<string> {
-    const handoffPassNumber = (
-      await readdir(this.getBuilderHandoffsPath(specId))
-    ).length;
+    const handoffPassNumber = (await readdir(this.getBuilderHandoffsPath(specId))).length;
 
     return this.getBuilderHandoffPath({
       specId,
@@ -176,9 +160,7 @@ export class MaestroPaths {
   }
 
   public async getNextVerifierHandoffPath(specId: string): Promise<string> {
-    const handoffPassNumber = (
-      await readdir(this.getVerifierHandoffsPath(specId))
-    ).length;
+    const handoffPassNumber = (await readdir(this.getVerifierHandoffsPath(specId))).length;
 
     return this.getVerifierHandoffPath({
       specId,
@@ -194,19 +176,14 @@ export class MaestroPaths {
     return resolve(this.getSpecPath(specId), PATHS.PROTOTYPES_PATH);
   }
 
-  public getPrototypePath({
-    specId,
-    relativePath,
-  }: PrototypePathInput): string {
+  public getPrototypePath({ specId, relativePath }: PrototypePathInput): string {
     assertSafeRelativePrototypePath(relativePath);
 
     const prototypesPath = this.getPrototypesPath(specId);
     const target = resolve(prototypesPath, relativePath);
 
     if (!isPathStrictlyWithin({ parent: prototypesPath, path: target })) {
-      throw new Error(
-        'Prototype path must stay inside the prototypes directory.',
-      );
+      throw new Error('Prototype path must stay inside the prototypes directory.');
     }
 
     return target;

@@ -1,6 +1,8 @@
 import { mkdir, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+
 import { afterEach, describe, expect, it } from 'vitest';
+
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { resolveWorkflowContext } from '#tools/child/utils/resolveWorkflowContext.ts';
 
@@ -35,9 +37,7 @@ describe('workflow context', () => {
     expect(context.projectRoot).toBe(childDirectory);
     expect(context.paths.getProjectRoot()).toBe(childDirectory);
     expect(context.specId).toBe(SPEC_ID);
-    expect(context.paths.getSpecDirectory()).toBe(
-      join(childDirectory, '.specs'),
-    );
+    expect(context.paths.getSpecDirectory()).toBe(join(childDirectory, '.specs'));
   });
 
   it('given an invalid spec ID when workflow context is requested then loading fails with an invalid spec ID error', async () => {

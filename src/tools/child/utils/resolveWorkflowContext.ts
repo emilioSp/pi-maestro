@@ -11,10 +11,7 @@ export type ResolveWorkflowContextInput = {
   specId: string;
 };
 
-export const resolveWorkflowContext = async ({
-  cwd,
-  specId,
-}: ResolveWorkflowContextInput) => {
+export const resolveWorkflowContext = async ({ cwd, specId }: ResolveWorkflowContextInput) => {
   if (!isValidSpecId(specId)) {
     throw new Error(`Invalid spec ID: "${specId}".`);
   }

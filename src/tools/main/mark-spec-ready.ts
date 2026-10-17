@@ -5,6 +5,7 @@
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
+
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';

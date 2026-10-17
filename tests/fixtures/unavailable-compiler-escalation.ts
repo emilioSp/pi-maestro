@@ -33,8 +33,7 @@ export const unavailableCompilerEscalation: Extract<
           id: 'restore',
           description: 'Restore the compiler and retry the required check.',
           consequences: 'The approved contract stays unchanged.',
-          nextStep:
-            'Start a fresh builder pass after the compiler is available.',
+          nextStep: 'Start a fresh builder pass after the compiler is available.',
         },
         {
           id: 'revise',

@@ -1,5 +1,7 @@
 import { readFile } from 'node:fs/promises';
+
 import { describe, expect, it } from 'vitest';
+
 import { assertConfiguration } from '#config/assertConfiguration.ts';
 import { SUPPORTED_CONFIG_VERSION, THINKING_LEVELS } from '#config/schema.ts';
 
@@ -24,9 +26,7 @@ describe('configuration input validation', () => {
   });
 
   it('given configuration containing only the supported version when validated then it is accepted', () => {
-    expect(() =>
-      assertConfiguration({ version: SUPPORTED_CONFIG_VERSION }),
-    ).not.toThrow();
+    expect(() => assertConfiguration({ version: SUPPORTED_CONFIG_VERSION })).not.toThrow();
   });
 
   it('given each supported builder thinking level when configuration is validated then every supported level is accepted', () => {
@@ -77,8 +77,7 @@ describe('configuration input validation', () => {
     {
       scenario: 'no version field',
       fixture: 'missing-version.json',
-      message:
-        "Missing configuration version. The 'version' field is required.",
+      message: "Missing configuration version. The 'version' field is required.",
     },
     {
       scenario: 'a model name without a provider',
@@ -119,10 +118,7 @@ describe('configuration input validation', () => {
     'given configuration with $scenario when validated then validation fails with the specific configuration error',
     async ({ fixture, message }) => {
       const input = JSON.parse(
-        await readFile(
-          new URL(import.meta.resolve(`#tests/fixtures/config/${fixture}`)),
-          'utf8',
-        ),
+        await readFile(new URL(import.meta.resolve(`#tests/fixtures/config/${fixture}`)), 'utf8'),
       );
 
       expect(() => assertConfiguration(input)).toThrow(message);

@@ -4,9 +4,11 @@
  */
 
 import { randomUUID } from 'node:crypto';
+
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import type { SubagentDelegationRequest } from 'pi-subagents/delegation';
 import { Type } from 'typebox';
+
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import {
   BUILDER_HANDOFF_STATUSES,
@@ -14,8 +16,8 @@ import {
 } from '#artifacts/builder-handoff/schema.ts';
 import { AGENTS } from '#config/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
-import type { MaestroPaths } from '#MaestroPaths.ts';
 import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
+import type { MaestroPaths } from '#MaestroPaths.ts';
 import {
   assertDelegationResponse,
   waitForDelegationResponse,
@@ -69,9 +71,7 @@ const readBuilderResult = async ({
     const state = await readWorkflowState(paths.getWorkflowPath(specId));
 
     if (state.specId !== specId) {
-      throw new Error(
-        `Workflow spec ID mismatch: expected "${specId}", found "${state.specId}".`,
-      );
+      throw new Error(`Workflow spec ID mismatch: expected "${specId}", found "${state.specId}".`);
     }
 
     return await readTerminalBuilderResult({ paths, specId, state });
@@ -97,9 +97,7 @@ const readTerminalBuilderResult = async ({
     state.phase !== WORKFLOW_PHASES.READY_FOR_VERIFIER &&
     state.phase !== WORKFLOW_PHASES.ESCALATION_DECISIONS
   ) {
-    throw new Error(
-      `Builder returned with unexpected workflow phase "${state.phase}".`,
-    );
+    throw new Error(`Builder returned with unexpected workflow phase "${state.phase}".`);
   }
 
   const handoff = await readBuilderHandoff({
@@ -113,9 +111,7 @@ const readTerminalBuilderResult = async ({
       : BUILDER_HANDOFF_STATUSES.ESCALATION;
 
   if (handoff.status !== expectedStatus) {
-    throw new Error(
-      `Builder handoff status does not match workflow phase "${state.phase}".`,
-    );
+    throw new Error(`Builder handoff status does not match workflow phase "${state.phase}".`);
   }
 
   if (state.phase === WORKFLOW_PHASES.READY_FOR_VERIFIER) {
@@ -128,9 +124,7 @@ const readTerminalBuilderResult = async ({
   }
 
   if (handoff.escalations.some(({ resolution }) => resolution !== null)) {
-    throw new Error(
-      'Current builder escalations already contain an owner resolution.',
-    );
+    throw new Error('Current builder escalations already contain an owner resolution.');
   }
 
   return {

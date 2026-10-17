@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 
 const SPEC_ID = '20260321-143052-add-weather-alerts';
@@ -24,8 +25,8 @@ describe('Maestro session state', () => {
   it('given a spec is already selected when a different spec is selected then an error prevents replacing the active spec', () => {
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
-    expect(() =>
-      maestroSessionState.setActiveSpecId('20260321-143053-add-other-change'),
-    ).toThrow('Cannot replace active Maestro spec');
+    expect(() => maestroSessionState.setActiveSpecId('20260321-143053-add-other-change')).toThrow(
+      'Cannot replace active Maestro spec',
+    );
   });
 });

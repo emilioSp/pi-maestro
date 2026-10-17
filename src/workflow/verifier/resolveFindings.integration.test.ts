@@ -1,5 +1,7 @@
 import { readFile } from 'node:fs/promises';
+
 import { afterEach, describe, expect, it } from 'vitest';
+
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import { PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
@@ -100,10 +102,7 @@ describe('finding resolution', () => {
 
     expect(resolved.state.phase).toBe(WORKFLOW_PHASES.READY_FOR_BUILDER);
 
-    const verifierAfterDecisions = await readFile(
-      firstVerifier.handoffPath,
-      'utf8',
-    );
+    const verifierAfterDecisions = await readFile(firstVerifier.handoffPath, 'utf8');
 
     await prepareBuilderRun({ paths, specId: SPEC_ID });
 
@@ -141,18 +140,14 @@ describe('finding resolution', () => {
     expect(secondVerifier.handoffPath).toBe(
       paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 2 }),
     );
-    await expect(readFile(firstBuilder.handoffPath, 'utf8')).resolves.toBe(
-      builderBefore,
-    );
+    await expect(readFile(firstBuilder.handoffPath, 'utf8')).resolves.toBe(builderBefore);
     await expect(
       readBuilderHandoff({ path: firstBuilder.handoffPath, specId: SPEC_ID }),
     ).resolves.toMatchObject({
       summary: 'Implemented greeting',
       acceptanceCriteria: doneHandoff().acceptanceCriteria,
     });
-    await expect(readFile(firstVerifier.handoffPath, 'utf8')).resolves.toBe(
-      verifierAfterDecisions,
-    );
+    await expect(readFile(firstVerifier.handoffPath, 'utf8')).resolves.toBe(verifierAfterDecisions);
     await expect(
       readVerifierHandoff({ path: firstVerifier.handoffPath, specId: SPEC_ID }),
     ).resolves.toMatchObject({

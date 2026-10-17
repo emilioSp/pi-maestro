@@ -1,4 +1,5 @@
 import { readFile, rm, writeFile } from 'node:fs/promises';
+
 import {
   SUBAGENT_DELEGATION_REQUEST_EVENT,
   SUBAGENT_DELEGATION_RESPONSE_EVENT,
@@ -6,11 +7,9 @@ import {
 } from 'pi-subagents/delegation';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
+
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
-import {
-  BUILDER_HANDOFF_STATUSES,
-  PROBE_STATUSES,
-} from '#artifacts/builder-handoff/schema.ts';
+import { BUILDER_HANDOFF_STATUSES, PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { AGENTS } from '#config/schema.ts';
 import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
@@ -62,9 +61,7 @@ describe('run builder tool', () => {
         result: { kind: 'text', text: 'Done' },
       });
     });
-    await expect(
-      tool.execute('test-call', { specId: SPEC_ID }),
-    ).rejects.toThrow(
+    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
       'Builder protocol error: Builder handoff status does not match workflow phase "ready-for-verifier".',
     );
   });
@@ -102,9 +99,7 @@ describe('run builder tool', () => {
           handoff: csvExportEscalation,
         });
 
-        const handoff = JSON.parse(
-          await readFile(completed.handoffPath, 'utf8'),
-        );
+        const handoff = JSON.parse(await readFile(completed.handoffPath, 'utf8'));
 
         if (scenario === 'missing') await rm(completed.handoffPath);
 
@@ -121,8 +116,7 @@ describe('run builder tool', () => {
             reason: 'Keep exports current',
           };
 
-        if (scenario !== 'missing')
-          await writeFile(completed.handoffPath, JSON.stringify(handoff));
+        if (scenario !== 'missing') await writeFile(completed.handoffPath, JSON.stringify(handoff));
         events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
           requestId: request.requestId,
           ownerRunId: request.ownerRunId,
@@ -131,9 +125,9 @@ describe('run builder tool', () => {
           result: { kind: 'text', text: 'Saved' },
         });
       });
-      await expect(
-        tool.execute('test-call', { specId: SPEC_ID }),
-      ).rejects.toThrow('Builder protocol error:');
+      await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
+        'Builder protocol error:',
+      );
     },
   );
 
@@ -155,11 +149,10 @@ describe('run builder tool', () => {
   it('given an approved workflow when the builder saves a done report then the run uses the configured agent and current project and returns that report in ready-for-verifier', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
-    const { tool, events, emit, on } =
-      await piTestSessions.createRegisteredTool({
-        cwd: repository.path,
-        extension: registerRunBuilderTool,
-      });
+    const { tool, events, emit, on } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerRunBuilderTool,
+    });
 
     events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
       // JUSTIFICATION: The run tool emits a delegation request on this channel.
@@ -227,10 +220,7 @@ describe('run builder tool', () => {
     expect(receivedRequest).toMatchObject({
       task: expect.stringContaining(repository.path),
     });
-    expect(on).toHaveBeenLastCalledWith(
-      SUBAGENT_DELEGATION_RESPONSE_EVENT,
-      expect.any(Function),
-    );
+    expect(on).toHaveBeenLastCalledWith(SUBAGENT_DELEGATION_RESPONSE_EVENT, expect.any(Function));
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
     expect(result.details).toMatchObject({
       outcome: BUILDER_HANDOFF_STATUSES.DONE,
@@ -310,18 +300,13 @@ describe('run builder tool', () => {
       });
     });
 
-    await expect(
-      tool.execute('test-call', { specId: SPEC_ID }),
-    ).rejects.toThrow(
+    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
       'Delegation error: The configured provider is unavailable.',
     );
-    await expect(
-      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_RUNNING });
-    expect(on).toHaveBeenLastCalledWith(
-      SUBAGENT_DELEGATION_RESPONSE_EVENT,
-      expect.any(Function),
-    );
+    await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
+      phase: WORKFLOW_PHASES.BUILDER_RUNNING,
+    });
+    expect(on).toHaveBeenLastCalledWith(SUBAGENT_DELEGATION_RESPONSE_EVENT, expect.any(Function));
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
   });
 
@@ -337,13 +322,10 @@ describe('run builder tool', () => {
       throw new Error('Request emission failed.');
     });
 
-    await expect(
-      tool.execute('test-call', { specId: SPEC_ID }),
-    ).rejects.toThrow('Delegation request error: Request emission failed.');
-    expect(on).toHaveBeenLastCalledWith(
-      SUBAGENT_DELEGATION_RESPONSE_EVENT,
-      expect.any(Function),
+    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
+      'Delegation request error: Request emission failed.',
     );
+    expect(on).toHaveBeenLastCalledWith(SUBAGENT_DELEGATION_RESPONSE_EVENT, expect.any(Function));
     expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
   });
 
@@ -367,12 +349,12 @@ describe('run builder tool', () => {
       });
     });
 
-    await expect(
-      tool.execute('test-call', { specId: SPEC_ID }),
-    ).rejects.toThrow('Delegation timeout: The builder exceeded its timeout.');
-    await expect(
-      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_RUNNING });
+    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
+      'Delegation timeout: The builder exceeded its timeout.',
+    );
+    await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
+      phase: WORKFLOW_PHASES.BUILDER_RUNNING,
+    });
   });
 
   it('given the builder is interrupted when the interruption response arrives then the run fails with an interruption error and the workflow stays in builder-running', async () => {
@@ -395,12 +377,12 @@ describe('run builder tool', () => {
       });
     });
 
-    await expect(
-      tool.execute('test-call', { specId: SPEC_ID }),
-    ).rejects.toThrow('Delegation interruption: The builder was interrupted.');
-    await expect(
-      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_RUNNING });
+    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
+      'Delegation interruption: The builder was interrupted.',
+    );
+    await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
+      phase: WORKFLOW_PHASES.BUILDER_RUNNING,
+    });
   });
 
   it('given the builder saved no report and left builder-running unchanged when it reports completion then the run fails with an unexpected workflow phase error', async () => {
@@ -423,16 +405,14 @@ describe('run builder tool', () => {
       });
     });
 
-    await expect(
-      tool.execute('test-call', { specId: SPEC_ID }),
-    ).rejects.toThrow(
+    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
       new Error(
         `Builder protocol error: Builder returned with unexpected workflow phase "${WORKFLOW_PHASES.BUILDER_RUNNING}"..`,
       ),
     );
-    await expect(
-      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_RUNNING });
+    await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
+      phase: WORKFLOW_PHASES.BUILDER_RUNNING,
+    });
   });
 
   it('given a builder response with an unsupported status when the run tool receives it then a protocol error identifies that status and the workflow stays in builder-running', async () => {
@@ -454,13 +434,11 @@ describe('run builder tool', () => {
       });
     });
 
-    await expect(
-      tool.execute('test-call', { specId: SPEC_ID }),
-    ).rejects.toThrow(
+    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
       'Protocol error: unsupported final response status "unsupported".',
     );
-    await expect(
-      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.BUILDER_RUNNING });
+    await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
+      phase: WORKFLOW_PHASES.BUILDER_RUNNING,
+    });
   });
 });

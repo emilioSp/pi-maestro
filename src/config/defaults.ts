@@ -3,11 +3,7 @@
  * Used: When configuration is resolved from missing or partial input.
  */
 
-import {
-  type MaestroConfig,
-  SUPPORTED_CONFIG_VERSION,
-  THINKING_LEVELS,
-} from '#config/schema.ts';
+import { type MaestroConfig, SUPPORTED_CONFIG_VERSION, THINKING_LEVELS } from '#config/schema.ts';
 
 export const DEFAULT_CONFIG_VERSION = SUPPORTED_CONFIG_VERSION;
 

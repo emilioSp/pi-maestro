@@ -4,14 +4,16 @@
  */
 
 import { randomUUID } from 'node:crypto';
+
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import type { SubagentDelegationRequest } from 'pi-subagents/delegation';
 import { Type } from 'typebox';
+
 import { readSimplifierHandoff } from '#artifacts/simplifier-handoff/readSimplifierHandoff.ts';
 import { AGENTS } from '#config/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
-import type { MaestroPaths } from '#MaestroPaths.ts';
 import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
+import type { MaestroPaths } from '#MaestroPaths.ts';
 import {
   assertDelegationResponse,
   waitForDelegationResponse,
@@ -44,16 +46,11 @@ type GitReadinessInput = {
   projectRoot: string;
 };
 
-const isGitReady = async ({
-  pi,
-  projectRoot,
-}: GitReadinessInput): Promise<boolean> => {
+const isGitReady = async ({ pi, projectRoot }: GitReadinessInput): Promise<boolean> => {
   try {
-    const result = await pi.exec(
-      'git',
-      ['rev-parse', '--is-inside-work-tree'],
-      { cwd: projectRoot },
-    );
+    const result = await pi.exec('git', ['rev-parse', '--is-inside-work-tree'], {
+      cwd: projectRoot,
+    });
 
     return result.code === 0 && result.stdout.trim() === 'true';
   } catch {
@@ -66,17 +63,12 @@ type ReadSimplifierResultInput = {
   specId: string;
 };
 
-const readSimplifierResult = async ({
-  paths,
-  specId,
-}: ReadSimplifierResultInput) => {
+const readSimplifierResult = async ({ paths, specId }: ReadSimplifierResultInput) => {
   try {
     const state = await readWorkflowState(paths.getWorkflowPath(specId));
 
     if (state.specId !== specId) {
-      throw new Error(
-        `Workflow spec ID mismatch: expected "${specId}", found "${state.specId}".`,
-      );
+      throw new Error(`Workflow spec ID mismatch: expected "${specId}", found "${state.specId}".`);
     }
 
     if (state.phase !== WORKFLOW_PHASES.CANDIDATE_READY) {
@@ -105,9 +97,7 @@ export const registerRunSimplifierTool = (pi: ExtensionAPI): void => {
     description: RUN_SIMPLIFIER_TOOL.DESCRIPTION,
     parameters: RunSimplifierToolParameters,
     async execute(toolCallId, { specId }, _signal, _onUpdate, context) {
-      const { paths, config, projectRoot } = await resolveToolRunContext(
-        context.cwd,
-      );
+      const { paths, config, projectRoot } = await resolveToolRunContext(context.cwd);
 
       const workflowPath = paths.getWorkflowPath(specId);
       const state = await readWorkflowState(workflowPath);

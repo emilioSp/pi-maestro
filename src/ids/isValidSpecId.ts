@@ -12,8 +12,7 @@ const isValidUtcTimestamp = (value: string): boolean => {
     return false;
   }
 
-  const [, yearText, monthText, dayText, hourText, minuteText, secondText] =
-    match;
+  const [, yearText, monthText, dayText, hourText, minuteText, secondText] = match;
 
   try {
     Temporal.PlainDateTime.from(

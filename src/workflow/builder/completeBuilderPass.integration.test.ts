@@ -1,10 +1,9 @@
 import { access, readdir, readFile, writeFile } from 'node:fs/promises';
+
 import { afterEach, describe, expect, it } from 'vitest';
+
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
-import {
-  BUILDER_HANDOFF_STATUSES,
-  PROBE_STATUSES,
-} from '#artifacts/builder-handoff/schema.ts';
+import { BUILDER_HANDOFF_STATUSES, PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
 import { unavailableCompilerEscalation } from '#tests/fixtures/unavailable-compiler-escalation.ts';
 import {
@@ -53,9 +52,7 @@ describe('builder completion', () => {
     expect(completed.projectRoot).toBe(repository.path);
     expect(completed.state.phase).toBe(WORKFLOW_PHASES.READY_FOR_VERIFIER);
 
-    await expect(
-      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).resolves.toMatchObject({
+    await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
       phase: WORKFLOW_PHASES.READY_FOR_VERIFIER,
     });
   });
@@ -90,12 +87,8 @@ describe('builder completion', () => {
       });
 
       const b1 = await paths.getActiveBuilderHandoffPath(SPEC_ID);
-      expect(b1).toBe(
-        paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
-      );
-      expect(
-        await readBuilderHandoff({ path: b1, specId: SPEC_ID }),
-      ).toMatchObject({
+      expect(b1).toBe(paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }));
+      expect(await readBuilderHandoff({ path: b1, specId: SPEC_ID })).toMatchObject({
         acceptanceCriteria,
         escalations: unavailableCompilerEscalation.escalations,
       });
@@ -103,9 +96,9 @@ describe('builder completion', () => {
       expect(result.details).toMatchObject({
         phase: WORKFLOW_PHASES.ESCALATION_DECISIONS,
       });
-      expect(
-        (await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).phase,
-      ).toBe(WORKFLOW_PHASES.ESCALATION_DECISIONS);
+      expect((await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).phase).toBe(
+        WORKFLOW_PHASES.ESCALATION_DECISIONS,
+      );
       await expect(
         access(`${paths.getSpecPath(SPEC_ID)}/handoffs/escalations`),
       ).rejects.toMatchObject({ code: 'ENOENT' });
@@ -153,19 +146,13 @@ describe('builder completion', () => {
         handoffPath: b2,
         phase: WORKFLOW_PHASES.READY_FOR_VERIFIER,
       });
-      expect(
-        await readBuilderHandoff({ path: b2, specId: SPEC_ID }),
-      ).toMatchObject({
+      expect(await readBuilderHandoff({ path: b2, specId: SPEC_ID })).toMatchObject({
         status: BUILDER_HANDOFF_STATUSES.DONE,
         escalations: [],
         acceptanceCriteria: [{ id: 'AC1', probeStatus: PROBE_STATUSES.PASSED }],
       });
-      expect(await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8')).toBe(
-        specBefore,
-      );
-      expect(
-        await readBuilderHandoff({ path: b1, specId: SPEC_ID }),
-      ).toMatchObject({
+      expect(await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8')).toBe(specBefore);
+      expect(await readBuilderHandoff({ path: b1, specId: SPEC_ID })).toMatchObject({
         acceptanceCriteria,
         escalations: [
           {
@@ -176,9 +163,9 @@ describe('builder completion', () => {
           },
         ],
       });
-      expect(
-        (await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).phase,
-      ).toBe(WORKFLOW_PHASES.READY_FOR_VERIFIER);
+      expect((await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).phase).toBe(
+        WORKFLOW_PHASES.READY_FOR_VERIFIER,
+      );
     },
   );
 
@@ -223,16 +210,13 @@ describe('builder completion', () => {
       status: BUILDER_HANDOFF_STATUSES.ESCALATION,
       acceptanceCriteria,
     });
-    expect(
-      (await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).phase,
-    ).toBe(WORKFLOW_PHASES.ESCALATION_DECISIONS);
+    expect((await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).phase).toBe(
+      WORKFLOW_PHASES.ESCALATION_DECISIONS,
+    );
   });
 
   it.each([
-    [
-      'an escalation report with no questions',
-      { ...csvExportEscalation, escalations: [] },
-    ],
+    ['an escalation report with no questions', { ...csvExportEscalation, escalations: [] }],
     [
       'a done report containing escalation questions',
       { ...csvExportEscalation, status: BUILDER_HANDOFF_STATUSES.DONE },
@@ -310,9 +294,7 @@ describe('builder completion', () => {
         ...csvExportEscalation,
         status: BUILDER_HANDOFF_STATUSES.DONE,
         escalations: [],
-        acceptanceCriteria: [
-          { id: 'AC1', probe: 'CSV check', probeStatus: PROBE_STATUSES.FAILED },
-        ],
+        acceptanceCriteria: [{ id: 'AC1', probe: 'CSV check', probeStatus: PROBE_STATUSES.FAILED }],
       },
     ],
     [
@@ -366,13 +348,11 @@ describe('builder completion', () => {
       await expect(
         tool.execute('invalid-handoff', { specId: SPEC_ID, ...handoff }),
       ).rejects.toThrow();
-      expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(
-        before,
-      );
+      expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(before);
       // No protocol directory is created by rejected submissions.
-      await expect(
-        readdir(paths.getBuilderHandoffsPath(SPEC_ID)),
-      ).rejects.toMatchObject({ code: 'ENOENT' });
+      await expect(readdir(paths.getBuilderHandoffsPath(SPEC_ID))).rejects.toMatchObject({
+        code: 'ENOENT',
+      });
     },
   );
 });
@@ -383,10 +363,7 @@ describe('builder spec criterion presence', () => {
     await writeFile(
       paths.getSpecFilePath(SPEC_ID),
       await readFile(
-        new URL(
-          '../../../tests/fixtures/two-acceptance-criteria-spec.md',
-          import.meta.url,
-        ),
+        new URL('../../../tests/fixtures/two-acceptance-criteria-spec.md', import.meta.url),
       ),
     );
     await prepareBuilderRun({ paths, specId: SPEC_ID });
@@ -416,20 +393,12 @@ describe('builder spec criterion presence', () => {
         escalations: [],
         notes: [],
       }),
-    ).rejects.toThrow(
-      'Handoff is missing acceptance criterion IDs from spec.md: AC2.',
-    );
+    ).rejects.toThrow('Handoff is missing acceptance criterion IDs from spec.md: AC2.');
 
-    expect(await readFile(paths.getWorkflowPath(SPEC_ID))).toEqual(
-      workflowBefore,
-    );
-    expect(
-      await readdir(paths.getSpecPath(SPEC_ID), { recursive: true }),
-    ).toEqual(entriesBefore);
+    expect(await readFile(paths.getWorkflowPath(SPEC_ID))).toEqual(workflowBefore);
+    expect(await readdir(paths.getSpecPath(SPEC_ID), { recursive: true })).toEqual(entriesBefore);
     await expect(
-      access(
-        paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
-      ),
+      access(paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 })),
     ).rejects.toMatchObject({ code: 'ENOENT' });
   });
 });

@@ -4,7 +4,9 @@
  */
 
 import { mkdir, readFile } from 'node:fs/promises';
+
 import { Value } from 'typebox/value';
+
 import { assertBuilderHandoff } from '#artifacts/builder-handoff/assertBuilderHandoff.ts';
 import {
   BUILDER_HANDOFF_VERSION,
@@ -33,8 +35,7 @@ function assertBuilderHandoffSubmission(
 ): asserts input is BuilderHandoffSubmissionInput {
   const [error] = Value.Errors(BuilderHandoffSubmissionSchema, input);
 
-  if (error !== undefined)
-    throw new Error(`Invalid builder submission: ${error.message}.`);
+  if (error !== undefined) throw new Error(`Invalid builder submission: ${error.message}.`);
 }
 
 type CompleteBuilderPassInput = {

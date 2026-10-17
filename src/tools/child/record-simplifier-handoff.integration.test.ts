@@ -4,7 +4,9 @@
  */
 
 import { readFile } from 'node:fs/promises';
+
 import { afterEach, describe, expect, it } from 'vitest';
+
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -69,11 +71,10 @@ describe('record simplifier handoff', () => {
     };
 
     const result = await tool.execute('record', submission);
-    expect(
-      JSON.parse(
-        await readFile(paths.getSimplifierHandoffPath(SPEC_ID), 'utf8'),
-      ),
-    ).toEqual({ version: '1.0.0', ...submission });
+    expect(JSON.parse(await readFile(paths.getSimplifierHandoffPath(SPEC_ID), 'utf8'))).toEqual({
+      version: '1.0.0',
+      ...submission,
+    });
     expect(paths.getSimplifierHandoffPath(SPEC_ID)).toBe(
       `${paths.getSpecPath(SPEC_ID)}/handoffs/simplifier/S.json`,
     );
@@ -82,8 +83,8 @@ describe('record simplifier handoff', () => {
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
       handoffPath: paths.getSimplifierHandoffPath(SPEC_ID),
     });
-    expect(
-      await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
+    expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
+      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+    });
   });
 });

@@ -5,6 +5,7 @@
 
 import { type Static, Type } from 'typebox';
 import { Value } from 'typebox/value';
+
 import { isValidSpecId, SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 
 export const WORKFLOW_STATE_VERSION = '1.0.0';
@@ -58,17 +59,13 @@ export const WorkflowStateSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export type WorkflowPhase =
-  (typeof WORKFLOW_PHASES)[keyof typeof WORKFLOW_PHASES];
+export type WorkflowPhase = (typeof WORKFLOW_PHASES)[keyof typeof WORKFLOW_PHASES];
 
-export type WorkflowEvent =
-  (typeof WORKFLOW_EVENTS)[keyof typeof WORKFLOW_EVENTS];
+export type WorkflowEvent = (typeof WORKFLOW_EVENTS)[keyof typeof WORKFLOW_EVENTS];
 
 export type WorkflowState = Static<typeof WorkflowStateSchema>;
 
-function assertWorkflowStateSchema(
-  input: unknown,
-): asserts input is WorkflowState {
+function assertWorkflowStateSchema(input: unknown): asserts input is WorkflowState {
   if (typeof input !== 'object' || input === null || Array.isArray(input)) {
     throw new Error('Workflow state must be a JSON object.');
   }
@@ -80,9 +77,7 @@ function assertWorkflowStateSchema(
   }
 }
 
-export function assertWorkflowState(
-  input: unknown,
-): asserts input is WorkflowState {
+export function assertWorkflowState(input: unknown): asserts input is WorkflowState {
   assertWorkflowStateSchema(input);
 
   if (!isValidSpecId(input.specId)) {

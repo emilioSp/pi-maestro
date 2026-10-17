@@ -10,10 +10,7 @@ type IsPathWithinOrEqualInput = {
   candidate: string;
 };
 
-export const isPathWithinOrEqual = ({
-  parent,
-  candidate,
-}: IsPathWithinOrEqualInput): boolean => {
+export const isPathWithinOrEqual = ({ parent, candidate }: IsPathWithinOrEqualInput): boolean => {
   const pathToCandidate = relative(parent, candidate);
 
   return (

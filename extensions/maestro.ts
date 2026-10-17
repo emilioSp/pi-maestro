@@ -4,19 +4,14 @@
  */
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
+
 import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { assertEnvironment } from '#maestro/checks/assertEnvironment.ts';
 import { getMaestroInstructions } from '#maestro/instructions/getMaestroInstructions.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
-import {
-  CREATE_SPEC_TOOL,
-  registerCreateSpecTool,
-} from '#tools/main/create-spec.ts';
-import {
-  MARK_SPEC_READY_TOOL,
-  registerMarkSpecReadyTool,
-} from '#tools/main/mark-spec-ready.ts';
+import { CREATE_SPEC_TOOL, registerCreateSpecTool } from '#tools/main/create-spec.ts';
+import { MARK_SPEC_READY_TOOL, registerMarkSpecReadyTool } from '#tools/main/mark-spec-ready.ts';
 import {
   RESOLVE_ESCALATIONS_TOOL,
   registerResolveEscalationsTool,
@@ -25,18 +20,9 @@ import {
   RESOLVE_FINDINGS_TOOL,
   registerResolveFindingsTool,
 } from '#tools/main/resolve-findings.ts';
-import {
-  RUN_BUILDER_TOOL,
-  registerRunBuilderTool,
-} from '#tools/main/run-builder.ts';
-import {
-  RUN_SIMPLIFIER_TOOL,
-  registerRunSimplifierTool,
-} from '#tools/main/run-simplifier.ts';
-import {
-  RUN_VERIFIER_TOOL,
-  registerRunVerifierTool,
-} from '#tools/main/run-verifier.ts';
+import { RUN_BUILDER_TOOL, registerRunBuilderTool } from '#tools/main/run-builder.ts';
+import { RUN_SIMPLIFIER_TOOL, registerRunSimplifierTool } from '#tools/main/run-simplifier.ts';
+import { RUN_VERIFIER_TOOL, registerRunVerifierTool } from '#tools/main/run-verifier.ts';
 
 const MAIN_TOOL_NAMES: readonly string[] = [
   CREATE_SPEC_TOOL.NAME,
@@ -58,14 +44,10 @@ export default (pi: ExtensionAPI): void => {
   registerRunSimplifierTool(pi);
 
   const syncMainTools = (): void => {
-    const foreignTools = pi
-      .getActiveTools()
-      .filter((name) => !MAIN_TOOL_NAMES.includes(name));
+    const foreignTools = pi.getActiveTools().filter((name) => !MAIN_TOOL_NAMES.includes(name));
 
     pi.setActiveTools(
-      maestroSessionState.isActive()
-        ? [...foreignTools, ...MAIN_TOOL_NAMES]
-        : foreignTools,
+      maestroSessionState.isActive() ? [...foreignTools, ...MAIN_TOOL_NAMES] : foreignTools,
     );
   };
 
@@ -118,10 +100,7 @@ export default (pi: ExtensionAPI): void => {
           'info',
         );
       } catch (error) {
-        context.ui.notify(
-          error instanceof Error ? error.message : String(error),
-          'error',
-        );
+        context.ui.notify(error instanceof Error ? error.message : String(error), 'error');
 
         return;
       }

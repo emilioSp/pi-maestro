@@ -5,6 +5,7 @@
 
 import { StringEnum } from '@earendil-works/pi-ai';
 import { type Static, Type } from 'typebox';
+
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 
 export const BUILDER_HANDOFF_VERSION = '1.0.0';
@@ -36,9 +37,7 @@ export const BuilderAcceptanceCriterionSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export type BuilderAcceptanceCriterion = Static<
-  typeof BuilderAcceptanceCriterionSchema
->;
+export type BuilderAcceptanceCriterion = Static<typeof BuilderAcceptanceCriterionSchema>;
 
 const BuilderHandoffContentFields = {
   summary: Type.String({ minLength: 1 }),
@@ -158,6 +157,4 @@ export const BuilderHandoffSubmissionSchema = Type.Union([
   BuilderEscalationHandoffSubmissionSchema,
 ]);
 
-export type BuilderHandoffSubmissionInput = Static<
-  typeof BuilderHandoffSubmissionSchema
->;
+export type BuilderHandoffSubmissionInput = Static<typeof BuilderHandoffSubmissionSchema>;

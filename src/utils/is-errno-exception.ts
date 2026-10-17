@@ -3,7 +3,5 @@
  * Used: When filesystem operations handle specific error codes.
  */
 
-export const isErrnoException = (
-  error: unknown,
-): error is NodeJS.ErrnoException =>
+export const isErrnoException = (error: unknown): error is NodeJS.ErrnoException =>
   error instanceof Error && 'code' in error && typeof error.code === 'string';

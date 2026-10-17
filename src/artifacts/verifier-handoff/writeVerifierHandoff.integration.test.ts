@@ -1,7 +1,9 @@
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
 import { afterEach, describe, expect, it } from 'vitest';
+
 import { PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import {
@@ -54,9 +56,7 @@ const handoff = (): VerifierHandoff => ({
 
 afterEach(async () => {
   await Promise.all(
-    temporaryDirectories
-      .splice(0)
-      .map((path) => rm(path, { force: true, recursive: true })),
+    temporaryDirectories.splice(0).map((path) => rm(path, { force: true, recursive: true })),
   );
 });
 
@@ -71,9 +71,7 @@ describe('verifier handoff writes', () => {
       specId,
     });
 
-    await expect(readVerifierHandoff({ path, specId })).resolves.toEqual(
-      handoff(),
-    );
+    await expect(readVerifierHandoff({ path, specId })).resolves.toEqual(handoff());
   });
 
   it('given an existing verifier report when a replacement includes a finding already marked rejected then writing fails and the original file stays unchanged', async () => {
@@ -100,9 +98,7 @@ describe('verifier handoff writes', () => {
         },
         specId,
       }),
-    ).rejects.toThrow(
-      'New verifier handoff findings must have no owner decision',
-    );
+    ).rejects.toThrow('New verifier handoff findings must have no owner decision');
     await expect(readFile(path, 'utf8')).resolves.toBe(before);
   });
 });

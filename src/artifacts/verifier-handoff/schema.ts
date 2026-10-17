@@ -4,6 +4,7 @@
  */
 
 import { type Static, Type } from 'typebox';
+
 import { BuilderAcceptanceCriterionSchema } from '#artifacts/builder-handoff/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 
@@ -15,8 +16,7 @@ export const FINDING_SEVERITIES = {
   LOW: 'low',
 } as const;
 
-export type FindingSeverity =
-  (typeof FINDING_SEVERITIES)[keyof typeof FINDING_SEVERITIES];
+export type FindingSeverity = (typeof FINDING_SEVERITIES)[keyof typeof FINDING_SEVERITIES];
 
 const FindingSeveritySchema = Type.Union([
   Type.Literal(FINDING_SEVERITIES.HIGH),
@@ -64,10 +64,7 @@ const FindingDecisionSchema = Type.Union([
 export const VerifierFindingSchema = Type.Object(
   {
     id: Type.String({ pattern: '^F[1-9]\\d*$' }),
-    acceptanceCriterion: Type.Union([
-      Type.String({ minLength: 1 }),
-      Type.Null(),
-    ]),
+    acceptanceCriterion: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
     severity: FindingSeveritySchema,
     confidence: Type.Number({ minimum: 0, maximum: 1 }),
     summary: Type.String({ minLength: 1 }),

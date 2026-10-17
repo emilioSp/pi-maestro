@@ -4,6 +4,7 @@
  */
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
+
 import { registerRecordBuilderHandoffTool } from '#tools/child/record-builder-handoff.ts';
 import { registerRecordSimplifierHandoffTool } from '#tools/child/record-simplifier-handoff.ts';
 import { registerRecordVerifierHandoffTool } from '#tools/child/record-verifier-handoff.ts';

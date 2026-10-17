@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
 import {
@@ -50,14 +51,10 @@ describe('verifier handoff validation', () => {
         probeStatus,
       });
 
-      expect(() => assertVerifierHandoff({ handoff: input, specId })).toThrow(
-        'requires a finding',
-      );
+      expect(() => assertVerifierHandoff({ handoff: input, specId })).toThrow('requires a finding');
 
       input.findings = [{ ...finding(), acceptanceCriterion: 'AC2' }];
-      expect(() =>
-        assertVerifierHandoff({ handoff: input, specId }),
-      ).not.toThrow();
+      expect(() => assertVerifierHandoff({ handoff: input, specId })).not.toThrow();
     },
   );
 
@@ -169,9 +166,7 @@ describe('verifier handoff validation', () => {
   ])(
     'given a verifier report with $scenario when validated then it is rejected with the corresponding report error',
     ({ handoff: input, message }) => {
-      expect(() => assertVerifierHandoff({ handoff: input, specId })).toThrow(
-        message,
-      );
+      expect(() => assertVerifierHandoff({ handoff: input, specId })).toThrow(message);
     },
   );
 });

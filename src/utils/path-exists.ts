@@ -4,6 +4,7 @@
  */
 
 import { access } from 'node:fs/promises';
+
 import { isErrnoException } from '#utils/is-errno-exception.ts';
 
 export const pathExists = async (path: string): Promise<boolean> => {

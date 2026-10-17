@@ -4,11 +4,10 @@
  */
 
 import { access, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  BUILDER_HANDOFF_STATUSES,
-  PROBE_STATUSES,
-} from '#artifacts/builder-handoff/schema.ts';
+
+import { BUILDER_HANDOFF_STATUSES, PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
 import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
 import {
@@ -143,9 +142,9 @@ describe('verifier completion', () => {
     expect(completed.projectRoot).toBe(repository.path);
     expect(completed.state.phase).toBe(WORKFLOW_PHASES.SIMPLIFIER_RUNNING);
 
-    await expect(
-      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING });
+    await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
+      phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
+    });
   });
 
   it('given a verifier report names a different spec when it is submitted then submission fails without saving a report or changing the workflow', async () => {
@@ -166,9 +165,7 @@ describe('verifier completion', () => {
 
     await expect(readFile(workflowPath, 'utf8')).resolves.toBe(workflowBefore);
     await expect(
-      access(
-        paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
-      ),
+      access(paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 })),
     ).rejects.toMatchObject({ code: 'ENOENT' });
   });
 });
@@ -179,10 +176,7 @@ describe('verifier spec criterion presence', () => {
     await writeFile(
       paths.getSpecFilePath(SPEC_ID),
       await readFile(
-        new URL(
-          '../../../tests/fixtures/two-acceptance-criteria-spec.md',
-          import.meta.url,
-        ),
+        new URL('../../../tests/fixtures/two-acceptance-criteria-spec.md', import.meta.url),
       ),
     );
     const workflowBefore = await readFile(paths.getWorkflowPath(SPEC_ID));
@@ -210,20 +204,12 @@ describe('verifier spec criterion presence', () => {
         findings: [],
         notes: [],
       }),
-    ).rejects.toThrow(
-      'Handoff is missing acceptance criterion IDs from spec.md: AC2.',
-    );
+    ).rejects.toThrow('Handoff is missing acceptance criterion IDs from spec.md: AC2.');
 
-    expect(await readFile(paths.getWorkflowPath(SPEC_ID))).toEqual(
-      workflowBefore,
-    );
-    expect(
-      await readdir(paths.getSpecPath(SPEC_ID), { recursive: true }),
-    ).toEqual(entriesBefore);
+    expect(await readFile(paths.getWorkflowPath(SPEC_ID))).toEqual(workflowBefore);
+    expect(await readdir(paths.getSpecPath(SPEC_ID), { recursive: true })).toEqual(entriesBefore);
     await expect(
-      access(
-        paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
-      ),
+      access(paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 })),
     ).rejects.toMatchObject({ code: 'ENOENT' });
   });
 });

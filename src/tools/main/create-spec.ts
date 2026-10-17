@@ -5,6 +5,7 @@
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
+
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { createSpec } from '#specs/create.ts';
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';

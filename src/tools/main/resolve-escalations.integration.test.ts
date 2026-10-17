@@ -1,6 +1,8 @@
 import { readFile, writeFile } from 'node:fs/promises';
+
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
+
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
@@ -121,8 +123,7 @@ describe('resolve escalations tool', () => {
     expect(result.details).toMatchObject({
       specId: SPEC_ID,
       phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
-      nextAction:
-        'Run the builder separately. No renewed approval is required.',
+      nextAction: 'Run the builder separately. No renewed approval is required.',
       projectRoot: repository.path,
     });
     expect(result.content).toEqual([
@@ -131,9 +132,9 @@ describe('resolve escalations tool', () => {
         text: `All current escalations resolved. Spec ${SPEC_ID} is ready-for-builder. Run the builder separately. No renewed approval is required.`,
       },
     ]);
-    expect(
-      (await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).phase,
-    ).toBe(WORKFLOW_PHASES.READY_FOR_BUILDER);
+    expect((await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).phase).toBe(
+      WORKFLOW_PHASES.READY_FOR_BUILDER,
+    );
 
     const resolved = await readBuilderHandoff({
       path: handoffPath,
@@ -148,9 +149,7 @@ describe('resolve escalations tool', () => {
         return { ...entry, resolution };
       }),
     });
-    expect(await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8')).toBe(
-      specBefore,
-    );
+    expect(await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8')).toBe(specBefore);
     const savedB1 = await readFile(handoffPath, 'utf8');
     await prepareBuilderRun({ paths, specId: SPEC_ID });
 
@@ -187,9 +186,9 @@ describe('resolve escalations tool', () => {
       handoffPassNumber: 2,
     });
 
-    expect(
-      await readBuilderHandoff({ path: b2, specId: SPEC_ID }),
-    ).toMatchObject({ escalations: [{ id: 'E1', resolution: null }] });
+    expect(await readBuilderHandoff({ path: b2, specId: SPEC_ID })).toMatchObject({
+      escalations: [{ id: 'E1', resolution: null }],
+    });
 
     expect(await readFile(handoffPath, 'utf8')).toBe(savedB1);
   });
@@ -277,15 +276,11 @@ describe('resolve escalations tool', () => {
         ),
       },
     ]);
-    expect(
-      await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).toMatchObject({
+    expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
       specId: SPEC_ID,
       phase: WORKFLOW_PHASES.DRAFTING_SPEC,
     });
-    expect(await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8')).toBe(
-      specBefore,
-    );
+    expect(await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8')).toBe(specBefore);
     expect(await readFile(handoffPath, 'utf8')).toBe(b1Before);
     expect(await readBuilderHandoff({ path: b2, specId: SPEC_ID })).toEqual({
       ...before,
@@ -315,9 +310,7 @@ describe('resolve escalations tool', () => {
       specId: SPEC_ID,
       phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
     });
-    expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toEqual(
-      approved.details,
-    );
+    expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toEqual(approved.details);
     expect(await readFile(b2, 'utf8')).toBe(resolvedB2);
     expect(await readFile(handoffPath, 'utf8')).toBe(b1Before);
   });
@@ -355,24 +348,16 @@ describe('resolve escalations tool', () => {
       extension: registerMarkSpecReadyTool,
     });
 
-    await expect(
-      tool.execute('premature-approval', { specId: SPEC_ID }),
-    ).rejects.toThrow('is not allowed from phase "escalation-decisions"');
-    expect(await Promise.all(savedPaths.map((path) => readFile(path)))).toEqual(
-      before,
+    await expect(tool.execute('premature-approval', { specId: SPEC_ID })).rejects.toThrow(
+      'is not allowed from phase "escalation-decisions"',
     );
+    expect(await Promise.all(savedPaths.map((path) => readFile(path)))).toEqual(before);
   });
 
   it.each([
     ['missing the decision for E2', [decisions[0]]],
-    [
-      'with duplicate decisions for E1',
-      [decisions[0], decisions[0], decisions[1]],
-    ],
-    [
-      'naming an unknown escalation E3',
-      [decisions[0], { ...decisions[1], escalationId: 'E3' }],
-    ],
+    ['with duplicate decisions for E1', [decisions[0], decisions[0], decisions[1]]],
+    ['naming an unknown escalation E3', [decisions[0], { ...decisions[1], escalationId: 'E3' }]],
     [
       'selecting an option absent from the question',
       [{ ...decisions[0], selectedOptionId: 'other' }, decisions[1]],
@@ -392,10 +377,7 @@ describe('resolve escalations tool', () => {
       const { paths, repository, handoffPath } = await openEscalations();
       const handoffBefore = await readFile(handoffPath, 'utf8');
 
-      const workflowBefore = await readFile(
-        paths.getWorkflowPath(SPEC_ID),
-        'utf8',
-      );
+      const workflowBefore = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
 
       const { tool } = await piTestSessions.createRegisteredTool({
         cwd: repository.path,
@@ -421,9 +403,7 @@ describe('resolve escalations tool', () => {
       ).rejects.toThrow();
 
       expect(await readFile(handoffPath, 'utf8')).toBe(handoffBefore);
-      expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(
-        workflowBefore,
-      );
+      expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(workflowBefore);
     },
   );
 
@@ -457,10 +437,7 @@ describe('resolve escalations tool', () => {
           decisions,
         });
 
-      if (
-        scenario === 'wrong-phase' ||
-        scenario === 'resolved-in-decision-phase'
-      ) {
+      if (scenario === 'wrong-phase' || scenario === 'resolved-in-decision-phase') {
         const state = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
         await writeWorkflowState({
           path: paths.getWorkflowPath(SPEC_ID),
@@ -489,10 +466,7 @@ describe('resolve escalations tool', () => {
         );
       const handoffBefore = await readFile(handoffPath, 'utf8');
 
-      const workflowBefore = await readFile(
-        paths.getWorkflowPath(SPEC_ID),
-        'utf8',
-      );
+      const workflowBefore = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
 
       const { tool } = await piTestSessions.createRegisteredTool({
         cwd: repository.path,
@@ -509,9 +483,7 @@ describe('resolve escalations tool', () => {
 
       expect(await readFile(handoffPath, 'utf8')).toBe(handoffBefore);
 
-      expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(
-        workflowBefore,
-      );
+      expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(workflowBefore);
     },
   );
 });

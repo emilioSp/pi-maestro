@@ -1,7 +1,9 @@
 import { access, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 
@@ -17,17 +19,13 @@ const temporaryDirectories: string[] = [];
 
 afterEach(async () => {
   await Promise.all(
-    temporaryDirectories
-      .splice(0)
-      .map((path) => rm(path, { force: true, recursive: true })),
+    temporaryDirectories.splice(0).map((path) => rm(path, { force: true, recursive: true })),
   );
 });
 
 describe('partial spec creation failure', () => {
   it('given saving workflow state fails during spec creation when creation is retried then the spec file and directory remain and the retry fails because the directory already exists', async () => {
-    const projectRoot = await mkdtemp(
-      join(tmpdir(), 'pi-maestro-spec-failure-'),
-    );
+    const projectRoot = await mkdtemp(join(tmpdir(), 'pi-maestro-spec-failure-'));
 
     temporaryDirectories.push(projectRoot);
 
@@ -53,9 +51,7 @@ describe('partial spec creation failure', () => {
       `Spec creation failed after creating ${specPath}. Remove this directory before retrying.`,
     );
     await expect(access(specPath)).resolves.toBeUndefined();
-    await expect(
-      access(paths.getSpecFilePath(specId)),
-    ).resolves.toBeUndefined();
+    await expect(access(paths.getSpecFilePath(specId))).resolves.toBeUndefined();
 
     await expect(createSpec(input)).rejects.toMatchObject({
       code: 'EEXIST',

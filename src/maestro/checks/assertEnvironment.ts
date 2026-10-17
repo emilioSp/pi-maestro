@@ -5,11 +5,10 @@
 
 import { randomUUID } from 'node:crypto';
 import { realpath } from 'node:fs/promises';
-import type {
-  ExtensionAPI,
-  ExtensionContext,
-} from '@earendil-works/pi-coding-agent';
+
+import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent';
 import { resolveSubagentLaunchContract } from 'pi-subagents/preflight';
+
 import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { AGENTS } from '#config/schema.ts';
 
@@ -19,8 +18,7 @@ export const SUBAGENT_PING = {
   VERSION: 1,
   METHOD: 'ping',
   TIMEOUT_MS: 2000,
-  INSTALLATION_ERROR:
-    'Maestro flow requires pi-subagents installed in the Pi environment.',
+  INSTALLATION_ERROR: 'Maestro flow requires pi-subagents installed in the Pi environment.',
 } as const;
 
 const getErrorMessage = (error: unknown): string =>
@@ -46,9 +44,7 @@ const getActivationConfiguration = async (
   try {
     return await loadConfiguration(projectRoot);
   } catch (error) {
-    throw new Error(
-      `Maestro configuration check failed: ${getErrorMessage(error)}`,
-    );
+    throw new Error(`Maestro configuration check failed: ${getErrorMessage(error)}`);
   }
 };
 
@@ -57,24 +53,13 @@ type AssertModelsAvailableInput = {
   config: Awaited<ReturnType<typeof loadConfiguration>>;
 };
 
-function assertModelsAvailable({
-  context,
-  config,
-}: AssertModelsAvailableInput): void {
+function assertModelsAvailable({ context, config }: AssertModelsAvailableInput): void {
   const availableModels = context.modelRegistry.getAvailable();
 
-  for (const model of [
-    config.builder.model,
-    config.verifier.model,
-    config.simplifier.model,
-  ]) {
+  for (const model of [config.builder.model, config.verifier.model, config.simplifier.model]) {
     const [provider, id] = model.split('/');
 
-    if (
-      !availableModels.some(
-        (entry) => entry.provider === provider && entry.id === id,
-      )
-    ) {
+    if (!availableModels.some((entry) => entry.provider === provider && entry.id === id)) {
       throw new Error(`Configured model is not available: "${model}".`);
     }
   }
@@ -110,9 +95,7 @@ type SuccessfulPingReply = {
   data: { version: typeof SUBAGENT_PING.VERSION };
 };
 
-function assertSuccessfulPingReply(
-  reply: unknown,
-): asserts reply is SuccessfulPingReply {
+function assertSuccessfulPingReply(reply: unknown): asserts reply is SuccessfulPingReply {
   if (
     !isReplyWithRequestId(reply) ||
     reply.version !== SUBAGENT_PING.VERSION ||
@@ -125,22 +108,17 @@ function assertSuccessfulPingReply(
   }
 }
 
-async function assertSubagentsRespond(
-  piEventsBus: ExtensionAPI['events'],
-): Promise<void> {
+async function assertSubagentsRespond(piEventsBus: ExtensionAPI['events']): Promise<void> {
   const requestId = randomUUID();
   const { promise, resolve, reject } = Promise.withResolvers<unknown>();
 
-  const unsubscribe = piEventsBus.on(
-    `${SUBAGENT_PING.REPLY_EVENT_PREFIX}${requestId}`,
-    (reply) => {
-      if (isReplyWithRequestId(reply) && reply.requestId !== requestId) {
-        return;
-      }
+  const unsubscribe = piEventsBus.on(`${SUBAGENT_PING.REPLY_EVENT_PREFIX}${requestId}`, (reply) => {
+    if (isReplyWithRequestId(reply) && reply.requestId !== requestId) {
+      return;
+    }
 
-      resolve(reply);
-    },
-  );
+    resolve(reply);
+  });
 
   const timeout = setTimeout(
     () => reject(new Error('Pi-subagents ping timed out after 2000 ms.')),
@@ -186,9 +164,8 @@ export async function assertEnvironment({
   try {
     await assertSubagentsRespond(piEventsBus);
   } catch (error) {
-    throw new Error(
-      `${SUBAGENT_PING.INSTALLATION_ERROR} ${getErrorMessage(error)}`,
-      { cause: error },
-    );
+    throw new Error(`${SUBAGENT_PING.INSTALLATION_ERROR} ${getErrorMessage(error)}`, {
+      cause: error,
+    });
   }
 }

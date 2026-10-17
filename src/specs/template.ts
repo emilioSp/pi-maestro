@@ -7,8 +7,7 @@ import { readFile } from 'node:fs/promises';
 
 const TEMPLATE_URL = new URL('../../templates/spec.md', import.meta.url);
 
-export const loadSpecTemplate = async (): Promise<string> =>
-  readFile(TEMPLATE_URL, 'utf8');
+export const loadSpecTemplate = async (): Promise<string> => readFile(TEMPLATE_URL, 'utf8');
 
 type RenderSpecTemplateInput = {
   template: string;
@@ -16,11 +15,5 @@ type RenderSpecTemplateInput = {
   title: string;
 };
 
-export const renderSpecTemplate = ({
-  template,
-  specId,
-  title,
-}: RenderSpecTemplateInput): string =>
-  template
-    .replace('<id>', specId)
-    .replace('<short, outcome-oriented title>', title.trim());
+export const renderSpecTemplate = ({ template, specId, title }: RenderSpecTemplateInput): string =>
+  template.replace('<id>', specId).replace('<short, outcome-oriented title>', title.trim());

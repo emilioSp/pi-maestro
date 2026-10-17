@@ -6,6 +6,7 @@
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { type Static, Type } from 'typebox';
 import { Value } from 'typebox/value';
+
 import {
   SIMPLIFIER_HANDOFF_VERSION,
   SimplifierSubmissionFields,
@@ -20,10 +21,9 @@ export const SIMPLIFIER_HANDOFF_TOOL = {
     'Save the simplifier result at handoffs/simplifier/S.json and complete the workflow. Stop after success.',
 } as const;
 
-const SimplifierHandoffToolParameters = Type.Object(
-  SimplifierSubmissionFields,
-  { additionalProperties: false },
-);
+const SimplifierHandoffToolParameters = Type.Object(SimplifierSubmissionFields, {
+  additionalProperties: false,
+});
 
 function assertSimplifierSubmission(
   input: unknown,

@@ -1,7 +1,9 @@
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
 import { afterEach, describe, expect, it } from 'vitest';
+
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import {
   BUILDER_HANDOFF_STATUSES,
@@ -40,9 +42,7 @@ const handoff = (summary: string): BuilderHandoff => ({
 
 afterEach(async () => {
   await Promise.all(
-    temporaryDirectories
-      .splice(0)
-      .map((path) => rm(path, { force: true, recursive: true })),
+    temporaryDirectories.splice(0).map((path) => rm(path, { force: true, recursive: true })),
   );
 });
 
@@ -62,9 +62,7 @@ describe('builder handoff writes', () => {
       specId,
     });
 
-    await expect(readBuilderHandoff({ path, specId })).resolves.toEqual(
-      handoff('Fixed greeting'),
-    );
+    await expect(readBuilderHandoff({ path, specId })).resolves.toEqual(handoff('Fixed greeting'));
     await expect(readFile(path, 'utf8')).resolves.toBe(
       `${JSON.stringify(handoff('Fixed greeting'), null, 2)}\n`,
     );

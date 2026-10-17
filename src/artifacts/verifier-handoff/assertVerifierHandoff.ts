@@ -4,16 +4,12 @@
  */
 
 import { Value } from 'typebox/value';
+
 import { PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
-import {
-  type VerifierHandoff,
-  VerifierHandoffSchema,
-} from '#artifacts/verifier-handoff/schema.ts';
+import { type VerifierHandoff, VerifierHandoffSchema } from '#artifacts/verifier-handoff/schema.ts';
 import { isValidSpecId } from '#ids/isValidSpecId.ts';
 
-function assertVerifierHandoffSchema(
-  input: unknown,
-): asserts input is VerifierHandoff {
+function assertVerifierHandoffSchema(input: unknown): asserts input is VerifierHandoff {
   if (typeof input !== 'object' || input === null || Array.isArray(input)) {
     throw new Error('Verifier handoff must be a JSON object.');
   }
@@ -45,9 +41,7 @@ export function assertVerifierHandoff(
   );
 
   if (acceptanceCriterionIds.size !== handoff.acceptanceCriteria.length) {
-    throw new Error(
-      'Verifier handoff acceptance criterion IDs must be unique.',
-    );
+    throw new Error('Verifier handoff acceptance criterion IDs must be unique.');
   }
 
   const criterionIdsWithFindings = new Set<string>();

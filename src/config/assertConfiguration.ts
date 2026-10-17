@@ -4,6 +4,7 @@
  */
 
 import { Value } from 'typebox/value';
+
 import {
   MAX_TIMEOUT_MINUTES,
   MaestroConfigInputSchema,
@@ -52,9 +53,7 @@ const formatError = (error: SchemaValidationError): string => {
   return `Invalid configuration at "${path}": ${error.message}.`;
 };
 
-export function assertConfiguration(
-  input: unknown,
-): asserts input is PartialMaestroConfig {
+export function assertConfiguration(input: unknown): asserts input is PartialMaestroConfig {
   if (typeof input !== 'object' || input === null || Array.isArray(input)) {
     throw new Error('Configuration must be a JSON object.');
   }
@@ -62,9 +61,7 @@ export function assertConfiguration(
   const raw = input;
 
   if (!('version' in raw) || raw.version === undefined) {
-    throw new Error(
-      "Missing configuration version. The 'version' field is required.",
-    );
+    throw new Error("Missing configuration version. The 'version' field is required.");
   }
 
   if (typeof raw.version !== 'string') {

@@ -2,29 +2,22 @@
   "name": "@emiliosp/pi-maestro",
   "version": "0.11.0",
   "description": "A spec-driven multiagent development workflow for Pi.",
-  "license": "MIT",
-  "type": "module",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/emiliosp/pi-maestro.git"
-  },
+  "keywords": [
+    "orchestration",
+    "pi",
+    "pi-coding-agent",
+    "pi-package",
+    "subagents",
+    "workflow"
+  ],
   "homepage": "https://github.com/emiliosp/pi-maestro#readme",
   "bugs": {
     "url": "https://github.com/emiliosp/pi-maestro/issues"
   },
-  "keywords": [
-    "pi-package",
-    "pi",
-    "pi-coding-agent",
-    "workflow",
-    "subagents",
-    "orchestration"
-  ],
-  "os": [
-    "darwin"
-  ],
-  "engines": {
-    "node": ">=26.0.0"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emiliosp/pi-maestro.git"
   },
   "files": [
     "extensions/",
@@ -41,6 +34,10 @@
     "README.md",
     "LICENSE"
   ],
+  "os": [
+    "darwin"
+  ],
+  "type": "module",
   "imports": {
     "#config/*": "./src/config/*",
     "#specs/*": "./src/specs/*",
@@ -53,41 +50,46 @@
     "#ids/*": "./src/ids/*",
     "#*": "./*"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage --config vitest.config.ts",
-    "check": "npm run lint:fix && npm run typecheck && npm test",
+    "check": "npm run fmt && npm run lint && npm run typecheck && npm test",
     "prepublishOnly": "npm run check",
     "publish:npm": "npm publish --access public",
-    "lint": "biome check .",
-    "lint:anti-slop": "oxlint --fix",
-    "lint:fix": "biome check --write . && npm run lint:anti-slop"
+    "fmt": "oxfmt",
+    "lint": "oxlint --fix"
   },
   "dependencies": {
     "pi-subagents": "0.78.0"
   },
-  "bundleDependencies": [
-    "pi-subagents"
-  ],
-  "peerDependencies": {
-    "@earendil-works/pi-ai": "*",
-    "@earendil-works/pi-coding-agent": "*",
-    "typebox": "*"
-  },
   "devDependencies": {
-    "@biomejs/biome": "2.5.15",
     "@earendil-works/pi-agent-core": "1.0.3",
     "@earendil-works/pi-tui": "1.0.3",
-    "@vitest/coverage-v8": "5.0.3",
     "@types/node": "26.6.4",
+    "@vitest/coverage-v8": "5.0.3",
+    "oxfmt": "0.73.0",
     "oxlint": "1.87.0",
     "oxlint-anti-slop": "0.3.6",
     "typebox": "1.3.35",
     "typescript": "7.0.2",
     "vitest": "5.0.3"
   },
-  "publishConfig": {
-    "access": "public"
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "typebox": "*"
+  },
+  "bundleDependencies": [
+    "pi-subagents"
+  ],
+  "engines": {
+    "node": ">=26.0.0"
+  },
+  "allowScripts": {
+    "fsevents@2.3.3": true
   },
   "pi": {
     "extensions": [
@@ -98,8 +100,5 @@
         "./agents"
       ]
     }
-  },
-  "allowScripts": {
-    "fsevents@2.3.3": true
   }
 }

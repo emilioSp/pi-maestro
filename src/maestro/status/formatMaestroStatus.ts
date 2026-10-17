@@ -4,11 +4,8 @@
  */
 
 import type { Theme, ThemeColor } from '@earendil-works/pi-coding-agent';
-import {
-  WORKFLOW_PHASES,
-  type WorkflowPhase,
-  type WorkflowState,
-} from '#workflow/state/schema.ts';
+
+import { WORKFLOW_PHASES, type WorkflowPhase, type WorkflowState } from '#workflow/state/schema.ts';
 
 export const WORKFLOW_PHASE_LABELS = {
   [WORKFLOW_PHASES.DRAFTING_SPEC]: 'Preparing specification',
@@ -82,15 +79,9 @@ export const formatMaestroStatus = ({
 
   const { phase, specId } = workflow.state;
 
-  const prefix = theme.fg(
-    'muted',
-    `Maestro active · ${shortenSpecId(specId)} · `,
-  );
+  const prefix = theme.fg('muted', `Maestro active · ${shortenSpecId(specId)} · `);
 
-  const label = theme.fg(
-    WORKFLOW_PHASE_COLORS[phase],
-    WORKFLOW_PHASE_LABELS[phase],
-  );
+  const label = theme.fg(WORKFLOW_PHASE_COLORS[phase], WORKFLOW_PHASE_LABELS[phase]);
 
   return `${prefix}${WORKFLOW_PHASE_ICONS[phase]} ${label}`;
 };
