@@ -35,7 +35,7 @@ For example, if Pi starts in `/work/app/src`, `Maestro` reads `/work/app/src/.pi
 ## Fields
 
 | Field                       |                  Required | Default                     | Rules                                                           |
-|-----------------------------|--------------------------:|-----------------------------|-----------------------------------------------------------------|
+| --------------------------- | ------------------------: | --------------------------- | --------------------------------------------------------------- |
 | `version`                   | Yes, when the file exists | `1.0.0`                     | Configuration format version. Only `1.0.0` is supported.        |
 | `specDirectory`             |                        No | `.specs`                    | Relative path below the project root.                           |
 | `builder`                   |                        No | `Builder` defaults          | Overrides supported `builder` fields.                           |
