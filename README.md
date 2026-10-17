@@ -8,11 +8,11 @@ Pi extension for a spec-driven multiagent development workflow.
 
 ## The idea
 
-A `specification` (`spec`) describes one reversible change.
-The `builder` implements it.
-An independent `verifier` checks every `acceptance criterion`.
-A `simplifier` then refactors accepted code without changing behavior.
-The `owner` performs the final review.
+- A `specification` (`spec`) describes one reversible change.
+- The `builder` implements it.
+- An independent `verifier` checks every `acceptance criterion`.
+- A `simplifier` then refactors accepted code without changing behavior.
+- The `owner` performs the final review.
 
 Five principles hold the workflow together:
 
@@ -25,7 +25,7 @@ Five principles hold the workflow together:
 ## The roles
 
 | Role         | Responsibility                                                                                                          |
-|--------------|-------------------------------------------------------------------------------------------------------------------------|
+| ------------ | ----------------------------------------------------------------------------------------------------------------------- |
 | `Owner`      | Brings the problem, approves the `spec`, decides questions and `findings`, and reviews the final code.                  |
 | `Maestro`    | Works directly with the `owner`, prepares the `spec`, runs the other agents, records decisions, and summarizes results. |
 | `Builder`    | Implements the approved `spec` and checks each `acceptance criterion`.                                                  |
@@ -79,31 +79,27 @@ The `owner` follows this workflow:
 5. Reviews `verifier` `findings` and chooses an action for every `finding`.
 6. Reads Maestro's summary at `candidate-ready` and performs the final review.
 
-`Maestro` starts the `verifier` after a successful `builder` `run`.
-All three agents run in the foreground: Pi waits for each `run` to finish and `Maestro` shows the current phase in Pi's status, while `pi-subagents` FleetView and
-`/subagents-fleet` show agent activity and transcripts.
+`Maestro` starts the `verifier` after a successful `builder` `run`. All three agents run in the foreground: Pi waits for each `run` to finish and `Maestro` shows the
+current phase in Pi's status, while `pi-subagents` FleetView and `/subagents-fleet` show agent activity and transcripts.
 
-The `owner` must not edit product files while the workflow runs.
-`Maestro` can perform temporary experiments with `owner` agreement during `spec` preparation and permitted revisions. See [Workflow](docs/workflow.md#spec-approval).
+The `owner` must not edit product files while the workflow runs. `Maestro` can perform temporary experiments with `owner` agreement during `spec` preparation and
+permitted revisions. See [Workflow](docs/workflow.md#spec-approval).
 
 An `escalation` asks the `owner` to decide an implementation question, and a `finding` records a technical issue reported by the `verifier`. The `owner` discusses both
-with `Maestro`, never directly with the `builder` or `verifier`.
-`Maestro` records all current `escalation` answers or `finding` decisions in the active `handoff` before changing phase.
+with `Maestro`, never directly with the `builder` or `verifier`. `Maestro` records all current `escalation` answers or `finding` decisions in the active `handoff` before
+changing phase.
 
-If any decision requires a `spec` change, the workflow returns to `drafting-spec` before the `owner` and `Maestro` revise the same `spec`.
-The `owner` reviews the revised `spec` and replies `GREEN FLAG` again.
-`Maestro` records renewed approval separately before another `builder` `run`.
+If any decision requires a `spec` change, the workflow returns to `drafting-spec` before the `owner` and `Maestro` revise the same `spec`. The `owner` reviews the revised
+`spec` and replies `GREEN FLAG` again. `Maestro` records renewed approval separately before another `builder` `run`.
 
-After successful verification or rejection of all `findings`, `Maestro` starts the `simplifier`.
-Only this step requires Git. If Git readiness cannot be confirmed, `Maestro` warns and skips simplification.
-The `simplifier` selects all uncommitted code changes, including pre-existing staged, unstaged, and untracked files.
+After successful verification or rejection of all `findings`, `Maestro` starts the `simplifier`. Only this step requires Git. If Git readiness cannot be confirmed,
+`Maestro` warns and skips simplification. The `simplifier` selects all uncommitted code changes, including pre-existing staged, unstaged, and untracked files.
 
-The workflow ends at `candidate-ready`. Rejected `findings` retain their reasons and accepted failures can remain.
-Maestro's summary separates independent verification from the later simplifier's report.
-The `owner` controls later review, commits, pull requests, and merging.
+The workflow ends at `candidate-ready`. Rejected `findings` retain their reasons and accepted failures can remain. Maestro's summary separates independent verification
+from the later simplifier's report. The `owner` controls later review, commits, pull requests, and merging.
 
-The same `/maestro` command disables `Maestro` and leaves project files unchanged. Disabling `Maestro`, restarting Pi, or using `/resume` clears live session state.
-Saved files do not automatically restore or resume an incomplete workflow. The `owner` handles it manually.
+The same `/maestro` command disables `Maestro` and leaves project files unchanged. Disabling `Maestro`, restarting Pi, or using `/resume` clears live session state. Saved
+files do not automatically restore or resume an incomplete workflow. The `owner` handles it manually.
 
 ## Configuration
 
