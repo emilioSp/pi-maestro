@@ -5,7 +5,9 @@
 
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+
 import { afterEach, describe, expect, it } from 'vitest';
+
 import {
   CONFIG_DIRECTORY_NAME,
   CONFIG_FILE_PATH,
@@ -13,10 +15,7 @@ import {
   DEFAULT_SPEC_DIRECTORY,
 } from '#config/defaults.ts';
 import { AGENTS } from '#config/schema.ts';
-import {
-  assertEnvironment,
-  SUBAGENT_PING,
-} from '#maestro/checks/assertEnvironment.ts';
+import { assertEnvironment, SUBAGENT_PING } from '#maestro/checks/assertEnvironment.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 
@@ -70,10 +69,7 @@ describe('assertEnvironment', () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await mkdir(join(repository.path, CONFIG_DIRECTORY_NAME));
-    await writeFile(
-      join(repository.path, CONFIG_FILE_PATH),
-      JSON.stringify({ version: 999 }),
-    );
+    await writeFile(join(repository.path, CONFIG_FILE_PATH), JSON.stringify({ version: 999 }));
 
     const { session, events } = await piTestSessions.create({
       cwd: repository.path,
@@ -110,9 +106,7 @@ describe('assertEnvironment', () => {
         context: session.extensionRunner.createContext(),
         piEventsBus: events,
       }),
-    ).rejects.toThrow(
-      'Configured model is not available: "openai-codex/missing".',
-    );
+    ).rejects.toThrow('Configured model is not available: "openai-codex/missing".');
   });
 
   it('given pi-subagents replies that its availability check failed when activation requirements are checked then the error reports the installation requirement and invalid reply', async () => {
@@ -147,10 +141,7 @@ describe('assertEnvironment', () => {
     cleanupFunctions.push(repository.cleanup);
     await writeFile(join(repository.path, 'README.md'), '# Original\n');
 
-    await writeFile(
-      join(repository.path, 'README.md'),
-      '# Uncommitted change\n',
-    );
+    await writeFile(join(repository.path, 'README.md'), '# Uncommitted change\n');
 
     const { session, events } = await piTestSessions.create({
       cwd: repository.path,
@@ -179,8 +170,8 @@ describe('assertEnvironment', () => {
     expect(await readFile(join(repository.path, 'README.md'), 'utf8')).toBe(
       '# Uncommitted change\n',
     );
-    await expect(
-      access(join(repository.path, DEFAULT_SPEC_DIRECTORY)),
-    ).rejects.toMatchObject({ code: 'ENOENT' });
+    await expect(access(join(repository.path, DEFAULT_SPEC_DIRECTORY))).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
   });
 });

@@ -22,9 +22,7 @@ export const writeVerifierHandoff = async ({
   const { handoff } = input;
 
   if (handoff.findings.some((finding) => finding.decision !== null)) {
-    throw new Error(
-      'New verifier handoff findings must have no owner decision.',
-    );
+    throw new Error('New verifier handoff findings must have no owner decision.');
   }
 
   await writeJson({ path, data: handoff });

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -20,9 +21,7 @@ describe('builder run preparation', () => {
       specId: SPEC_ID,
       projectRoot: repository.path,
     });
-    await expect(
-      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).resolves.toMatchObject({
+    await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
       phase: WORKFLOW_PHASES.BUILDER_RUNNING,
     });
   });

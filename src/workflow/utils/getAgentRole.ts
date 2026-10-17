@@ -18,9 +18,7 @@ const VERIFIER_PHASES: readonly WorkflowState['phase'][] = [
   WORKFLOW_PHASES.FINDING_DECISIONS,
 ];
 
-export const getAgentRole = (
-  phase: WorkflowState['phase'],
-): WorkflowRole | null => {
+export const getAgentRole = (phase: WorkflowState['phase']): WorkflowRole | null => {
   if (BUILDER_PHASES.includes(phase)) {
     return WORKFLOW_ROLES.BUILDER;
   }

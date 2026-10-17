@@ -1,5 +1,6 @@
 import { ObjectOptions } from 'typebox/type';
 import { describe, expect, it } from 'vitest';
+
 import {
   assertWorkflowState,
   WORKFLOW_PHASES,
@@ -35,9 +36,7 @@ describe('workflow state schema', () => {
   ])(
     'given workflow state with $scenario when validated then validation fails with an invalid workflow state error',
     ({ state }) => {
-      expect(() => assertWorkflowState(state)).toThrow(
-        'Invalid workflow state',
-      );
+      expect(() => assertWorkflowState(state)).toThrow('Invalid workflow state');
     },
   );
 
@@ -51,8 +50,6 @@ describe('workflow state schema', () => {
   });
 
   it('given null instead of workflow state when validated then validation fails because state must be a JSON object', () => {
-    expect(() => assertWorkflowState(null)).toThrow(
-      'Workflow state must be a JSON object.',
-    );
+    expect(() => assertWorkflowState(null)).toThrow('Workflow state must be a JSON object.');
   });
 });

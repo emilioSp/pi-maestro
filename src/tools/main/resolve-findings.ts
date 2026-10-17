@@ -6,6 +6,7 @@
 import { StringEnum } from '@earendil-works/pi-ai';
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
+
 import { FINDING_DECISIONS } from '#artifacts/verifier-handoff/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
@@ -86,9 +87,7 @@ const formatResolution = (details: FindingResolutionDetails): string => {
   const summary = `Recorded rejections for ${rejected}. Findings requiring code fixes: ${requiringFix}.`;
 
   if (details.phase === WORKFLOW_PHASES.DRAFTING_SPEC) {
-    const requiringRevision = formatFindingIds(
-      details.findingsRequiringSpecRevisionIds,
-    );
+    const requiringRevision = formatFindingIds(details.findingsRequiringSpecRevisionIds);
 
     return `${summary} Findings requiring spec revision: ${requiringRevision}. The workflow is drafting-spec. Revise the same spec with the owner and obtain renewed GREEN FLAG. Then call maestro_mark_spec_ready separately before running the builder.`;
   }
@@ -106,13 +105,7 @@ export const registerResolveFindingsTool = (pi: ExtensionAPI): void => {
     label: RESOLVE_FINDINGS_TOOL.LABEL,
     description: RESOLVE_FINDINGS_TOOL.DESCRIPTION,
     parameters: ResolveFindingsToolParameters,
-    async execute(
-      _toolCallId,
-      { specId, decisions },
-      _signal,
-      _onUpdate,
-      context,
-    ) {
+    async execute(_toolCallId, { specId, decisions }, _signal, _onUpdate, context) {
       const { paths } = await resolveToolRunContext(context.cwd);
 
       const resolved = await resolveFindings({
@@ -126,20 +119,13 @@ export const registerResolveFindingsTool = (pi: ExtensionAPI): void => {
         phase: resolved.state.phase,
         projectRoot: resolved.projectRoot,
         rejectedFindingIds: resolved.findings
-          .filter(
-            ({ decision }) => decision?.decision === FINDING_DECISIONS.REJECT,
-          )
+          .filter(({ decision }) => decision?.decision === FINDING_DECISIONS.REJECT)
           .map(({ id }) => id),
         findingsRequiringSpecRevisionIds: resolved.findings
-          .filter(
-            ({ decision }) =>
-              decision?.decision === FINDING_DECISIONS.REVISE_SPEC,
-          )
+          .filter(({ decision }) => decision?.decision === FINDING_DECISIONS.REVISE_SPEC)
           .map(({ id }) => id),
         findingsRequiringFixIds: resolved.findings
-          .filter(
-            ({ decision }) => decision?.decision === FINDING_DECISIONS.FIX_CODE,
-          )
+          .filter(({ decision }) => decision?.decision === FINDING_DECISIONS.FIX_CODE)
           .map(({ id }) => id),
       };
 

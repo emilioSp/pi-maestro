@@ -5,7 +5,9 @@
 
 import { lstat, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
+
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { SUPPORTED_CONFIG_VERSION, THINKING_LEVELS } from '#config/schema.ts';
@@ -173,9 +175,7 @@ describe('configuration loading', () => {
           'utf8',
         );
 
-        await expect(loadConfiguration(workspace.path)).rejects.toThrow(
-          message,
-        );
+        await expect(loadConfiguration(workspace.path)).rejects.toThrow(message);
       } finally {
         await workspace.cleanup();
       }

@@ -4,6 +4,7 @@
  */
 
 import { realpath } from 'node:fs/promises';
+
 import { loadConfiguration } from '#config/loadConfiguration.ts';
 import type { MaestroConfig } from '#config/schema.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
@@ -14,9 +15,7 @@ export type ToolRunContext = {
   paths: MaestroPaths;
 };
 
-export const resolveToolRunContext = async (
-  cwd: string,
-): Promise<ToolRunContext> => {
+export const resolveToolRunContext = async (cwd: string): Promise<ToolRunContext> => {
   const projectRoot = await realpath(cwd);
   const config = await loadConfiguration(projectRoot);
 

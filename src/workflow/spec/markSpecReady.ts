@@ -4,6 +4,7 @@
  */
 
 import { readFile } from 'node:fs/promises';
+
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -50,9 +51,7 @@ export const markSpecReady = async ({
   const current = await readWorkflowState(workflowPath);
 
   if (current.specId !== specId) {
-    throw new Error(
-      `Workflow spec ID mismatch: expected "${specId}", found "${current.specId}".`,
-    );
+    throw new Error(`Workflow spec ID mismatch: expected "${specId}", found "${current.specId}".`);
   }
 
   const state = transitionWorkflow({

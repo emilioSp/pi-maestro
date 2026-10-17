@@ -4,6 +4,7 @@
  */
 
 import { Value } from 'typebox/value';
+
 import {
   BUILDER_HANDOFF_STATUSES,
   type BuilderAcceptanceCriterion,
@@ -16,19 +17,12 @@ import { isValidSpecId } from '#ids/isValidSpecId.ts';
 const hasUniqueAcceptanceCriterionIds = (
   acceptanceCriteria: BuilderAcceptanceCriterion[],
 ): boolean =>
-  new Set(acceptanceCriteria.map((criterion) => criterion.id)).size ===
-  acceptanceCriteria.length;
+  new Set(acceptanceCriteria.map((criterion) => criterion.id)).size === acceptanceCriteria.length;
 
-const hasOnlyPassedProbes = (
-  acceptanceCriteria: BuilderAcceptanceCriterion[],
-): boolean =>
-  acceptanceCriteria.every(
-    (criterion) => criterion.probeStatus === PROBE_STATUSES.PASSED,
-  );
+const hasOnlyPassedProbes = (acceptanceCriteria: BuilderAcceptanceCriterion[]): boolean =>
+  acceptanceCriteria.every((criterion) => criterion.probeStatus === PROBE_STATUSES.PASSED);
 
-function assertBuilderHandoffSchema(
-  input: unknown,
-): asserts input is BuilderHandoff {
+function assertBuilderHandoffSchema(input: unknown): asserts input is BuilderHandoff {
   if (typeof input !== 'object' || input === null || Array.isArray(input)) {
     throw new Error('Builder handoff must be a JSON object.');
   }
@@ -77,10 +71,7 @@ export function assertBuilderHandoff(
       throw new Error('Escalation option IDs must be unique.');
     }
 
-    if (
-      escalation.recommendation !== null &&
-      !optionIds.has(escalation.recommendation.optionId)
-    ) {
+    if (escalation.recommendation !== null && !optionIds.has(escalation.recommendation.optionId)) {
       throw new Error('Escalation recommendation references unknown option.');
     }
 

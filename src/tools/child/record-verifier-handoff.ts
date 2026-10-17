@@ -5,6 +5,7 @@
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
+
 import { BuilderAcceptanceCriterionSchema } from '#artifacts/builder-handoff/schema.ts';
 import {
   VERIFIER_HANDOFF_VERSION,
@@ -57,9 +58,7 @@ export const registerRecordVerifierHandoffTool = (pi: ExtensionAPI): void => {
         specId,
       });
 
-      const currentState = await readWorkflowState(
-        paths.getWorkflowPath(specId),
-      );
+      const currentState = await readWorkflowState(paths.getWorkflowPath(specId));
 
       const handoff = {
         version: VERIFIER_HANDOFF_VERSION,

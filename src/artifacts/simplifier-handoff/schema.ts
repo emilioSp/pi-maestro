@@ -4,6 +4,7 @@
  */
 
 import { type Static, Type } from 'typebox';
+
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 
 export const SIMPLIFIER_HANDOFF_VERSION = '1.0.0';

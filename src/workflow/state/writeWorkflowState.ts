@@ -4,10 +4,7 @@
  */
 
 import { writeJson } from '#utils/write-json.ts';
-import {
-  assertWorkflowState,
-  type WorkflowState,
-} from '#workflow/state/schema.ts';
+import { assertWorkflowState, type WorkflowState } from '#workflow/state/schema.ts';
 
 type WriteWorkflowStateInput = {
   path: string;

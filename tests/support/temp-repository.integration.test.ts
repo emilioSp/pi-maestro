@@ -1,6 +1,8 @@
 import { access, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
+
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 
 describe('temporary project support', () => {
@@ -9,9 +11,7 @@ describe('temporary project support', () => {
 
     try {
       await writeFile(join(project.path, 'message.txt'), 'hello\n', 'utf8');
-      await expect(
-        access(join(project.path, 'message.txt')),
-      ).resolves.toBeUndefined();
+      await expect(access(join(project.path, 'message.txt'))).resolves.toBeUndefined();
     } finally {
       await project.cleanup();
     }

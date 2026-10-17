@@ -1,18 +1,17 @@
 import { readFile, writeFile } from 'node:fs/promises';
+
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
+
 import { loadConfiguration } from '#config/loadConfiguration.ts';
-import { MaestroPaths } from '#MaestroPaths.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
+import { MaestroPaths } from '#MaestroPaths.ts';
 import { createSpec } from '#specs/create.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { registerMarkSpecReadyTool } from '#tools/main/mark-spec-ready.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import {
-  WORKFLOW_PHASES,
-  WORKFLOW_STATE_VERSION,
-} from '#workflow/state/schema.ts';
+import { WORKFLOW_PHASES, WORKFLOW_STATE_VERSION } from '#workflow/state/schema.ts';
 
 const INSTANT = Temporal.Instant.from('2026-03-21T14:30:52Z');
 
@@ -91,12 +90,8 @@ describe('mark spec ready tool', () => {
       specId: SPEC_ID,
       phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
     });
-    await expect(readFile(created.specFilePath, 'utf8')).resolves.toBe(
-      approvedContent,
-    );
-    await expect(readWorkflowState(created.workflowPath)).resolves.toEqual(
-      result.details,
-    );
+    await expect(readFile(created.specFilePath, 'utf8')).resolves.toBe(approvedContent);
+    await expect(readWorkflowState(created.workflowPath)).resolves.toEqual(result.details);
   });
 
   it('given one spec is active when approval is requested for another spec then approval fails with an active spec ID mismatch error', async () => {
@@ -107,9 +102,7 @@ describe('mark spec ready tool', () => {
       extension: registerMarkSpecReadyTool,
     });
 
-    await expect(
-      tool.execute('test-call', { specId: OTHER_SPEC_ID }),
-    ).rejects.toThrow(
+    await expect(tool.execute('test-call', { specId: OTHER_SPEC_ID })).rejects.toThrow(
       `Active workflow spec ID mismatch: expected "${OTHER_SPEC_ID}", found "${SPEC_ID}".`,
     );
   });

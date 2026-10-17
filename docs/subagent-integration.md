@@ -8,7 +8,7 @@ stays in the main `Maestro` conversation.
 The package supplies all three roles and the tools that save their results:
 
 | Role         | Agent name           | Definition                                        |
-|--------------|----------------------|---------------------------------------------------|
+| ------------ | -------------------- | ------------------------------------------------- |
 | `Builder`    | `maestro.builder`    | [`agents/builder.md`](../agents/builder.md)       |
 | `Verifier`   | `maestro.verifier`   | [`agents/verifier.md`](../agents/verifier.md)     |
 | `Simplifier` | `maestro.simplifier` | [`agents/simplifier.md`](../agents/simplifier.md) |
@@ -36,9 +36,8 @@ If a `run` fails or returns without a valid saved result, `Maestro` reports the 
 
 ## External configuration
 
-The `pi-subagents` extension must be installed and enabled in Pi. `Builder`, `verifier`, and `simplifier` model choices, thinking levels, and timeouts come
-from [Maestro configuration](configuration.md). Other `pi-subagents` configuration remains the owner's responsibility.
+The `pi-subagents` extension must be installed and enabled in Pi. `Builder`, `verifier`, and `simplifier` model choices, thinking levels, and timeouts come from
+[Maestro configuration](configuration.md). Other `pi-subagents` configuration remains the owner's responsibility.
 
-Only `maestro_run_simplifier` checks Git readiness, with `git rev-parse --is-inside-work-tree`.
-If readiness cannot be confirmed, it warns and completes without delegation.
-The `simplifier` uses Git to select all uncommitted code changes. `Maestro` does not change the Git index or create commits or checkpoints.
+Only `maestro_run_simplifier` checks Git readiness, with `git rev-parse --is-inside-work-tree`. If readiness cannot be confirmed, it warns and completes without
+delegation. The `simplifier` uses Git to select all uncommitted code changes. `Maestro` does not change the Git index or create commits or checkpoints.

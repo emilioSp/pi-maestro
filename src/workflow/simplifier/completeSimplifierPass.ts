@@ -5,6 +5,7 @@
 
 import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
+
 import { assertSimplifierHandoff } from '#artifacts/simplifier-handoff/assertSimplifierHandoff.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { writeJson } from '#utils/write-json.ts';
@@ -28,9 +29,7 @@ export const completeSimplifierPass = async ({
   const state = await readWorkflowState(workflowPath);
 
   if (state.specId !== specId) {
-    throw new Error(
-      `Workflow spec ID mismatch: expected "${specId}", found "${state.specId}".`,
-    );
+    throw new Error(`Workflow spec ID mismatch: expected "${specId}", found "${state.specId}".`);
   }
 
   if (state.phase !== WORKFLOW_PHASES.SIMPLIFIER_RUNNING) {

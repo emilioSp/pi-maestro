@@ -10,10 +10,7 @@ type ReadJsonFileInput = {
   description: string;
 };
 
-export const readJsonFile = async ({
-  path,
-  description,
-}: ReadJsonFileInput): Promise<unknown> => {
+export const readJsonFile = async ({ path, description }: ReadJsonFileInput): Promise<unknown> => {
   const content = await readFile(path, 'utf8');
 
   try {

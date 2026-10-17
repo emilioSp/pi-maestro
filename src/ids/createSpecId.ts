@@ -41,5 +41,4 @@ type CreateSpecIdInput = {
 export const createSpecId = ({
   title,
   instant = Temporal.Now.instant(),
-}: CreateSpecIdInput): string =>
-  `${formatUtcTimestamp(instant)}-${normalizeSlug(title)}`;
+}: CreateSpecIdInput): string => `${formatUtcTimestamp(instant)}-${normalizeSlug(title)}`;

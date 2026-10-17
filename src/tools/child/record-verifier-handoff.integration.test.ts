@@ -1,10 +1,9 @@
 import { writeFile } from 'node:fs/promises';
+
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  FINDING_DECISIONS,
-  FINDING_SEVERITIES,
-} from '#artifacts/verifier-handoff/schema.ts';
+
+import { FINDING_DECISIONS, FINDING_SEVERITIES } from '#artifacts/verifier-handoff/schema.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -36,9 +35,7 @@ describe('verifier handoff tool', () => {
     const input = createHandoffInput();
 
     expect(Value.Check(tool.parameters, input)).toBe(true);
-    expect(Value.Check(tool.parameters, { ...input, branch: 'main' })).toBe(
-      false,
-    );
+    expect(Value.Check(tool.parameters, { ...input, branch: 'main' })).toBe(false);
     expect(
       Value.Check(tool.parameters, {
         ...input,
@@ -68,9 +65,7 @@ describe('verifier handoff tool', () => {
       extension: registerRecordVerifierHandoffTool,
     });
 
-    await expect(
-      tool.execute('test-call', createHandoffInput()),
-    ).rejects.toThrow(
+    await expect(tool.execute('test-call', createHandoffInput())).rejects.toThrow(
       'Verifier handoff requires verifier-running state, found "ready-for-builder".',
     );
   });
@@ -82,11 +77,7 @@ describe('verifier handoff tool', () => {
 
     await writeFile(
       statePath,
-      `${JSON.stringify(
-        { ...state, specId: '20260321-143052-other-spec' },
-        null,
-        2,
-      )}\n`,
+      `${JSON.stringify({ ...state, specId: '20260321-143052-other-spec' }, null, 2)}\n`,
       'utf8',
     );
 
@@ -95,9 +86,7 @@ describe('verifier handoff tool', () => {
       extension: registerRecordVerifierHandoffTool,
     });
 
-    await expect(
-      tool.execute('test-call', createHandoffInput()),
-    ).rejects.toThrow(
+    await expect(tool.execute('test-call', createHandoffInput())).rejects.toThrow(
       `Workflow spec ID mismatch: expected "${SPEC_ID}", found "20260321-143052-other-spec".`,
     );
   });

@@ -4,6 +4,7 @@
  */
 
 import type { ExtensionContext } from '@earendil-works/pi-coding-agent';
+
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { formatMaestroStatus } from '#maestro/status/formatMaestroStatus.ts';
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
@@ -11,9 +12,7 @@ import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 
 export const MAESTRO_STATUS_KEY = 'maestro';
 
-export const refreshMaestroStatus = async (
-  context: ExtensionContext,
-): Promise<void> => {
+export const refreshMaestroStatus = async (context: ExtensionContext): Promise<void> => {
   if (!maestroSessionState.isActive()) {
     context.ui.setStatus(MAESTRO_STATUS_KEY, undefined);
 
@@ -50,9 +49,6 @@ export const refreshMaestroStatus = async (
     );
   } catch (error) {
     context.ui.setStatus(MAESTRO_STATUS_KEY, undefined);
-    context.ui.notify(
-      error instanceof Error ? error.message : String(error),
-      'error',
-    );
+    context.ui.notify(error instanceof Error ? error.message : String(error), 'error');
   }
 };

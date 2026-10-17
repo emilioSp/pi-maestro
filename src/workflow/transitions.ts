@@ -35,10 +35,7 @@ export const WORKFLOW_TRANSITIONS: Record<WorkflowEvent, WorkflowTransition> = {
     to: WORKFLOW_PHASES.READY_FOR_BUILDER,
   },
   [WORKFLOW_EVENTS.OWNER_REQUEST_SPEC_REVISION]: {
-    from: [
-      WORKFLOW_PHASES.ESCALATION_DECISIONS,
-      WORKFLOW_PHASES.FINDING_DECISIONS,
-    ],
+    from: [WORKFLOW_PHASES.ESCALATION_DECISIONS, WORKFLOW_PHASES.FINDING_DECISIONS],
     to: WORKFLOW_PHASES.DRAFTING_SPEC,
   },
   [WORKFLOW_EVENTS.BUILDER_DONE]: {
@@ -80,10 +77,7 @@ type TransitionWorkflowInput = {
   event: WorkflowEvent;
 };
 
-export const transitionWorkflow = ({
-  state,
-  event,
-}: TransitionWorkflowInput): WorkflowState => {
+export const transitionWorkflow = ({ state, event }: TransitionWorkflowInput): WorkflowState => {
   assertWorkflowState(state);
   const transition = WORKFLOW_TRANSITIONS[event];
 
@@ -92,9 +86,7 @@ export const transitionWorkflow = ({
   }
 
   if (!transition.from.includes(state.phase)) {
-    throw new Error(
-      `Workflow event "${event}" is not allowed from phase "${state.phase}".`,
-    );
+    throw new Error(`Workflow event "${event}" is not allowed from phase "${state.phase}".`);
   }
 
   return {

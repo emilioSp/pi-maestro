@@ -5,6 +5,7 @@
 
 import { readFile, realpath } from 'node:fs/promises';
 import { isAbsolute, join, resolve } from 'node:path';
+
 import { assertConfiguration } from '#config/assertConfiguration.ts';
 import { CONFIG_FILE_PATH, DEFAULT_CONFIG } from '#config/defaults.ts';
 import type { MaestroConfig, PartialMaestroConfig } from '#config/schema.ts';
@@ -24,10 +25,7 @@ type ResolveSpecDirectoryInput = {
   directory: string;
 };
 
-const resolveSpecDirectory = ({
-  projectRoot,
-  directory,
-}: ResolveSpecDirectoryInput): string => {
+const resolveSpecDirectory = ({ projectRoot, directory }: ResolveSpecDirectoryInput): string => {
   if (directory.includes('\0')) {
     throw new Error('specDirectory must not contain a null byte.');
   }
@@ -59,10 +57,7 @@ type ResolveDirectoriesInput = {
   config: MaestroConfig;
 };
 
-const resolveDirectories = ({
-  projectRoot,
-  config,
-}: ResolveDirectoriesInput): MaestroConfig => {
+const resolveDirectories = ({ projectRoot, config }: ResolveDirectoriesInput): MaestroConfig => {
   const specDirectory = resolveSpecDirectory({
     projectRoot,
     directory: config.specDirectory,
@@ -85,9 +80,7 @@ const readConfigurationFile = async (path: string): Promise<unknown> => {
   }
 };
 
-export const loadConfiguration = async (
-  cwd: string = process.cwd(),
-): Promise<MaestroConfig> => {
+export const loadConfiguration = async (cwd: string = process.cwd()): Promise<MaestroConfig> => {
   const projectRoot = await realpath(cwd);
   const targetPath = join(projectRoot, CONFIG_FILE_PATH);
 

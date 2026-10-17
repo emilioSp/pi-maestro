@@ -4,12 +4,11 @@
  */
 
 import { readFile, writeFile } from 'node:fs/promises';
+
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  BUILDER_HANDOFF_STATUSES,
-  PROBE_STATUSES,
-} from '#artifacts/builder-handoff/schema.ts';
+
+import { BUILDER_HANDOFF_STATUSES, PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import {
   FINDING_DECISIONS,
@@ -227,9 +226,7 @@ describe('resolve findings tool', () => {
   });
 
   it('given a single finding when the owner rejects it with a reason then the rejection is saved and Maestro requests simplification without another approval or verification', async () => {
-    const { paths, repository } = await createFindingsDecisionWorkflow([
-      createFinding('F1'),
-    ]);
+    const { paths, repository } = await createFindingsDecisionWorkflow([createFinding('F1')]);
 
     const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
@@ -247,9 +244,9 @@ describe('resolve findings tool', () => {
       ],
     });
 
-    expect(
-      await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).toMatchObject({ phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING });
+    expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
+      phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
+    });
     expect(result.content).toEqual([
       {
         type: 'text',
@@ -373,16 +370,12 @@ describe('resolve findings tool', () => {
       }),
     ).rejects.toThrow('Duplicate decision for finding "F1"');
 
-    await expect(
-      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).resolves.toEqual(stateBefore);
+    await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toEqual(stateBefore);
     await expect(readCurrentHandoff(paths)).resolves.toEqual(handoffBefore);
   });
 
   it('given the saved verifier report names a different spec when the owner rejects its finding then resolution fails without changing the report or workflow', async () => {
-    const { paths, repository } = await createFindingsDecisionWorkflow([
-      createFinding('F1'),
-    ]);
+    const { paths, repository } = await createFindingsDecisionWorkflow([createFinding('F1')]);
 
     const statePath = paths.getWorkflowPath(SPEC_ID);
 
@@ -424,9 +417,7 @@ describe('resolve findings tool', () => {
   });
 
   it('given a rejection reason containing only whitespace when finding decisions are submitted then resolution fails without changing the verifier report or workflow', async () => {
-    const { paths, repository } = await createFindingsDecisionWorkflow([
-      createFinding('F1'),
-    ]);
+    const { paths, repository } = await createFindingsDecisionWorkflow([createFinding('F1')]);
 
     const statePath = paths.getWorkflowPath(SPEC_ID);
 
@@ -498,15 +489,11 @@ describe('resolve findings tool', () => {
         text: 'Recorded rejections for none. Findings requiring code fixes: none. Findings requiring spec revision: F1. The workflow is drafting-spec. Revise the same spec with the owner and obtain renewed GREEN FLAG. Then call maestro_mark_spec_ready separately before running the builder.',
       },
     ]);
-    expect(
-      await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).toMatchObject({
+    expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
       specId: SPEC_ID,
       phase: WORKFLOW_PHASES.DRAFTING_SPEC,
     });
-    expect(await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8')).toBe(
-      specBefore,
-    );
+    expect(await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8')).toBe(specBefore);
     expect((await readCurrentHandoff(paths)).findings[0].decision).toEqual({
       decision: FINDING_DECISIONS.REVISE_SPEC,
       reason: 'Exports must show current records only',
@@ -533,19 +520,13 @@ describe('resolve findings tool', () => {
       specId: SPEC_ID,
       phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
     });
-    expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toEqual(
-      approved.details,
-    );
-    expect(await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8')).toBe(
-      revisedSpec,
-    );
+    expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toEqual(approved.details);
+    expect(await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8')).toBe(revisedSpec);
     expect(await readFile(handoffPath, 'utf8')).toBe(resolvedHandoff);
   });
 
   it('given a decision names a finding absent from the verifier report when it is submitted then resolution fails without changing the report or workflow', async () => {
-    const { paths, repository } = await createFindingsDecisionWorkflow([
-      createFinding('F1'),
-    ]);
+    const { paths, repository } = await createFindingsDecisionWorkflow([createFinding('F1')]);
 
     const stateBefore = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
 
@@ -568,9 +549,7 @@ describe('resolve findings tool', () => {
       }),
     ).rejects.toThrow('Unknown finding ID: "F2"');
 
-    await expect(
-      readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-    ).resolves.toEqual(stateBefore);
+    await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toEqual(stateBefore);
     await expect(readCurrentHandoff(paths)).resolves.toEqual(handoffBefore);
   });
 });

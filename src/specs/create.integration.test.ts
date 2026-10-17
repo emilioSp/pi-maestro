@@ -1,15 +1,14 @@
 import { access, mkdtemp, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
 import { afterEach, describe, expect, it } from 'vitest';
+
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 import { createSpec } from '#specs/create.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import {
-  WORKFLOW_PHASES,
-  WORKFLOW_STATE_VERSION,
-} from '#workflow/state/schema.ts';
+import { WORKFLOW_PHASES, WORKFLOW_STATE_VERSION } from '#workflow/state/schema.ts';
 
 const INSTANT = Temporal.Instant.from('2026-03-21T14:30:52Z');
 
@@ -34,9 +33,7 @@ const createWorkspace = async (specDirectory: string = 'custom-specs') => {
 
 afterEach(async () => {
   await Promise.all(
-    temporaryDirectories
-      .splice(0)
-      .map((path) => rm(path, { force: true, recursive: true })),
+    temporaryDirectories.splice(0).map((path) => rm(path, { force: true, recursive: true })),
   );
 });
 
@@ -62,9 +59,7 @@ describe('spec template and creation', () => {
       phase: WORKFLOW_PHASES.DRAFTING_SPEC,
     });
     expect(created).not.toHaveProperty('escalationsPath');
-    expect((await stat(paths.getPrototypesPath(SPEC_ID))).isDirectory()).toBe(
-      true,
-    );
+    expect((await stat(paths.getPrototypesPath(SPEC_ID))).isDirectory()).toBe(true);
   });
 
   it('given an existing spec with the same title and timestamp when creation is retried then creation fails because the directory exists and the original spec stays unchanged', async () => {
@@ -100,9 +95,7 @@ describe('spec template and creation', () => {
         activeWorkflowSpecId: '20260320-120000-current-workflow',
         instant: INSTANT,
       }),
-    ).rejects.toThrow(
-      'Workflow 20260320-120000-current-workflow is already active.',
-    );
+    ).rejects.toThrow('Workflow 20260320-120000-current-workflow is already active.');
     await expect(access(paths.getSpecDirectory())).rejects.toMatchObject({
       code: 'ENOENT',
     });

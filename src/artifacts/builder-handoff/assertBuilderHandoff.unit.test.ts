@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { assertBuilderHandoff } from '#artifacts/builder-handoff/assertBuilderHandoff.ts';
 import {
   BUILDER_HANDOFF_STATUSES,
@@ -63,9 +64,7 @@ describe('builder handoff validation', () => {
       scenario: 'an unknown probe status',
       handoff: {
         ...doneHandoff(),
-        acceptanceCriteria: [
-          { ...doneHandoff().acceptanceCriteria[0], probeStatus: 'unknown' },
-        ],
+        acceptanceCriteria: [{ ...doneHandoff().acceptanceCriteria[0], probeStatus: 'unknown' }],
       },
       message: 'Invalid builder handoff',
     },
@@ -83,9 +82,7 @@ describe('builder handoff validation', () => {
       scenario: 'an unknown acceptance criterion field',
       handoff: {
         ...doneHandoff(),
-        acceptanceCriteria: [
-          { ...doneHandoff().acceptanceCriteria[0], extra: true },
-        ],
+        acceptanceCriteria: [{ ...doneHandoff().acceptanceCriteria[0], extra: true }],
       },
       message: 'Invalid builder handoff',
     },

@@ -3,8 +3,8 @@
  * Used: Before Maestro runs a builder pass.
  */
 
-import type { MaestroPaths } from '#MaestroPaths.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
+import type { MaestroPaths } from '#MaestroPaths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
@@ -21,16 +21,11 @@ type AssertBuilderRunBaseInput = {
   specId: string;
 };
 
-async function assertBuilderRunBase({
-  paths,
-  specId,
-}: AssertBuilderRunBaseInput): Promise<void> {
+async function assertBuilderRunBase({ paths, specId }: AssertBuilderRunBaseInput): Promise<void> {
   const state = await readWorkflowState(paths.getWorkflowPath(specId));
 
   if (state.specId !== specId) {
-    throw new Error(
-      `Workflow spec ID mismatch: expected "${specId}", found "${state.specId}".`,
-    );
+    throw new Error(`Workflow spec ID mismatch: expected "${specId}", found "${state.specId}".`);
   }
 
   if (state.phase !== WORKFLOW_PHASES.READY_FOR_BUILDER) {

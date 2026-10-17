@@ -26,16 +26,12 @@ type ApplyEscalationDecisionsInput = {
   decisions: EscalationDecision[];
 };
 
-const applyEscalationDecisions = ({
-  escalations,
-  decisions,
-}: ApplyEscalationDecisionsInput) => {
+const applyEscalationDecisions = ({ escalations, decisions }: ApplyEscalationDecisionsInput) => {
   if (escalations.some(({ resolution }) => resolution !== null)) {
     throw new Error('Current questions already contain an owner resolution.');
   }
 
-  if (decisions.length === 0)
-    throw new Error('At least one escalation decision is required.');
+  if (decisions.length === 0) throw new Error('At least one escalation decision is required.');
 
   const expectedIds = new Set(escalations.map(({ id }) => id));
   const resolutions = new Map<string, EscalationResolution>();

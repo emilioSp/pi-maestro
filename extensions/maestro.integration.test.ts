@@ -7,10 +7,8 @@ import { execFile } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
-import type {
-  ExtensionAPI,
-  wrapRegisteredTool,
-} from '@earendil-works/pi-coding-agent';
+
+import type { ExtensionAPI, wrapRegisteredTool } from '@earendil-works/pi-coding-agent';
 import { getAgentDir } from '@earendil-works/pi-coding-agent';
 import { stripTerminalSequences } from '@earendil-works/pi-tui';
 import {
@@ -20,10 +18,8 @@ import {
 } from 'pi-subagents/delegation';
 import { Type } from 'typebox';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  BUILDER_HANDOFF_STATUSES,
-  PROBE_STATUSES,
-} from '#artifacts/builder-handoff/schema.ts';
+
+import { BUILDER_HANDOFF_STATUSES, PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { readSimplifierHandoff } from '#artifacts/simplifier-handoff/readSimplifierHandoff.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import {
@@ -32,17 +28,13 @@ import {
   VERIFIER_HANDOFF_VERSION,
 } from '#artifacts/verifier-handoff/schema.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
-import {
-  AGENTS,
-  SUPPORTED_CONFIG_VERSION,
-  THINKING_LEVELS,
-} from '#config/schema.ts';
-import maestroExtension from '#extensions/maestro.ts';
+import { AGENTS, SUPPORTED_CONFIG_VERSION, THINKING_LEVELS } from '#config/schema.ts';
 import maestroSubagentExtension from '#extensions/maestro-subagent.ts';
-import type { MaestroPaths } from '#MaestroPaths.ts';
+import maestroExtension from '#extensions/maestro.ts';
 import { SUBAGENT_PING } from '#maestro/checks/assertEnvironment.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { MAESTRO_STATUS_KEY } from '#maestro/status/refreshMaestroStatus.ts';
+import type { MaestroPaths } from '#MaestroPaths.ts';
 import type { CreatedSpec } from '#specs/create.ts';
 import { unavailableCompilerEscalation } from '#tests/fixtures/unavailable-compiler-escalation.ts';
 import {
@@ -113,9 +105,7 @@ const foreignExtension = (pi: ExtensionAPI): void => {
 
 type RegisteredTool = ReturnType<typeof wrapRegisteredTool>;
 
-function assertToolRegistered(
-  tool: RegisteredTool | undefined,
-): asserts tool is RegisteredTool {
+function assertToolRegistered(tool: RegisteredTool | undefined): asserts tool is RegisteredTool {
   if (tool === undefined) throw new Error('The tool is not active in Pi.');
 }
 
@@ -136,9 +126,7 @@ describe('main Maestro extension', () => {
     });
 
     expect(
-      session.extensionRunner
-        .getAllRegisteredTools()
-        .map(({ definition }) => definition.name),
+      session.extensionRunner.getAllRegisteredTools().map(({ definition }) => definition.name),
     ).toEqual([FOREIGN_TOOL, ...MAIN_TOOL_NAMES]);
     expect(session.getActiveToolNames()).toEqual(BASE_TOOLS);
     expect(maestroSessionState.isActive()).toBe(false);
@@ -175,18 +163,12 @@ describe('main Maestro extension', () => {
     const theme = session.extensionRunner.createContext().ui.theme;
 
     expect(modelRequests).not.toHaveBeenCalled();
-    expect(session.sessionManager.getEntries()).toEqual(
-      entriesBeforeActivation,
-    );
+    expect(session.sessionManager.getEntries()).toEqual(entriesBeforeActivation);
     expect(maestroSessionState.isActive()).toBe(true);
-    expect(session.getActiveToolNames()).toEqual([
-      ...BASE_TOOLS,
-      ...MAIN_TOOL_NAMES,
-    ]);
+    expect(session.getActiveToolNames()).toEqual([...BASE_TOOLS, ...MAIN_TOOL_NAMES]);
     expect(setStatus).toHaveBeenLastCalledWith(
       MAESTRO_STATUS_KEY,
-      theme.fg('muted', 'Maestro active · ') +
-        theme.fg('accent', 'No active spec'),
+      theme.fg('muted', 'Maestro active · ') + theme.fg('accent', 'No active spec'),
     );
     expect(notify).toHaveBeenCalledOnce();
     expect(notify.mock.calls[0][1]).toBe('info');
@@ -203,12 +185,8 @@ describe('main Maestro extension', () => {
       },
     );
 
-    expect(event.systemPromptOptions.sections.maestro).toContain(
-      'You are Maestro',
-    );
-    expect(event.systemPromptOptions.sections.foreign).toBe(
-      'Keep foreign instructions',
-    );
+    expect(event.systemPromptOptions.sections.maestro).toContain('You are Maestro');
+    expect(event.systemPromptOptions.sections.foreign).toBe('Keep foreign instructions');
 
     setStatus.mockClear();
     await session.extensionRunner.emitToolResult({
@@ -227,19 +205,12 @@ describe('main Maestro extension', () => {
     expect(setStatus).toHaveBeenLastCalledWith(MAESTRO_STATUS_KEY, undefined);
     await session.prompt('/maestro');
     expect(maestroSessionState.isActive()).toBe(true);
-    expect(session.getActiveToolNames()).toEqual([
-      ...BASE_TOOLS,
-      ...MAIN_TOOL_NAMES,
-    ]);
+    expect(session.getActiveToolNames()).toEqual([...BASE_TOOLS, ...MAIN_TOOL_NAMES]);
     expect(
-      session.extensionRunner
-        .getAllRegisteredTools()
-        .map(({ definition }) => definition.name),
+      session.extensionRunner.getAllRegisteredTools().map(({ definition }) => definition.name),
     ).toEqual([FOREIGN_TOOL, ...MAIN_TOOL_NAMES]);
     expect(notify).toHaveBeenCalledTimes(2);
-    expect(session.sessionManager.getEntries()).toEqual(
-      entriesBeforeActivation,
-    );
+    expect(session.sessionManager.getEntries()).toEqual(entriesBeforeActivation);
     expect(modelRequests).not.toHaveBeenCalled();
 
     modelRequests.mockImplementation(() => {
@@ -328,30 +299,24 @@ describe('main Maestro extension', () => {
     });
 
     // simulate the ping response from pi-subagents
-    const removeResponder = events.on(
-      SUBAGENT_PING.REQUEST_EVENT,
-      (payload) => {
-        // JUSTIFICATION: Maestro emits this version 1 ping request.
-        const request = payload as { requestId: string };
-        events.emit(`${SUBAGENT_PING.REPLY_EVENT_PREFIX}${request.requestId}`, {
-          version: SUBAGENT_PING.VERSION,
-          requestId: request.requestId,
-          method: SUBAGENT_PING.METHOD,
-          success: true,
-          data: { version: SUBAGENT_PING.VERSION },
-        });
-      },
-    );
+    const removeResponder = events.on(SUBAGENT_PING.REQUEST_EVENT, (payload) => {
+      // JUSTIFICATION: Maestro emits this version 1 ping request.
+      const request = payload as { requestId: string };
+      events.emit(`${SUBAGENT_PING.REPLY_EVENT_PREFIX}${request.requestId}`, {
+        version: SUBAGENT_PING.VERSION,
+        requestId: request.requestId,
+        method: SUBAGENT_PING.METHOD,
+        success: true,
+        data: { version: SUBAGENT_PING.VERSION },
+      });
+    });
 
     await session.prompt('/maestro');
     expect(maestroSessionState.isActive()).toBe(true);
     removeResponder();
     const emit = vi.spyOn(events, 'emit');
 
-    await writeFile(
-      join(getAgentDir(), 'settings.json'),
-      JSON.stringify({ packages: [] }),
-    );
+    await writeFile(join(getAgentDir(), 'settings.json'), JSON.stringify({ packages: [] }));
     await session.prompt('/maestro');
     expect(maestroSessionState.isActive()).toBe(false);
     expect(notify).toHaveBeenCalledOnce();
@@ -452,16 +417,11 @@ describe('main Maestro extension', () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 
-    const { session, notify, setStatus, settingsManager } =
-      await piTestSessions.create({
-        extensions: [
-          foreignExtension,
-          maestroExtension,
-          successfulPingExtension,
-        ],
-        cwd: repository.path,
-        projectTrusted: false,
-      });
+    const { session, notify, setStatus, settingsManager } = await piTestSessions.create({
+      extensions: [foreignExtension, maestroExtension, successfulPingExtension],
+      cwd: repository.path,
+      projectTrusted: false,
+    });
 
     await session.prompt('/maestro');
     await session.prompt('/maestro');
@@ -484,15 +444,10 @@ describe('main Maestro extension', () => {
   it('given Maestro has an active spec when it is disabled and enabled again then saved files stay unchanged and the previous spec is no longer active', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
-    const { session, notify, setStatus, settingsManager } =
-      await piTestSessions.create({
-        extensions: [
-          foreignExtension,
-          maestroExtension,
-          successfulPingExtension,
-        ],
-        cwd: repository.path,
-      });
+    const { session, notify, setStatus, settingsManager } = await piTestSessions.create({
+      extensions: [foreignExtension, maestroExtension, successfulPingExtension],
+      cwd: repository.path,
+    });
 
     await session.prompt('/maestro');
     const theme = session.extensionRunner.createContext().ui.theme;
@@ -529,9 +484,7 @@ describe('main Maestro extension', () => {
     expect(setStatus).toHaveBeenLastCalledWith(MAESTRO_STATUS_KEY, undefined);
     expect(notify).toHaveBeenCalledOnce();
     expect(await readFile(specPath, 'utf8')).toBe(spec);
-    expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(
-      workflow,
-    );
+    expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(workflow);
 
     settingsManager.setProjectTrusted(true);
     await session.prompt('/maestro');
@@ -539,14 +492,9 @@ describe('main Maestro extension', () => {
     expect(maestroSessionState.getActiveSpecId()).toBeNull();
     expect(setStatus).toHaveBeenLastCalledWith(
       MAESTRO_STATUS_KEY,
-      theme.fg('muted', 'Maestro active · ') +
-        theme.fg('accent', 'No active spec'),
+      theme.fg('muted', 'Maestro active · ') + theme.fg('accent', 'No active spec'),
     );
-    expect(session.getActiveToolNames()).toEqual([
-      'read',
-      FOREIGN_TOOL,
-      ...MAIN_TOOL_NAMES,
-    ]);
+    expect(session.getActiveToolNames()).toEqual(['read', FOREIGN_TOOL, ...MAIN_TOOL_NAMES]);
   });
 
   it('given a saved workflow when Pi resumes the session then Maestro stays disabled, leaves the workflow unchanged, and does not select an active spec', async () => {
@@ -565,9 +513,7 @@ describe('main Maestro extension', () => {
     expect(session.getActiveToolNames()).toEqual(BASE_TOOLS);
     expect(notify).not.toHaveBeenCalled();
     expect(setStatus).toHaveBeenLastCalledWith(MAESTRO_STATUS_KEY, undefined);
-    expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(
-      workflow,
-    );
+    expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(workflow);
   });
 
   it('given an approved spec in a Git repository when builder, verifier, and simplifier finish then status follows each phase and the workflow ends at candidate-ready with saved reports', async () => {
@@ -603,8 +549,7 @@ describe('main Maestro extension', () => {
     });
 
     // JUSTIFICATION: The registered create-spec tool returns CreatedSpec details.
-    const { specId, specPath, specFilePath, workflowPath } =
-      created.details as CreatedSpec;
+    const { specId, specPath, specFilePath, workflowPath } = created.details as CreatedSpec;
 
     expect(maestroSessionState.getActiveSpecId()).toBe(specId);
     expect(specPath).toBe(join(repository.path, '.specs', specId));
@@ -617,10 +562,7 @@ describe('main Maestro extension', () => {
     );
 
     const approvedSpec = (
-      await readFile(
-        new URL(import.meta.resolve('#tests/fixtures/weather-alert-spec.md')),
-        'utf8',
-      )
+      await readFile(new URL(import.meta.resolve('#tests/fixtures/weather-alert-spec.md')), 'utf8')
     ).replace('<id>', specId);
 
     await writeFile(specFilePath, approvedSpec);
@@ -720,9 +662,7 @@ describe('main Maestro extension', () => {
           extensions: [maestroSubagentExtension],
         });
 
-        const scriptedRun = scriptedRuns.find(
-          ({ agent }) => agent === request.agent,
-        );
+        const scriptedRun = scriptedRuns.find(({ agent }) => agent === request.agent);
 
         if (scriptedRun === undefined) {
           throw new Error(`Unexpected agent: ${request.agent}`);
@@ -883,12 +823,7 @@ describe('main Maestro extension', () => {
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
     });
 
-    const verifierHandoffPath = join(
-      specPath,
-      'handoffs',
-      'verifier',
-      'V1.json',
-    );
+    const verifierHandoffPath = join(specPath, 'handoffs', 'verifier', 'V1.json');
 
     expect(
       await readVerifierHandoff({
@@ -920,12 +855,8 @@ describe('main Maestro extension', () => {
       },
     );
 
-    expect(event.systemPromptOptions.sections.maestro).toContain(
-      'You own the final summary.',
-    );
-    expect(event.systemPromptOptions.sections.maestro).toContain(
-      'No final tool call is required.',
-    );
+    expect(event.systemPromptOptions.sections.maestro).toContain('You own the final summary.');
+    expect(event.systemPromptOptions.sections.maestro).toContain('No final tool call is required.');
   });
 
   type PrepareSpecRevisionPhaseInput = {
@@ -985,10 +916,7 @@ describe('main Maestro extension', () => {
     });
   };
 
-  it.each([
-    WORKFLOW_PHASES.ESCALATION_DECISIONS,
-    WORKFLOW_PHASES.FINDING_DECISIONS,
-  ])(
+  it.each([WORKFLOW_PHASES.ESCALATION_DECISIONS, WORKFLOW_PHASES.FINDING_DECISIONS])(
     'given a workflow in %s when the owner records a decision to revise the spec and approves the revision then the same workflow returns to ready-for-builder',
     async (phase) => {
       const { paths, repository } = await createApprovedWorkflow();
@@ -998,11 +926,7 @@ describe('main Maestro extension', () => {
       await prepareSpecRevisionPhase({ paths, phase });
 
       const { session, setStatus } = await piTestSessions.create({
-        extensions: [
-          foreignExtension,
-          maestroExtension,
-          successfulPingExtension,
-        ],
+        extensions: [foreignExtension, maestroExtension, successfulPingExtension],
         cwd: repository.path,
       });
 
@@ -1010,64 +934,52 @@ describe('main Maestro extension', () => {
       const theme = session.extensionRunner.createContext().ui.theme;
       maestroSessionState.setActiveSpecId(SPEC_ID);
 
-      if (phase === WORKFLOW_PHASES.ESCALATION_DECISIONS) {
-        const resolveTool = session.agent.state.tools.find(
-          (tool) => tool.name === RESOLVE_ESCALATIONS_TOOL.NAME,
-        );
+      const resolveTool = session.agent.state.tools.find(
+        (tool) =>
+          tool.name ===
+          (phase === WORKFLOW_PHASES.ESCALATION_DECISIONS
+            ? RESOLVE_ESCALATIONS_TOOL.NAME
+            : RESOLVE_FINDINGS_TOOL.NAME),
+      );
 
-        assertToolRegistered(resolveTool);
+      assertToolRegistered(resolveTool);
 
-        const resolution = await resolveTool.execute('revision-decision', {
-          specId: SPEC_ID,
-          specChangeRequired: true,
-          decisions: [
-            {
-              escalationId: 'E1',
-              selectedOptionId: null,
-              decision:
-                'Revise the spec to use a local check instead of the unavailable compiler',
-              reason: 'The required compiler cannot run in this environment',
+      const resolution = await resolveTool.execute(
+        'revision-decision',
+        phase === WORKFLOW_PHASES.ESCALATION_DECISIONS
+          ? {
+              specId: SPEC_ID,
+              specChangeRequired: true,
+              decisions: [
+                {
+                  escalationId: 'E1',
+                  selectedOptionId: null,
+                  decision:
+                    'Revise the spec to use a local check instead of the unavailable compiler',
+                  reason: 'The required compiler cannot run in this environment',
+                },
+              ],
+            }
+          : {
+              specId: SPEC_ID,
+              decisions: [
+                {
+                  findingId: 'F1',
+                  decision: FINDING_DECISIONS.REVISE_SPEC,
+                  reason: 'The required compiler cannot run in this environment',
+                  specChange: 'Use a local check instead of the unavailable compiler',
+                },
+              ],
             },
-          ],
-        });
+      );
 
-        expect(resolution.details).toMatchObject({
-          specId: SPEC_ID,
-          phase: WORKFLOW_PHASES.DRAFTING_SPEC,
-        });
-        await expect(
-          readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-        ).resolves.toMatchObject({ phase: WORKFLOW_PHASES.DRAFTING_SPEC });
-      }
-
-      if (phase === WORKFLOW_PHASES.FINDING_DECISIONS) {
-        const resolveTool = session.agent.state.tools.find(
-          (tool) => tool.name === RESOLVE_FINDINGS_TOOL.NAME,
-        );
-
-        assertToolRegistered(resolveTool);
-
-        const resolution = await resolveTool.execute('revision-decision', {
-          specId: SPEC_ID,
-          decisions: [
-            {
-              findingId: 'F1',
-              decision: FINDING_DECISIONS.REVISE_SPEC,
-              reason: 'The required compiler cannot run in this environment',
-              specChange:
-                'Use a local check instead of the unavailable compiler',
-            },
-          ],
-        });
-
-        expect(resolution.details).toMatchObject({
-          specId: SPEC_ID,
-          phase: WORKFLOW_PHASES.DRAFTING_SPEC,
-        });
-        expect(
-          await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-        ).toMatchObject({ phase: WORKFLOW_PHASES.DRAFTING_SPEC });
-      }
+      expect(resolution.details).toMatchObject({
+        specId: SPEC_ID,
+        phase: WORKFLOW_PHASES.DRAFTING_SPEC,
+      });
+      await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
+        phase: WORKFLOW_PHASES.DRAFTING_SPEC,
+      });
 
       await writeFile(
         paths.getSpecFilePath(SPEC_ID),
@@ -1098,9 +1010,9 @@ describe('main Maestro extension', () => {
         ...current,
         phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
       });
-      await expect(
-        readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
-      ).resolves.toEqual(result.details);
+      await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toEqual(
+        result.details,
+      );
       expect(setStatus).toHaveBeenLastCalledWith(
         MAESTRO_STATUS_KEY,
         theme.fg('muted', `Maestro active · ${SPEC_ID.slice(0, 26)}... · `) +
@@ -1223,13 +1135,8 @@ describe('main Maestro extension', () => {
       },
     );
 
-    expect(event.systemPromptOptions.sections.maestro).toContain(
-      'You are Maestro',
-    );
+    expect(event.systemPromptOptions.sections.maestro).toContain('You are Maestro');
     expect(setStatus).toHaveBeenLastCalledWith(MAESTRO_STATUS_KEY, undefined);
-    expect(notify).toHaveBeenCalledWith(
-      expect.stringContaining('ENOENT'),
-      'error',
-    );
+    expect(notify).toHaveBeenCalledWith(expect.stringContaining('ENOENT'), 'error');
   });
 });

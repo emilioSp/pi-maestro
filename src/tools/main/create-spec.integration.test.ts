@@ -1,16 +1,15 @@
 import { readFile } from 'node:fs/promises';
+
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
+
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import type { CreatedSpec } from '#specs/create.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { registerCreateSpecTool } from '#tools/main/create-spec.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import {
-  WORKFLOW_PHASES,
-  WORKFLOW_STATE_VERSION,
-} from '#workflow/state/schema.ts';
+import { WORKFLOW_PHASES, WORKFLOW_STATE_VERSION } from '#workflow/state/schema.ts';
 
 const cleanupFunctions: Array<() => Promise<void>> = [];
 
@@ -26,9 +25,7 @@ describe('create spec tool', () => {
       extension: registerCreateSpecTool,
     });
 
-    expect(Value.Check(tool.parameters, { title: 'Add Weather Alerts' })).toBe(
-      true,
-    );
+    expect(Value.Check(tool.parameters, { title: 'Add Weather Alerts' })).toBe(true);
     expect(Value.Check(tool.parameters, {})).toBe(false);
     expect(
       Value.Check(tool.parameters, {
@@ -85,9 +82,7 @@ describe('create spec tool', () => {
       extension: registerCreateSpecTool,
     });
 
-    await expect(
-      tool.execute('test-call', { title: 'Add Weather Alerts' }),
-    ).rejects.toThrow(
+    await expect(tool.execute('test-call', { title: 'Add Weather Alerts' })).rejects.toThrow(
       'Workflow 20260321-143052-current-workflow is already active.',
     );
   });

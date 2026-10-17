@@ -1,6 +1,8 @@
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
+
 import { afterEach, describe, expect, it } from 'vitest';
+
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
@@ -11,9 +13,7 @@ const temporaryPaths: string[] = [];
 
 afterEach(async () => {
   await Promise.all(
-    temporaryPaths
-      .splice(0)
-      .map((path) => rm(path, { force: true, recursive: true })),
+    temporaryPaths.splice(0).map((path) => rm(path, { force: true, recursive: true })),
   );
 });
 
@@ -33,20 +33,10 @@ describe('Maestro paths', () => {
     await mkdir(paths.getBuilderHandoffsPath(SPEC_ID), { recursive: true });
     await mkdir(paths.getVerifierHandoffsPath(SPEC_ID), { recursive: true });
 
-    for (
-      let handoffPassNumber = 1;
-      handoffPassNumber <= 10;
-      handoffPassNumber += 1
-    ) {
+    for (let handoffPassNumber = 1; handoffPassNumber <= 10; handoffPassNumber += 1) {
       // Path lookup only needs directory entries
-      await writeFile(
-        paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber }),
-        '',
-      );
-      await writeFile(
-        paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber }),
-        '',
-      );
+      await writeFile(paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber }), '');
+      await writeFile(paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber }), '');
     }
 
     await expect(paths.getActiveBuilderHandoffPath(SPEC_ID)).resolves.toBe(
@@ -76,26 +66,15 @@ describe('Maestro paths', () => {
 
     expect(paths.getProjectRoot()).toBe(projectRoot);
     expect(paths.getSpecDirectory()).toBe(join(projectRoot, 'custom/specs'));
-    expect(paths.getSpecPath(SPEC_ID)).toBe(
-      join(projectRoot, 'custom/specs', SPEC_ID),
-    );
+    expect(paths.getSpecPath(SPEC_ID)).toBe(join(projectRoot, 'custom/specs', SPEC_ID));
     expect(paths.getSpecFilePath(SPEC_ID)).toBe(
       join(projectRoot, 'custom/specs', SPEC_ID, 'spec.md'),
     );
     expect(paths.getWorkflowPath(SPEC_ID)).toBe(
       join(projectRoot, 'custom/specs', SPEC_ID, 'workflow.json'),
     );
-    expect(
-      paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
-    ).toBe(
-      join(
-        projectRoot,
-        'custom/specs',
-        SPEC_ID,
-        'handoffs',
-        'verifier',
-        'V1.json',
-      ),
+    expect(paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 })).toBe(
+      join(projectRoot, 'custom/specs', SPEC_ID, 'handoffs', 'verifier', 'V1.json'),
     );
   });
 
@@ -126,9 +105,7 @@ describe('Maestro paths', () => {
 
     for (const path of generatedPaths) {
       const pathFromRoot = relative(projectRoot, path);
-      expect(pathFromRoot === '..' || pathFromRoot.startsWith('../')).toBe(
-        false,
-      );
+      expect(pathFromRoot === '..' || pathFromRoot.startsWith('../')).toBe(false);
     }
 
     expect(() => paths.getSpecPath('../outside')).toThrow('Invalid spec ID');

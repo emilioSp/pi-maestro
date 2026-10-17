@@ -50,8 +50,7 @@ export const matchesDelegationRequest = ({
 
   return (
     response.requestId === request.requestId &&
-    (response.ownerRunId === undefined ||
-      response.ownerRunId === request.ownerRunId) &&
+    (response.ownerRunId === undefined || response.ownerRunId === request.ownerRunId) &&
     (response.nodeId === undefined || response.nodeId === request.nodeId)
   );
 };
@@ -65,20 +64,16 @@ export const waitForDelegationResponse = async ({
   piEventsBus,
   request,
 }: WaitForDelegationResponseInput): Promise<SubagentDelegationResponse> => {
-  const { promise, resolve } =
-    Promise.withResolvers<SubagentDelegationResponse>();
+  const { promise, resolve } = Promise.withResolvers<SubagentDelegationResponse>();
 
-  const unsubscribe = piEventsBus.on(
-    SUBAGENT_DELEGATION_RESPONSE_EVENT,
-    (payload) => {
-      if (!matchesDelegationRequest({ request, payload })) {
-        return;
-      }
+  const unsubscribe = piEventsBus.on(SUBAGENT_DELEGATION_RESPONSE_EVENT, (payload) => {
+    if (!matchesDelegationRequest({ request, payload })) {
+      return;
+    }
 
-      // JUSTIFICATION: matchesDelegationRequest accepts only the response for this pi-subagents request.
-      resolve(payload as SubagentDelegationResponse);
-    },
-  );
+    // JUSTIFICATION: matchesDelegationRequest accepts only the response for this pi-subagents request.
+    resolve(payload as SubagentDelegationResponse);
+  });
 
   try {
     try {
@@ -97,9 +92,7 @@ export const waitForDelegationResponse = async ({
   }
 };
 
-export function assertDelegationResponse(
-  response: SubagentDelegationResponse,
-): void {
+export function assertDelegationResponse(response: SubagentDelegationResponse): void {
   if (response.status === DELEGATION_STATUSES.COMPLETED) {
     return;
   }
@@ -121,7 +114,5 @@ export function assertDelegationResponse(
     throw new Error(`Delegation error: ${error}`);
   }
 
-  throw new Error(
-    `Protocol error: unsupported final response status "${response.status}".`,
-  );
+  throw new Error(`Protocol error: unsupported final response status "${response.status}".`);
 }

@@ -1,12 +1,11 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
 import { afterEach, describe, expect, it } from 'vitest';
+
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import {
-  WORKFLOW_PHASES,
-  WORKFLOW_STATE_VERSION,
-} from '#workflow/state/schema.ts';
+import { WORKFLOW_PHASES, WORKFLOW_STATE_VERSION } from '#workflow/state/schema.ts';
 
 const temporaryDirectories: string[] = [];
 
@@ -19,9 +18,7 @@ const createTemporaryDirectory = async (): Promise<string> => {
 
 afterEach(async () => {
   await Promise.all(
-    temporaryDirectories
-      .splice(0)
-      .map((path) => rm(path, { force: true, recursive: true })),
+    temporaryDirectories.splice(0).map((path) => rm(path, { force: true, recursive: true })),
   );
 });
 
@@ -31,9 +28,7 @@ describe('readWorkflowState', () => {
     const path = join(directory, 'workflow.json');
     await writeFile(path, '{broken', 'utf8');
 
-    await expect(readWorkflowState(path)).rejects.toThrow(
-      'Workflow state contains malformed JSON',
-    );
+    await expect(readWorkflowState(path)).rejects.toThrow('Workflow state contains malformed JSON');
 
     await writeFile(
       path,
@@ -45,8 +40,6 @@ describe('readWorkflowState', () => {
       }),
       'utf8',
     );
-    await expect(readWorkflowState(path)).rejects.toThrow(
-      'Invalid workflow state',
-    );
+    await expect(readWorkflowState(path)).rejects.toThrow('Invalid workflow state');
   });
 });

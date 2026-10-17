@@ -5,10 +5,7 @@
 
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
-import type {
-  VerifierFinding,
-  VerifierHandoff,
-} from '#artifacts/verifier-handoff/schema.ts';
+import type { VerifierFinding, VerifierHandoff } from '#artifacts/verifier-handoff/schema.ts';
 import { FINDING_DECISIONS } from '#artifacts/verifier-handoff/schema.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { writeJson } from '#utils/write-json.ts';
@@ -48,20 +45,13 @@ const applyFindingDecisions = ({
     }
 
     if (decisionsById.has(decision.findingId)) {
-      throw new Error(
-        `Duplicate decision for finding "${decision.findingId}".`,
-      );
+      throw new Error(`Duplicate decision for finding "${decision.findingId}".`);
     }
 
     decisionsById.set(decision.findingId, decision);
 
-    if (
-      decision.decision === FINDING_DECISIONS.REJECT &&
-      decision.reason.trim().length === 0
-    ) {
-      throw new Error(
-        `Rejection reason for "${decision.findingId}" must not be empty.`,
-      );
+    if (decision.decision === FINDING_DECISIONS.REJECT && decision.reason.trim().length === 0) {
+      throw new Error(`Rejection reason for "${decision.findingId}" must not be empty.`);
     }
   }
 
@@ -94,15 +84,11 @@ const readFindingWorkflow = async ({
   const state = await readWorkflowState(paths.getWorkflowPath(specId));
 
   if (state.specId !== specId) {
-    throw new Error(
-      `Workflow spec ID mismatch: expected "${specId}", found "${state.specId}".`,
-    );
+    throw new Error(`Workflow spec ID mismatch: expected "${specId}", found "${state.specId}".`);
   }
 
   if (state.phase !== WORKFLOW_PHASES.FINDING_DECISIONS) {
-    throw new Error(
-      `Finding resolution requires finding-decisions state, found "${state.phase}".`,
-    );
+    throw new Error(`Finding resolution requires finding-decisions state, found "${state.phase}".`);
   }
 
   const handoff = await readVerifierHandoff({
@@ -111,23 +97,17 @@ const readFindingWorkflow = async ({
   });
 
   if (handoff.findings.length === 0) {
-    throw new Error(
-      'Finding resolution requires at least one current finding.',
-    );
+    throw new Error('Finding resolution requires at least one current finding.');
   }
 
   if (handoff.findings.some(({ decision }) => decision !== null)) {
-    throw new Error(
-      'Current verifier findings already contain an owner decision.',
-    );
+    throw new Error('Current verifier findings already contain an owner decision.');
   }
 
   return { state, handoff };
 };
 
-const getSavedFindingDecision = (
-  decision: FindingDecision | undefined,
-): SavedFindingDecision => {
+const getSavedFindingDecision = (decision: FindingDecision | undefined): SavedFindingDecision => {
   if (decision?.decision === FINDING_DECISIONS.REVISE_SPEC) {
     return {
       decision: FINDING_DECISIONS.REVISE_SPEC,

@@ -4,6 +4,7 @@
  */
 
 import { relative } from 'node:path';
+
 import { isPathWithinOrEqual } from '#utils/path-within-or-equal.ts';
 
 type IsPathStrictlyWithinInput = {
@@ -11,9 +12,5 @@ type IsPathStrictlyWithinInput = {
   path: string;
 };
 
-export const isPathStrictlyWithin = ({
-  parent,
-  path,
-}: IsPathStrictlyWithinInput): boolean =>
-  relative(parent, path) !== '' &&
-  isPathWithinOrEqual({ parent, candidate: path });
+export const isPathStrictlyWithin = ({ parent, path }: IsPathStrictlyWithinInput): boolean =>
+  relative(parent, path) !== '' && isPathWithinOrEqual({ parent, candidate: path });

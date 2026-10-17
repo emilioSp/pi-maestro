@@ -4,15 +4,17 @@
  */
 
 import { randomUUID } from 'node:crypto';
+
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import type { SubagentDelegationRequest } from 'pi-subagents/delegation';
 import { Type } from 'typebox';
+
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import type { VerifierHandoff } from '#artifacts/verifier-handoff/schema.ts';
 import { AGENTS } from '#config/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
-import type { MaestroPaths } from '#MaestroPaths.ts';
 import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
+import type { MaestroPaths } from '#MaestroPaths.ts';
 import {
   assertDelegationResponse,
   waitForDelegationResponse,
@@ -65,9 +67,7 @@ const readTerminalVerifierResult = async ({
     state.phase !== WORKFLOW_PHASES.SIMPLIFIER_RUNNING &&
     state.phase !== WORKFLOW_PHASES.FINDING_DECISIONS
   ) {
-    throw new Error(
-      `Verifier returned with unexpected workflow phase "${state.phase}".`,
-    );
+    throw new Error(`Verifier returned with unexpected workflow phase "${state.phase}".`);
   }
 
   const handoff = await readVerifierHandoff({
@@ -81,9 +81,7 @@ const readTerminalVerifierResult = async ({
       : WORKFLOW_PHASES.SIMPLIFIER_RUNNING;
 
   if (state.phase !== expectedPhase) {
-    throw new Error(
-      `Verifier handoff findings do not match workflow phase "${state.phase}".`,
-    );
+    throw new Error(`Verifier handoff findings do not match workflow phase "${state.phase}".`);
   }
 
   return {
@@ -107,15 +105,11 @@ const readVerifierResult = async ({
     const state = await readWorkflowState(paths.getWorkflowPath(specId));
 
     if (state.specId !== specId) {
-      throw new Error(
-        `Workflow spec ID mismatch: expected "${specId}", found "${state.specId}".`,
-      );
+      throw new Error(`Workflow spec ID mismatch: expected "${specId}", found "${state.specId}".`);
     }
 
     if (state.phase === WORKFLOW_PHASES.VERIFIER_RUNNING) {
-      throw new Error(
-        'The verifier returned without recording a valid terminal handoff.',
-      );
+      throw new Error('The verifier returned without recording a valid terminal handoff.');
     }
 
     return await readTerminalVerifierResult({

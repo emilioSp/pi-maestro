@@ -5,9 +5,7 @@
 
 import { fileURLToPath } from 'node:url';
 
-const README_PATH = fileURLToPath(
-  new URL('../../../README.md', import.meta.url),
-);
+const README_PATH = fileURLToPath(new URL('../../../README.md', import.meta.url));
 
 const DOCS_PATH = fileURLToPath(new URL('../../../docs/', import.meta.url));
 

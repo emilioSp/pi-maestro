@@ -5,6 +5,7 @@
 
 import type { Theme } from '@earendil-works/pi-coding-agent';
 import { describe, expect, it } from 'vitest';
+
 import {
   formatMaestroStatus,
   WORKFLOW_PHASE_COLORS,
@@ -25,9 +26,7 @@ const SPEC_ID = '20250101-000000-status-test';
 
 describe('Maestro status', () => {
   it('given Maestro is disabled when status text is requested then no status text is returned', () => {
-    expect(
-      formatMaestroStatus({ active: false, workflow: null, theme }),
-    ).toBeUndefined();
+    expect(formatMaestroStatus({ active: false, workflow: null, theme })).toBeUndefined();
   });
 
   it('given Maestro is active without a workflow when status text is requested then it shows Maestro active and No active spec', () => {

@@ -9,9 +9,7 @@ import {
 } from '#artifacts/builder-handoff/schema.ts';
 import { WORKFLOW_EVENTS, type WorkflowEvent } from '#workflow/state/schema.ts';
 
-export const getWorkflowEventByBuilderHandoff = ({
-  status,
-}: BuilderHandoff): WorkflowEvent => {
+export const getWorkflowEventByBuilderHandoff = ({ status }: BuilderHandoff): WorkflowEvent => {
   if (status === BUILDER_HANDOFF_STATUSES.DONE) {
     return WORKFLOW_EVENTS.BUILDER_DONE;
   }

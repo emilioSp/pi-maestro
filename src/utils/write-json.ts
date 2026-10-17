@@ -10,10 +10,7 @@ type WriteJsonInput = {
   data: unknown;
 };
 
-export const writeJson = async ({
-  path,
-  data,
-}: WriteJsonInput): Promise<void> => {
+export const writeJson = async ({ path, data }: WriteJsonInput): Promise<void> => {
   const content = JSON.stringify(data, null, 2);
 
   if (content === undefined) {

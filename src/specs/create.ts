@@ -4,6 +4,7 @@
  */
 
 import { mkdir, writeFile } from 'node:fs/promises';
+
 import { createSpecId } from '#ids/createSpecId.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { loadSpecTemplate, renderSpecTemplate } from '#specs/template.ts';
