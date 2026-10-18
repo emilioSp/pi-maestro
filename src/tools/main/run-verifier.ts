@@ -22,7 +22,7 @@ import {
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
+import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 
 export const RUN_VERIFIER_TOOL = {
@@ -52,46 +52,6 @@ type VerifierRunResult = {
   handoff: VerifierHandoff;
 };
 
-type ReadTerminalVerifierResultInput = {
-  paths: MaestroPaths;
-  specId: string;
-  state: WorkflowState;
-};
-
-const readTerminalVerifierResult = async ({
-  paths,
-  specId,
-  state,
-}: ReadTerminalVerifierResultInput): Promise<VerifierRunResult> => {
-  if (
-    state.phase !== WORKFLOW_PHASES.SIMPLIFIER_RUNNING &&
-    state.phase !== WORKFLOW_PHASES.FINDING_DECISIONS
-  ) {
-    throw new Error(`Verifier returned with unexpected workflow phase "${state.phase}".`);
-  }
-
-  const handoff = await readVerifierHandoff({
-    path: await paths.getActiveVerifierHandoffPath(specId),
-    specId,
-  });
-
-  const expectedPhase =
-    handoff.findings.length > 0
-      ? WORKFLOW_PHASES.FINDING_DECISIONS
-      : WORKFLOW_PHASES.SIMPLIFIER_RUNNING;
-
-  if (state.phase !== expectedPhase) {
-    throw new Error(`Verifier handoff findings do not match workflow phase "${state.phase}".`);
-  }
-
-  return {
-    specId,
-    handoff,
-    outcome: state.phase,
-    phase: state.phase,
-  };
-};
-
 type ReadVerifierResultInput = {
   paths: MaestroPaths;
   specId: string;
@@ -112,11 +72,33 @@ const readVerifierResult = async ({
       throw new Error('The verifier returned without recording a valid terminal handoff.');
     }
 
-    return await readTerminalVerifierResult({
-      paths,
+    if (
+      state.phase !== WORKFLOW_PHASES.SIMPLIFIER_RUNNING &&
+      state.phase !== WORKFLOW_PHASES.FINDING_DECISIONS
+    ) {
+      throw new Error(`Verifier returned with unexpected workflow phase "${state.phase}".`);
+    }
+
+    const handoff = await readVerifierHandoff({
+      path: await paths.getActiveVerifierHandoffPath(specId),
       specId,
-      state,
     });
+
+    const expectedPhase =
+      handoff.findings.length > 0
+        ? WORKFLOW_PHASES.FINDING_DECISIONS
+        : WORKFLOW_PHASES.SIMPLIFIER_RUNNING;
+
+    if (state.phase !== expectedPhase) {
+      throw new Error(`Verifier handoff findings do not match workflow phase "${state.phase}".`);
+    }
+
+    return {
+      specId,
+      handoff,
+      outcome: state.phase,
+      phase: state.phase,
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
 

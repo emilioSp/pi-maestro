@@ -87,15 +87,7 @@ const isReplyWithRequestId = (
 ): reply is Record<string, unknown> & { requestId: string } =>
   isRecord(reply) && typeof reply.requestId === 'string';
 
-type SuccessfulPingReply = {
-  version: typeof SUBAGENT_PING.VERSION;
-  requestId: string;
-  method: typeof SUBAGENT_PING.METHOD;
-  success: true;
-  data: { version: typeof SUBAGENT_PING.VERSION };
-};
-
-function assertSuccessfulPingReply(reply: unknown): asserts reply is SuccessfulPingReply {
+function assertSuccessfulPingReply(reply: unknown): void {
   if (
     !isReplyWithRequestId(reply) ||
     reply.version !== SUBAGENT_PING.VERSION ||

@@ -26,7 +26,7 @@ import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
+import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 
 export const RUN_BUILDER_TOOL = {
   NAME: 'maestro_run_builder',
@@ -74,65 +74,51 @@ const readBuilderResult = async ({
       throw new Error(`Workflow spec ID mismatch: expected "${specId}", found "${state.specId}".`);
     }
 
-    return await readTerminalBuilderResult({ paths, specId, state });
+    if (
+      state.phase !== WORKFLOW_PHASES.READY_FOR_VERIFIER &&
+      state.phase !== WORKFLOW_PHASES.ESCALATION_DECISIONS
+    ) {
+      throw new Error(`Builder returned with unexpected workflow phase "${state.phase}".`);
+    }
+
+    const handoff = await readBuilderHandoff({
+      path: await paths.getActiveBuilderHandoffPath(specId),
+      specId,
+    });
+
+    const expectedStatus =
+      state.phase === WORKFLOW_PHASES.READY_FOR_VERIFIER
+        ? BUILDER_HANDOFF_STATUSES.DONE
+        : BUILDER_HANDOFF_STATUSES.ESCALATION;
+
+    if (handoff.status !== expectedStatus) {
+      throw new Error(`Builder handoff status does not match workflow phase "${state.phase}".`);
+    }
+
+    if (state.phase === WORKFLOW_PHASES.READY_FOR_VERIFIER) {
+      return {
+        outcome: BUILDER_HANDOFF_STATUSES.DONE,
+        specId,
+        phase: state.phase,
+        handoff,
+      };
+    }
+
+    if (handoff.escalations.some(({ resolution }) => resolution !== null)) {
+      throw new Error('Current builder escalations already contain an owner resolution.');
+    }
+
+    return {
+      outcome: BUILDER_HANDOFF_STATUSES.ESCALATION,
+      specId,
+      phase: state.phase,
+      handoff,
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
 
     throw new Error(`Builder protocol error: ${message}.`, { cause: error });
   }
-};
-
-type ReadTerminalBuilderResultInput = {
-  paths: MaestroPaths;
-  specId: string;
-  state: WorkflowState;
-};
-
-const readTerminalBuilderResult = async ({
-  paths,
-  specId,
-  state,
-}: ReadTerminalBuilderResultInput): Promise<BuilderRunResult> => {
-  if (
-    state.phase !== WORKFLOW_PHASES.READY_FOR_VERIFIER &&
-    state.phase !== WORKFLOW_PHASES.ESCALATION_DECISIONS
-  ) {
-    throw new Error(`Builder returned with unexpected workflow phase "${state.phase}".`);
-  }
-
-  const handoff = await readBuilderHandoff({
-    path: await paths.getActiveBuilderHandoffPath(specId),
-    specId,
-  });
-
-  const expectedStatus =
-    state.phase === WORKFLOW_PHASES.READY_FOR_VERIFIER
-      ? BUILDER_HANDOFF_STATUSES.DONE
-      : BUILDER_HANDOFF_STATUSES.ESCALATION;
-
-  if (handoff.status !== expectedStatus) {
-    throw new Error(`Builder handoff status does not match workflow phase "${state.phase}".`);
-  }
-
-  if (state.phase === WORKFLOW_PHASES.READY_FOR_VERIFIER) {
-    return {
-      outcome: BUILDER_HANDOFF_STATUSES.DONE,
-      specId,
-      phase: state.phase,
-      handoff,
-    };
-  }
-
-  if (handoff.escalations.some(({ resolution }) => resolution !== null)) {
-    throw new Error('Current builder escalations already contain an owner resolution.');
-  }
-
-  return {
-    outcome: BUILDER_HANDOFF_STATUSES.ESCALATION,
-    specId,
-    phase: state.phase,
-    handoff,
-  };
 };
 
 const formatBuilderResult = (result: BuilderRunResult): string => {
