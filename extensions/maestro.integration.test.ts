@@ -868,8 +868,9 @@ describe('main Maestro extension', () => {
     paths,
     phase,
   }: PrepareSpecRevisionPhaseInput): Promise<void> => {
+    await prepareBuilderRun({ paths, specId: SPEC_ID });
+
     if (phase === WORKFLOW_PHASES.ESCALATION_DECISIONS) {
-      await prepareBuilderRun({ paths, specId: SPEC_ID });
       await completeBuilderPass({
         paths,
         specId: SPEC_ID,
@@ -880,7 +881,6 @@ describe('main Maestro extension', () => {
     }
 
     // phase === WORKFLOW_PHASES.FINDING_DECISIONS
-    await prepareBuilderRun({ paths, specId: SPEC_ID });
     await completeBuilderPass({
       paths,
       specId: SPEC_ID,
