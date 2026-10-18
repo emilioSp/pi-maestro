@@ -50,7 +50,7 @@ flowchart TD
     buildOutcome{Builder outcome}
     verify[Verifier checks live project files]
     findings{Findings?}
-    simplify[Simplifier refactors accepted code or skips if Git is unavailable]
+    simplify[Simplifier refactors accepted code]
     candidate[Candidate ready]
     summary[Maestro summarizes results]
     review[Owner performs the final review]
