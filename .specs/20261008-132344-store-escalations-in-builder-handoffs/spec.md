@@ -19,12 +19,20 @@ Model the implementation as if standalone escalation storage never existed. Remo
 
 ### REQ1: Save each builder outcome in a numbered handoff
 
+Delta: modified
+
+Before: The builder handoff schema supported done and failed reports, but no escalation report variant ([c891474:src/artifacts/builder-handoff/schema.ts](https://github.com/emiliosp/pi-maestro/blob/c891474bf8cf2a100bb5a145c793020daeb78f3d/src/artifacts/builder-handoff/schema.ts)).
+
 Each builder pass that returns `done` or `escalation` saves the next `handoffs/builder/B<number>.json` file.
 These handoffs contain `version`, `specId`, `status`, `summary`, `acceptanceCriteria`, `notes`, and `escalations`.
 
 Verified by: [AC1](#ac1-one-builder-handoff-contains-multiple-escalation-questions); [AC6](#ac6-builder-outcomes-use-the-existing-phase-transitions); [AC8](#ac8-builder-run-results-contain-the-saved-active-handoff)
 
 ### REQ2: Validate builder outcomes and preserve actual probe results
+
+Delta: modified
+
+Before: Done reports had no escalations field, and the schema had no escalation report variant ([c891474:src/artifacts/builder-handoff/schema.ts](https://github.com/emiliosp/pi-maestro/blob/c891474bf8cf2a100bb5a145c793020daeb78f3d/src/artifacts/builder-handoff/schema.ts)).
 
 An `escalation` outcome requires at least one escalation. Criterion results record the actual probe outcomes, including incomplete probes.
 A `done` outcome requires `escalations: []`. Keep the existing requirement that every recorded probe passes.
@@ -34,21 +42,11 @@ Its handoff still records every spec criterion and its actual result.
 
 Verified by: [AC5](#ac5-invalid-builder-submissions-perform-no-protocol-write); [AC6](#ac6-builder-outcomes-use-the-existing-phase-transitions)
 
-### REQ3: Keep handoff format versions unchanged
-
-Keep the `version` field in builder and verifier handoffs at `1.0.0`, despite the breaking change.
-
-Verified by: Not established. No matching AC or exact existing test scenario has been confirmed.
-
-### REQ4: Reuse or update existing tests before adding coverage
-
-Do not add new tests if a current test already covers an acceptance criterion. Use that test as evidence.
-If a current test needs changes to cover the required behavior, update it instead of adding a duplicate test.
-Add a new test only when no current test covers the required scenario.
-
-Verified by: Not established. No matching AC or exact existing test scenario has been confirmed.
-
 ### REQ5: Embed questions and restart their IDs in each handoff
+
+Delta: modified
+
+Before: Each question was a standalone artifact carrying its own version and specId ([c891474:src/artifacts/escalation/schema.ts](https://github.com/emiliosp/pi-maestro/blob/c891474bf8cf2a100bb5a145c793020daeb78f3d/src/artifacts/escalation/schema.ts)).
 
 Each escalation contains `id`, `question`, `context`, `options`, `recommendation`, `notes`, and `resolution`.
 The enclosing handoff owns `version` and `specId`. Do not repeat those fields inside an escalation.
@@ -60,6 +58,10 @@ Verified by: [AC1](#ac1-one-builder-handoff-contains-multiple-escalation-questio
 
 ### REQ6: Validate options, recommendations, and unresolved submissions
 
+Delta: modified
+
+Before: Options and recommendations were validated on standalone escalations; builder handoff submissions had no escalation variant ([c891474:src/artifacts/escalation/assertEscalation.ts](https://github.com/emiliosp/pi-maestro/blob/c891474bf8cf2a100bb5a145c793020daeb78f3d/src/artifacts/escalation/assertEscalation.ts); [c891474:src/artifacts/builder-handoff/schema.ts](https://github.com/emiliosp/pi-maestro/blob/c891474bf8cf2a100bb5a145c793020daeb78f3d/src/artifacts/builder-handoff/schema.ts)).
+
 Each escalation has at least one option. Each option contains `id`, `description`, `consequences`, and `nextStep`.
 Option IDs are unique within that escalation.
 A recommendation is `null` or contains `optionId` and `reason`. Its option ID must exist in that escalation.
@@ -69,6 +71,10 @@ Verified by: [AC1](#ac1-one-builder-handoff-contains-multiple-escalation-questio
 
 ### REQ7: Require an explicit owner decision and reason
 
+Delta: modified
+
+Before: Resolution decision and reason required only minLength: 1, not non-whitespace text ([c891474:src/artifacts/escalation/schema.ts](https://github.com/emiliosp/pi-maestro/blob/c891474bf8cf2a100bb5a145c793020daeb78f3d/src/artifacts/escalation/schema.ts)).
+
 An owner resolution contains `selectedOptionId`, `decision`, and `reason`.
 The decision and reason must contain non-whitespace text.
 `selectedOptionId` is an option ID from that escalation or `null` for an owner decision outside the listed options.
@@ -77,6 +83,10 @@ Verified by: [AC3](#ac3-batch-decisions-update-only-the-active-handoffs-resoluti
 
 ### REQ8: Resolve the complete active batch without altering other content
 
+Delta: modified
+
+Before: Maestro resolved one standalone escalation through maestro_resolve_escalation ([c891474:src/maestro/instructions/getMaestroInstructions.ts](https://github.com/emiliosp/pi-maestro/blob/c891474bf8cf2a100bb5a145c793020daeb78f3d/src/maestro/instructions/getMaestroInstructions.ts)).
+
 When the contract remains unchanged, record exactly one resolution for every escalation in the active builder handoff, in one call.
 Save the resolutions inside that handoff. Preserve its other content and all earlier handoffs.
 Reject missing, duplicate, or unknown escalation IDs and invalid option references before any protocol write.
@@ -84,14 +94,11 @@ Reject resolution attempts outside `escalation-decision`, against a non-escalati
 
 Verified by: [AC3](#ac3-batch-decisions-update-only-the-active-handoffs-resolutions); [AC4](#ac4-invalid-decision-batches-perform-no-protocol-write); [AC10](#ac10-batch-resolution-saves-ready-for-builder)
 
-### REQ9: Keep earlier questions historical after a spec revision
-
-Keep the existing spec revision path. After an approved contract revision, earlier unresolved escalations remain historical context.
-They do not block a new builder pass and do not require resolutions against the revised contract.
-
-Verified by: [AC3](#ac3-batch-decisions-update-only-the-active-handoffs-resolutions)
-
 ### REQ10: Remove standalone escalation storage
+
+Delta: removed
+
+Before: Standalone escalation paths were part of MaestroPaths ([c891474:src/MaestroPaths.ts](https://github.com/emiliosp/pi-maestro/blob/c891474bf8cf2a100bb5a145c793020daeb78f3d/src/MaestroPaths.ts)).
 
 Workflow creation, submission, result reading, and resolution use only builder handoffs for escalations.
 Do not create or use `handoffs/escalations/` or standalone escalation files.
@@ -102,6 +109,10 @@ Verified by: [AC7](#ac7-runtime-tools-and-instructions-use-the-unified-handoff-a
 Coverage gap: AC7 inspects tools and instructions; creation results and path APIs have no explicit probe here.
 
 ### REQ11: Return only a consistent saved active builder handoff
+
+Delta: modified
+
+Before: An escalation run result returned a standalone escalation rather than a builder handoff ([c891474:src/tools/main/run-builder.ts](https://github.com/emiliosp/pi-maestro/blob/c891474bf8cf2a100bb5a145c793020daeb78f3d/src/tools/main/run-builder.ts)).
 
 `maestro_run_builder` returns the saved active builder handoff for `done` and `escalation`, including all escalations when present.
 It checks the handoff spec identity, schema, and status against the saved phase.

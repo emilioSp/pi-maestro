@@ -15,6 +15,8 @@ Out of scope: changes to the existing escalation route, finding rejection and co
 
 ### REQ1: Accept explicit revision decisions with nonblank details
 
+Delta: added
+
 Add revise-spec as a third finding decision in the existing maestro_resolve_findings operation.
 Each revision decision includes findingId, decision set to revise-spec, reason, and specChange describing the agreed requirement change.
 The reason and specChange must contain nonwhitespace text.
@@ -22,6 +24,10 @@ The reason and specChange must contain nonwhitespace text.
 Verified by: [AC1](#ac1-a-finding-driven-revision-returns-to-drafting-spec); [AC6](#ac6-incomplete-revision-details-are-rejected-without-saving)
 
 ### REQ2: Save the complete batch only in the active report
+
+Delta: modified
+
+Before: The active verifier report recorded only reject and fix-code decisions ([749f96b:src/workflow/verifier/resolveFindings.ts](https://github.com/emiliosp/pi-maestro/blob/749f96bbda0c9373c1757471b55c564c1db9877a/src/workflow/verifier/resolveFindings.ts)).
 
 Record the complete current decision batch in the active verifier handoff before saving the next phase.
 Save each revision decision, reason, and specChange in that finding's existing decision object.
@@ -31,6 +37,8 @@ Verified by: [AC4](#ac4-a-mixed-batch-preserves-every-decision-in-its-original-r
 
 ### REQ3: Give revision priority before editing the spec
 
+Delta: added
+
 If any decision is revise-spec, move the same workflow from findings-decision to drafting-spec before editing the spec.
 Revision takes priority over fix-code and reject in a mixed batch, while all submitted decisions are saved.
 This action does not approve the spec or start an agent.
@@ -39,20 +47,18 @@ Verified by: [AC1](#ac1-a-finding-driven-revision-returns-to-drafting-spec); [AC
 
 ### REQ4: Require drafting and renewed approval for the same spec
 
+Delta: modified
+
+Before: Revision and renewed approval could occur directly in findings-decision ([749f96b:src/maestro/instructions/getMaestroInstructions.ts](https://github.com/emiliosp/pi-maestro/blob/749f96bbda0c9373c1757471b55c564c1db9877a/src/maestro/instructions/getMaestroInstructions.ts); [749f96b:src/workflow/transitions.ts](https://github.com/emiliosp/pi-maestro/blob/749f96bbda0c9373c1757471b55c564c1db9877a/src/workflow/transitions.ts)).
+
 Revise and review the same spec in drafting-spec. Require renewed GREEN FLAG before a separate approval moves it to ready-for-builder.
 Spec approval must be allowed only from drafting-spec. Direct approval from findings-decision is rejected without changing saved files.
 
 Verified by: [AC2](#ac2-direct-approval-from-findings-decision-is-rejected); [AC3](#ac3-a-revised-spec-receives-approval-separately-from-the-revision-choice)
 
-### REQ5: Preserve no-revision outcomes
-
-Keep the existing outcomes when no spec change is needed: rejecting every finding reaches candidate-ready, while any fix-code decision returns to ready-for-builder.
-
-Verified by: [src/workflow/verifier/resolveFindings.integration.test.ts](../../src/workflow/verifier/resolveFindings.integration.test.ts), scenario "given one finding is rejected and another requires a code fix when the builder and verifier run again then new numbered reports are saved and earlier reports retain both decisions"
-
-Coverage gap: The historical reject-all destination is candidate-ready; current tests instead expect simplifier-running. No current exact test is linked to that historical outcome.
-
 ### REQ6: Preserve existing finding validation and reject incomplete revisions
+
+Delta: modified
 
 Preserve existing finding batch validation and numbered handoff history. Existing reports and resolution calls without revise-spec remain valid.
 Missing or blank revision fields reject submission before any saved file changes.
@@ -62,6 +68,8 @@ Verified by: [AC6](#ac6-incomplete-revision-details-are-rejected-without-saving)
 Coverage gap: AC6 covers new revision-field validation, not every preserved batch-validation and history scenario.
 
 ### REQ7: Explain revision separately from fixes and rejections
+
+Delta: modified
 
 Tool responses must distinguish findings requiring spec revision from findings assigned for code fixes or rejected.
 For a revision batch, report drafting-spec and direct revision of the same spec and renewed approval before a builder run.
@@ -81,6 +89,10 @@ A separate revise-spec decision records why the requirements must change without
 
 Relevant boundaries: src/artifacts/verifier-handoff/schema.ts defines saved decisions, src/tools/main/resolve-findings.ts defines tool input and results, and src/workflow/verifier/resolveFindings.ts maps submitted decisions into the saved report.
 The mapper and event selection must preserve the new decision rather than treating it as fix-code.
+
+Historical coverage note (original REQ5):
+
+Coverage gap: The historical reject-all destination is candidate-ready; current tests instead expect simplifier-running. No current exact test is linked to that historical outcome.
 
 ## 4. Acceptance criteria
 

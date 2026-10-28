@@ -18,11 +18,15 @@ Do not test the pi-subagents ping implementation. That package owns its tests. V
 
 ### REQ1: Require one successful ping within the activation deadline
 
+Delta: added
+
 Activation requires a matching successful version 1 ping reply in the current Pi process, in addition to the existing activation checks. Each activation attempt that reaches the ping check sends one request and waits at most 2 seconds (2000 ms). Do not add retry code or a test dedicated to the absence of retries.
 
 Verified by: [AC1](#ac1-a-successful-ping-permits-activation); [AC2](#ac2-no-reply-produces-the-installation-error-at-the-deadline); [AC4](#ac4-an-activation-attempt-makes-no-automatic-retry)
 
 ### REQ2: Reject ping failures with the installation error
+
+Delta: added
 
 A ping error, unsuccessful reply, invalid reply on the matching channel, or timeout prevents activation. The UI error must include: "Maestro flow requires pi-subagents installed in the Pi environment." Diagnostic details can follow this sentence. Existing non-ping activation errors retain their meaning.
 
@@ -30,25 +34,21 @@ Verified by: [AC2](#ac2-no-reply-produces-the-installation-error-at-the-deadline
 
 ### REQ3: Isolate requests and ignore late replies
 
+Delta: added
+
 A reply for another request does not satisfy the check. A late reply cannot activate Maestro after the attempt fails. A later owner activation attempt makes a fresh request.
 
 Verified by: Not established. No matching AC or exact existing test scenario has been confirmed.
 
 ### REQ4: Keep the availability check outside agents and model requests
 
+Delta: added
+
 The check must not start an agent or make a model request. Preserve the existing UI-only activation notice and absence of activation entries in session history.
 
 Verified by: [AC5](#ac5-activation-remains-outside-session-history); [extensions/maestro.integration.test.ts](../../extensions/maestro.integration.test.ts), scenario "given valid activation checks when Maestro is enabled and later re-enabled then its tools, instructions, and status are available without duplicate registration, automatic model calls, or new session history"
 
 Coverage gap: The linked test checks model requests and history, but does not explicitly count agent launches.
-
-### REQ5: Keep deactivation and existing environment checks unchanged
-
-Turning Maestro off remains independent of availability checks. Preserve existing trust, agent discovery, configuration, and model checks. Do not change saved workflow files or product files during activation.
-
-Verified by: [AC6](#ac6-turning-maestro-off-does-not-ping); [AC7](#ac7-existing-activation-checks-still-reject-invalid-environments)
-
-Coverage gap: AC7 exercises trust only; the other environment checks and preservation of saved and product files are not all covered by these ACs.
 
 ## 3. Technical decisions
 
@@ -59,6 +59,10 @@ A successful reply has matching `requestId`, `version: 1`, `method: "ping"`, `su
 The installed pi-subagents 0.78.0 handles ping directly without calling its agent executor. Evidence: `node_modules/pi-subagents/src/extension/rpc.js`, `handleRequest`, and the Extension RPC section of `node_modules/pi-subagents/skills/pi-subagents/references/management-authoring-rpc.md`.
 
 Integrate with the existing activation path in `extensions/maestro.ts` and its environment checks. `src/maestro/checks/assertEnvironment.ts` currently imports preflight code, which does not confirm that the extension responds. Existing offline Pi sessions expose the event bus in `tests/support/pi-session.ts`, so controlled consumer checks need no upstream ping execution.
+
+Historical coverage note (original REQ5):
+
+Coverage gap: AC7 exercises trust only; the other environment checks and preservation of saved and product files are not all covered by these ACs.
 
 ## 4. Acceptance criteria
 

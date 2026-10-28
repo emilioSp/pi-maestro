@@ -16,6 +16,10 @@ Coverage labels and exclusion of scenarios already covered by tests apply to thi
 
 ### REQ1: Record every owner answer using the existing resolution fields
 
+Delta: modified
+
+Before: A contract-changing answer followed revision instead of recording the escalation resolution ([749f96b:src/maestro/instructions/getMaestroInstructions.ts](https://github.com/emiliosp/pi-maestro/blob/749f96bbda0c9373c1757471b55c564c1db9877a/src/maestro/instructions/getMaestroInstructions.ts)).
+
 Use maestro_resolve_escalations for the complete current decision batch, whether or not the spec must change.
 Each decision retains escalationId, selectedOptionId, decision, and reason.
 Save the chosen solution and the owner's reason in the corresponding question's existing resolution fields.
@@ -26,6 +30,8 @@ Verified by: [AC1](#ac1-revision-answers-remain-in-the-original-handoff)
 
 ### REQ2: Save only active resolution fields and retain batch validation
 
+Delta: modified
+
 Save all validated resolutions in the active builder handoff before saving the next workflow phase.
 Only its resolution fields change. Earlier numbered handoffs remain unchanged.
 Preserve existing validation for complete batches, IDs, options, nonblank answers and reasons, incompatible handoffs, phases, and already resolved questions.
@@ -34,6 +40,10 @@ Invalid submissions leave saved files unchanged.
 Verified by: [AC1](#ac1-revision-answers-remain-in-the-original-handoff); [src/tools/main/resolve-escalations.integration.test.ts](../../src/tools/main/resolve-escalations.integration.test.ts), scenario "given an escalation decision batch %s when submitted then resolution fails without changing the builder report or workflow"; [src/tools/main/resolve-escalations.integration.test.ts](../../src/tools/main/resolve-escalations.integration.test.ts), scenario "given $description when escalation decisions are submitted then resolution fails without changing the builder report or workflow"
 
 ### REQ3: Route the batch according to whether revision is required
+
+Delta: modified
+
+Before: Revision and renewed approval occurred directly in escalation-decision ([749f96b:src/maestro/instructions/getMaestroInstructions.ts](https://github.com/emiliosp/pi-maestro/blob/749f96bbda0c9373c1757471b55c564c1db9877a/src/maestro/instructions/getMaestroInstructions.ts)).
 
 | Owner decision batch | Saved next phase | Next action |
 |---|---|---|
@@ -44,6 +54,10 @@ Verified by: [AC1](#ac1-revision-answers-remain-in-the-original-handoff); [src/t
 Verified by: [AC2](#ac2-a-revision-batch-reports-drafting-spec-as-the-next-state); [AC3](#ac3-recorded-revision-answers-permit-separate-renewed-approval); [AC4](#ac4-both-resolution-routes-use-the-central-transition-definitions); [src/tools/main/resolve-escalations.integration.test.ts](../../src/tools/main/resolve-escalations.integration.test.ts), scenario "given unanswered builder questions when the owner answers all without a spec change then answers are saved in B1, the builder can run again, and new questions restart at E1 in B2"
 
 ### REQ4: Keep answer recording separate from approval and execution
+
+Delta: modified
+
+Before: MARK_SPEC_READY accepted escalation-decision as well as drafting-spec and findings-decision ([749f96b:src/workflow/transitions.ts](https://github.com/emiliosp/pi-maestro/blob/749f96bbda0c9373c1757471b55c564c1db9877a/src/workflow/transitions.ts)).
 
 Recording answers neither approves a revised spec nor launches an agent.
 It never moves directly to ready-for-verifier. That phase still requires a completed builder pass.
@@ -56,6 +70,8 @@ Coverage gap: Preservation of direct approval from findings-decision is historic
 
 ### REQ5: Explain both routes and retain the revised contract as authority
 
+Delta: modified
+
 Tool text and structured results must report the saved next phase and its corresponding next action.
 Maestro guidance and human documentation must describe both routes, including recording revision answers before revising the spec.
 After revision, the approved spec controls subsequent work. Earlier questions and answers remain historical context.
@@ -63,6 +79,8 @@ After revision, the approved spec controls subsequent work. Earlier questions an
 Verified by: [AC2](#ac2-a-revision-batch-reports-drafting-spec-as-the-next-state); [AC5](#ac5-guidance-describes-the-recorded-revision-route)
 
 ### REQ6: Require an explicit boolean revision-routing flag
+
+Delta: added
 
 Add required batch-level boolean specChangeRequired to maestro_resolve_escalations alongside specId and decisions.
 Use true when any answer requires a spec revision and false when none does.

@@ -10,6 +10,8 @@ This change concerns status presentation and activation feedback. It does not ch
 
 ### REQ1: Show the configured agent settings on activation
 
+Delta: added
+
 After each successful `/maestro` activation, show one theme-colored UI-only information notice with three lines:
 
 ```text
@@ -26,11 +28,15 @@ Coverage gap: The activation notice's theme styling is not explicitly checked by
 
 ### REQ2: Keep activation feedback outside AI requests and saved context
 
+Delta: added
+
 The notice does not start an AI response, enter model context, or persist in session history.
 
 Verified by: [AC3](#ac3-activation-feedback-does-not-enter-session-history); [AC4](#ac4-activation-feedback-does-not-start-an-ai-response); [AC11](#ac11-the-activation-notice-does-not-enter-model-context)
 
 ### REQ3: Show the notice only after successful activation
+
+Delta: added
 
 Do not show it on deactivation, failed activation, status refresh, or session start. Existing activation errors remain unchanged.
 
@@ -39,6 +45,10 @@ Verified by: [AC5](#ac5-reactivation-shows-the-notice-again)
 Coverage gap: Failed activation, status refresh, session start, and unchanged activation errors are not all exercised by AC5.
 
 ### REQ4: Shorten only the displayed spec ID
+
+Delta: modified
+
+Before: Status displayed the full spec ID ([68bd11f:src/maestro/status/formatMaestroStatus.ts](https://github.com/emiliosp/pi-maestro/blob/68bd11f69b40b7baecc5ee082f248d8e9750796c/src/maestro/status/formatMaestroStatus.ts)).
 
 Keep the existing status structure, with a shortened ID and phase icon:
 
@@ -50,13 +60,11 @@ Keep the original `YYYYMMDD-HHMMSS` prefix. Retain at most 10 characters from th
 
 Verified by: [AC6](#ac6-long-spec-ids-have-a-shortened-display); [AC7](#ac7-short-spec-ids-have-no-cut-marker); [AC12](#ac12-display-shortening-preserves-the-workflows-full-spec-id)
 
-### REQ5: Keep status free of agent settings and hide it when inactive
-
-Do not include agent model or thinking details in the status. With no selected spec, keep `Maestro active · No active spec` without a phase icon. Hide the status when Maestro is off.
-
-Verified by: [AC9](#ac9-maestro-off-has-no-status-entry); [AC10](#ac10-activation-without-a-selected-spec-preserves-the-existing-status-text)
-
 ### REQ6: Use the active theme for status colors
+
+Delta: modified
+
+Before: Status returned plain text without theme-role formatting ([68bd11f:src/maestro/status/formatMaestroStatus.ts](https://github.com/emiliosp/pi-maestro/blob/68bd11f69b40b7baecc5ee082f248d8e9750796c/src/maestro/status/formatMaestroStatus.ts)).
 
 Use Pi theme roles, not fixed colors:
 
@@ -78,6 +86,10 @@ Coverage gap: AC8 checks rendered roles, not the absence of an extra theme-chang
 
 ### REQ7: Prefix each phase label with its approved icon
 
+Delta: modified
+
+Before: Phase labels had no icons ([68bd11f:src/maestro/status/formatMaestroStatus.ts](https://github.com/emiliosp/pi-maestro/blob/68bd11f69b40b7baecc5ee082f248d8e9750796c/src/maestro/status/formatMaestroStatus.ts)).
+
 Prefix each existing phase label with its approved icon and one space. Keep the phase labels unchanged.
 
 | Phase | Existing label | Icon name | Unicode code point |
@@ -93,14 +105,6 @@ Prefix each existing phase label with its approved icon and one space. Keep the 
 | candidate-ready | Completed | Check mark button | U+2705 |
 
 Verified by: [AC1](#ac1-each-phase-label-has-its-approved-icon)
-
-### REQ8: Reuse existing test coverage
-
-DO NOT ADD NEW TESTS TO COVER AC ALREADY COVERED.
-
-Reuse existing coverage. Update existing expectations when this change alters the expected output. Add tests only for behavior not already covered.
-
-Verified by: Not established. No matching AC or exact existing test scenario has been confirmed.
 
 ## 3. Technical decisions and limits
 
