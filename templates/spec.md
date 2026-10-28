@@ -1,67 +1,40 @@
 # <id>: <short, outcome-oriented title>
 
 <!--
-Write for the owner, not only for agents. Keep detail proportional to the change.
-State each requirement once. Refer to it from acceptance criteria instead of repeating it.
-Use the topics below as guidance, not a checklist to fill. Omit empty subsections and these instructions.
-Leave local implementation choices, test code, fixtures, mocks, and commands to the builder.
+Define required behavior, not motivation or implementation. See proposal.md for scope and design.md, when present, for approved technical decisions.
+Write for the owner. State each requirement once and keep its acceptance criteria immediately below it.
+Use the topics below as guidance. Omit empty subsections and these instructions.
+Leave test code, fixtures, mocks, and commands to the builder. Keep execution evidence in handoffs.
 -->
 
-## 1. Context, goals, and scope
+## Requirements
 
-<Briefly describe the problem, who is affected, and the intended outcome.>
+<Give each requirement its own ### REQ<number>: <title> heading and a unique, stable ID. Document only behavior or constraints this change adds, modifies, or removes, with relevant measurable limits, edge cases, and error handling. Existing behavior must continue working unless explicitly changed or removed; do not list unchanged behavior as requirements. Do not copy repository or agent instructions.>
 
-### Out of scope
+<Give each requirement exactly one Delta value: added, modified, or removed. Keep requirements organized by topic, not by delta category. For modified or removed requirements, add a brief Before description only when useful. Verify the previous behavior from repository evidence; do not invent it or repeat the whole old requirement. State the complete required outcome, including the required absence and any agreed replacement or error behavior for removals. Keep the same pre-change baseline during revisions.>
 
-<Name related changes that are explicitly excluded.>
+<Each requirement must have Verified by with Markdown links to its acceptance criteria, using their actual heading anchors. When an existing test covers the exact starting conditions, action, and expected result, link its file relative to spec.md and give the exact scenario name instead of creating a duplicate criterion. Keep criteria for partial or uncertain coverage. A requirement can reference both criteria and tests; check their combined coverage.>
 
-## 2. Requirements and constraints
+<Write each requirement-associated AC once, immediately below its primary requirement, with a #### AC<number>: <title> heading. Other requirements can link to it without duplication. A relevant regression AC without an associated changed requirement can instead use a ### AC<number>: <title> heading under an optional ## Regression checks section, with the same probe, expected result, and example fields. Do not invent a REQ or Delta field for it. Include only regressions relevant to this change, not an inventory of existing behavior, and omit the section when unnecessary.>
 
-<Describe required behavior and measurable limits. Include performance, reliability, accessibility, or other quality requirements only when relevant.>
+<Number ACs continuously from AC1 across the whole document, including nested and standalone regression criteria. During review, remove criteria already covered exactly by existing tests and update numbering and affected links. Keep required behavior documented when a requirement-associated criterion is omitted; omitting a standalone regression criterion does not require creating a requirement.>
 
-<Include non-negotiable boundaries and existing behavior that this change must preserve. Do not copy repository or agent instructions.>
+### REQ1: <short required behavior>
 
-### Edge cases and error handling
+Delta: <added | modified | removed>
 
-<Describe boundary conditions, failures, and required recovery behavior not already covered above. Keep these requirements even when existing tests cover their scenarios.>
+<Describe the requirement once, including relevant boundary conditions and required failure or recovery behavior.>
 
-## 3. Technical decisions and prototypes
+Verified by: [AC1](#ac1-short-observable-claim)
 
-<Record only approved architectural decisions or technical constraints that affect scope or behavior. Explain their reasons briefly. Leave routine implementation choices to the builder.>
+#### AC1: <short observable claim>
 
-<For each relevant topic below, add a short subsection. Omit topics that do not apply.>
-
-1. Components and data flow: changed responsibilities, data contracts, and important boundaries. No file inventory or function-level design.
-2. API specification: changed operations, permissions, inputs, outputs, errors, side effects, and delivery guarantees.
-3. Prototype and user interaction: link prototypes and identify approved states and interactions. Distinguish illustrative content from requirements.
-4. External integrations: affected services, failure behavior, and retries.
-5. Security and privacy: access rules, sensitive data, retention, and trust boundaries.
-6. Compatibility and migration: compatibility limits, migration, rollout, and rollback requirements.
-7. Monitoring and observability: required signals, alerts, and ownership.
-
-<Include only evidence and unresolved limits that affect an owner decision. Do not include investigation logs or general verification disclaimers.>
-
-## 4. Acceptance criteria
-
-<Inspect existing tests before writing criteria. Omit a criterion only if a test covers the same starting conditions, action, and expected result. Keep criteria when coverage is partial or uncertain. During review, remove criteria already covered by tests. Keep numbering continuous from AC1 and update affected references. Keep required behavior in section 2 even when its criterion is omitted.>
-
-<Give each criterion a unique ID, one observable claim, and one coverage label. A probe is the scenario used to check that claim. Describe it in plain language. Use success for a valid action that produces the required result. Use failure for an invalid action that is correctly rejected. Use unchanged when the criterion explicitly checks existing behavior that the change must preserve. The label describes the scenario, not the test outcome. A failure scenario passes when the invalid action is correctly rejected. Do not require all three categories.>
-
-### AC1: <short observable claim>
-
-1. Coverage: <success | failure | unchanged>
-2. Probe: <starting conditions and action or observation, without prescribing test implementation>
-3. Expected result: <observable and measurable outcome>
-4. Example: <specific starting conditions, concrete input or action, and exact expected result for this probe, not a restatement of the claim>
+1. Probe: <starting conditions and action or observation, without prescribing test implementation>
+2. Expected result: <observable and measurable outcome>
+3. Example: <specific starting conditions, concrete input or action, and exact expected result, not a restatement of the claim>
 
 <!--
-Example:
-Coverage: success
-Probe: Save a change to an item's title, then reopen the item.
-Expected result: The saved title is still present.
-Example: An item's title is "Draft". Change it to "Ready", save, and reopen the item. The title is "Ready".
-
-The builder and verifier each run every probe.
-The builder chooses executable checks. The verifier checks their coverage independently.
-Keep execution evidence in handoffs, not in this spec.
+Each AC has one observable claim, a probe, an expected result, and a concrete example.
+Describe relevant valid actions, invalid actions, and regressions directly through those fields, without a separate classification label.
+The builder and verifier each run every probe independently. The builder chooses executable checks; the verifier checks their coverage independently.
 -->

@@ -1,5 +1,5 @@
 /**
- * Objective: Create a spec directory, spec file, and initial workflow state.
+ * Objective: Create a proposal, behavioral spec, and initial workflow state.
  * Used: When an owner starts a new Maestro workflow.
  */
 
@@ -7,7 +7,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 
 import { createSpecId } from '#ids/createSpecId.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
-import { loadSpecTemplate, renderSpecTemplate } from '#specs/template.ts';
+import { renderSpecTemplate } from '#specs/template.ts';
 import {
   assertWorkflowState,
   WORKFLOW_PHASES,
@@ -19,7 +19,9 @@ import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 export type CreatedSpec = {
   specId: string;
   specPath: string;
+  proposalFilePath: string;
   specFilePath: string;
+  designFilePath: string;
   workflowPath: string;
   prototypesPath: string;
   state: WorkflowState;
@@ -44,12 +46,16 @@ export const createSpec = async ({
 
   const specId = createSpecId({ title, instant });
   const specPath = paths.getSpecPath(specId);
+  const proposalFilePath = paths.getProposalFilePath(specId);
   const specFilePath = paths.getSpecFilePath(specId);
+  const designFilePath = paths.getDesignFilePath(specId);
   const workflowPath = paths.getWorkflowPath(specId);
   const prototypesPath = paths.getPrototypesPath(specId);
 
-  const template = await loadSpecTemplate();
-  const spec = renderSpecTemplate({ template, specId, title });
+  const [proposal, spec] = await Promise.all([
+    renderSpecTemplate({ document: 'proposal.md', specId, title }),
+    renderSpecTemplate({ document: 'spec.md', specId, title }),
+  ]);
 
   const state = {
     version: WORKFLOW_STATE_VERSION,
@@ -64,6 +70,7 @@ export const createSpec = async ({
 
   try {
     await mkdir(prototypesPath, { recursive: true });
+    await writeFile(proposalFilePath, proposal, { encoding: 'utf8', flag: 'wx' });
     await writeFile(specFilePath, spec, { encoding: 'utf8', flag: 'wx' });
     await writeWorkflowState({
       path: workflowPath,
@@ -79,7 +86,9 @@ export const createSpec = async ({
   return {
     specId,
     specPath,
+    proposalFilePath,
     specFilePath,
+    designFilePath,
     workflowPath,
     prototypesPath,
     state,

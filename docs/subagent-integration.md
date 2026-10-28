@@ -16,8 +16,8 @@ The package supplies all three roles and the tools that save their results:
 Each `run` starts with a fresh conversation, not the main session's conversation history. All three agents inherit project instructions, the owner's global `AGENTS.md`,
 and available skills. The global file normally lives at `~/.pi/agent/AGENTS.md`.
 
-`Maestro` supplies the `spec` ID, project directory, model, thinking level, and timeout. The agents read the approved `spec` and saved `artifacts` to understand the work.
-Earlier `artifacts` provide context, not proof.
+`Maestro` supplies the `spec` ID, project directory, model, thinking level, and timeout. The agents read all approved documents (`proposal.md`, `spec.md`, and `design.md`
+when present) and saved `artifacts` to understand the work. Earlier `artifacts` provide context, not proof.
 
 The `owner` does not call agent tools directly. `Maestro` starts the `builder` after `GREEN FLAG` approval. The `verifier` starts after successful `builder` completion,
 and the `simplifier` follows successful `verifier` completion.

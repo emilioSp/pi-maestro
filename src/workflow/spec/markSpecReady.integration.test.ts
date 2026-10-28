@@ -65,10 +65,14 @@ afterEach(async () => {
 });
 
 describe('markSpecReady', () => {
-  it('given an owner-approved draft when approval is requested then the wrong spec ID is rejected and the active spec becomes ready-for-builder without content changes', async () => {
+  it('given an approved proposal, spec, and design when approval is requested then the wrong spec ID is rejected and the active spec becomes ready-for-builder without changing any document', async () => {
     const { paths, created } = await createWorkflow();
     const markdown = '# Owner-approved content\n';
     await writeFile(created.specFilePath, markdown, 'utf8');
+    await writeFile(created.proposalFilePath, '# Approved proposal\n', 'utf8');
+    await writeFile(created.designFilePath, '# Approved design\n', 'utf8');
+    const documentPaths = [created.proposalFilePath, created.specFilePath, created.designFilePath];
+    const documentsBefore = await Promise.all(documentPaths.map((path) => readFile(path, 'utf8')));
 
     await expect(
       markSpecReady({
@@ -89,16 +93,37 @@ describe('markSpecReady', () => {
       phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
     });
 
+    expect(await Promise.all(documentPaths.map((path) => readFile(path, 'utf8')))).toEqual(
+      documentsBefore,
+    );
+  });
+
+  it('given nested AC1 and standalone regression AC3 when approval is requested then global numbering rejects the gap without changing the draft or workflow', async () => {
+    const { created, paths } = await createWorkflow();
+
+    const markdown = (
+      await readFile(
+        new URL('../../../tests/fixtures/two-acceptance-criteria-spec.md', import.meta.url),
+        'utf8',
+      )
+    ).replace('### AC2:', '### AC3:');
+
+    await writeFile(created.specFilePath, markdown, 'utf8');
+
+    await expect(
+      markSpecReady({ paths, specId: SPEC_ID, activeWorkflowSpecId: SPEC_ID }),
+    ).rejects.toThrow('Fix acceptance criterion ordering in spec.md.');
     await expect(readFile(created.specFilePath, 'utf8')).resolves.toBe(markdown);
+    await expect(readWorkflowState(created.workflowPath)).resolves.toEqual(created.state);
   });
 
   it.each([{ numbers: [2] }, { numbers: [1, 3] }, { numbers: [1, 1] }, { numbers: [1, 3, 2] }])(
-    'given a draft with acceptance criterion numbers $numbers when approval is requested then a numbering error prevents approval and leaves all saved files unchanged',
+    'given a draft with nested acceptance criterion numbers $numbers when approval is requested then a numbering error prevents approval and leaves all saved files unchanged',
     async ({ numbers }) => {
       const { created, paths } = await createWorkflow();
       await writeFile(
         created.specFilePath,
-        numbers.map((number) => `### AC${number}: Criterion\n`).join('\n'),
+        numbers.map((number) => `#### AC${number}: Criterion\n`).join('\n'),
         'utf8',
       );
       await mkdir(paths.getBuilderHandoffsPath(SPEC_ID), { recursive: true });
@@ -136,7 +161,11 @@ describe('markSpecReady', () => {
         },
       });
 
+      await writeFile(created.designFilePath, '# Agreed technical decisions\n', 'utf8');
+
       const savedPaths = [
+        created.proposalFilePath,
+        created.designFilePath,
         created.specFilePath,
         created.workflowPath,
         builderHandoffPath,
@@ -207,6 +236,16 @@ describe('markSpecReady', () => {
     ).rejects.toThrow(
       `Workflow spec ID mismatch: expected "${SPEC_ID}", found "${OTHER_SPEC_ID}".`,
     );
+  });
+
+  it('given proposal.md is missing when approval is requested then approval fails with the missing proposal path and leaves the workflow unchanged', async () => {
+    const { paths, created } = await createWorkflow();
+    await rm(created.proposalFilePath);
+
+    await expect(
+      markSpecReady({ paths, specId: SPEC_ID, activeWorkflowSpecId: SPEC_ID }),
+    ).rejects.toThrow(`Proposal file is missing: ${created.proposalFilePath}.`);
+    await expect(readWorkflowState(created.workflowPath)).resolves.toEqual(created.state);
   });
 
   it('given spec.md is missing when approval is requested then approval fails with the missing file path and leaves the workflow unchanged', async () => {

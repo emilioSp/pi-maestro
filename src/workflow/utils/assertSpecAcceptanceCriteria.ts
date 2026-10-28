@@ -12,7 +12,8 @@ export function assertSpecAcceptanceCriteria({
   markdown,
   criterionIds,
 }: AssertSpecAcceptanceCriteriaInput): void {
-  const missingIds = [...markdown.matchAll(/^### AC(\d+):/gm)]
+  // Match standalone ACs (###), including regression checks, and ACs nested under requirements (####).
+  const missingIds = [...markdown.matchAll(/^#{3,4} AC(\d+):/gm)]
     .map((match) => `AC${match[1]}`)
     .filter((id) => !criterionIds.has(id));
 

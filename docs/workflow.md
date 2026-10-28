@@ -2,9 +2,10 @@
 
 `Maestro` manages one spec-driven workflow in the current Pi session. The `owner` works directly with `Maestro`.
 
-The approved `spec.md` defines behavior, scope, constraints, technical decisions, and `acceptance criteria` for the change.
+The approved `spec` is one document set: `proposal.md` explains motivation and scope, `spec.md` defines behavior and `acceptance criteria`, and optional `design.md`
+records significant technical decisions. The set forms one contract for the change.
 
-An `acceptance criterion` contains a coverage label, a `probe`, an `expected result`, and an example. A `probe` is a scenario used to test behavior.
+An `acceptance criterion` contains a `probe`, an `expected result`, and an example. A `probe` is a scenario used to test behavior.
 
 A `handoff` is a saved agent report. `Builder` and `verifier` reports contain `probe` outcomes. The simplifier's report records refactored files, a summary, and notes.
 
@@ -95,30 +96,106 @@ The default path is `.specs/<spec-id>/workflow.json`. The `spec` directory is [c
 | `simplifier-running`   | Verification succeeded or the `owner` rejected all current `findings`. The `simplifier` can run or skip if Git is unavailable. |
 | `candidate-ready`      | Simplification completed. The workflow is complete.                                                                            |
 
+## Specification documents
+
+Each new `spec` uses these documents in the same directory:
+
+| Document      | Content                                                                                           | Presence                                                       |
+| ------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `proposal.md` | Problem, goal, scope, and exclusions.                                                             | Always created.                                                |
+| `spec.md`     | Required behavior, constraints, deltas, and `acceptance criteria` next to their requirements.     | Always created.                                                |
+| `design.md`   | Approved technical decisions, brief reasons, relevant contracts, risks, and prototype references. | Only when significant technical decisions need to be recorded. |
+
 ## Spec approval
 
 For the initial `spec`:
 
-1. `Maestro` creates `spec.md` and `workflow.json` in `drafting-spec` and prepares the `spec` with the `owner`.
-2. The `owner` reviews the requirements, scope, technical decisions, and `acceptance criteria`.
-3. `Maestro` asks the `owner` to inspect the current `spec.md` and reply `GREEN FLAG` to approve it and start the `builder`.
+1. `Maestro` creates `proposal.md`, `spec.md`, and `workflow.json` in `drafting-spec`, then prepares the documents with the `owner`. It adds `design.md` only when needed.
+2. The `owner` reviews the complete document set: motivation, scope, requirements, `acceptance criteria`, and any approved technical decisions.
+3. `Maestro` asks the `owner` to inspect `proposal.md`, `spec.md`, and `design.md` when present and reply `GREEN FLAG` once to approve the entire set and start the
+   `builder`.
 4. After that reply, `Maestro` saves `ready-for-builder` and starts the `builder` in the foreground.
 
-Approval freezes the `spec`. The `spec` and its visual prototypes remain unchanged during `builder`, `verifier`, and `simplifier` execution. See
+Approval freezes all present `spec` documents and visual prototypes together. None may change during `builder`, `verifier`, or `simplifier` execution. See
 [Spec revision](#spec-revision) for permitted revisions.
+
+## Requirement deltas
+
+Each requirement has exactly one `Delta` field. It describes the impact of the requirement against the current system's behavior.
+
+| Value      | Meaning                                                                   |
+| ---------- | ------------------------------------------------------------------------- |
+| `added`    | Introduces behavior or a constraint that did not exist before the change. |
+| `modified` | Changes existing behavior or a constraint.                                |
+| `removed`  | Removes behavior that must no longer be available.                        |
+
+The `spec` describes only requirements added, modified, or removed by the change. Existing behavior must continue working unless explicitly changed or removed. Unchanged
+behavior is implicit, not an inventory of requirements to repeat in every `spec`.
+
+For `modified` or `removed` requirements, a short `Before` description is included only when it helps explain the change. For example,
+`Before: Tokens expire 30 minutes after issuance.`
+
+## Requirement coverage
+
+Each requirement has its own section and a unique, stable ID, such as `REQ1`. Its `Verified by` field links to the `acceptance criteria` or existing tests that verify it.
+The mapping appears only under the requirement, not again inside each `acceptance criterion`. Requirements use `### REQ<number>:` headings; their criteria immediately
+follow as `#### AC<number>:` subsections. Each requirement-associated AC is defined once under its primary requirement; other requirements can link to it. AC numbering is
+continuous across the whole document, including standalone regression criteria, not restarted for each requirement or section.
+
+For example, a change that introduces persistent item titles can describe its requirement and linked `acceptance criterion` in `spec.md` as follows:
+
+```markdown
+### REQ1: Persist saved titles
+
+Delta: added
+
+Saving and reopening an item must preserve its title.
+
+Verified by: [AC1](#ac1-saved-title-is-persisted)
+
+#### AC1: Saved title is persisted
+
+1. Probe: Save a change to an item's title, then reopen the item.
+2. Expected result: The saved title is still present.
+3. Example: Change the title from "Draft" to "Ready", save, and reopen the item. The title is "Ready".
+```
+
+A requirement can link to several `acceptance criteria`, and one criterion can verify several requirements (1:N). When an existing test covers the exact starting
+conditions, action, and `expected result`, `Verified by` links to the test file relative to `spec.md` and includes the exact scenario name. No duplicate criterion is
+needed. A requirement can reference both criteria and existing tests.
+
+Before approval, `Maestro` follows the links and checks that their combined scenarios verify the whole requirement. Missing, partial, or uncertain coverage must be
+resolved with an appropriate criterion or a confirmed existing test. References are updated when criterion headings or test locations change, including during `spec`
+revisions.
 
 ## Acceptance criteria
 
-Each `acceptance criterion` has a unique ID and describes one observable result.
+Each `acceptance criterion` has a unique ID and describes one observable result. A criterion can verify a changed requirement or check a relevant regression in existing
+behavior without an associated requirement.
 
-Each criterion contains these parts:
+Standalone regression criteria belong in an optional `## Regression checks` section, with `### AC<number>:` headings. They do not need a `REQ` heading, `Delta`, or an
+artificial requirement association. Only regressions relevant to the change belong here; unchanged requirements are not listed. The section is omitted when unnecessary.
 
-| Part              | Content                                                                             |
-| ----------------- | ----------------------------------------------------------------------------------- |
-| Coverage          | One label that states the scenario's purpose: `success`, `failure`, or `unchanged`. |
-| `Probe`           | Starting conditions and the action or observation that checks the behavior.         |
-| `Expected result` | The measurable result the `probe` observes.                                         |
-| Example           | Concrete starting conditions, an input or action, and the exact `expected result`.  |
+For example, if saving item descriptions already works, adding title persistence may warrant this regression check without a new requirement for descriptions:
+
+```markdown
+## Regression checks
+
+### AC2: Existing descriptions remain saved
+
+1. Probe: Change and save the title of an item with a saved description, then reopen it.
+2. Expected result: The description is unchanged.
+3. Example: An item's saved description is "Buy milk". Change its title from "Draft" to "Shopping", save, and reopen it. Its description is still "Buy milk".
+```
+
+Both nested and standalone criteria share one continuous AC sequence and are checked by the `builder` and `verifier`. Standalone criteria have the same fields as
+requirement-associated criteria:
+
+| Part              | Content                                                                            |
+| ----------------- | ---------------------------------------------------------------------------------- |
+| `Probe`           | Starting conditions and the action or observation that checks the behavior.        |
+| `Expected result` | The measurable result the `probe` observes.                                        |
+| Example           | Concrete starting conditions, an input or action, and the exact `expected result`. |
 
 ## Escalations
 
@@ -170,8 +247,9 @@ Without revision, any `fix-code` decision requires another `builder` `run`, incl
 For either `escalation` answers or `finding` decisions, `Maestro` records the complete batch before the workflow returns to `drafting-spec`. This decision does not
 approve the `spec` or start an agent. The `owner` and `Maestro` then revise the same `spec` together in `drafting-spec`.
 
-The `owner` reviews the changes and replies `GREEN FLAG` again. `Maestro` records that renewed approval separately, moves to `ready-for-builder`, and starts another
-`builder` `run`. Approval is permitted only in `drafting-spec`, not directly from either decision phase.
+The `owner` reviews the complete revised set of `proposal.md`, `spec.md`, and `design.md` when present and replies `GREEN FLAG` once again. `Maestro` records that renewed
+approval separately, moves to `ready-for-builder`, and starts another `builder` `run`. Approval is permitted only in `drafting-spec`, not directly from either decision
+phase.
 
 The revised `spec` controls subsequent work. Earlier `escalations`, `findings`, and their decisions remain historical context.
 
@@ -199,8 +277,8 @@ The `owner` performs the final review and controls any later Git use, pull reque
 
 ## Stored artifacts
 
-An `artifact` is a saved workflow file. `Maestro` creates the `spec` directory with `spec.md`, `workflow.json`, and an empty `prototypes/` directory. `Builder`,
-`verifier`, and `simplifier` `handoff` directories appear when those results are saved.
+An `artifact` is a saved workflow file. `Maestro` creates the `spec` directory with `proposal.md`, `spec.md`, `workflow.json`, and an empty `prototypes/` directory.
+`design.md` is created during drafting only when needed. `Builder`, `verifier`, and `simplifier` `handoff` directories appear when those results are saved.
 
 The agents submit results through `Maestro` tools instead of writing the reports directly. A successful submission saves the result and updates the phase in
 `workflow.json` before the agent returns.
@@ -232,7 +310,9 @@ The default layout after multiple `runs` is:
 
 ```text
 .specs/<spec-id>/
+├── proposal.md
 ├── spec.md
+├── design.md             # only when needed
 ├── workflow.json
 ├── handoffs/
 │   ├── builder/

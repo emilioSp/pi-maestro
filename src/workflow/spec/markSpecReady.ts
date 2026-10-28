@@ -13,7 +13,8 @@ import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 
 function assertAcceptanceCriterionOrdering(markdown: string): void {
-  const criteria = [...markdown.matchAll(/^### AC(\d+):/gm)];
+  // Match standalone ACs (###), including regression checks, and ACs nested under requirements (####).
+  const criteria = [...markdown.matchAll(/^#{3,4} AC(\d+):/gm)];
 
   if (criteria.some((match, index) => Number(match[1]) !== index + 1)) {
     throw new Error('Fix acceptance criterion ordering in spec.md.');
@@ -45,6 +46,12 @@ export const markSpecReady = async ({
 
   if (!(await pathExists(specFilePath))) {
     throw new Error(`Spec file is missing: ${specFilePath}.`);
+  }
+
+  const proposalFilePath = paths.getProposalFilePath(specId);
+
+  if (!(await pathExists(proposalFilePath))) {
+    throw new Error(`Proposal file is missing: ${proposalFilePath}.`);
   }
 
   const workflowPath = paths.getWorkflowPath(specId);

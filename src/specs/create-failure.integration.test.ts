@@ -52,6 +52,7 @@ describe('partial spec creation failure', () => {
     );
     await expect(access(specPath)).resolves.toBeUndefined();
     await expect(access(paths.getSpecFilePath(specId))).resolves.toBeUndefined();
+    await expect(access(paths.getProposalFilePath(specId))).resolves.toBeUndefined();
 
     await expect(createSpec(input)).rejects.toMatchObject({
       code: 'EEXIST',

@@ -1,20 +1,14 @@
 # 20261015-140755-record-escalation-resolutions-when-the-spec-changes: Record escalation resolutions when the spec changes
 
-> After owner approval, this specification is the contract for the builder and verifier.
+Motivation and scope: [proposal.md](proposal.md). Technical decisions: [design.md](design.md).
 
-## 1. Context, goals, and scope
+## Requirements
 
-R-17 requires a saved answer for every current builder escalation, including answers that require a spec revision.
-Currently, the revision route bypasses resolution recording and permits direct approval from escalation-decision.
+### REQ1: Record every owner answer using the existing resolution fields
 
-Save all answers in their original builder handoff before leaving escalation-decision. Reuse the same spec for revision and renewed approval.
+Delta: modified
 
-Out of scope: changes to verifier finding decisions, automatic recovery, parallel decision storage, new tools, new workflow phases, and the general R-18/R-19 guidance changes.
-Coverage labels and exclusion of scenarios already covered by tests apply to this spec only.
-
-## 2. Requirements and constraints
-
-### Resolution recording
+Before: A contract-changing answer followed revision instead of recording the escalation resolution ([749f96b:src/maestro/instructions/getMaestroInstructions.ts](https://github.com/emiliosp/pi-maestro/blob/749f96bbda0c9373c1757471b55c564c1db9877a/src/maestro/instructions/getMaestroInstructions.ts)).
 
 Use maestro_resolve_escalations for the complete current decision batch, whether or not the spec must change.
 Each decision retains escalationId, selectedOptionId, decision, and reason.
@@ -22,12 +16,30 @@ Save the chosen solution and the owner's reason in the corresponding question's 
 For each answer that requires revision, identify the question through escalationId and describe the agreed spec change in decision.
 Do not add fields to saved resolutions or another decision store.
 
+Verified by: [AC1](#ac1-revision-answers-remain-in-the-original-handoff)
+
+#### AC1: Revision answers remain in the original handoff
+
+1. Probe: Resolve all questions in an active handoff with a mixed batch. One answer requires revision and another keeps the existing requirements. Inspect saved handoffs.
+2. Expected result: The active handoff contains exactly the submitted resolutions and otherwise retains its original content. Earlier handoffs remain unchanged.
+3. Example: B1.json already exists. B2/E1 asks about archived rows. B2/E2 asks about file encoding and offers option "utf8". Both answers are null. Submit the complete batch with specChangeRequired true. E1 has selectedOptionId null, decision "Revise the spec to include archived rows", reason "Audit exports need complete history". E2 has selectedOptionId "utf8", decision "Use UTF-8", reason "Keep the existing encoding requirement". B2.json stores those exact three resolution values for each question. Its other content and B1.json are unchanged.
+
+### REQ2: Save only active resolution fields and retain batch validation
+
+Delta: modified
+
 Save all validated resolutions in the active builder handoff before saving the next workflow phase.
 Only its resolution fields change. Earlier numbered handoffs remain unchanged.
 Preserve existing validation for complete batches, IDs, options, nonblank answers and reasons, incompatible handoffs, phases, and already resolved questions.
 Invalid submissions leave saved files unchanged.
 
-### Routing and approval
+Verified by: [AC1](#ac1-revision-answers-remain-in-the-original-handoff); [src/tools/main/resolve-escalations.integration.test.ts](../../src/tools/main/resolve-escalations.integration.test.ts), scenario "given an escalation decision batch %s when submitted then resolution fails without changing the builder report or workflow"; [src/tools/main/resolve-escalations.integration.test.ts](../../src/tools/main/resolve-escalations.integration.test.ts), scenario "given $description when escalation decisions are submitted then resolution fails without changing the builder report or workflow"
+
+### REQ3: Route the batch according to whether revision is required
+
+Delta: modified
+
+Before: Revision and renewed approval occurred directly in escalation-decision ([749f96b:src/maestro/instructions/getMaestroInstructions.ts](https://github.com/emiliosp/pi-maestro/blob/749f96bbda0c9373c1757471b55c564c1db9877a/src/maestro/instructions/getMaestroInstructions.ts)).
 
 | Owner decision batch | Saved next phase | Next action |
 |---|---|---|
@@ -35,25 +47,60 @@ Invalid submissions leave saved files unchanged.
 | At least one answer requires a spec change | drafting-spec | Revise and review the same spec with the owner. |
 | The revised spec receives renewed GREEN FLAG | ready-for-builder | Approve through a separate maestro_mark_spec_ready call, then run the builder. |
 
+Verified by: [AC2](#ac2-a-revision-batch-reports-drafting-spec-as-the-next-state); [AC3](#ac3-recorded-revision-answers-permit-separate-renewed-approval); [AC4](#ac4-both-resolution-routes-use-the-central-transition-definitions); [src/tools/main/resolve-escalations.integration.test.ts](../../src/tools/main/resolve-escalations.integration.test.ts), scenario "given unanswered builder questions when the owner answers all without a spec change then answers are saved in B1, the builder can run again, and new questions restart at E1 in B2"
+
+#### AC2: A revision batch reports drafting-spec as the next state
+
+1. Probe: Submit a complete batch that requires revision and inspect the saved workflow and tool response before any approval.
+2. Expected result: Saved phase, structured result, and response text identify drafting-spec. The response directs revision and renewed approval rather than a builder or verifier run.
+3. Example: The workflow is escalation-decision and B1/E1 has no answer. Submit the answer "Revise the spec to include archived rows", reason "Audit exports need complete history", selectedOptionId null, with specChangeRequired true. The saved phase and returned phase are drafting-spec. The response instructs revision of the same spec and renewed GREEN FLAG before approval and a builder run.
+
+#### AC3: Recorded revision answers permit separate renewed approval
+
+1. Probe: Record a revision batch, revise the same spec, obtain renewed GREEN FLAG, and request approval separately.
+2. Expected result: The same workflow reaches ready-for-builder through the separate approval, with the recorded resolutions still saved.
+3. Example: From escalation-decision, resolve B1/E1 with specChangeRequired true, selectedOptionId null, decision "Revise the spec to include archived rows", and reason "Audit exports need complete history". The workflow reaches drafting-spec. Update the same spec to require archived rows with continuous criterion numbering. After renewed GREEN FLAG, maestro_mark_spec_ready returns ready-for-builder for that specId. B1/E1 still contains the submitted answer and reason.
+
+#### AC4: Both resolution routes use the central transition definitions
+
+1. Probe: Inspect the central transition definitions and trace the resolution operation for both decisions about revision.
+2. Expected result: Both routes are defined in src/workflow/transitions.ts and selected through transitionWorkflow, not through direct next-phase assignment elsewhere.
+3. Example: Start in escalation-decision with one unresolved question. A complete batch with specChangeRequired false uses a centrally defined transition to ready-for-builder. In a separate instance of that starting state, a complete batch with specChangeRequired true uses a centrally defined transition to drafting-spec. The resolution operation obtains each next state by calling transitionWorkflow.
+
+### REQ4: Keep answer recording separate from approval and execution
+
+Delta: modified
+
+Before: MARK_SPEC_READY accepted escalation-decision as well as drafting-spec and findings-decision ([749f96b:src/workflow/transitions.ts](https://github.com/emiliosp/pi-maestro/blob/749f96bbda0c9373c1757471b55c564c1db9877a/src/workflow/transitions.ts)).
+
 Recording answers neither approves a revised spec nor launches an agent.
 It never moves directly to ready-for-verifier. That phase still requires a completed builder pass.
 Reject maestro_mark_spec_ready from escalation-decision without changing saved files.
 Preserve initial approval from drafting-spec and existing finding decisions and revision approval from findings-decision.
 
+Verified by: [AC2](#ac2-a-revision-batch-reports-drafting-spec-as-the-next-state); [AC3](#ac3-recorded-revision-answers-permit-separate-renewed-approval); [src/tools/main/resolve-escalations.integration.test.ts](../../src/tools/main/resolve-escalations.integration.test.ts), scenario "given unanswered builder questions when direct spec approval is requested then approval fails and the spec, workflow, and builder report stay unchanged"
+
+Coverage gap: Preservation of direct approval from findings-decision is historical and is no longer exercised by current tests.
+
+### REQ5: Explain both routes and retain the revised contract as authority
+
+Delta: modified
+
 Tool text and structured results must report the saved next phase and its corresponding next action.
 Maestro guidance and human documentation must describe both routes, including recording revision answers before revising the spec.
 After revision, the approved spec controls subsequent work. Earlier questions and answers remain historical context.
 
-## 3. Technical decisions
+Verified by: [AC2](#ac2-a-revision-batch-reports-drafting-spec-as-the-next-state); [AC5](#ac5-guidance-describes-the-recorded-revision-route)
 
-Reuse the existing resolution operation and handoff schema. The resolution's existing decision text can describe an agreed spec change.
-Define both resolution routes explicitly in src/workflow/transitions.ts and apply each through transitionWorkflow.
-Do not assign the next phase directly in the resolution operation.
-Remove escalation-decision from the phases allowed for spec approval, without removing findings-decision.
+#### AC5: Guidance describes the recorded revision route
 
-Relevant boundaries: src/tools/main/resolve-escalations.ts exposes the tool input and result, src/workflow/builder/resolveEscalations.ts saves answers, and src/artifacts/builder-handoff/schema.ts defines the saved fields.
+1. Probe: Read affected tool descriptions, agent guidance, and human workflow documentation for a revision decision.
+2. Expected result: They consistently describe recording the complete decision batch before entering drafting-spec, revising the same spec, and obtaining renewed approval separately.
+3. Example: Start in escalation-decision with unresolved B1/E1. For the owner's decision to add archived rows, the written route submits the complete batch with specChangeRequired true and records its answer in B1.json before revision in drafting-spec. It then requires renewed GREEN FLAG and a separate approval before another builder run. No affected guidance directs approval straight from escalation-decision or skipping the saved answer.
 
-### Tool input
+### REQ6: Require an explicit boolean revision-routing flag
+
+Delta: added
 
 Add required batch-level boolean specChangeRequired to maestro_resolve_escalations alongside specId and decisions.
 Use true when any answer requires a spec revision and false when none does.
@@ -63,48 +110,10 @@ This flag selects the route but is not added to saved handoffs or workflow state
 
 The explicit flag avoids interpreting free text. Agreed changes remain in each answer's existing decision field.
 
-## 4. Acceptance criteria
+Verified by: [AC6](#ac6-the-routing-flag-must-be-an-explicit-boolean)
 
-Coverage labels describe success, failure, or keeping current behavior unchanged.
+#### AC6: The routing flag must be an explicit boolean
 
-### AC1: Revision answers remain in the original handoff
-
-1. Coverage: Success.
-2. Probe: Resolve all questions in an active handoff with a mixed batch. One answer requires revision and another keeps the existing requirements. Inspect saved handoffs.
-3. Expected result: The active handoff contains exactly the submitted resolutions and otherwise retains its original content. Earlier handoffs remain unchanged.
-4. Example: B1.json already exists. B2/E1 asks about archived rows. B2/E2 asks about file encoding and offers option "utf8". Both answers are null. Submit the complete batch with specChangeRequired true. E1 has selectedOptionId null, decision "Revise the spec to include archived rows", reason "Audit exports need complete history". E2 has selectedOptionId "utf8", decision "Use UTF-8", reason "Keep the existing encoding requirement". B2.json stores those exact three resolution values for each question. Its other content and B1.json are unchanged.
-
-### AC2: A revision batch reports drafting-spec as the next state
-
-1. Coverage: Success.
-2. Probe: Submit a complete batch that requires revision and inspect the saved workflow and tool response before any approval.
-3. Expected result: Saved phase, structured result, and response text identify drafting-spec. The response directs revision and renewed approval rather than a builder or verifier run.
-4. Example: The workflow is escalation-decision and B1/E1 has no answer. Submit the answer "Revise the spec to include archived rows", reason "Audit exports need complete history", selectedOptionId null, with specChangeRequired true. The saved phase and returned phase are drafting-spec. The response instructs revision of the same spec and renewed GREEN FLAG before approval and a builder run.
-
-### AC3: Recorded revision answers permit separate renewed approval
-
-1. Coverage: Success.
-2. Probe: Record a revision batch, revise the same spec, obtain renewed GREEN FLAG, and request approval separately.
-3. Expected result: The same workflow reaches ready-for-builder through the separate approval, with the recorded resolutions still saved.
-4. Example: From escalation-decision, resolve B1/E1 with specChangeRequired true, selectedOptionId null, decision "Revise the spec to include archived rows", and reason "Audit exports need complete history". The workflow reaches drafting-spec. Update the same spec to require archived rows with continuous criterion numbering. After renewed GREEN FLAG, maestro_mark_spec_ready returns ready-for-builder for that specId. B1/E1 still contains the submitted answer and reason.
-
-### AC4: Both resolution routes use the central transition definitions
-
-1. Coverage: Success.
-2. Probe: Inspect the central transition definitions and trace the resolution operation for both decisions about revision.
-3. Expected result: Both routes are defined in src/workflow/transitions.ts and selected through transitionWorkflow, not through direct next-phase assignment elsewhere.
-4. Example: Start in escalation-decision with one unresolved question. A complete batch with specChangeRequired false uses a centrally defined transition to ready-for-builder. In a separate instance of that starting state, a complete batch with specChangeRequired true uses a centrally defined transition to drafting-spec. The resolution operation obtains each next state by calling transitionWorkflow.
-
-### AC5: Guidance describes the recorded revision route
-
-1. Coverage: Success.
-2. Probe: Read affected tool descriptions, agent guidance, and human workflow documentation for a revision decision.
-3. Expected result: They consistently describe recording the complete decision batch before entering drafting-spec, revising the same spec, and obtaining renewed approval separately.
-4. Example: Start in escalation-decision with unresolved B1/E1. For the owner's decision to add archived rows, the written route submits the complete batch with specChangeRequired true and records its answer in B1.json before revision in drafting-spec. It then requires renewed GREEN FLAG and a separate approval before another builder run. No affected guidance directs approval straight from escalation-decision or skipping the saved answer.
-
-### AC6: The routing flag must be an explicit boolean
-
-1. Coverage: Failure.
-2. Probe: Submit an otherwise valid complete resolution batch with specChangeRequired omitted or set to a nonboolean value.
-3. Expected result: The tool rejects each submission without changing saved files.
-4. Example: Start in escalation-decision with only B1/E1 unresolved. Submit its valid answer with selectedOptionId null, decision "Use a local compiler", and reason "The required compiler is unavailable", but omit specChangeRequired. The tool rejects the call. Repeat with specChangeRequired set to the string "true". The tool rejects that call too. The workflow, spec.md, and handoffs remain unchanged after both calls.
+1. Probe: Submit an otherwise valid complete resolution batch with specChangeRequired omitted or set to a nonboolean value.
+2. Expected result: The tool rejects each submission without changing saved files.
+3. Example: Start in escalation-decision with only B1/E1 unresolved. Submit its valid answer with selectedOptionId null, decision "Use a local compiler", and reason "The required compiler is unavailable", but omit specChangeRequired. The tool rejects the call. Repeat with specChangeRequired set to the string "true". The tool rejects that call too. The workflow, spec.md, and handoffs remain unchanged after both calls.

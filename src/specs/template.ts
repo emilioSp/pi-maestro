@@ -1,19 +1,22 @@
 /**
- * Objective: Load and render the spec document template.
- * Used: When Maestro creates a new spec file.
+ * Objective: Load and render a required specification document from its bundled template.
+ * Used: When Maestro creates the proposal and behavioral spec for a new change.
  */
 
 import { readFile } from 'node:fs/promises';
 
-const TEMPLATE_URL = new URL('../../templates/spec.md', import.meta.url);
-
-export const loadSpecTemplate = async (): Promise<string> => readFile(TEMPLATE_URL, 'utf8');
-
 type RenderSpecTemplateInput = {
-  template: string;
+  document: 'proposal.md' | 'spec.md';
   specId: string;
   title: string;
 };
 
-export const renderSpecTemplate = ({ template, specId, title }: RenderSpecTemplateInput): string =>
-  template.replace('<id>', specId).replace('<short, outcome-oriented title>', title.trim());
+export const renderSpecTemplate = async ({
+  document,
+  specId,
+  title,
+}: RenderSpecTemplateInput): Promise<string> => {
+  const template = await readFile(new URL(`../../templates/${document}`, import.meta.url), 'utf8');
+
+  return template.replace('<id>', specId).replace('<short, outcome-oriented title>', title.trim());
+};

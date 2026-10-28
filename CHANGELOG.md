@@ -3,6 +3,20 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
+## Unreleased
+
+1. Added stable `REQ` identifiers and a `Verified by` field to the `spec` template and `Maestro` guidance. Each requirement links to its `acceptance criteria` or exact
+   existing test scenarios. Review checks complete coverage and current links, including during revisions. Approval validation and `handoff` formats remain unchanged.
+2. Added per-requirement `Delta` labels: `added`, `modified`, and `removed`. Modified or removed behavior can include a brief, evidence-based `Before` description when
+   useful. Requirements state the complete required outcome; unchanged behavior remains implicit. Approval validation and `handoff` formats remain unchanged.
+3. Split new `specs` into required `proposal.md` and `spec.md`, with optional `design.md`. One `GREEN FLAG` approves and freezes the present document set; all agent roles
+   read it. Creation returns the new document paths; approval requires the proposal. Historical documents are not migrated.
+4. Placed requirement-associated `acceptance criteria` under their requirements as level-four headings. Relevant standalone regression criteria use level-three headings
+   under optional `Regression checks`, without inventing unchanged requirements. Both forms share global numbering and are required in `handoffs`. Workflow phases and
+   saved report formats remain unchanged.
+5. Removed the `Coverage` classification field from current `acceptance criteria`. Each criterion retains its `probe`, `expected result`, and example. Standalone
+   regression checks remain identified by their section; validation and report formats are unchanged.
+
 ## 0.11.0
 
 1. Added the `simplifier` after successful verification or rejection of all current `findings`, without another approval or verification cycle.

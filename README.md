@@ -40,12 +40,20 @@ The following official sources document the conceptual references. The links poi
 5. **Review requirements separately from testing code.** [Spec Kit's checklist command][spec-kit-checklist] evaluates requirements for completeness, clarity, consistency,
    and measurability, not implementation correctness. Before approval, `Maestro` reviews the `spec` for consistency, missing decisions, measurable outcomes, and
    reproducible scenarios. The later `verifier` checks the implementation independently.
+6. **Separate motivation, behavior, and design.** [OpenSpec's schema][openspec-schema] separates these concerns and calls for `design.md` only when significant technical
+   decisions need recording, including reasons, alternatives, and risks.
+7. **Make requirement changes explicit.** [OpenSpec's schema][openspec-schema] distinguishes added, modified, removed, and renamed requirements. `Maestro` adapts this
+   concept with one `Delta` field per requirement: `added`, `modified`, or `removed`. Each requirement states the complete required outcome.
+8. **Make requirement coverage traceable.** [Spec Kit's analyze command][spec-kit-analyze] maps requirements to implementation tasks and identifies coverage gaps.
+   `Maestro` applies a related principle to verification: each requirement has a `Verified by` field linking to its `acceptance criteria`, existing tests covering exact
+   scenarios, or both. The mapping connects requirements to verification.
 
 [openspec-schema]: https://github.com/Fission-AI/OpenSpec/blob/6d04a1b58dedc95729d34e4f223d9d483aae210a/schemas/spec-driven/schema.yaml
 [spec-kit-philosophy]: https://github.com/github/spec-kit/blob/222a973f8b8794366680c043fb935a31f71902af/spec-driven.md
 [spec-kit-template]: https://github.com/github/spec-kit/blob/222a973f8b8794366680c043fb935a31f71902af/templates/spec-template.md
 [spec-kit-clarify]: https://github.com/github/spec-kit/blob/222a973f8b8794366680c043fb935a31f71902af/templates/commands/clarify.md
 [spec-kit-checklist]: https://github.com/github/spec-kit/blob/222a973f8b8794366680c043fb935a31f71902af/templates/commands/checklist.md
+[spec-kit-analyze]: https://github.com/github/spec-kit/blob/222a973f8b8794366680c043fb935a31f71902af/templates/commands/analyze.md
 
 ## The roles
 

@@ -14,7 +14,7 @@ export const CREATE_SPEC_TOOL = {
   NAME: 'maestro_create_spec',
   LABEL: 'Create Spec',
   DESCRIPTION:
-    'Create a new Maestro specification in drafting-spec phase from the approved template. Review the generated spec with the owner before marking it ready.',
+    'Create proposal.md and spec.md in drafting-spec from the bundled templates. Add design.md only when significant technical decisions are needed. Review all present documents with the owner before marking the specification ready.',
 } as const;
 
 const CreateSpecToolParameters = Type.Object(
@@ -45,7 +45,7 @@ export const registerCreateSpecTool = (pi: ExtensionAPI): void => {
         content: [
           {
             type: 'text',
-            text: `Spec ${created.specId} created in drafting-spec phase. Review ${created.specFilePath} with the owner before marking it ready.`,
+            text: `Spec ${created.specId} created in drafting-spec phase. Review ${created.proposalFilePath} and ${created.specFilePath} with the owner. Add ${created.designFilePath} only when significant technical decisions are needed; include it in the same approval.`,
           },
         ],
         details: created,

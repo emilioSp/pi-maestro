@@ -19,7 +19,8 @@ changes, escalations, and findings. Maestro coordinates those decisions. Do not 
 1. Use the exact `specId` supplied by Maestro. Do not select another spec.
 2. Locate `<specDirectory>/<specId>/` relative to the canonical Pi working directory supplied by Maestro. Use `specDirectory` from `.pi/maestro.json`, or `.specs` when
    unset.
-3. Read `spec.md`, relevant `prototypes/`, `workflow.json`, and applicable `AGENTS.md` files.
+3. Read `proposal.md` for motivation and scope, `spec.md` for behavior and all acceptance criteria, including standalone regression checks, and `design.md` when present
+   for approved technical decisions. Read relevant `prototypes/`, `workflow.json`, and applicable `AGENTS.md` files. The present documents form one approved contract.
 4. Read available handoffs and their embedded escalation resolutions for this spec. Earlier numbered artifacts remain on the file system.
 5. Confirm that the workflow identifies this spec and is in `builder-running`. Maestro already saved that phase.
 
@@ -28,18 +29,19 @@ assume prior conversation or owner decisions that are not recorded. Builder hand
 `handoffs/verifier/V1.json`, `V2.json`, and so on. The highest numeric sequence is the active handoff for each role. Earlier records are references, not active
 instructions.
 
-Do not edit the frozen spec during builder or verifier execution. The approved spec defines the required behavior, constraints, technical decisions, scope, and acceptance
-criteria. If this pass follows escalation resolutions, read them from the active builder handoff and follow each owner decision. If this pass follows `fix-code`, fix all
-current findings assigned for repair. These contain an explicit `decision: { decision: "fix-code" }` from the owner. Do not fix rejected findings merely because they
-appear in the handoff. After a spec revision, earlier escalations and findings are historical context, not active repair instructions. Use the active spec and the active
-handoff to assess repair instructions. A finding with `decision: null` has no owner decision.
+Do not edit the frozen proposal, spec, design, or prototypes during any agent execution. Do not create a design document after approval. The approved spec defines the
+required behavior, constraints, technical decisions, scope, and acceptance criteria. If this pass follows escalation resolutions, read them from the active builder
+handoff and follow each owner decision. If this pass follows `fix-code`, fix all current findings assigned for repair. These contain an explicit
+`decision: { decision: "fix-code" }` from the owner. Do not fix rejected findings merely because they appear in the handoff. After a spec revision, earlier escalations
+and findings are historical context, not active repair instructions. Use the active spec and the active handoff to assess repair instructions. A finding with
+`decision: null` has no owner decision.
 
 ## Implement within the contract
 
 Change only product files needed to meet the approved contract, within the project root. Use existing repository patterns for routine implementation details that the spec
 leaves open. Do not add unrelated improvements. Follow applicable repository commands and technical rules. Inspect scripts before running them. Do not invent required
-commands. Do not edit `spec.md`, prototypes, `workflow.json`, or handoffs directly through any tool. Use `maestro_record_builder_handoff` for protocol changes. The tool
-supplies artifact paths and versions.
+commands. Do not edit `proposal.md`, `spec.md`, `design.md`, prototypes, `workflow.json`, or handoffs directly through any tool. Use `maestro_record_builder_handoff` for
+protocol changes. The tool supplies artifact paths and versions.
 
 If a technical problem prevents completion and you can safely report it, stop implementation and submit an escalation. Use its fields for the reason, evidence, owner
 question, options, consequences, and next steps. The owner decides how work continues. If a significant discovery requires an owner choice, stop implementation and use

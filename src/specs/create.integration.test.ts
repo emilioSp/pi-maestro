@@ -38,7 +38,7 @@ afterEach(async () => {
 });
 
 describe('spec template and creation', () => {
-  it('given a custom spec directory when a spec is created then that directory receives the spec file, drafting-spec workflow, and prototypes directory', async () => {
+  it('given a custom spec directory when a spec is created then proposal and spec drafts are saved with a drafting workflow and prototypes but no design file', async () => {
     const { paths } = await createWorkspace();
 
     const created = await createSpec({
@@ -53,6 +53,12 @@ describe('spec template and creation', () => {
     await expect(readFile(created.specFilePath, 'utf8')).resolves.toContain(
       `# ${SPEC_ID}: Add Weather Alerts`,
     );
+    await expect(readFile(created.proposalFilePath, 'utf8')).resolves.toContain(
+      `# ${SPEC_ID}: Add Weather Alerts`,
+    );
+    expect(created.proposalFilePath).toBe(paths.getProposalFilePath(SPEC_ID));
+    expect(created.designFilePath).toBe(paths.getDesignFilePath(SPEC_ID));
+    await expect(access(created.designFilePath)).rejects.toMatchObject({ code: 'ENOENT' });
     await expect(readWorkflowState(created.workflowPath)).resolves.toEqual({
       version: WORKFLOW_STATE_VERSION,
       specId: SPEC_ID,
@@ -73,6 +79,7 @@ describe('spec template and creation', () => {
     });
 
     const before = await readFile(first.specFilePath, 'utf8');
+    const proposalBefore = await readFile(first.proposalFilePath, 'utf8');
 
     await expect(
       createSpec({
@@ -83,6 +90,7 @@ describe('spec template and creation', () => {
       }),
     ).rejects.toMatchObject({ code: 'EEXIST', path: first.specPath });
     await expect(readFile(first.specFilePath, 'utf8')).resolves.toBe(before);
+    await expect(readFile(first.proposalFilePath, 'utf8')).resolves.toBe(proposalBefore);
   });
 
   it('given another workflow is active when spec creation is requested then creation fails without creating the spec directory', async () => {

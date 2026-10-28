@@ -11,7 +11,9 @@ import { isValidSpecId } from '#ids/isValidSpecId.ts';
 import { isPathStrictlyWithin } from '#utils/path-strictly-within.ts';
 
 const PATHS = {
+  PROPOSAL_FILE: 'proposal.md',
   SPEC_FILE: 'spec.md',
+  DESIGN_FILE: 'design.md',
   WORKFLOW_FILE: 'workflow.json',
   HANDOFFS_PATH: 'handoffs',
   BUILDER_HANDOFFS_PATH: 'handoffs/builder',
@@ -96,8 +98,16 @@ export class MaestroPaths {
     return resolve(this.projectRoot, this.specDirectoryFromRoot, specId);
   }
 
+  public getProposalFilePath(specId: string): string {
+    return resolve(this.getSpecPath(specId), PATHS.PROPOSAL_FILE);
+  }
+
   public getSpecFilePath(specId: string): string {
     return resolve(this.getSpecPath(specId), PATHS.SPEC_FILE);
+  }
+
+  public getDesignFilePath(specId: string): string {
+    return resolve(this.getSpecPath(specId), PATHS.DESIGN_FILE);
   }
 
   public getWorkflowPath(specId: string): string {

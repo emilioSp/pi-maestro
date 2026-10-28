@@ -1,14 +1,12 @@
 # Maestro status bar and activation notice
 
-## 1. Context, goals, and scope
+Motivation and scope: [proposal.md](proposal.md). Technical decisions: [design.md](design.md).
 
-The owner needs a compact status bar with phase icons and theme colors. Agent settings appear at activation, not in the status bar.
+## Requirements
 
-This change concerns status presentation and activation feedback. It does not change agent execution settings, workflow phases, spec identifiers, or artifact paths.
+### REQ1: Show the configured agent settings on activation
 
-## 2. Requirements and constraints
-
-### Activation notice
+Delta: added
 
 After each successful `/maestro` activation, show one theme-colored UI-only information notice with three lines:
 
@@ -20,9 +18,63 @@ Verifier (<model name> <thinking level>)
 
 Use resolved project configuration at activation, including defaults for omitted settings. Omit each model's provider prefix. These are configured settings, not a report of a running agent.
 
-The notice does not start an AI response, enter model context, or persist in session history. Do not show it on deactivation, failed activation, status refresh, or session start. Existing activation errors remain unchanged.
+Verified by: [AC2](#ac2-successful-activation-displays-the-configured-agent-settings)
 
-### Status content
+Coverage gap: The activation notice's theme styling is not explicitly checked by AC2.
+
+#### AC2: Successful activation displays the configured agent settings
+
+1. Probe: With Maestro off, activate it in a valid project. Cover explicit settings and configuration with omitted agent settings.
+2. Expected result: One information notice has the three defined lines, using the resolved builder and verifier settings.
+3. Example: Builder uses `openai-codex/gpt-6.1-sol` with `xhigh`; verifier uses the same model with `high`. Run `/maestro`. The notice text is exactly `Maestro active\nBuilder (gpt-6.1-sol xhigh)\nVerifier (gpt-6.1-sol high)`.
+
+### REQ2: Keep activation feedback outside AI requests and saved context
+
+Delta: added
+
+The notice does not start an AI response, enter model context, or persist in session history.
+
+Verified by: [AC3](#ac3-activation-feedback-does-not-enter-session-history); [AC4](#ac4-activation-feedback-does-not-start-an-ai-response); [AC11](#ac11-the-activation-notice-does-not-enter-model-context)
+
+#### AC3: Activation feedback does not enter session history
+
+1. Probe: Activate Maestro successfully, then inspect the saved session entries.
+2. Expected result: The activation notice is absent from saved session history.
+3. Example: Activate with builder `gpt-6.1-sol xhigh` and verifier `gpt-6.1-sol high`. No saved message or custom entry contains the three-line activation notice.
+
+#### AC4: Activation feedback does not start an AI response
+
+1. Probe: Activate Maestro successfully while idle and observe model requests.
+2. Expected result: The command starts no model request.
+3. Example: With zero model requests in an idle session, run `/maestro` successfully. The request count remains zero.
+
+#### AC11: The activation notice does not enter model context
+
+1. Probe: Activate successfully, then inspect the context for the next owner prompt.
+2. Expected result: The activation notice is absent from model context.
+3. Example: Activate with builder `gpt-6.1-sol xhigh` and verifier `gpt-6.1-sol high`. Submit `Summarize the project`. Its model context contains no three-line activation notice.
+
+### REQ3: Show the notice only after successful activation
+
+Delta: added
+
+Do not show it on deactivation, failed activation, status refresh, or session start. Existing activation errors remain unchanged.
+
+Verified by: [AC5](#ac5-reactivation-shows-the-notice-again)
+
+Coverage gap: Failed activation, status refresh, session start, and unchanged activation errors are not all exercised by AC5.
+
+#### AC5: Reactivation shows the notice again
+
+1. Probe: In one Pi session, start with Maestro off and valid activation checks. Run `/maestro` three times.
+2. Expected result: The third call activates Maestro and shows a fresh activation notice, just like the first call. The notice is not limited to once per session.
+3. Example: The first call turns Maestro on and shows one notice. The second turns Maestro off and shows no notice. The third turns Maestro on and shows the notice again. The cumulative activation notice counts after these calls are exactly 1, 1, and 2.
+
+### REQ4: Shorten only the displayed spec ID
+
+Delta: modified
+
+Before: Status displayed the full spec ID ([68bd11f:src/maestro/status/formatMaestroStatus.ts](https://github.com/emiliosp/pi-maestro/blob/68bd11f69b40b7baecc5ee082f248d8e9750796c/src/maestro/status/formatMaestroStatus.ts)).
 
 Keep the existing status structure, with a shortened ID and phase icon:
 
@@ -32,9 +84,31 @@ Maestro active · <shortened spec ID> · <phase icon> <existing phase label>
 
 Keep the original `YYYYMMDD-HHMMSS` prefix. Retain at most 10 characters from the title portion. Hyphens and digits count toward this limit. Append `...` only if characters were removed. Shorten only the status display. Keep full identifiers everywhere else.
 
-Do not include agent model or thinking details in the status. With no selected spec, keep `Maestro active · No active spec` without a phase icon. Hide the status when Maestro is off.
+Verified by: [AC6](#ac6-long-spec-ids-have-a-shortened-display); [AC7](#ac7-short-spec-ids-have-no-cut-marker); [AC12](#ac12-display-shortening-preserves-the-workflows-full-spec-id)
 
-### Theme colors
+#### AC6: Long spec IDs have a shortened display
+
+1. Probe: With Maestro active, select a spec whose title portion exceeds 10 characters. Observe the status.
+2. Expected result: Its displayed ID retains the date and time, the first 10 title characters, and `...`.
+3. Example: Select `20261007-170438-update-maestro-status-bar-with-agent-models-theme-colors-and-phase-icons`. Its ID segment is exactly `20261007-170438-update-mae...`.
+
+#### AC7: Short spec IDs have no cut marker
+
+1. Probe: With Maestro active, select specs with title portions shorter than 10 characters and exactly 10 characters.
+2. Expected result: Each displayed ID is unchanged, without appended `...`.
+3. Example: Select `20250101-000000-fix`, then `20250101-000000-status-fix`. Their ID segments remain exactly `20250101-000000-fix` and `20250101-000000-status-fix`.
+
+#### AC12: Display shortening preserves the workflow's full spec ID
+
+1. Probe: Create a spec with a long title and observe its saved identity and status display.
+2. Expected result: Only the status uses the shortened ID; workflow identity and artifact paths retain the full ID.
+3. Example: Create `20261007-170438-update-maestro-status-bar-with-agent-models-theme-colors-and-phase-icons`. The status ID segment is `20261007-170438-update-mae...`, but workflow `specId` and the spec directory retain the full ID.
+
+### REQ6: Use the active theme for status colors
+
+Delta: modified
+
+Before: Status returned plain text without theme-role formatting ([68bd11f:src/maestro/status/formatMaestroStatus.ts](https://github.com/emiliosp/pi-maestro/blob/68bd11f69b40b7baecc5ee082f248d8e9750796c/src/maestro/status/formatMaestroStatus.ts)).
 
 Use Pi theme roles, not fixed colors:
 
@@ -50,7 +124,21 @@ Emoji appearance remains controlled by the terminal.
 
 Use Pi's active theme when formatting the status. Theme switching is Pi's responsibility. Do not add a theme-change handler or another refresh mechanism.
 
-### Phase icons
+Verified by: [AC8](#ac8-status-colors-use-the-approved-theme-roles)
+
+Coverage gap: AC8 checks rendered roles, not the absence of an extra theme-change handler or refresh mechanism.
+
+#### AC8: Status colors use the approved theme roles
+
+1. Probe: Observe the status without a selected spec and in every phase under themes with distinct role colors.
+2. Expected result: Each text segment uses the role in the theme table, not a fixed color.
+3. Example: A theme assigns `muted` gray, `accent` blue, `warning` amber, `error` red, and `success` green. In `builder-failed`, the prefix, ID, and separators are gray and `Builder failed` is red. In `candidate-ready`, `Completed` is green.
+
+### REQ7: Prefix each phase label with its approved icon
+
+Delta: modified
+
+Before: Phase labels had no icons ([68bd11f:src/maestro/status/formatMaestroStatus.ts](https://github.com/emiliosp/pi-maestro/blob/68bd11f69b40b7baecc5ee082f248d8e9750796c/src/maestro/status/formatMaestroStatus.ts)).
 
 Prefix each existing phase label with its approved icon and one space. Keep the phase labels unchanged.
 
@@ -66,69 +154,15 @@ Prefix each existing phase label with its approved icon and one space. Keep the 
 | findings-decision | Owner decision needed: findings | Speech balloon | U+1F4AC |
 | candidate-ready | Completed | Check mark button | U+2705 |
 
-### Test coverage constraint
+Verified by: [AC1](#ac1-each-phase-label-has-its-approved-icon)
 
-DO NOT ADD NEW TESTS TO COVER AC ALREADY COVERED.
-
-Reuse existing coverage. Update existing expectations when this change alters the expected output. Add tests only for behavior not already covered.
-
-## 3. Technical decisions and limits
-
-Use Pi's existing `context.ui.notify` information notice from the activation command in `extensions/maestro.ts`. This keeps feedback out of saved messages and model context. Configuration resolution remains owned by `src/config/loadConfiguration.ts`.
-
-Keep the existing status integration in `src/maestro/status/formatMaestroStatus.ts` and `src/maestro/status/refreshMaestroStatus.ts`. Use Pi's theme directly. No theme-switch handling is in scope.
-
-Pi's default footer joins extension statuses on one line and truncates to the available terminal columns. It does not wrap. Keep that behavior. Other extension statuses share this width. For this spec, the shortened ID is `20261007-170438-update-mae...`. Its `Builder running` status needs 67 columns with the approved icon.
-
-## 4. Acceptance criteria
-
-### AC1: Each phase label has its approved icon
+#### AC1: Each phase label has its approved icon
 
 1. Probe: With Maestro active and a selected spec, observe the status in all nine phases.
 2. Expected result: Each phase segment matches its entry in the icon table, with one space between the icon and label.
 3. Example: Spec `20250101-000000-status-test` is in `builder-running`. Refresh the status. Its phase segment is the hammer and wrench icon (U+1F6E0 U+FE0F), one space, and `Builder running`.
 
-### AC2: Successful activation displays the configured agent settings
-
-1. Probe: With Maestro off, activate it in a valid project. Cover explicit settings and configuration with omitted agent settings.
-2. Expected result: One information notice has the three defined lines, using the resolved builder and verifier settings.
-3. Example: Builder uses `openai-codex/gpt-6.1-sol` with `xhigh`; verifier uses the same model with `high`. Run `/maestro`. The notice text is exactly `Maestro active\nBuilder (gpt-6.1-sol xhigh)\nVerifier (gpt-6.1-sol high)`.
-
-### AC3: Activation feedback does not enter session history
-
-1. Probe: Activate Maestro successfully, then inspect the saved session entries.
-2. Expected result: The activation notice is absent from saved session history.
-3. Example: Activate with builder `gpt-6.1-sol xhigh` and verifier `gpt-6.1-sol high`. No saved message or custom entry contains the three-line activation notice.
-
-### AC4: Activation feedback does not start an AI response
-
-1. Probe: Activate Maestro successfully while idle and observe model requests.
-2. Expected result: The command starts no model request.
-3. Example: With zero model requests in an idle session, run `/maestro` successfully. The request count remains zero.
-
-### AC5: Reactivation shows the notice again
-
-1. Probe: In one Pi session, start with Maestro off and valid activation checks. Run `/maestro` three times.
-2. Expected result: The third call activates Maestro and shows a fresh activation notice, just like the first call. The notice is not limited to once per session.
-3. Example: The first call turns Maestro on and shows one notice. The second turns Maestro off and shows no notice. The third turns Maestro on and shows the notice again. The cumulative activation notice counts after these calls are exactly 1, 1, and 2.
-
-### AC6: Long spec IDs have a shortened display
-
-1. Probe: With Maestro active, select a spec whose title portion exceeds 10 characters. Observe the status.
-2. Expected result: Its displayed ID retains the date and time, the first 10 title characters, and `...`.
-3. Example: Select `20261007-170438-update-maestro-status-bar-with-agent-models-theme-colors-and-phase-icons`. Its ID segment is exactly `20261007-170438-update-mae...`.
-
-### AC7: Short spec IDs have no cut marker
-
-1. Probe: With Maestro active, select specs with title portions shorter than 10 characters and exactly 10 characters.
-2. Expected result: Each displayed ID is unchanged, without appended `...`.
-3. Example: Select `20250101-000000-fix`, then `20250101-000000-status-fix`. Their ID segments remain exactly `20250101-000000-fix` and `20250101-000000-status-fix`.
-
-### AC8: Status colors use the approved theme roles
-
-1. Probe: Observe the status without a selected spec and in every phase under themes with distinct role colors.
-2. Expected result: Each text segment uses the role in the theme table, not a fixed color.
-3. Example: A theme assigns `muted` gray, `accent` blue, `warning` amber, `error` red, and `success` green. In `builder-failed`, the prefix, ID, and separators are gray and `Builder failed` is red. In `candidate-ready`, `Completed` is green.
+## Regression checks
 
 ### AC9: Maestro off has no status entry
 
@@ -141,15 +175,3 @@ Pi's default footer joins extension statuses on one line and truncates to the av
 1. Probe: Activate Maestro successfully before creating a spec. Observe the status.
 2. Expected result: The visible status text is exactly `Maestro active · No active spec`.
 3. Example: Start with Maestro off and no selected spec. Run `/maestro`. The status is `Maestro active · No active spec`, without an icon or agent settings.
-
-### AC11: The activation notice does not enter model context
-
-1. Probe: Activate successfully, then inspect the context for the next owner prompt.
-2. Expected result: The activation notice is absent from model context.
-3. Example: Activate with builder `gpt-6.1-sol xhigh` and verifier `gpt-6.1-sol high`. Submit `Summarize the project`. Its model context contains no three-line activation notice.
-
-### AC12: Display shortening preserves the workflow's full spec ID
-
-1. Probe: Create a spec with a long title and observe its saved identity and status display.
-2. Expected result: Only the status uses the shortened ID; workflow identity and artifact paths retain the full ID.
-3. Example: Create `20261007-170438-update-maestro-status-bar-with-agent-models-theme-colors-and-phase-icons`. The status ID segment is `20261007-170438-update-mae...`, but workflow `specId` and the spec directory retain the full ID.
