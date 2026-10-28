@@ -516,7 +516,7 @@ describe('main Maestro extension', () => {
     expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(workflow);
   });
 
-  it('given an approved spec in a Git repository when builder, verifier, and simplifier finish then status follows each phase and the workflow ends at candidate-ready with saved reports', async () => {
+  it('given an approved proposal, nested-criteria spec, and design in Git when builder, verifier, and simplifier finish then the workflow ends at candidate-ready with saved reports and unchanged approved documents', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await execFileAsync('git', ['init', '-q', repository.path]);
@@ -549,7 +549,8 @@ describe('main Maestro extension', () => {
     });
 
     // JUSTIFICATION: The registered create-spec tool returns CreatedSpec details.
-    const { specId, specPath, specFilePath, workflowPath } = created.details as CreatedSpec;
+    const { specId, specPath, proposalFilePath, specFilePath, designFilePath, workflowPath } =
+      created.details as CreatedSpec;
 
     expect(maestroSessionState.getActiveSpecId()).toBe(specId);
     expect(specPath).toBe(join(repository.path, '.specs', specId));
@@ -565,7 +566,23 @@ describe('main Maestro extension', () => {
       await readFile(new URL(import.meta.resolve('#tests/fixtures/weather-alert-spec.md')), 'utf8')
     ).replace('<id>', specId);
 
+    const approvedProposal = (
+      await readFile(
+        new URL(import.meta.resolve('#tests/fixtures/weather-alert-proposal.md')),
+        'utf8',
+      )
+    ).replace('<id>', specId);
+
+    const approvedDesign = (
+      await readFile(
+        new URL(import.meta.resolve('#tests/fixtures/weather-alert-design.md')),
+        'utf8',
+      )
+    ).replace('<id>', specId);
+
+    await writeFile(proposalFilePath, approvedProposal);
     await writeFile(specFilePath, approvedSpec);
+    await writeFile(designFilePath, approvedDesign);
 
     const markSpecReadyTool = session.agent.state.tools.find(
       (tool) => tool.name === MARK_SPEC_READY_TOOL.NAME,
@@ -843,7 +860,9 @@ describe('main Maestro extension', () => {
       summary: 'No simplification needed.',
       notes: [],
     });
+    expect(await readFile(proposalFilePath, 'utf8')).toBe(approvedProposal);
     expect(await readFile(specFilePath, 'utf8')).toBe(approvedSpec);
+    expect(await readFile(designFilePath, 'utf8')).toBe(approvedDesign);
     expect(await readFile(productPath, 'utf8')).toBe(productContents);
 
     const event = await session.extensionRunner.emitBeforeAgentStart(

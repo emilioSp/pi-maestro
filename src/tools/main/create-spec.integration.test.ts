@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -64,6 +65,10 @@ describe('create spec tool', () => {
       `# ${details.specId}: Add Weather Alerts`,
     );
 
+    await expect(readFile(details.proposalFilePath, 'utf8')).resolves.toContain(
+      `# ${details.specId}: Add Weather Alerts`,
+    );
+    expect(details.designFilePath).toBe(join(details.specPath, 'design.md'));
     await expect(readWorkflowState(details.workflowPath)).resolves.toEqual({
       version: WORKFLOW_STATE_VERSION,
       specId: details.specId,
