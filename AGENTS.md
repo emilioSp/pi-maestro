@@ -10,6 +10,7 @@ Read `CHANGELOG.md` and `ADR.md`. The roadmap is maintained in [Linear](https://
 1. Update `ADR.md` only when the session includes a significant architectural decision.
 2. Update the relevant Linear roadmap issue, but only when you worked on an item already present there. Record completion only when supported by owner acceptance. Do not
    maintain a local copy of the roadmap.
+3. If spec exists, link it the issue in Linear.
 
 ## Commands
 
