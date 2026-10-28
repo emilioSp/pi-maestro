@@ -107,21 +107,39 @@ For the initial `spec`:
 Approval freezes the `spec`. The `spec` and its visual prototypes remain unchanged during `builder`, `verifier`, and `simplifier` execution. See
 [Spec revision](#spec-revision) for permitted revisions.
 
+## Requirement deltas
+
+Each requirement has exactly one `Delta` field. It describes the impact of the requirement against the current system's behavior.
+
+| Value      | Meaning                                                                   |
+| ---------- | ------------------------------------------------------------------------- |
+| `added`    | Introduces behavior or a constraint that did not exist before the change. |
+| `modified` | Changes existing behavior or a constraint.                                |
+| `removed`  | Removes behavior that must no longer be available.                        |
+
+The `spec` describes only requirements added, modified, or removed by the change. Existing behavior must continue working unless explicitly changed or removed. Unchanged
+behavior is implicit, not an inventory of requirements to repeat in every `spec`.
+
+For `modified` or `removed` requirements, a short `Before` description is included only when it helps explain the change. For example,
+`Before: Tokens expire 30 minutes after issuance.`
+
 ## Requirement coverage
 
 Each requirement has its own section and a unique, stable ID, such as `REQ1`. Its `Verified by` field links to the `acceptance criteria` or existing tests that verify it.
 The mapping appears only under the requirement, not again inside each `acceptance criterion`.
 
-For example, a requirement and its linked `acceptance criterion` can appear in `spec.md` as follows:
+For example, a change that introduces persistent item titles can describe its requirement and linked `acceptance criterion` in `spec.md` as follows:
 
 ```markdown
-### REQ1: Preserve the saved title
+### REQ1: Persist saved titles
+
+Delta: added
 
 Saving and reopening an item must preserve its title.
 
 Verified by: [AC1](#ac1-saved-title-is-preserved)
 
-### AC1: Saved title is preserved
+### AC1: Saved title is persisted
 
 1. Coverage: success
 2. Probe: Save a change to an item's title, then reopen the item.

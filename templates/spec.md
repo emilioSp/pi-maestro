@@ -17,11 +17,17 @@ Leave local implementation choices, test code, fixtures, mocks, and commands to 
 
 ## 2. Requirements and constraints
 
-<Give each requirement its own ### REQ<number>: <title> heading and a unique, stable ID. Include required behavior, measurable limits, constraints, preserved behavior, edge cases, and error handling as relevant. Do not copy repository or agent instructions.>
+<Give each requirement its own ### REQ<number>: <title> heading and a unique, stable ID. Document only behavior or constraints this change adds, modifies, or removes, with relevant measurable limits, edge cases, and error handling. Existing behavior must continue working unless explicitly changed or removed; do not list unchanged behavior as requirements. Do not copy repository or agent instructions.>
+
+<Give each requirement exactly one Delta value: added for new behavior or constraints, modified for changes to existing behavior or constraints, or removed for behavior that must no longer be available. Keep requirements organized by topic, not by delta category.>
+
+<For modified or removed requirements, add a brief Before description only when it helps explain the change. Verify the previous behavior from repository evidence; do not invent it or copy the whole old requirement. State the complete required outcome in the requirement body. For removed behavior, describe the required absence and any agreed replacement or error behavior. Keep the same pre-change baseline during spec revisions.>
 
 <Each requirement must have Verified by with Markdown links to one or more acceptance criteria. Use each criterion's actual heading anchor and update links when headings change. If an existing test covers the exact scenario, link its file relative to spec.md and include the exact test scenario name instead of creating a duplicate criterion. A requirement can reference both criteria and existing tests. Check that their combined coverage verifies the whole requirement. Keep the mapping only here, not in the acceptance criteria.>
 
 ### REQ1: <short required behavior>
+
+Delta: <added | modified | removed>
 
 <Describe the requirement once, including relevant boundary conditions and expected failure or recovery behavior. Keep it documented even when existing tests cover it.>
 

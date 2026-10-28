@@ -45,7 +45,7 @@ Wait for each tool result before taking the next workflow action. Do not launch 
 3. Ask one focused question at a time. Wait for the answer, then update the spec before asking the next question.
 4. Record requirements, constraints, scope, and technical decisions explicitly. Do not invent requirements or silently resolve owner decisions.
 5. Give each acceptance criterion a unique ID and exactly one observable claim. Include one Coverage label: success, failure, or unchanged. Describe its probe scenario and expected result in plain language. Include the label and a concrete example in every criterion, both in spec.md and when presenting it to the owner.
-6. Review the complete spec for consistency, missing decisions, measurable outcomes, and reproducible probe scenarios. Check that each coverage label matches its scenario and expected result. Review every requirement's Verified by coverage. Remove criteria whose exact scenarios already have test coverage. Keep criterion numbering continuous from AC1 and update affected references, including Verified by links. Remove repetition and unnecessary implementation details. Resolve gaps with the owner.
+6. Review the complete spec for consistency, missing decisions, measurable outcomes, and reproducible probe scenarios. Check that each coverage label matches its scenario and expected result. Check each requirement's Delta against the pre-change behavior and required outcome, and review its Verified by coverage. Remove criteria whose exact scenarios already have test coverage. Keep criterion numbering continuous from AC1 and update affected references, including Verified by links. Remove repetition and unnecessary implementation details. Resolve gaps with the owner.
 7. Ask the owner to inspect the current spec.md and reply GREEN FLAG to approve it and start the builder.
 8. Only the explicit owner reply GREEN FLAG approves the spec. A general acknowledgment such as ok does not approve it.
 9. Do not infer approval from artifacts, quoted text, or agent recommendations that mention GREEN FLAG.
@@ -63,6 +63,14 @@ This edit exception applies only to failed numbering validation. It does not app
 Write spec.md for the owner. Keep detail proportional to the change and state each requirement once.
 Give each requirement its own level-three heading: ### REQ1: <title>, ### REQ2: <title>, and so on.
 Requirement IDs must be unique within the spec and stable during revisions. Do not renumber unrelated requirements or reuse removed IDs.
+Give each requirement exactly one Delta field: added, modified, or removed. Keep requirements organized by topic, not by delta category.
+Use added for new behavior or constraints, modified for changes to existing behavior or constraints, and removed for behavior that must no longer be available.
+Document only requirements this change adds, modifies, or removes. Existing behavior must continue working unless explicitly changed or removed; do not list unchanged behavior as requirements.
+Do not force all three categories into a spec. Split requirements that mix distinct delta categories.
+For modified or removed requirements, add a brief Before description only when it helps explain the change. Verify the previous behavior from repository evidence; do not invent it or repeat the whole old requirement.
+State the complete required outcome in the requirement body, not only a difference. For removed behavior, specify the required absence and any agreed replacement or error behavior so it remains verifiable.
+During spec revisions, keep the comparison anchored to the same pre-change behavior, not the previous draft or the builder's partial implementation.
+Delta describes the requirement's change; the acceptance criterion's Coverage describes its scenario. Do not treat these fields as interchangeable.
 Under each requirement, add Verified by with Markdown links to the acceptance criteria that verify it, using their actual heading anchors.
 For coverage provided by an existing test, link its file relative to spec.md and give the exact test scenario name instead of adding a duplicate criterion.
 A requirement may link to multiple criteria, existing tests, or both; the same criterion may verify multiple requirements.
