@@ -23,12 +23,12 @@ Check `README.md`, `docs/`, and the available project constitution:
 
 1. `../../../MISSION.md`: purpose, scope, and owner responsibilities.
 2. `../../../TECH_STACK.md`: technologies and their roles.
-3. `../../../ROADMAP.md`: completed outcomes and planned priorities.
+3. [Linear roadmap](https://linear.app/emilio-spatola/team/MAESTRO/overview): completed outcomes and planned priorities.
 4. `../../../CHANGELOG.md`: meaningful codebase changes and breaking contracts.
 5. `../../../ADR.md`: architectural choices, status, context, consequences, and evidence.
 
-These five files default to the project root. Discover alternative names, directories, or embedded sections from the repository and its instructions. Audit the actual
-documents rather than assuming a fixed layout. Report missing documents only when project instructions require them.
+The four local constitution files default to the project root; the roadmap is maintained in Linear. Discover alternative names, directories, or embedded sections from the
+repository and its instructions. Audit the actual documents rather than assuming a fixed layout. Report missing documents only when project instructions require them.
 
 Use `package.json`, `package-lock.json`, and the code under `src/`, `extensions/`, `agents/`, and `templates/` as comparison sources. `package.json` is authoritative for
 declared scripts, dependencies, peer dependencies, import aliases, published files, and the Pi manifest. Use relevant specs, tests, configuration, and local Git history
@@ -57,10 +57,10 @@ current documentation. Do not treat an accurately labeled historical changelog e
 
 Check that documentation follows this rule, with paths relative to the project root:
 
-In `README.md`, `docs/*.md`, `MISSION.md`, `TECH_STACK.md`, `ROADMAP.md`, `CHANGELOG.md`, and `ADR.md`, format terms from `docs/glossary.md` with inline code. Do not
-apply this formatting to section titles, blockquotes (`>`), link labels, or text inside quotation marks. Do not format `spec` within `spec-driven` phrases. Leave
-possessive forms, such as `owner's`, unformatted. Include plurals and capitalization variants only when they have the glossary meaning. Do not change wording, code
-blocks, link targets, or file paths just to apply this formatting.
+In `README.md`, `docs/*.md`, `MISSION.md`, `TECH_STACK.md`, `CHANGELOG.md`, `ADR.md`, and in Linear roadmap issues, projects, and documents, format terms from
+`docs/glossary.md` with inline code. Do not apply this formatting to section titles, blockquotes (`>`), link labels, or text inside quotation marks. Do not format `spec`
+within `spec-driven` phrases. Leave possessive forms, such as `owner's`, unformatted. Include plurals and capitalization variants only when they have the glossary
+meaning. Do not change wording, code blocks, link targets, or file paths just to apply this formatting.
 
 ### 3. Links and references
 
@@ -104,11 +104,16 @@ Planned choices must remain clearly labeled as planned, and descriptions must no
 
 #### Roadmap
 
+The roadmap is maintained at https://linear.app/emilio-spatola/team/MAESTRO/overview. Read relevant issues through MCP in team `MAESTRO` and use their Linear issue
+identifiers. Do not expect a local roadmap file. If Linear is unavailable, report the roadmap evidence limit rather than treating historical Git content as its current
+state.
+
 Check identifiers for uniqueness and references for consistency. Compare outcome descriptions, scope boundaries, known dependencies, completion conditions, and
 specification links with the available evidence. Check that partially implemented work is not described as wholly complete.
 
-Where the roadmap uses Completed, Now, Next, and Later, check their documented meaning and priorities. Completed entries need evidence consistent with owner acceptance.
-Passing tests, an agent handoff, or `candidate-ready` alone do not prove final owner review.
+Check issue workflow states separately from Now, Next, and Later planning horizons. Imported descriptions identify their original roadmap section as historical metadata,
+not a live planning horizon. Done issues need evidence consistent with owner acceptance. Passing tests, an agent handoff, or `candidate-ready` alone do not prove final
+owner review.
 
 Report absent completion evidence as unverified, not automatically false. Do not infer acceptance dates from spec identifiers or creation dates. Do not promote priorities
 or treat roadmap entries as permission to implement.

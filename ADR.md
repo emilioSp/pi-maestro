@@ -2,7 +2,7 @@
 
 An Architecture Decision Record (ADR) explains an important architectural choice, its context, and its consequences. This file contains one numbered record per decision.
 
-Requirements and routine project rules belong in the [roadmap](ROADMAP.md) or other relevant documentation.
+Requirements and routine project rules belong in the [roadmap](https://linear.app/emilio-spatola/team/MAESTRO/overview) or other relevant documentation.
 
 When a new decision replaces an accepted decision, add a new record, mark the earlier record as superseded, and link both records.
 
@@ -87,13 +87,13 @@ This breaking MVP change has no migrations, compatibility readers, deprecated al
 ### Evidence
 
 [Specification](.specs/20261013-101454-route-builder-failures-through-owner-escalations/spec.md) and
-[R-03](ROADMAP.md#r-03-route-builder-failures-through-owner-escalations).
+[MAESTRO-7](https://linear.app/emilio-spatola/issue/MAESTRO-7/route-builder-failures-through-owner-escalations).
 
 ## ADR-004: Require Git only for the simplifier
 
 ### Status
 
-Accepted. Implemented through R-21. Supersedes [ADR-001](#adr-001-keep-the-workflow-independent-of-git).
+Accepted. Implemented through MAESTRO-24. Supersedes [ADR-001](#adr-001-keep-the-workflow-independent-of-git).
 
 ### Context
 
@@ -124,7 +124,7 @@ The `simplifier` uses Git to select all staged, unstaged, and untracked code cha
 
 ### Evidence
 
-[R-21](ROADMAP.md#r-21-add-a-simplifier-with-one-clear-purpose-per-agent) and the
+[MAESTRO-24](https://linear.app/emilio-spatola/issue/MAESTRO-24/add-a-simplifier-with-one-clear-purpose-per-agent) and the
 [specification](.specs/20261016-090319-add-a-dedicated-simplifier-after-verification/spec.md).
 
 ## ADR-005: Approve a specification document set as one contract
@@ -163,3 +163,30 @@ approval.
 
 [Document workflow](docs/workflow.md#specification-documents), [creation](src/specs/create.ts), [approval](src/workflow/spec/markSpecReady.ts), and
 [templates](templates/).
+
+## ADR-006: Maintain the roadmap in Linear
+
+### Status
+
+Accepted. Implemented.
+
+### Context
+
+The `owner` moved roadmap items from the repository to Linear, selected the dedicated `MAESTRO` team, and requested removal of the local roadmap file and redundant
+identifiers. This moves the source of truth for planning outside Git.
+
+### Decision
+
+Maintain the roadmap only in [Linear](https://linear.app/emilio-spatola/team/MAESTRO/overview), using Linear issue identifiers. Keep the roadmap location and maintenance
+instructions in `AGENTS.md`, without a local copy of the issue list.
+
+Approved `specifications`, verification evidence, the changelog, and architectural decisions remain in the repository.
+
+### Consequences
+
+Reading or updating current roadmap state requires Linear access. Git history remains evidence of earlier plans, not the current roadmap. Imported issues retain
+commit-pinned links to repository evidence. Removing the local roadmap also removes it from the published package.
+
+### Evidence
+
+[Linear roadmap](https://linear.app/emilio-spatola/team/MAESTRO/overview) and [repository instructions](AGENTS.md).
