@@ -1,16 +1,8 @@
 # 20261013-202811-check-acceptance-criterion-numbering-before-builder-execution: Check acceptance criterion numbering before builder execution
 
-> After owner approval, this specification is the contract for the builder and verifier.
+Motivation and scope: [proposal.md](proposal.md). Technical decisions: [design.md](design.md).
 
-## 1. Context, goals, and scope
-
-R-05 in `ROADMAP.md` requires criterion numbering that starts at AC1 and continues without gaps. Reject incorrect numbering when Maestro records spec approval.
-
-### Out of scope
-
-No new tool, renumbering by the approval tool, check for missing criteria, or matching of criterion IDs against handoffs. No additional checks in builder launch or unchanged-contract decision resolution.
-
-## 2. Requirements and constraints
+## Requirements
 
 ### REQ1: Extract criterion numbers with the existing raw heading rule
 
@@ -32,6 +24,12 @@ Verified by: [AC1](#ac1-incorrect-numbering-produces-an-ordering-error); [src/wo
 
 Coverage gap: The linked success test confirms zero matches; alternative number spellings and ignored heading content are not explicitly exercised.
 
+#### AC1: Incorrect numbering produces an ordering error
+
+1. Probe: Approve specs with a wrong starting number, a gap, a duplicate, or reversed ordering.
+2. Expected result: Each approval throws an error containing `Fix acceptance criterion ordering in spec.md.`
+3. Example: In `drafting-spec`, approve separate specs with matched sequences `[2]`, `[1, 3]`, `[1, 1]`, and `[1, 3, 2]`. Each call throws the ordering error. Repeat an invalid sequence `[1, 3]` in both decision phases and receive the same error.
+
 ### REQ3: Reject invalid numbering without writing saved files
 
 Delta: added
@@ -39,6 +37,12 @@ Delta: added
 Before saving `ready-for-builder`, reject invalid numbering by throwing an error that includes `Fix acceptance criterion ordering in spec.md.` Leave all saved workflow files and the spec unchanged on rejection.
 
 Verified by: [AC1](#ac1-incorrect-numbering-produces-an-ordering-error); [AC2](#ac2-rejected-numbering-changes-no-saved-files)
+
+#### AC2: Rejected numbering changes no saved files
+
+1. Probe: Record the current spec and saved workflow files, then attempt approval with invalid numbering in each existing approval phase.
+2. Expected result: Every recorded file retains exactly its previous content.
+3. Example: In `findings-decision`, the spec contains `### AC1: First` and `### AC3: Third`. Attempt approval. The spec, workflow file, and existing handoffs remain byte-for-byte unchanged, including phase `findings-decision`. Repeat in `drafting-spec` and `escalation-decision` with their phases unchanged.
 
 ### REQ5: Recover from numbering errors without renewed owner approval
 
@@ -48,32 +52,14 @@ Maestro guidance must explain recovery from this validation error: keep the curr
 
 Verified by: [AC3](#ac3-maestro-guidance-continues-after-numbering-correction-without-another-approval)
 
-## 3. Technical decisions
-
-Keep validation in the existing approval operation instead of adding a tool or workflow phase. It already checks approval prerequisites before saving the transition. See `src/workflow/spec/markSpecReady.ts` and `src/workflow/transitions.ts`.
-
-Use a text regex, not a Markdown parser. Only matches of the stated expression participate in ordering validation. The check does not validate heading presence or format.
-
-Historical coverage note (original REQ4):
-
-Coverage gap: These references do not individually exercise every preserved prerequisite or enforce the test-reuse constraint.
-
-## 4. Acceptance criteria
-
-### AC1: Incorrect numbering produces an ordering error
-
-1. Probe: Approve specs with a wrong starting number, a gap, a duplicate, or reversed ordering.
-2. Expected result: Each approval throws an error containing `Fix acceptance criterion ordering in spec.md.`
-3. Example: In `drafting-spec`, approve separate specs with matched sequences `[2]`, `[1, 3]`, `[1, 1]`, and `[1, 3, 2]`. Each call throws the ordering error. Repeat an invalid sequence `[1, 3]` in both decision phases and receive the same error.
-
-### AC2: Rejected numbering changes no saved files
-
-1. Probe: Record the current spec and saved workflow files, then attempt approval with invalid numbering in each existing approval phase.
-2. Expected result: Every recorded file retains exactly its previous content.
-3. Example: In `findings-decision`, the spec contains `### AC1: First` and `### AC3: Third`. Attempt approval. The spec, workflow file, and existing handoffs remain byte-for-byte unchanged, including phase `findings-decision`. Repeat in `drafting-spec` and `escalation-decision` with their phases unchanged.
-
-### AC3: Maestro guidance continues after numbering correction without another approval
+#### AC3: Maestro guidance continues after numbering correction without another approval
 
 1. Probe: Inspect the Maestro instructions for the recovery procedure after an ordering validation error following GREEN FLAG.
 2. Expected result: The instructions require a numbering-only correction in the unchanged permitted phase, retrying approval with the existing GREEN FLAG, and starting the builder after success without requesting another approval.
 3. Example: After GREEN FLAG, approval fails in `drafting-spec` for headings AC1 and AC3, where another paragraph refers to AC3. The written procedure directs Maestro to change AC3 and that reference to AC2 without changing the requirements or criterion order, retry `maestro_mark_spec_ready`, then call `maestro_run_builder` after success. No new GREEN FLAG is requested.
+
+## Historical coverage notes
+
+Historical coverage note (original REQ4):
+
+Coverage gap: These references do not individually exercise every preserved prerequisite or enforce the test-reuse constraint.

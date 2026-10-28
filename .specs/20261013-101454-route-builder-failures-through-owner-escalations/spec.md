@@ -1,18 +1,8 @@
 # 20261013-101454-route-builder-failures-through-owner-escalations: Route builder failures through owner escalations
 
-> After owner approval, this specification is the contract for the builder and verifier.
+Motivation and scope: [proposal.md](proposal.md). Technical decisions: [design.md](design.md).
 
-## 1. Context, goals, and scope
-
-R-03 in `ROADMAP.md` routes reportable builder failures through owner escalations. The owner decides how to proceed instead of reaching a terminal failure phase.
-
-The change covers the builder report contract, finite-state machine, tools, status presentation, agent instructions, tests, and current documentation, including `ROADMAP.md`.
-
-### Out of scope
-
-Automatic recovery, rollback, reconciliation, and changes to verifier responsibilities are outside this change. Historical approved specs and handoffs remain unchanged.
-
-## 2. Requirements and constraints
+## Requirements
 
 ### REQ1: Expose only done and escalation builder outcomes
 
@@ -24,6 +14,12 @@ The builder has only `done` and `escalation` handoff outcomes. Remove the `faile
 
 Verified by: [AC3](#ac3-builder-contracts-expose-only-done-and-escalation-outcomes)
 
+#### AC3: Builder contracts expose only done and escalation outcomes
+
+1. Probe: Inspect the builder artifact contract, registered handoff tool input schema, and parent run result contract.
+2. Expected result: Each contract supports exactly the `done` and `escalation` builder outcomes.
+3. Example: Register `maestro_record_builder_handoff` and inspect its outcome variants. The supported `status` values are exactly `done` and `escalation`.
+
 ### REQ2: Report technical problems through existing escalation fields
 
 Delta: modified
@@ -33,6 +29,12 @@ Before: A technical reason needing no owner decision used the failed outcome ([5
 When a technical problem prevents completion and the builder can safely report it, the builder stops and submits an escalation. Use existing escalation fields for the reason, evidence, owner question, options, consequences, and next steps. Do not add a separate failure subtype or storage format.
 
 Verified by: [AC4](#ac4-a-reported-technical-problem-returns-a-saved-escalation-result)
+
+#### AC4: A reported technical problem returns a saved escalation result
+
+1. Probe: During a running builder pass, submit a valid technical-problem escalation. Complete the delegation normally and observe the parent run result.
+2. Expected result: The parent returns `outcome: escalation`, `phase: escalation-decision`, and the saved active handoff with the reported problem.
+3. Example: A required check cannot run because the `compiler` command is unavailable. Save `B1.json` with `status: escalation`, question `E1`, and context "The compiler command is unavailable." Complete delegation. The parent returns that handoff, `outcome: escalation`, and `phase: escalation-decision`.
 
 ### REQ4: Remove the failure phase and event
 
@@ -46,6 +48,18 @@ Verified by: [AC1](#ac1-the-current-state-machine-exposes-exactly-eight-phases);
 
 Coverage gap: Status mapping removal is not explicitly checked by AC1 or AC2.
 
+#### AC1: The current state machine exposes exactly eight phases
+
+1. Probe: Inspect the supported phase definitions, their schema, and the finite-state machine after the change.
+2. Expected result: The supported phase set is exactly `drafting-spec`, `ready-for-builder`, `builder-running`, `escalation-decision`, `ready-for-verifier`, `verifier-running`, `findings-decision`, and `candidate-ready`.
+3. Example: The sample workflow `20260321-143052-add-weather-alerts` is in `builder-running`. Enumerate the current contract's supported phases. The result is exactly `drafting-spec`, `ready-for-builder`, `builder-running`, `escalation-decision`, `ready-for-verifier`, `verifier-running`, `findings-decision`, and `candidate-ready`.
+
+#### AC2: The current state machine exposes exactly ten events
+
+1. Probe: Inspect the supported event definitions and registered workflow transitions after the change.
+2. Expected result: The supported event set is exactly `mark-spec-ready`, `run-builder`, `open-escalation`, `resolve-escalation`, `builder-done`, `run-verifier`, `verifier-found-findings`, `verifier-approved`, `reject-findings`, and `request-fixes`.
+3. Example: The sample workflow `20260321-143052-add-weather-alerts` is in `builder-running`. Enumerate the current machine's transition event keys. The result is exactly `mark-spec-ready`, `run-builder`, `open-escalation`, `resolve-escalation`, `builder-done`, `run-verifier`, `verifier-found-findings`, `verifier-approved`, `reject-findings`, and `request-fixes`.
+
 ### REQ7: Align current guidance and remove obsolete failure code
 
 Delta: modified
@@ -58,57 +72,7 @@ Verified by: Not established. No matching AC or exact existing test scenario has
 
 Coverage gap: The existing ACs do not inspect all affected guidance, documentation, obsolete code, and historical-record preservation.
 
-## 3. Technical decisions
-
-### Reuse the existing escalation path
-
-`src/workflow/builder/completeBuilderPass.ts` saves the handoff and applies the workflow transition. `src/workflow/escalation/resolveEscalations.ts` already records owner decisions and permits another builder pass.
-
-Keep these responsibilities and the existing escalation data contract. No new tool or workflow phase is needed.
-
-`src/tools/main/run-builder.ts` checks execution errors through `src/tools/utils/pi-subagent-delegation.ts` before reading a saved outcome. Preserve this boundary instead of adding recovery behavior.
-
-### Compatibility
-
-This is a breaking MVP change. Treat the current model as if the removed outcome and phase never existed. Do not add migrations, compatibility readers, deprecated aliases, or dedicated legacy-format tests. Keep existing artifact version values unchanged.
-
-Historical coverage note (original REQ3):
-
-Coverage gap: AC8 covers successful done submission, not rejection of failed probes or nonempty escalations.
-
-Historical coverage note (original REQ5):
-
-Coverage gap: The general preservation of other transitions and fresh foreground contexts is broader than these probes.
-
-Historical coverage note (original REQ6):
-
-Coverage gap: Cancellation and partial protocol-write handling are not covered by the linked scenarios.
-
-## 4. Acceptance criteria
-
-### AC1: The current state machine exposes exactly eight phases
-
-1. Probe: Inspect the supported phase definitions, their schema, and the finite-state machine after the change.
-2. Expected result: The supported phase set is exactly `drafting-spec`, `ready-for-builder`, `builder-running`, `escalation-decision`, `ready-for-verifier`, `verifier-running`, `findings-decision`, and `candidate-ready`.
-3. Example: The sample workflow `20260321-143052-add-weather-alerts` is in `builder-running`. Enumerate the current contract's supported phases. The result is exactly `drafting-spec`, `ready-for-builder`, `builder-running`, `escalation-decision`, `ready-for-verifier`, `verifier-running`, `findings-decision`, and `candidate-ready`.
-
-### AC2: The current state machine exposes exactly ten events
-
-1. Probe: Inspect the supported event definitions and registered workflow transitions after the change.
-2. Expected result: The supported event set is exactly `mark-spec-ready`, `run-builder`, `open-escalation`, `resolve-escalation`, `builder-done`, `run-verifier`, `verifier-found-findings`, `verifier-approved`, `reject-findings`, and `request-fixes`.
-3. Example: The sample workflow `20260321-143052-add-weather-alerts` is in `builder-running`. Enumerate the current machine's transition event keys. The result is exactly `mark-spec-ready`, `run-builder`, `open-escalation`, `resolve-escalation`, `builder-done`, `run-verifier`, `verifier-found-findings`, `verifier-approved`, `reject-findings`, and `request-fixes`.
-
-### AC3: Builder contracts expose only done and escalation outcomes
-
-1. Probe: Inspect the builder artifact contract, registered handoff tool input schema, and parent run result contract.
-2. Expected result: Each contract supports exactly the `done` and `escalation` builder outcomes.
-3. Example: Register `maestro_record_builder_handoff` and inspect its outcome variants. The supported `status` values are exactly `done` and `escalation`.
-
-### AC4: A reported technical problem returns a saved escalation result
-
-1. Probe: During a running builder pass, submit a valid technical-problem escalation. Complete the delegation normally and observe the parent run result.
-2. Expected result: The parent returns `outcome: escalation`, `phase: escalation-decision`, and the saved active handoff with the reported problem.
-3. Example: A required check cannot run because the `compiler` command is unavailable. Save `B1.json` with `status: escalation`, question `E1`, and context "The compiler command is unavailable." Complete delegation. The parent returns that handoff, `outcome: escalation`, and `phase: escalation-decision`.
+## Regression checks
 
 ### AC5: Escalations preserve supplied acceptance probe results
 
@@ -133,3 +97,17 @@ Coverage gap: Cancellation and partial protocol-write handling are not covered b
 1. Probe: Complete a running builder pass with passed acceptance probes and no escalations, then observe the parent run result.
 2. Expected result: The parent returns `outcome: done` and `phase: ready-for-verifier`.
 3. Example: A sample workflow has `AC1: passed`. Submit `status: done` and `escalations: []`, then complete delegation. The parent returns `outcome: done` and `phase: ready-for-verifier`.
+
+## Historical coverage notes
+
+Historical coverage note (original REQ3):
+
+Coverage gap: AC8 covers successful done submission, not rejection of failed probes or nonempty escalations.
+
+Historical coverage note (original REQ5):
+
+Coverage gap: The general preservation of other transitions and fresh foreground contexts is broader than these probes.
+
+Historical coverage note (original REQ6):
+
+Coverage gap: Cancellation and partial protocol-write handling are not covered by the linked scenarios.
