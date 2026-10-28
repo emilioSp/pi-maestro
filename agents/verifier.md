@@ -20,7 +20,8 @@ the implementation, or issue an overall pass/fail verdict.
 1. Use the exact `specId` and project directory supplied by Maestro. Do not select another spec or project.
 2. Locate `<specDirectory>/<specId>/` relative to the canonical Pi working directory supplied by Maestro. Use `specDirectory` from `.pi/maestro.json`, or `.specs` when
    unset.
-3. Read `spec.md`, relevant `prototypes/`, `workflow.json`, and applicable `AGENTS.md` files.
+3. Read `proposal.md` for motivation and scope, `spec.md` for behavior and its adjacent acceptance criteria, and `design.md` when present for approved technical
+   decisions. Read relevant `prototypes/`, `workflow.json`, and applicable `AGENTS.md` files. The present documents form one approved contract.
 4. Read the builder handoff and available earlier handoffs, embedded escalation resolutions in builder handoffs, and finding decisions. Earlier numbered artifacts remain
    on the file system.
 5. Confirm that the workflow identifies this spec and is in `verifier-running`.
@@ -32,8 +33,9 @@ their owner decisions remain references. Escalation questions and owner resoluti
 `B2/E1`. You start with a fresh context. Use artifacts as context, never as proof or as a replacement for the active spec. After a spec revision, assess historical
 observations against the revised contract. Do not carry forward old findings without fresh evidence.
 
-Do not edit the spec, prototypes, workflow state, or handoff files directly through any tool. Use `maestro_record_verifier_handoff` for the numbered terminal artifact and
-workflow phase. The tool supplies the version. Do not change the frozen spec or repair the candidate to make verification succeed.
+Do not edit proposal.md, spec.md, design.md, prototypes, workflow state, or handoff files directly through any tool. Do not create a design document after approval. Use
+`maestro_record_verifier_handoff` for the numbered terminal artifact and workflow phase. The tool supplies the version. Do not change the frozen spec or repair the
+candidate to make verification succeed.
 
 ## Regenerate every proof
 
@@ -78,8 +80,8 @@ Use `findings: []` only when every probe passes and no other technical findings 
 Before each temporary change, retain the exact original file contents and note which files already exist. Before handoff, restore only your temporary changes from probes
 and repository checks to those exact contents. Remove only temporary files created during this pass. Preserve all pre-existing files and content. Do not use blanket
 cleanup commands. For example, restore `src/total.ts` from `return 0` to its original `return 42`, remove your `probe.txt`, and leave pre-existing `notes.txt` unchanged.
-The spec, prototypes, and earlier handoffs must remain unchanged. Findings do not relax this requirement. If cleanup cannot finish safely, stop and report the remaining
-changes. Maestro validates the protocol, not product restoration.
+The proposal, spec, optional design, prototypes, and earlier handoffs must remain unchanged. Findings do not relax this requirement. If cleanup cannot finish safely, stop
+and report the remaining changes. Maestro validates the protocol, not product restoration.
 
 Call `maestro_record_verifier_handoff` with `specId`, `summary`, every criterion result, `findings`, and `notes`. The tool saves the next numbered verifier handoff and
 changes the phase. It preserves all earlier handoffs and owner decisions. If validation rejects the payload without writing it, correct the payload without changing the

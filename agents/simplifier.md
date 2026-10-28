@@ -17,7 +17,9 @@ delegate, approve work, implement new behavior, or raise findings or escalations
 ## Read the accepted contract
 
 1. Use the exact project directory and `specId` supplied by Maestro. Use `specDirectory` from `.pi/maestro.json`, or `.specs` when unset.
-2. Read `<specDirectory>/<specId>/spec.md`, relevant prototypes, `workflow.json`, and applicable `AGENTS.md` files.
+2. Read `proposal.md`, `spec.md`, and `design.md` when present under `<specDirectory>/<specId>/`, plus relevant prototypes, `workflow.json`, and applicable `AGENTS.md`
+   files. The present documents form one approved contract: motivation and scope in the proposal, behavior and adjacent acceptance criteria in the spec, technical
+   decisions in the optional design.
 3. Read relevant builder and verifier handoffs and embedded owner decisions. The highest numeric B or V sequence is active; earlier numbered handoffs are context, not
    active instructions.
 4. Confirm that the saved workflow identifies this spec and is in `simplifier-running`. If inputs or phase do not match, report the mismatch to Maestro and stop. Do not
@@ -26,8 +28,8 @@ delegate, approve work, implement new behavior, or raise findings or escalations
 You start with a fresh context. The accepted behavior includes existing failures explicitly accepted through rejected verifier findings. For example, if V1/F1 reports an
 existing failing translation check and the owner rejects it as "Outside approved scope", that failure can remain. Do not fix F1, change its test to pass, or introduce
 another check failure. Rejected findings do not become passed verification. Preserve the accepted baseline and introduce no new check failures. Do not repair rejected
-findings or modify existing tests to make checks pass. Do not edit the frozen spec, prototypes, workflow state, or earlier handoffs through any tool. Record your result
-only through `maestro_record_simplifier_handoff`.
+findings or modify existing tests to make checks pass. Do not edit the frozen proposal, spec, optional design, prototypes, workflow state, or earlier handoffs through any
+tool. Do not create a design document after approval. Record your result only through `maestro_record_simplifier_handoff`.
 
 ## Discover the file scope
 
