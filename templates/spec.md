@@ -1,75 +1,40 @@
 # <id>: <short, outcome-oriented title>
 
 <!--
-Write for the owner, not only for agents. Keep detail proportional to the change.
-State each requirement once. Link its verification from Verified by instead of repeating the requirement in acceptance criteria.
-Use the topics below as guidance, not a checklist to fill. Omit empty subsections and these instructions.
-Leave local implementation choices, test code, fixtures, mocks, and commands to the builder.
+Define required behavior, not motivation or implementation. See proposal.md for scope and design.md, when present, for approved technical decisions.
+Write for the owner. State each requirement once and keep its acceptance criteria immediately below it.
+Use the topics below as guidance. Omit empty subsections and these instructions.
+Leave test code, fixtures, mocks, and commands to the builder. Keep execution evidence in handoffs.
 -->
 
-## 1. Context, goals, and scope
-
-<Briefly describe the problem, who is affected, and the intended outcome.>
-
-### Out of scope
-
-<Name related changes that are explicitly excluded.>
-
-## 2. Requirements and constraints
+## Requirements
 
 <Give each requirement its own ### REQ<number>: <title> heading and a unique, stable ID. Document only behavior or constraints this change adds, modifies, or removes, with relevant measurable limits, edge cases, and error handling. Existing behavior must continue working unless explicitly changed or removed; do not list unchanged behavior as requirements. Do not copy repository or agent instructions.>
 
-<Give each requirement exactly one Delta value: added for new behavior or constraints, modified for changes to existing behavior or constraints, or removed for behavior that must no longer be available. Keep requirements organized by topic, not by delta category.>
+<Give each requirement exactly one Delta value: added, modified, or removed. Keep requirements organized by topic, not by delta category. For modified or removed requirements, add a brief Before description only when useful. Verify the previous behavior from repository evidence; do not invent it or repeat the whole old requirement. State the complete required outcome, including the required absence and any agreed replacement or error behavior for removals. Keep the same pre-change baseline during revisions.>
 
-<For modified or removed requirements, add a brief Before description only when it helps explain the change. Verify the previous behavior from repository evidence; do not invent it or copy the whole old requirement. State the complete required outcome in the requirement body. For removed behavior, describe the required absence and any agreed replacement or error behavior. Keep the same pre-change baseline during spec revisions.>
+<Each requirement must have Verified by with Markdown links to its acceptance criteria, using their actual heading anchors. When an existing test covers the exact starting conditions, action, and expected result, link its file relative to spec.md and give the exact scenario name instead of creating a duplicate criterion. Keep criteria for partial or uncertain coverage. A requirement can reference both criteria and tests; check their combined coverage.>
 
-<Each requirement must have Verified by with Markdown links to one or more acceptance criteria. Use each criterion's actual heading anchor and update links when headings change. If an existing test covers the exact scenario, link its file relative to spec.md and include the exact test scenario name instead of creating a duplicate criterion. A requirement can reference both criteria and existing tests. Check that their combined coverage verifies the whole requirement. Keep the mapping only here, not in the acceptance criteria.>
+<Write each AC once, immediately below its primary requirement, with a #### AC<number>: <title> heading. Other requirements can link to the same AC without duplicating it. Number ACs continuously from AC1 across the whole document, not separately per requirement. During review, remove criteria already covered exactly by existing tests and update numbering and affected links. Keep the required behavior documented even when its criterion is omitted.>
 
 ### REQ1: <short required behavior>
 
 Delta: <added | modified | removed>
 
-<Describe the requirement once, including relevant boundary conditions and expected failure or recovery behavior. Keep it documented even when existing tests cover it.>
+<Describe the requirement once, including relevant boundary conditions and required failure or recovery behavior.>
 
 Verified by: [AC1](#ac1-short-observable-claim)
 
-## 3. Technical decisions and prototypes
-
-<Record only approved architectural decisions or technical constraints that affect scope or behavior. Explain their reasons briefly. Leave routine implementation choices to the builder.>
-
-<For each relevant topic below, add a short subsection. Omit topics that do not apply.>
-
-1. Components and data flow: changed responsibilities, data contracts, and important boundaries. No file inventory or function-level design.
-2. API specification: changed operations, permissions, inputs, outputs, errors, side effects, and delivery guarantees.
-3. Prototype and user interaction: link prototypes and identify approved states and interactions. Distinguish illustrative content from requirements.
-4. External integrations: affected services, failure behavior, and retries.
-5. Security and privacy: access rules, sensitive data, retention, and trust boundaries.
-6. Compatibility and migration: compatibility limits, migration, rollout, and rollback requirements.
-7. Monitoring and observability: required signals, alerts, and ownership.
-
-<Include only evidence and unresolved limits that affect an owner decision. Do not include investigation logs or general verification disclaimers.>
-
-## 4. Acceptance criteria
-
-<Inspect existing tests before writing criteria. Omit a criterion only if a test covers the same starting conditions, action, and expected result. Keep criteria when coverage is partial or uncertain. During review, remove criteria already covered by tests. Keep numbering continuous from AC1 and update affected references, including Verified by links. Keep required behavior in section 2 and link the covering tests from its Verified by field even when its criterion is omitted.>
-
-<Give each criterion a unique ID, one observable claim, and one coverage label. A probe is the scenario used to check that claim. Describe it in plain language. Use success for a valid action that produces the required result. Use failure for an invalid action that is correctly rejected. Use unchanged when the criterion explicitly checks existing behavior that the change must preserve. The label describes the scenario, not the test outcome. A failure scenario passes when the invalid action is correctly rejected. Do not require all three categories.>
-
-### AC1: <short observable claim>
+#### AC1: <short observable claim>
 
 1. Coverage: <success | failure | unchanged>
 2. Probe: <starting conditions and action or observation, without prescribing test implementation>
 3. Expected result: <observable and measurable outcome>
-4. Example: <specific starting conditions, concrete input or action, and exact expected result for this probe, not a restatement of the claim>
+4. Example: <specific starting conditions, concrete input or action, and exact expected result, not a restatement of the claim>
 
 <!--
-Example:
-Coverage: success
-Probe: Save a change to an item's title, then reopen the item.
-Expected result: The saved title is still present.
-Example: An item's title is "Draft". Change it to "Ready", save, and reopen the item. The title is "Ready".
-
-The builder and verifier each run every probe.
-The builder chooses executable checks. The verifier checks their coverage independently.
-Keep execution evidence in handoffs, not in this spec.
+Each AC has one observable claim and exactly one Coverage label.
+Use success for a valid action producing the required result, failure for an invalid action correctly rejected, and unchanged for an explicit regression scenario.
+Coverage labels describe scenarios, not test outcomes; a failure scenario passes when rejection is correct. Do not force all three categories into a spec.
+The builder and verifier each run every probe independently. The builder chooses executable checks; the verifier checks their coverage independently.
 -->
