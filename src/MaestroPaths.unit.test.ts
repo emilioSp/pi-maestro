@@ -67,6 +67,12 @@ describe('Maestro paths', () => {
     expect(paths.getProjectRoot()).toBe(projectRoot);
     expect(paths.getSpecDirectory()).toBe(join(projectRoot, 'custom/specs'));
     expect(paths.getSpecPath(SPEC_ID)).toBe(join(projectRoot, 'custom/specs', SPEC_ID));
+    expect(paths.getProposalFilePath(SPEC_ID)).toBe(
+      join(projectRoot, 'custom/specs', SPEC_ID, 'proposal.md'),
+    );
+    expect(paths.getDesignFilePath(SPEC_ID)).toBe(
+      join(projectRoot, 'custom/specs', SPEC_ID, 'design.md'),
+    );
     expect(paths.getSpecFilePath(SPEC_ID)).toBe(
       join(projectRoot, 'custom/specs', SPEC_ID, 'spec.md'),
     );
@@ -91,7 +97,9 @@ describe('Maestro paths', () => {
 
     const generatedPaths = [
       paths.getSpecPath(SPEC_ID),
+      paths.getProposalFilePath(SPEC_ID),
       paths.getSpecFilePath(SPEC_ID),
+      paths.getDesignFilePath(SPEC_ID),
       paths.getWorkflowPath(SPEC_ID),
       paths.getHandoffsPath(SPEC_ID),
       paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
