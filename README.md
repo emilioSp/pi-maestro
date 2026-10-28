@@ -40,6 +40,8 @@ The following official sources document the conceptual references. The links poi
 5. **Review requirements separately from testing code.** [Spec Kit's checklist command][spec-kit-checklist] evaluates requirements for completeness, clarity, consistency,
    and measurability, not implementation correctness. Before approval, `Maestro` reviews the `spec` for consistency, missing decisions, measurable outcomes, and
    reproducible scenarios. The later `verifier` checks the implementation independently.
+6. **Separate motivation, behavior, and design.** This separation is inspired by [OpenSpec's schema][openspec-schema]. The single approval of the document set is
+   Maestro's workflow choice. Historical `specs` are not converted automatically.
 
 [openspec-schema]: https://github.com/Fission-AI/OpenSpec/blob/6d04a1b58dedc95729d34e4f223d9d483aae210a/schemas/spec-driven/schema.yaml
 [spec-kit-philosophy]: https://github.com/github/spec-kit/blob/222a973f8b8794366680c043fb935a31f71902af/spec-driven.md
