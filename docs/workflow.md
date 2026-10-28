@@ -139,8 +139,8 @@ For `modified` or `removed` requirements, a short `Before` description is includ
 
 Each requirement has its own section and a unique, stable ID, such as `REQ1`. Its `Verified by` field links to the `acceptance criteria` or existing tests that verify it.
 The mapping appears only under the requirement, not again inside each `acceptance criterion`. Requirements use `### REQ<number>:` headings; their criteria immediately
-follow as `#### AC<number>:` subsections. Each AC is defined once under its primary requirement; other requirements can link to it. AC numbering is continuous across the
-whole document, not restarted for each requirement.
+follow as `#### AC<number>:` subsections. Each requirement-associated AC is defined once under its primary requirement; other requirements can link to it. AC numbering is
+continuous across the whole document, including standalone regression criteria, not restarted for each requirement or section.
 
 For example, a change that introduces persistent item titles can describe its requirement and linked `acceptance criterion` in `spec.md` as follows:
 
@@ -171,9 +171,28 @@ revisions.
 
 ## Acceptance criteria
 
-Each `acceptance criterion` has a unique ID and describes one observable result.
+Each `acceptance criterion` has a unique ID and describes one observable result. A criterion can verify a changed requirement or check a relevant regression in existing
+behavior without an associated requirement.
 
-Each criterion contains these parts:
+Standalone regression criteria belong in an optional `## Regression checks` section, with `### AC<number>:` headings and `Coverage: unchanged`. They do not need a `REQ`
+heading, `Delta`, or an artificial requirement association. Only regressions relevant to the change belong here; unchanged requirements are not listed. The section is
+omitted when unnecessary.
+
+For example, if saving item descriptions already works, adding title persistence may warrant this regression check without a new requirement for descriptions:
+
+```markdown
+## Regression checks
+
+### AC2: Existing descriptions remain saved
+
+1. Coverage: unchanged
+2. Probe: Change and save the title of an item with a saved description, then reopen it.
+3. Expected result: The description is unchanged.
+4. Example: An item's saved description is "Buy milk". Change its title from "Draft" to "Shopping", save, and reopen it. Its description is still "Buy milk".
+```
+
+Both nested and standalone criteria share one continuous AC sequence and are checked by the `builder` and `verifier`. Standalone criteria have the same fields as
+requirement-associated criteria:
 
 | Part              | Content                                                                             |
 | ----------------- | ----------------------------------------------------------------------------------- |

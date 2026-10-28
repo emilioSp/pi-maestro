@@ -15,7 +15,9 @@ Leave test code, fixtures, mocks, and commands to the builder. Keep execution ev
 
 <Each requirement must have Verified by with Markdown links to its acceptance criteria, using their actual heading anchors. When an existing test covers the exact starting conditions, action, and expected result, link its file relative to spec.md and give the exact scenario name instead of creating a duplicate criterion. Keep criteria for partial or uncertain coverage. A requirement can reference both criteria and tests; check their combined coverage.>
 
-<Write each AC once, immediately below its primary requirement, with a #### AC<number>: <title> heading. Other requirements can link to the same AC without duplicating it. Number ACs continuously from AC1 across the whole document, not separately per requirement. During review, remove criteria already covered exactly by existing tests and update numbering and affected links. Keep the required behavior documented even when its criterion is omitted.>
+<Write each requirement-associated AC once, immediately below its primary requirement, with a #### AC<number>: <title> heading. Other requirements can link to it without duplication. A relevant regression AC without an associated changed requirement can instead use a ### AC<number>: <title> heading under an optional ## Regression checks section, with Coverage: unchanged and the same probe, expected result, and example fields. Do not invent a REQ or Delta field for it. Include only regressions relevant to this change, not an inventory of existing behavior, and omit the section when unnecessary.>
+
+<Number ACs continuously from AC1 across the whole document, including nested and standalone regression criteria. During review, remove criteria already covered exactly by existing tests and update numbering and affected links. Keep required behavior documented when a requirement-associated criterion is omitted; omitting a standalone regression criterion does not require creating a requirement.>
 
 ### REQ1: <short required behavior>
 

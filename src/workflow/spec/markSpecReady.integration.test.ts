@@ -98,6 +98,25 @@ describe('markSpecReady', () => {
     );
   });
 
+  it('given nested AC1 and standalone regression AC3 when approval is requested then global numbering rejects the gap without changing the draft or workflow', async () => {
+    const { created, paths } = await createWorkflow();
+
+    const markdown = (
+      await readFile(
+        new URL('../../../tests/fixtures/two-acceptance-criteria-spec.md', import.meta.url),
+        'utf8',
+      )
+    ).replace('### AC2:', '### AC3:');
+
+    await writeFile(created.specFilePath, markdown, 'utf8');
+
+    await expect(
+      markSpecReady({ paths, specId: SPEC_ID, activeWorkflowSpecId: SPEC_ID }),
+    ).rejects.toThrow('Fix acceptance criterion ordering in spec.md.');
+    await expect(readFile(created.specFilePath, 'utf8')).resolves.toBe(markdown);
+    await expect(readWorkflowState(created.workflowPath)).resolves.toEqual(created.state);
+  });
+
   it.each([{ numbers: [2] }, { numbers: [1, 3] }, { numbers: [1, 1] }, { numbers: [1, 3, 2] }])(
     'given a draft with nested acceptance criterion numbers $numbers when approval is requested then a numbering error prevents approval and leaves all saved files unchanged',
     async ({ numbers }) => {

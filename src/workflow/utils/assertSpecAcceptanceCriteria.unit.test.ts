@@ -8,13 +8,13 @@ describe('assertSpecAcceptanceCriteria', () => {
   it.each([
     {
       fixture: 'two-acceptance-criteria-spec.md',
-      scenario: 'AC1 instead of AC1 and AC2',
+      scenario: 'nested AC1 but no standalone regression AC2',
       criterionIds: ['AC1'],
       missingIds: 'AC2',
     },
     {
       fixture: 'two-acceptance-criteria-spec.md',
-      scenario: 'no IDs instead of AC1 and AC2',
+      scenario: 'no IDs from a mixed nested and standalone spec',
       criterionIds: [],
       missingIds: 'AC1, AC2',
     },

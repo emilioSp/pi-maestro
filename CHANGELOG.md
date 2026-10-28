@@ -11,8 +11,9 @@ GitHub Releases are not required.
    useful. Requirements state the complete required outcome; unchanged behavior remains implicit. Approval validation and `handoff` formats remain unchanged.
 3. Split new `specs` into required `proposal.md` and `spec.md`, with optional `design.md`. One `GREEN FLAG` approves and freezes the present document set; all agent roles
    read it. Creation returns the new document paths; approval requires the proposal. Historical documents are not migrated.
-4. Placed `acceptance criteria` under their requirements as level-four headings, with global numbering and shared links. Approval and `handoff` validation recognize both
-   existing level-three and new level-four AC headings. Workflow phases and saved report formats remain unchanged.
+4. Placed requirement-associated `acceptance criteria` under their requirements as level-four headings. Relevant standalone regression criteria use level-three headings
+   under optional `Regression checks`, without inventing unchanged requirements. Both forms share global numbering and are required in `handoffs`. Workflow phases and
+   saved report formats remain unchanged.
 
 ## 0.11.0
 

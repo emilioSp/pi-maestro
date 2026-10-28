@@ -49,9 +49,8 @@ contains `specs`.
 Requirement IDs use the `REQ` prefix. They are unique within the `spec` and remain stable during revisions. Each requirement links to its verification through
 `Verified by`. See [Requirement coverage](workflow.md#requirement-coverage).
 
-The `AC` prefix is the template's naming convention. Criterion IDs must be unique within the `spec`. Reports use the exact IDs from the `spec`.
-
-`Builder` and `verifier` numbers count saved `handoffs` in separate sequences.
+The `AC` prefix is the template's naming convention. Criterion IDs must be unique within the `spec`. Reports use the exact IDs from the `spec`, including standalone
+regression criteria without a requirement association. `Builder` and `verifier` numbers count saved `handoffs` in separate sequences.
 
 ## Escalation references
 

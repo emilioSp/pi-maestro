@@ -76,8 +76,10 @@ For modified or removed requirements, add a brief Before description only when i
 State the complete required outcome in the requirement body, not only a difference. For removed behavior, specify the required absence and any agreed replacement or error behavior so it remains verifiable.
 During spec revisions, keep the comparison anchored to the same pre-change behavior, not the previous draft or the builder's partial implementation.
 Delta describes the requirement's change; the acceptance criterion's Coverage describes its scenario. Do not treat these fields as interchangeable.
-Place each acceptance criterion immediately below its primary requirement using a level-four heading, such as #### AC1: <title>.
-Define each AC only once. Other requirements may link to it. Keep AC numbering continuous from AC1 across all requirements, not restarted per requirement.
+Place each requirement-associated acceptance criterion immediately below its primary requirement using a level-four heading, such as #### AC1: <title>.
+A relevant regression criterion without an associated changed requirement may stand alone under an optional ## Regression checks section with a level-three ### AC<number>: <title> heading and Coverage: unchanged.
+Give standalone regression criteria the same probe, expected result, and concrete example fields. Do not invent a REQ or Delta field for them, force a requirement association, or enumerate all existing behavior. Omit the section when unnecessary.
+Define each AC only once. Other requirements may link to it. Keep AC numbering continuous from AC1 across both nested and standalone criteria, not restarted per requirement or section.
 Under each requirement, add Verified by with Markdown links to the acceptance criteria that verify it, using their actual heading anchors.
 For coverage provided by an existing test, link its file relative to spec.md and give the exact test scenario name instead of adding a duplicate criterion.
 A requirement may link to multiple criteria, existing tests, or both; the same criterion may verify multiple requirements.
@@ -93,7 +95,7 @@ Use exactly one label per criterion. Do not force all three categories into a sp
 Omit a criterion only when an existing test covers the same starting conditions, action, and expected result.
 Similar tests do not count. Keep the criterion if coverage is partial or uncertain.
 For example, a test that rejects an empty title does not cover a title containing only spaces.
-Keep required behavior in the requirements and constraints even when its criterion is omitted, and link the covering test from its Verified by field. These rules also apply during spec revisions.
+For requirement-associated criteria, keep required behavior documented even when the criterion is omitted, and link the covering test from the requirement's Verified by field. Omit a standalone regression criterion when an existing test already covers its exact scenario without creating a requirement for it. These rules also apply during spec revisions.
 Each example must show specific starting conditions, an input or action, and the exact observable result expected from that scenario.
 Use concrete values or states, not a restatement of the claim. Keep examples within the criterion's scope and approved behavior.
 Every probe remains mandatory for builder and verifier.

@@ -20,8 +20,8 @@ the implementation, or issue an overall pass/fail verdict.
 1. Use the exact `specId` and project directory supplied by Maestro. Do not select another spec or project.
 2. Locate `<specDirectory>/<specId>/` relative to the canonical Pi working directory supplied by Maestro. Use `specDirectory` from `.pi/maestro.json`, or `.specs` when
    unset.
-3. Read `proposal.md` for motivation and scope, `spec.md` for behavior and its adjacent acceptance criteria, and `design.md` when present for approved technical
-   decisions. Read relevant `prototypes/`, `workflow.json`, and applicable `AGENTS.md` files. The present documents form one approved contract.
+3. Read `proposal.md` for motivation and scope, `spec.md` for behavior and all acceptance criteria, including standalone regression checks, and `design.md` when present
+   for approved technical decisions. Read relevant `prototypes/`, `workflow.json`, and applicable `AGENTS.md` files. The present documents form one approved contract.
 4. Read the builder handoff and available earlier handoffs, embedded escalation resolutions in builder handoffs, and finding decisions. Earlier numbered artifacts remain
    on the file system.
 5. Confirm that the workflow identifies this spec and is in `verifier-running`.
