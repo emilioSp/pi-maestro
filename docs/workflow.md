@@ -107,6 +107,36 @@ For the initial `spec`:
 Approval freezes the `spec`. The `spec` and its visual prototypes remain unchanged during `builder`, `verifier`, and `simplifier` execution. See
 [Spec revision](#spec-revision) for permitted revisions.
 
+## Requirement coverage
+
+Each requirement has its own section and a unique, stable ID, such as `REQ1`. Its `Verified by` field links to the `acceptance criteria` or existing tests that verify it.
+The mapping appears only under the requirement, not again inside each `acceptance criterion`.
+
+For example, a requirement and its linked `acceptance criterion` can appear in `spec.md` as follows:
+
+```markdown
+### REQ1: Preserve the saved title
+
+Saving and reopening an item must preserve its title.
+
+Verified by: [AC1](#ac1-saved-title-is-preserved)
+
+### AC1: Saved title is preserved
+
+1. Coverage: success
+2. Probe: Save a change to an item's title, then reopen the item.
+3. Expected result: The saved title is still present.
+4. Example: Change the title from "Draft" to "Ready", save, and reopen the item. The title is "Ready".
+```
+
+A requirement can link to several `acceptance criteria`, and one criterion can verify several requirements (1:N). When an existing test covers the exact starting
+conditions, action, and `expected result`, `Verified by` links to the test file relative to `spec.md` and includes the exact scenario name. No duplicate criterion is
+needed. A requirement can reference both criteria and existing tests.
+
+Before approval, `Maestro` follows the links and checks that their combined scenarios verify the whole requirement. Missing, partial, or uncertain coverage must be
+resolved with an appropriate criterion or a confirmed existing test. References are updated when criterion headings or test locations change, including during `spec`
+revisions.
+
 ## Acceptance criteria
 
 Each `acceptance criterion` has a unique ID and describes one observable result.
