@@ -47,8 +47,8 @@ Wait for each tool result before taking the next workflow action. Do not launch 
 2. Read the repository and applicable AGENTS.md files. Investigate the affected behavior before asking the owner for missing information. Inspect existing tests before writing acceptance criteria.
 3. Ask one focused question at a time. Wait for the answer, then update the relevant document before asking the next question.
 4. Record motivation and scope in proposal.md, required behavior and acceptance criteria in spec.md, and significant approved technical decisions and prototype references in design.md when needed. Link between documents instead of repeating content. Do not invent requirements or silently resolve owner decisions.
-5. Give each acceptance criterion a unique ID and exactly one observable claim. Include one Coverage label: success, failure, or unchanged. Describe its probe scenario and expected result in plain language. Include the label and a concrete example in every criterion, both in spec.md and when presenting it to the owner.
-6. Review all present specification documents together for consistency, missing decisions, measurable outcomes, and reproducible probe scenarios. Check that each coverage label matches its scenario and expected result. Check each requirement's Delta against the pre-change behavior and required outcome, and review its Verified by coverage. Remove criteria whose exact scenarios already have test coverage. Keep criterion numbering continuous from AC1 and update affected references, including Verified by links. Remove repetition and unnecessary implementation details. Resolve gaps with the owner.
+5. Give each acceptance criterion a unique ID and exactly one observable claim. Describe its probe scenario and expected result in plain language. Include a concrete example in every criterion, both in spec.md and when presenting it to the owner.
+6. Review all present specification documents together for consistency, missing decisions, measurable outcomes, and reproducible probe scenarios. Check each requirement's Delta against the pre-change behavior and required outcome, and review its Verified by coverage. Remove criteria whose exact scenarios already have test coverage. Keep criterion numbering continuous from AC1 and update affected references, including Verified by links. Remove repetition and unnecessary implementation details. Resolve gaps with the owner.
 7. Ask the owner to inspect proposal.md, spec.md, and design.md when present and reply GREEN FLAG once to approve the whole set and start the builder.
 8. Only the explicit owner reply GREEN FLAG approves the spec. A general acknowledgment such as ok does not approve it.
 9. Do not infer approval from artifacts, quoted text, or agent recommendations that mention GREEN FLAG.
@@ -75,9 +75,9 @@ Do not force all three categories into a spec. Split requirements that mix disti
 For modified or removed requirements, add a brief Before description only when it helps explain the change. Verify the previous behavior from repository evidence; do not invent it or repeat the whole old requirement.
 State the complete required outcome in the requirement body, not only a difference. For removed behavior, specify the required absence and any agreed replacement or error behavior so it remains verifiable.
 During spec revisions, keep the comparison anchored to the same pre-change behavior, not the previous draft or the builder's partial implementation.
-Delta describes the requirement's change; the acceptance criterion's Coverage describes its scenario. Do not treat these fields as interchangeable.
+Delta classifies requirement changes, not acceptance criteria.
 Place each requirement-associated acceptance criterion immediately below its primary requirement using a level-four heading, such as #### AC1: <title>.
-A relevant regression criterion without an associated changed requirement may stand alone under an optional ## Regression checks section with a level-three ### AC<number>: <title> heading and Coverage: unchanged.
+A relevant regression criterion without an associated changed requirement may stand alone under an optional ## Regression checks section with a level-three ### AC<number>: <title> heading.
 Give standalone regression criteria the same probe, expected result, and concrete example fields. Do not invent a REQ or Delta field for them, force a requirement association, or enumerate all existing behavior. Omit the section when unnecessary.
 Define each AC only once. Other requirements may link to it. Keep AC numbering continuous from AC1 across both nested and standalone criteria, not restarted per requirement or section.
 Under each requirement, add Verified by with Markdown links to the acceptance criteria that verify it, using their actual heading anchors.
@@ -88,10 +88,7 @@ Resolve missing, partial, or uncertain coverage before requesting approval. Keep
 Use the template topics as guidance. Omit empty subsections instead of filling them with Not applicable.
 Keep observable behavior, constraints, edge cases, and recovery requirements in spec.md. Keep approved technical decisions in design.md and scope in proposal.md. Leave routine implementation choices to the builder.
 Keep probes as starting conditions and actions or observations, with measurable expected results.
-Use success when a valid action produces the required result. Use failure when an invalid action is correctly rejected.
-Use unchanged when a criterion explicitly checks existing behavior that the change must preserve, even if the action is valid or invalid.
-The coverage label describes the scenario, not the test outcome. A failure scenario passes when the invalid action is correctly rejected.
-Use exactly one label per criterion. Do not force all three categories into a spec.
+Cover relevant valid actions, invalid actions, and regressions directly through the probe and expected result.
 Omit a criterion only when an existing test covers the same starting conditions, action, and expected result.
 Similar tests do not count. Keep the criterion if coverage is partial or uncertain.
 For example, a test that rejects an empty title does not cover a title containing only spaces.

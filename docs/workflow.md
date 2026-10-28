@@ -5,7 +5,7 @@
 The approved `spec` is one document set: `proposal.md` explains motivation and scope, `spec.md` defines behavior and `acceptance criteria`, and optional `design.md`
 records significant technical decisions. The set forms one contract for the change.
 
-An `acceptance criterion` contains a coverage label, a `probe`, an `expected result`, and an example. A `probe` is a scenario used to test behavior.
+An `acceptance criterion` contains a `probe`, an `expected result`, and an example. A `probe` is a scenario used to test behavior.
 
 A `handoff` is a saved agent report. `Builder` and `verifier` reports contain `probe` outcomes. The simplifier's report records refactored files, a summary, and notes.
 
@@ -155,10 +155,9 @@ Verified by: [AC1](#ac1-saved-title-is-persisted)
 
 #### AC1: Saved title is persisted
 
-1. Coverage: success
-2. Probe: Save a change to an item's title, then reopen the item.
-3. Expected result: The saved title is still present.
-4. Example: Change the title from "Draft" to "Ready", save, and reopen the item. The title is "Ready".
+1. Probe: Save a change to an item's title, then reopen the item.
+2. Expected result: The saved title is still present.
+3. Example: Change the title from "Draft" to "Ready", save, and reopen the item. The title is "Ready".
 ```
 
 A requirement can link to several `acceptance criteria`, and one criterion can verify several requirements (1:N). When an existing test covers the exact starting
@@ -174,9 +173,8 @@ revisions.
 Each `acceptance criterion` has a unique ID and describes one observable result. A criterion can verify a changed requirement or check a relevant regression in existing
 behavior without an associated requirement.
 
-Standalone regression criteria belong in an optional `## Regression checks` section, with `### AC<number>:` headings and `Coverage: unchanged`. They do not need a `REQ`
-heading, `Delta`, or an artificial requirement association. Only regressions relevant to the change belong here; unchanged requirements are not listed. The section is
-omitted when unnecessary.
+Standalone regression criteria belong in an optional `## Regression checks` section, with `### AC<number>:` headings. They do not need a `REQ` heading, `Delta`, or an
+artificial requirement association. Only regressions relevant to the change belong here; unchanged requirements are not listed. The section is omitted when unnecessary.
 
 For example, if saving item descriptions already works, adding title persistence may warrant this regression check without a new requirement for descriptions:
 
@@ -185,21 +183,19 @@ For example, if saving item descriptions already works, adding title persistence
 
 ### AC2: Existing descriptions remain saved
 
-1. Coverage: unchanged
-2. Probe: Change and save the title of an item with a saved description, then reopen it.
-3. Expected result: The description is unchanged.
-4. Example: An item's saved description is "Buy milk". Change its title from "Draft" to "Shopping", save, and reopen it. Its description is still "Buy milk".
+1. Probe: Change and save the title of an item with a saved description, then reopen it.
+2. Expected result: The description is unchanged.
+3. Example: An item's saved description is "Buy milk". Change its title from "Draft" to "Shopping", save, and reopen it. Its description is still "Buy milk".
 ```
 
 Both nested and standalone criteria share one continuous AC sequence and are checked by the `builder` and `verifier`. Standalone criteria have the same fields as
 requirement-associated criteria:
 
-| Part              | Content                                                                             |
-| ----------------- | ----------------------------------------------------------------------------------- |
-| Coverage          | One label that states the scenario's purpose: `success`, `failure`, or `unchanged`. |
-| `Probe`           | Starting conditions and the action or observation that checks the behavior.         |
-| `Expected result` | The measurable result the `probe` observes.                                         |
-| Example           | Concrete starting conditions, an input or action, and the exact `expected result`.  |
+| Part              | Content                                                                            |
+| ----------------- | ---------------------------------------------------------------------------------- |
+| `Probe`           | Starting conditions and the action or observation that checks the behavior.        |
+| `Expected result` | The measurable result the `probe` observes.                                        |
+| Example           | Concrete starting conditions, an input or action, and the exact `expected result`. |
 
 ## Escalations
 

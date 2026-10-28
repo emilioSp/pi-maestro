@@ -14,6 +14,8 @@ GitHub Releases are not required.
 4. Placed requirement-associated `acceptance criteria` under their requirements as level-four headings. Relevant standalone regression criteria use level-three headings
    under optional `Regression checks`, without inventing unchanged requirements. Both forms share global numbering and are required in `handoffs`. Workflow phases and
    saved report formats remain unchanged.
+5. Removed the `Coverage` classification field from current `acceptance criteria`. Each criterion retains its `probe`, `expected result`, and example. Standalone
+   regression checks remain identified by their section; validation and report formats are unchanged.
 
 ## 0.11.0
 
