@@ -8,7 +8,7 @@ This change concerns status presentation and activation feedback. It does not ch
 
 ## 2. Requirements and constraints
 
-### Activation notice
+### REQ1: Show the configured agent settings on activation
 
 After each successful `/maestro` activation, show one theme-colored UI-only information notice with three lines:
 
@@ -20,9 +20,25 @@ Verifier (<model name> <thinking level>)
 
 Use resolved project configuration at activation, including defaults for omitted settings. Omit each model's provider prefix. These are configured settings, not a report of a running agent.
 
-The notice does not start an AI response, enter model context, or persist in session history. Do not show it on deactivation, failed activation, status refresh, or session start. Existing activation errors remain unchanged.
+Verified by: [AC2](#ac2-successful-activation-displays-the-configured-agent-settings)
 
-### Status content
+Coverage gap: The activation notice's theme styling is not explicitly checked by AC2.
+
+### REQ2: Keep activation feedback outside AI requests and saved context
+
+The notice does not start an AI response, enter model context, or persist in session history.
+
+Verified by: [AC3](#ac3-activation-feedback-does-not-enter-session-history); [AC4](#ac4-activation-feedback-does-not-start-an-ai-response); [AC11](#ac11-the-activation-notice-does-not-enter-model-context)
+
+### REQ3: Show the notice only after successful activation
+
+Do not show it on deactivation, failed activation, status refresh, or session start. Existing activation errors remain unchanged.
+
+Verified by: [AC5](#ac5-reactivation-shows-the-notice-again)
+
+Coverage gap: Failed activation, status refresh, session start, and unchanged activation errors are not all exercised by AC5.
+
+### REQ4: Shorten only the displayed spec ID
 
 Keep the existing status structure, with a shortened ID and phase icon:
 
@@ -32,9 +48,15 @@ Maestro active · <shortened spec ID> · <phase icon> <existing phase label>
 
 Keep the original `YYYYMMDD-HHMMSS` prefix. Retain at most 10 characters from the title portion. Hyphens and digits count toward this limit. Append `...` only if characters were removed. Shorten only the status display. Keep full identifiers everywhere else.
 
+Verified by: [AC6](#ac6-long-spec-ids-have-a-shortened-display); [AC7](#ac7-short-spec-ids-have-no-cut-marker); [AC12](#ac12-display-shortening-preserves-the-workflows-full-spec-id)
+
+### REQ5: Keep status free of agent settings and hide it when inactive
+
 Do not include agent model or thinking details in the status. With no selected spec, keep `Maestro active · No active spec` without a phase icon. Hide the status when Maestro is off.
 
-### Theme colors
+Verified by: [AC9](#ac9-maestro-off-has-no-status-entry); [AC10](#ac10-activation-without-a-selected-spec-preserves-the-existing-status-text)
+
+### REQ6: Use the active theme for status colors
 
 Use Pi theme roles, not fixed colors:
 
@@ -50,7 +72,11 @@ Emoji appearance remains controlled by the terminal.
 
 Use Pi's active theme when formatting the status. Theme switching is Pi's responsibility. Do not add a theme-change handler or another refresh mechanism.
 
-### Phase icons
+Verified by: [AC8](#ac8-status-colors-use-the-approved-theme-roles)
+
+Coverage gap: AC8 checks rendered roles, not the absence of an extra theme-change handler or refresh mechanism.
+
+### REQ7: Prefix each phase label with its approved icon
 
 Prefix each existing phase label with its approved icon and one space. Keep the phase labels unchanged.
 
@@ -66,11 +92,15 @@ Prefix each existing phase label with its approved icon and one space. Keep the 
 | findings-decision | Owner decision needed: findings | Speech balloon | U+1F4AC |
 | candidate-ready | Completed | Check mark button | U+2705 |
 
-### Test coverage constraint
+Verified by: [AC1](#ac1-each-phase-label-has-its-approved-icon)
+
+### REQ8: Reuse existing test coverage
 
 DO NOT ADD NEW TESTS TO COVER AC ALREADY COVERED.
 
 Reuse existing coverage. Update existing expectations when this change alters the expected output. Add tests only for behavior not already covered.
+
+Verified by: Not established. No matching AC or exact existing test scenario has been confirmed.
 
 ## 3. Technical decisions and limits
 

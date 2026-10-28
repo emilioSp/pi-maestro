@@ -14,7 +14,7 @@ New commands or documentation tools, configuration changes, workflow changes, an
 
 ## 2. Requirements and constraints
 
-### Activation notice
+### REQ1: Introduce Maestro before showing agent settings
 
 Keep the existing "Maestro active" heading. Insert these two lines immediately after it, before the existing builder and verifier details:
 
@@ -23,15 +23,31 @@ Maestro helps the owner define a spec, then coordinates implementation and indep
 Ask how Maestro works for a short explanation.
 ```
 
+Verified by: [AC1](#ac1-successful-activation-shows-the-approved-introduction)
+
+### REQ2: Preserve notice styling and show it only on activation
+
 Preserve the configured builder and verifier model and thinking information and existing theme styling. Keep one info notice per successful activation. Failed activation, deactivation, and session resets must not show the introduction.
+
+Verified by: [AC2](#ac2-the-notice-preserves-configured-agent-details); [AC5](#ac5-the-introduction-appears-only-on-successful-activation)
+
+### REQ3: Keep activation UI-only
 
 Activation remains UI-only. It does not start a model request or add conversation history.
 
-### Documentation access
+Verified by: [AC4](#ac4-activation-does-not-add-conversation-history); [extensions/maestro.integration.test.ts](../../extensions/maestro.integration.test.ts), scenario "given valid activation checks when Maestro is enabled and later re-enabled then its tools, instructions, and status are available without duplicate registration, automatic model calls, or new session history"
+
+### REQ4: Advertise installed documentation through absolute paths
 
 While Maestro is active, its instructions identify absolute paths to the loaded package's `README.md` and `docs/`. The paths must work independently of the owner's project directory.
 
+Verified by: [AC6](#ac6-active-instructions-expose-readable-installed-documentation-paths)
+
+### REQ5: Read documentation on demand without automatic injection
+
 The instructions tell Maestro to read relevant documentation on demand before answering questions about Maestro. Do not automatically insert documentation contents into the instructions. Existing file-reading tools provide access.
+
+Verified by: [AC8](#ac8-documentation-bodies-are-not-automatically-injected)
 
 ## 3. Technical decisions
 

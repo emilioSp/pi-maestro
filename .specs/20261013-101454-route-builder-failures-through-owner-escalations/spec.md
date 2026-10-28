@@ -14,17 +14,35 @@ Automatic recovery, rollback, reconciliation, and changes to verifier responsibi
 
 ## 2. Requirements and constraints
 
-### Builder outcomes
+### REQ1: Expose only done and escalation builder outcomes
 
 The builder has only `done` and `escalation` handoff outcomes. Remove the `failed` handoff variant and its `failure` object.
 
+Verified by: [AC3](#ac3-builder-contracts-expose-only-done-and-escalation-outcomes)
+
+### REQ2: Report technical problems through existing escalation fields
+
 When a technical problem prevents completion and the builder can safely report it, the builder stops and submits an escalation. Use existing escalation fields for the reason, evidence, owner question, options, consequences, and next steps. Do not add a separate failure subtype or storage format.
+
+Verified by: [AC4](#ac4-a-reported-technical-problem-returns-a-saved-escalation-result)
+
+### REQ3: Preserve actual probe results and done validation
 
 Escalations retain actual probe results: `passed`, `failed`, or `not-run`. An escalation remains valid when every acceptance probe passes but another required check prevents completion. A `done` handoff still requires every recorded probe to pass and `escalations: []`.
 
-### Current finite-state machine
+Verified by: [AC5](#ac5-escalations-preserve-supplied-acceptance-probe-results); [AC8](#ac8-a-successful-builder-result-still-permits-verification)
+
+Coverage gap: AC8 covers successful done submission, not rejection of failed probes or nonempty escalations.
+
+### REQ4: Remove the failure phase and event
 
 Remove the `builder-failed` phase and event, their transition, and their status mappings. Do not add a replacement failure phase.
+
+Verified by: [AC1](#ac1-the-current-state-machine-exposes-exactly-eight-phases); [AC2](#ac2-the-current-state-machine-exposes-exactly-ten-events)
+
+Coverage gap: Status mapping removal is not explicitly checked by AC1 or AC2.
+
+### REQ5: Preserve the supported builder paths
 
 Keep these builder paths:
 
@@ -38,21 +56,35 @@ Keep these builder paths:
 
 Other supported transitions remain unchanged. Retain the existing owner decision process, numbered handoffs, and fresh foreground runs.
 
-### Execution and protocol errors
+Verified by: [AC4](#ac4-a-reported-technical-problem-returns-a-saved-escalation-result); [AC6](#ac6-owner-resolutions-permit-a-subsequent-builder-pass); [AC7](#ac7-renewed-spec-approval-retains-the-revision-path); [AC8](#ac8-a-successful-builder-result-still-permits-verification)
+
+Coverage gap: The general preservation of other transitions and fresh foreground contexts is broader than these probes.
+
+### REQ6: Keep execution and protocol errors as stopping errors
 
 Launch errors, delegation failures, timeouts, interruptions, cancellations, and missing or invalid handoffs retain their current error and stop behavior. They do not create synthetic escalations or recovery transitions.
 
 When a run enters `builder-running` but never saves a completed transition, that saved phase remains unchanged. Partial protocol writes still require manual follow-up.
 
-### Current guidance
+Verified by: [src/tools/main/run-builder.integration.test.ts](../../src/tools/main/run-builder.integration.test.ts), scenario "given the builder provider is unavailable when the failed run response arrives then the tool reports the provider error, removes its listener, and leaves builder-running unchanged"; [src/tools/main/run-builder.integration.test.ts](../../src/tools/main/run-builder.integration.test.ts), scenario "given the event bus cannot send the builder request when a run is started then the tool reports the request error and removes its response listener"; [src/tools/main/run-builder.integration.test.ts](../../src/tools/main/run-builder.integration.test.ts), scenario "given the builder exceeds its timeout when the timeout response arrives then the run fails with a timeout error and the workflow stays in builder-running"; [src/tools/main/run-builder.integration.test.ts](../../src/tools/main/run-builder.integration.test.ts), scenario "given the builder is interrupted when the interruption response arrives then the run fails with an interruption error and the workflow stays in builder-running"; [src/tools/main/run-builder.integration.test.ts](../../src/tools/main/run-builder.integration.test.ts), scenario "given the builder saved no report and left builder-running unchanged when it reports completion then the run fails with an unexpected workflow phase error"
+
+Coverage gap: Cancellation and partial protocol-write handling are not covered by the linked scenarios.
+
+### REQ7: Align current guidance and remove obsolete failure code
 
 Runtime agent instructions, tool descriptions, status presentation, tests, and current human documentation must describe the supported flow. Technical problems that the builder can report use escalations. Execution and protocol errors without a valid saved result still stop the workflow.
 
 Remove obsolete failure-outcome code, fixtures, tests, and instructions rather than retaining a deprecated branch. Do not rewrite historical records to describe the new behavior.
 
-### Test coverage
+Verified by: Not established. No matching AC or exact existing test scenario has been confirmed.
+
+Coverage gap: The existing ACs do not inspect all affected guidance, documentation, obsolete code, and historical-record preservation.
+
+### REQ8: Reuse existing tests for already covered scenarios
 
 Do not write new tests when current tests already cover an acceptance criterion. Use those tests as evidence. Update an existing test only when this change requires it. Add a new test only for a coverage gap that existing tests do not cover.
+
+Verified by: Not established. No matching AC or exact existing test scenario has been confirmed.
 
 ## 3. Technical decisions
 

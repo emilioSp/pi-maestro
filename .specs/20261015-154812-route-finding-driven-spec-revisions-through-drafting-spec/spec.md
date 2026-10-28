@@ -13,30 +13,63 @@ Out of scope: changes to the existing escalation route, finding rejection and co
 
 ## 2. Requirements and constraints
 
+### REQ1: Accept explicit revision decisions with nonblank details
+
 Add revise-spec as a third finding decision in the existing maestro_resolve_findings operation.
 Each revision decision includes findingId, decision set to revise-spec, reason, and specChange describing the agreed requirement change.
 The reason and specChange must contain nonwhitespace text.
+
+Verified by: [AC1](#ac1-a-finding-driven-revision-returns-to-drafting-spec); [AC6](#ac6-incomplete-revision-details-are-rejected-without-saving)
+
+### REQ2: Save the complete batch only in the active report
 
 Record the complete current decision batch in the active verifier handoff before saving the next phase.
 Save each revision decision, reason, and specChange in that finding's existing decision object.
 Only the current handoff's decision fields change. Earlier numbered handoffs remain unchanged.
 
+Verified by: [AC4](#ac4-a-mixed-batch-preserves-every-decision-in-its-original-report)
+
+### REQ3: Give revision priority before editing the spec
+
 If any decision is revise-spec, move the same workflow from findings-decision to drafting-spec before editing the spec.
 Revision takes priority over fix-code and reject in a mixed batch, while all submitted decisions are saved.
 This action does not approve the spec or start an agent.
 
+Verified by: [AC1](#ac1-a-finding-driven-revision-returns-to-drafting-spec); [AC5](#ac5-revision-takes-priority-in-a-mixed-batch)
+
+### REQ4: Require drafting and renewed approval for the same spec
+
 Revise and review the same spec in drafting-spec. Require renewed GREEN FLAG before a separate approval moves it to ready-for-builder.
 Spec approval must be allowed only from drafting-spec. Direct approval from findings-decision is rejected without changing saved files.
 
+Verified by: [AC2](#ac2-direct-approval-from-findings-decision-is-rejected); [AC3](#ac3-a-revised-spec-receives-approval-separately-from-the-revision-choice)
+
+### REQ5: Preserve no-revision outcomes
+
 Keep the existing outcomes when no spec change is needed: rejecting every finding reaches candidate-ready, while any fix-code decision returns to ready-for-builder.
+
+Verified by: [src/workflow/verifier/resolveFindings.integration.test.ts](../../src/workflow/verifier/resolveFindings.integration.test.ts), scenario "given one finding is rejected and another requires a code fix when the builder and verifier run again then new numbered reports are saved and earlier reports retain both decisions"
+
+Coverage gap: The historical reject-all destination is candidate-ready; current tests instead expect simplifier-running. No current exact test is linked to that historical outcome.
+
+### REQ6: Preserve existing finding validation and reject incomplete revisions
+
 Preserve existing finding batch validation and numbered handoff history. Existing reports and resolution calls without revise-spec remain valid.
 Missing or blank revision fields reject submission before any saved file changes.
+
+Verified by: [AC6](#ac6-incomplete-revision-details-are-rejected-without-saving)
+
+Coverage gap: AC6 covers new revision-field validation, not every preserved batch-validation and history scenario.
+
+### REQ7: Explain revision separately from fixes and rejections
 
 Tool responses must distinguish findings requiring spec revision from findings assigned for code fixes or rejected.
 For a revision batch, report drafting-spec and direct revision of the same spec and renewed approval before a builder run.
 Maestro guidance must describe recording the complete batch before revision. After renewed approval, the revised spec controls subsequent work.
 Earlier findings and their decisions remain historical context rather than instructions that override the revised spec.
 Human documentation must explain the event flow and owner approval, without internal tool parameters or agent procedures.
+
+Verified by: [AC1](#ac1-a-finding-driven-revision-returns-to-drafting-spec); [AC7](#ac7-written-guidance-describes-one-revision-flow)
 
 ## 3. Technical decisions
 

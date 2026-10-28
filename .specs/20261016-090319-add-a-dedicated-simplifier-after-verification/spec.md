@@ -14,17 +14,53 @@ No additional verification cycle, findings, escalations, automatic commits, Git 
 
 ## 2. Requirements and constraints
 
-### Responsibilities and agent instructions
+### REQ1: Remove the extra verifier quality-review responsibility
 
-1. Remove the entire "Review code quality" section from `agents/verifier.md`. Preserve independent acceptance verification and its remaining duties.
-2. Add the dedicated `maestro.simplifier` agent in `agents/simplifier.md`. Like the existing agents, it runs in the foreground with a fresh context, inherited project instructions, global instructions, and skills. It works in the canonical project directory supplied by Maestro.
-3. The simplifier communicates with Maestro, never directly with the owner. It cannot raise findings or escalations, implement new behavior, approve work, or delegate.
-4. Use the owner's supplied Simplifier guidance. Its repository source is `.agents/skills/simplifier/SKILL.md`: retain Overview, The Five Principles, The Simplification Process, Common Rationalizations, and Red Flags, including their examples and tables. Do not include skill metadata or the extra When to Use section. The bundled agent must contain the guidance itself, without a runtime dependency on this repository's skill file.
-5. Keep the supplied object-to-Map example. Explain the coordinated caller update, such as replacing `result.a.count` with `result.get("a")`. Internal representations can change when affected callers are updated. Observable inputs, outputs, side effects, ordering, errors, and edge cases must remain identical.
-6. Preserve the accepted behavior and introduce no new check failures. Existing failures explicitly accepted through rejected findings do not block completion. Do not fix rejected findings or modify existing tests to make checks pass. Adapt the supplied guidance's green-check wording to this accepted baseline. Follow project conventions, understand code before changing it, and undo simplifications that make it harder to understand or review.
-7. Add the workflow context and handoff instructions needed by this agent. It reads the approved spec, current workflow, relevant handoffs, and applicable project instructions. It must not edit the frozen spec, prototypes, workflow state, or earlier handoffs. It records its result only through the simplifier handoff tool.
+Remove the entire "Review code quality" section from `agents/verifier.md`. Preserve independent acceptance verification and its remaining duties.
 
-### Workflow
+Verified by: [AC14](#ac14-verifier-guidance-no-longer-assigns-the-extra-quality-review)
+
+Coverage gap: AC14 checks removal of the added review, not preservation of every remaining verifier duty.
+
+### REQ2: Run the dedicated simplifier in a fresh foreground context
+
+Add the dedicated `maestro.simplifier` agent in `agents/simplifier.md`. Like the existing agents, it runs in the foreground with a fresh context, inherited project instructions, global instructions, and skills. It works in the canonical project directory supplied by Maestro.
+
+Verified by: [AC5](#ac5-simplifier-delegation-uses-its-execution-configuration)
+
+Coverage gap: Inherited project instructions, global instructions, and skills are not explicitly asserted by AC5.
+
+### REQ3: Keep the simplifier within its role and communication boundaries
+
+The simplifier communicates with Maestro, never directly with the owner. It cannot raise findings or escalations, implement new behavior, approve work, or delegate.
+
+Verified by: Not established. No matching AC or exact existing test scenario has been confirmed.
+
+### REQ4: Bundle the supplied simplification guidance
+
+Use the owner's supplied Simplifier guidance. Its repository source is `.agents/skills/simplifier/SKILL.md`: retain Overview, The Five Principles, The Simplification Process, Common Rationalizations, and Red Flags, including their examples and tables. Do not include skill metadata or the extra When to Use section. The bundled agent must contain the guidance itself, without a runtime dependency on this repository's skill file.
+
+Verified by: [AC15](#ac15-the-shipped-simplifier-guidance-preserves-the-supplied-content)
+
+### REQ5: Preserve behavior while updating internal representations and callers
+
+Keep the supplied object-to-Map example. Explain the coordinated caller update, such as replacing `result.a.count` with `result.get("a")`. Internal representations can change when affected callers are updated. Observable inputs, outputs, side effects, ordering, errors, and edge cases must remain identical.
+
+Verified by: [AC15](#ac15-the-shipped-simplifier-guidance-preserves-the-supplied-content)
+
+### REQ6: Preserve the accepted check baseline
+
+Preserve the accepted behavior and introduce no new check failures. Existing failures explicitly accepted through rejected findings do not block completion. Do not fix rejected findings or modify existing tests to make checks pass. Adapt the supplied guidance's green-check wording to this accepted baseline. Follow project conventions, understand code before changing it, and undo simplifications that make it harder to understand or review.
+
+Verified by: [AC15](#ac15-the-shipped-simplifier-guidance-preserves-the-supplied-content); [AC16](#ac16-simplifier-instructions-preserve-the-accepted-check-baseline)
+
+### REQ7: Read workflow context and protect frozen artifacts
+
+Add the workflow context and handoff instructions needed by this agent. It reads the approved spec, current workflow, relevant handoffs, and applicable project instructions. It must not edit the frozen spec, prototypes, workflow state, or earlier handoffs. It records its result only through the simplifier handoff tool.
+
+Verified by: Not established. No matching AC or exact existing test scenario has been confirmed.
+
+### REQ8: Add the simplifier phase and its entry and exit routes
 
 Add exactly one phase, `simplifier-running`.
 
@@ -35,21 +71,53 @@ Add exactly one phase, `simplifier-running`.
 | `simplifier-running` | Git readiness cannot be confirmed inside `maestro_run_simplifier` | Warn, skip delegation, and move to `candidate-ready` through an explicit skip event |
 | `simplifier-running` | Valid saved simplifier handoff produces `SIMPLIFIER_DONE` | `candidate-ready` |
 
+Verified by: [AC1](#ac1-successful-verification-starts-simplification); [AC2](#ac2-rejecting-all-findings-starts-simplification); [AC4](#ac4-a-git-skip-concludes-the-workflow); [AC7](#ac7-simplifier-completion-concludes-the-workflow)
+
+### REQ9: Start simplification without another approval or verifier pass
+
 Maestro calls `maestro_run_simplifier` after either entry route, without another owner approval or verifier pass. That tool decides whether to delegate or skip. Verifier findings still require owner decisions before this point. Fix and spec-revision routes remain unchanged. Rejections retain their reasons and do not become passed verification.
+
+Verified by: [AC2](#ac2-rejecting-all-findings-starts-simplification); [AC17](#ac17-maestro-starts-simplification-without-another-approval)
+
+Coverage gap: These ACs do not separately exercise unchanged code-fix and spec-revision routes.
+
+### REQ10: Check Git readiness only inside the simplifier run tool
 
 Preserve ADR-004: only simplification requires Git, with no non-Git fallback. Check Git readiness only inside `maestro_run_simplifier`, immediately before delegation. Activation, spec preparation, builder execution, verifier completion, and finding resolution do not check Git readiness. Both entry routes save `simplifier-running` regardless of Git availability. A Git skip is a normal outcome, not an execution error.
 
+Verified by: [AC1](#ac1-successful-verification-starts-simplification); [AC2](#ac2-rejecting-all-findings-starts-simplification); [AC3](#ac3-unavailable-git-produces-a-skip-warning); [AC4](#ac4-a-git-skip-concludes-the-workflow); [AC20](#ac20-activation-presents-the-configured-simplifier-independently-of-git); [AC22](#ac22-a-git-skip-does-not-launch-the-simplifier)
+
+Coverage gap: The absence of Git checks in every other named operation is not explicitly inspected by these probes.
+
+### REQ11: Stop on simplifier execution and protocol errors
+
 The existing error policy applies to simplifier execution and protocol errors. An execution failure, interruption, timeout, or missing or invalid saved result stops the workflow. Do not manufacture findings, escalations, or successful completion. Partial protocol writes require manual owner follow-up, not automatic retry or recovery.
 
-### File scope
+Verified by: [AC9](#ac9-returning-without-a-handoff-cannot-complete-simplification); [AC10](#ac10-simplifier-execution-failure-stops-the-workflow)
+
+Coverage gap: Partial protocol-write handling is not explicitly exercised by AC9 or AC10.
+
+### REQ12: Discover all current uncommitted code changes using Git
 
 Start from all current uncommitted code changes: staged, unstaged, and untracked code files. Include pre-existing uncommitted changes. Committed changes alone do not select files. Use Git for discovery without adding a starting commit or builder file list.
 
+Verified by: Not established. No matching AC or exact existing test scenario has been confirmed.
+
+### REQ13: Allow required caller updates without unrelated refactoring
+
 Required caller updates can include initially unchanged code files. Exclude unrelated refactoring. Do not reset pre-existing changes or modify the Git index or history.
+
+Verified by: [AC6](#ac6-the-simplifier-saves-the-agreed-handoff); [AC15](#ac15-the-shipped-simplifier-guidance-preserves-the-supplied-content)
+
+Coverage gap: These ACs cover caller reporting and guidance, not exclusion of unrelated edits or preservation of the Git index and history.
+
+### REQ14: Allow completion without refactoring
 
 No refactoring is required when selected code is already clear or no code files are selected. The refactored-file list can be empty.
 
-### Simplifier handoff
+Verified by: [AC7](#ac7-simplifier-completion-concludes-the-workflow)
+
+### REQ15: Save the closed unnumbered simplifier handoff
 
 Save one unnumbered artifact at `<spec-directory>/<specId>/handoffs/simplifier/S.json`.
 
@@ -63,9 +131,19 @@ Save one unnumbered artifact at `<spec-directory>/<specId>/handoffs/simplifier/S
 
 This is a closed schema. Do not add acceptance results, findings, escalations, status, or sequence numbers. Reviewed files left unchanged are not refactored files. An empty array is valid. The Git skip route creates no simplifier handoff.
 
+Verified by: [AC6](#ac6-the-simplifier-saves-the-agreed-handoff); [AC7](#ac7-simplifier-completion-concludes-the-workflow); [AC8](#ac8-invalid-simplifier-submissions-do-not-change-protocol-files); [AC22](#ac22-a-git-skip-does-not-launch-the-simplifier)
+
+Coverage gap: AC22 checks that skipping emits no delegation, not the absence of a handoff file after a skip.
+
+### REQ16: Validate before writes and complete through the fixed handoff
+
 Validate phase, spec identity, and payload before protocol writes. The recording operation saves the artifact before applying `SIMPLIFIER_DONE`. Use one fixed path for `S.json`, without active/latest lookup, directory counting, sequence validation, or counters. Existing builder and verifier handoff formats and numbering remain unchanged.
 
-### Configuration and presentation
+Verified by: [AC7](#ac7-simplifier-completion-concludes-the-workflow); [AC8](#ac8-invalid-simplifier-submissions-do-not-change-protocol-files)
+
+Coverage gap: These probes do not establish write ordering, the absence of sequence lookup logic, or unchanged builder and verifier formats.
+
+### REQ17: Resolve independent optional simplifier configuration
 
 Add an optional `simplifier` configuration block with the existing agent configuration rules and independent field overrides.
 
@@ -75,15 +153,41 @@ Add an optional `simplifier` configuration block with the existing agent configu
 | `thinking` | `high` |
 | `timeoutMinutes` | `60` |
 
+Verified by: [AC11](#ac11-simplifier-defaults-preserve-existing-configuration-files); [AC12](#ac12-simplifier-overrides-are-independent); [AC13](#ac13-invalid-simplifier-configuration-is-rejected)
+
+### REQ18: Integrate configuration and running status with existing rules
+
 Existing configuration without this block remains valid. Use the existing model identifier format, thinking levels, and timeout limits. Integrate the new agent into agent and model availability checks, the activation notice, and workflow status. Show `Simplifier running` during its phase, not `Completed`, with the broom icon (`U+1F9F9`).
+
+Verified by: [AC11](#ac11-simplifier-defaults-preserve-existing-configuration-files); [AC13](#ac13-invalid-simplifier-configuration-is-rejected); [AC19](#ac19-the-running-simplifier-is-visible-in-status); [AC20](#ac20-activation-presents-the-configured-simplifier-independently-of-git); [AC21](#ac21-unavailable-simplifier-dependencies-block-activation)
+
+Coverage gap: AC13 checks a timeout below the minimum, not every preserved model, thinking, and timeout validation rule.
+
+### REQ19: Check simplifier availability regardless of Git readiness
 
 At activation, validate the simplifier model and agent through the normal availability checks, just like builder and verifier. Do not make these checks conditional on Git. An unavailable configured simplifier model or agent blocks activation even when Git would later cause simplification to be skipped.
 
+Verified by: [AC21](#ac21-unavailable-simplifier-dependencies-block-activation)
+
+### REQ20: Show configured settings at activation and warn on a later Git skip
+
 The UI-only activation notice always shows the configured simplifier model and thinking level after successful activation. It does not predict whether simplification will be skipped. If `maestro_run_simplifier` later cannot confirm Git readiness, it returns `Simplifier skipped: Git repository unavailable.` as a warning.
+
+Verified by: [AC3](#ac3-unavailable-git-produces-a-skip-warning); [AC20](#ac20-activation-presents-the-configured-simplifier-independently-of-git)
+
+### REQ21: Report simplifier results separately from verifier evidence
 
 Maestro reports the simplifier's summary and notes in the final conversation. It does not claim that the verifier independently checked later refactoring. Skipped simplification is identified as skipped.
 
+Verified by: [AC18](#ac18-maestro-reports-the-saved-simplifier-result)
+
+Coverage gap: AC18 addresses completed simplification, not final-summary wording after a skip.
+
+### REQ22: Update current documentation and preserve historical records
+
 Update affected human documentation and R-21 to describe the implemented flow. Keep ADR-004 aligned with the implemented design. Preserve historical handoffs and completed specs.
+
+Verified by: Not established. No matching AC or exact existing test scenario has been confirmed.
 
 ## 3. Technical decisions
 

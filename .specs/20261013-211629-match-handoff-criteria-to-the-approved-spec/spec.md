@@ -9,19 +9,40 @@ This is narrower than the roadmap's exact-match objective. Only missing IDs requ
 
 ## 2. Requirements and constraints
 
+### REQ1: Require every spec criterion before saving a handoff
+
 Before saving a builder or verifier handoff or changing phase, reject a submission that omits any criterion ID from spec.md.
 Apply this check to both builder outcomes and verifier submissions with or without findings.
 Rejection leaves saved reports and workflow state unchanged.
 
+Verified by: [AC1](#ac1-missing-spec-criterion-ids-prevent-handoff-submission)
+
+### REQ2: Preserve validation without rejecting additional report IDs
+
 Preserve existing validation. Do not add checks for extra report IDs or duplicate spec IDs.
 
-## 3. Technical decisions
+Verified by: [AC2](#ac2-reports-containing-every-spec-criterion-id-pass-the-new-check)
+
+Coverage gap: AC2 covers extra report IDs, not duplicate spec IDs or every existing validation rule.
+
+### REQ3: Extract exact IDs from raw matching headings
 
 Extract IDs from raw spec.md lines using the existing multiline rule `^### AC(\d+):`.
 Preserve the digits as written, including leading zeros. Matching lines inside code blocks count.
-This reuses the heading rule in `src/workflow/spec/markSpecReady.ts`.
+
+Verified by: [AC1](#ac1-missing-spec-criterion-ids-prevent-handoff-submission); [AC2](#ac2-reports-containing-every-spec-criterion-id-pass-the-new-check)
+
+Coverage gap: Leading zeros and matching headings inside code blocks are not explicitly exercised by the existing AC examples.
+
+### REQ4: Leave approval unchanged and permit specs without matching headings
 
 Keep existing approval behavior. If no headings match, the new presence check imposes no restriction.
+
+Verified by: [AC2](#ac2-reports-containing-every-spec-criterion-id-pass-the-new-check)
+
+## 3. Technical decisions
+
+This reuses the heading rule in `src/workflow/spec/markSpecReady.ts`.
 
 ## 4. Acceptance criteria
 

@@ -12,15 +12,41 @@ No new tool, renumbering by the approval tool, check for missing criteria, or ma
 
 ## 2. Requirements and constraints
 
+### REQ1: Extract criterion numbers with the existing raw heading rule
+
 Reuse `src/workflow/spec/markSpecReady.ts`, called by `maestro_mark_spec_ready`. Read the current `spec.md` and extract numbers in document order using `/^### AC(\d+):/gm`.
+
+Verified by: [AC1](#ac1-incorrect-numbering-produces-an-ordering-error)
+
+Coverage gap: AC1 uses standard headings and does not distinguish the exact regex from other parsers.
+
+### REQ2: Require consecutive numeric positions and allow zero matches
 
 For each match, compare its numeric value with its one-based position. Valid numbering starts at 1 and continues without gaps. This checks ordering only, not number spelling or criterion content. Zero matches pass this check.
 
+Verified by: [AC1](#ac1-incorrect-numbering-produces-an-ordering-error); [src/workflow/spec/markSpecReady.integration.test.ts](../../src/workflow/spec/markSpecReady.integration.test.ts), scenario "given an owner-approved draft when approval is requested then the wrong spec ID is rejected and the active spec becomes ready-for-builder without content changes"
+
+Coverage gap: The linked success test confirms zero matches; alternative number spellings and ignored heading content are not explicitly exercised.
+
+### REQ3: Reject invalid numbering without writing saved files
+
 Before saving `ready-for-builder`, reject invalid numbering by throwing an error that includes `Fix acceptance criterion ordering in spec.md.` Leave all saved workflow files and the spec unchanged on rejection.
+
+Verified by: [AC1](#ac1-incorrect-numbering-produces-an-ordering-error); [AC2](#ac2-rejected-numbering-changes-no-saved-files)
+
+### REQ4: Preserve approval prerequisites and successful results
 
 Apply the check to initial approval and renewed approval in the existing permitted phases. Preserve the existing active-spec, file, workflow-identity, and phase checks, tool input, and successful result. Reuse existing successful-approval test coverage rather than adding a dedicated consecutive-numbering test.
 
+Verified by: [AC1](#ac1-incorrect-numbering-produces-an-ordering-error); [AC2](#ac2-rejected-numbering-changes-no-saved-files); [src/workflow/spec/markSpecReady.integration.test.ts](../../src/workflow/spec/markSpecReady.integration.test.ts), scenario "given an owner-approved draft when approval is requested then the wrong spec ID is rejected and the active spec becomes ready-for-builder without content changes"
+
+Coverage gap: These references do not individually exercise every preserved prerequisite or enforce the test-reuse constraint.
+
+### REQ5: Recover from numbering errors without renewed owner approval
+
 Maestro guidance must explain recovery from this validation error: keep the current drafting or decision phase, correct only numbering and affected references in the current spec without changing criterion order or requirements, then retry `maestro_mark_spec_ready` using the existing GREEN FLAG. After the transition succeeds, start the builder without requesting another approval. This exception applies only to failed numbering validation, not successful approval or running agents.
+
+Verified by: [AC3](#ac3-maestro-guidance-continues-after-numbering-correction-without-another-approval)
 
 ## 3. Technical decisions
 

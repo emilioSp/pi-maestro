@@ -14,7 +14,7 @@ Coverage labels and exclusion of scenarios already covered by tests apply to thi
 
 ## 2. Requirements and constraints
 
-### Resolution recording
+### REQ1: Record every owner answer using the existing resolution fields
 
 Use maestro_resolve_escalations for the complete current decision batch, whether or not the spec must change.
 Each decision retains escalationId, selectedOptionId, decision, and reason.
@@ -22,12 +22,18 @@ Save the chosen solution and the owner's reason in the corresponding question's 
 For each answer that requires revision, identify the question through escalationId and describe the agreed spec change in decision.
 Do not add fields to saved resolutions or another decision store.
 
+Verified by: [AC1](#ac1-revision-answers-remain-in-the-original-handoff)
+
+### REQ2: Save only active resolution fields and retain batch validation
+
 Save all validated resolutions in the active builder handoff before saving the next workflow phase.
 Only its resolution fields change. Earlier numbered handoffs remain unchanged.
 Preserve existing validation for complete batches, IDs, options, nonblank answers and reasons, incompatible handoffs, phases, and already resolved questions.
 Invalid submissions leave saved files unchanged.
 
-### Routing and approval
+Verified by: [AC1](#ac1-revision-answers-remain-in-the-original-handoff); [src/tools/main/resolve-escalations.integration.test.ts](../../src/tools/main/resolve-escalations.integration.test.ts), scenario "given an escalation decision batch %s when submitted then resolution fails without changing the builder report or workflow"; [src/tools/main/resolve-escalations.integration.test.ts](../../src/tools/main/resolve-escalations.integration.test.ts), scenario "given $description when escalation decisions are submitted then resolution fails without changing the builder report or workflow"
+
+### REQ3: Route the batch according to whether revision is required
 
 | Owner decision batch | Saved next phase | Next action |
 |---|---|---|
@@ -35,14 +41,38 @@ Invalid submissions leave saved files unchanged.
 | At least one answer requires a spec change | drafting-spec | Revise and review the same spec with the owner. |
 | The revised spec receives renewed GREEN FLAG | ready-for-builder | Approve through a separate maestro_mark_spec_ready call, then run the builder. |
 
+Verified by: [AC2](#ac2-a-revision-batch-reports-drafting-spec-as-the-next-state); [AC3](#ac3-recorded-revision-answers-permit-separate-renewed-approval); [AC4](#ac4-both-resolution-routes-use-the-central-transition-definitions); [src/tools/main/resolve-escalations.integration.test.ts](../../src/tools/main/resolve-escalations.integration.test.ts), scenario "given unanswered builder questions when the owner answers all without a spec change then answers are saved in B1, the builder can run again, and new questions restart at E1 in B2"
+
+### REQ4: Keep answer recording separate from approval and execution
+
 Recording answers neither approves a revised spec nor launches an agent.
 It never moves directly to ready-for-verifier. That phase still requires a completed builder pass.
 Reject maestro_mark_spec_ready from escalation-decision without changing saved files.
 Preserve initial approval from drafting-spec and existing finding decisions and revision approval from findings-decision.
 
+Verified by: [AC2](#ac2-a-revision-batch-reports-drafting-spec-as-the-next-state); [AC3](#ac3-recorded-revision-answers-permit-separate-renewed-approval); [src/tools/main/resolve-escalations.integration.test.ts](../../src/tools/main/resolve-escalations.integration.test.ts), scenario "given unanswered builder questions when direct spec approval is requested then approval fails and the spec, workflow, and builder report stay unchanged"
+
+Coverage gap: Preservation of direct approval from findings-decision is historical and is no longer exercised by current tests.
+
+### REQ5: Explain both routes and retain the revised contract as authority
+
 Tool text and structured results must report the saved next phase and its corresponding next action.
 Maestro guidance and human documentation must describe both routes, including recording revision answers before revising the spec.
 After revision, the approved spec controls subsequent work. Earlier questions and answers remain historical context.
+
+Verified by: [AC2](#ac2-a-revision-batch-reports-drafting-spec-as-the-next-state); [AC5](#ac5-guidance-describes-the-recorded-revision-route)
+
+### REQ6: Require an explicit boolean revision-routing flag
+
+Add required batch-level boolean specChangeRequired to maestro_resolve_escalations alongside specId and decisions.
+Use true when any answer requires a spec revision and false when none does.
+Do not infer this value from decision text or default an omitted value.
+Reject missing or nonboolean values before writing saved files.
+This flag selects the route but is not added to saved handoffs or workflow state.
+
+The explicit flag avoids interpreting free text. Agreed changes remain in each answer's existing decision field.
+
+Verified by: [AC6](#ac6-the-routing-flag-must-be-an-explicit-boolean)
 
 ## 3. Technical decisions
 
@@ -52,16 +82,6 @@ Do not assign the next phase directly in the resolution operation.
 Remove escalation-decision from the phases allowed for spec approval, without removing findings-decision.
 
 Relevant boundaries: src/tools/main/resolve-escalations.ts exposes the tool input and result, src/workflow/builder/resolveEscalations.ts saves answers, and src/artifacts/builder-handoff/schema.ts defines the saved fields.
-
-### Tool input
-
-Add required batch-level boolean specChangeRequired to maestro_resolve_escalations alongside specId and decisions.
-Use true when any answer requires a spec revision and false when none does.
-Do not infer this value from decision text or default an omitted value.
-Reject missing or nonboolean values before writing saved files.
-This flag selects the route but is not added to saved handoffs or workflow state.
-
-The explicit flag avoids interpreting free text. Agreed changes remain in each answer's existing decision field.
 
 ## 4. Acceptance criteria
 

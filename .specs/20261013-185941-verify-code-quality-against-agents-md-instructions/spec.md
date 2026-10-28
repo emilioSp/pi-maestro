@@ -8,16 +8,39 @@ Implement R-16 from `ROADMAP.md`. Add explicit code-quality review when applicab
 
 The current guidance requires reading those files and following technical rules. It does not explicitly require reviewing candidate code for instruction violations.
 
-Code-quality review covers only code affected by the approved change. It does not audit unrelated project code.
-
 Product changes are limited to `agents/verifier.md`. Documentation, tests, schemas, tools, dependencies, and other product files remain unchanged. Preserve the owner's existing `ROADMAP.md` changes.
 
 ## 2. Requirements and constraints
 
-1. Code-quality review supplements all existing verifier responsibilities. Every acceptance criterion still requires independent verification.
-2. Each finding about an instruction violation identifies the applicable `AGENTS.md` file, quotes the violated instruction, and explains the code violation.
-3. Personal style preferences are not requirements.
-4. If no applicable code-quality directives are present, skip only the added review. Missing `AGENTS.md` files are not errors or findings. Do not invent directives or require those files to be created.
+### REQ1: Keep independent acceptance verification mandatory
+
+Code-quality review supplements all existing verifier responsibilities. Every acceptance criterion still requires independent verification.
+
+Verified by: [AC1](#ac1-independent-verification-remains-mandatory)
+
+### REQ2: Make instruction-violation findings traceable
+
+Each finding about an instruction violation identifies the applicable `AGENTS.md` file, quotes the violated instruction, and explains the code violation.
+
+Verified by: [AC2](#ac2-instruction-violations-require-traceable-findings)
+
+### REQ3: Exclude personal style preferences
+
+Personal style preferences are not requirements.
+
+Verified by: [AC3](#ac3-personal-preferences-cannot-become-findings)
+
+### REQ4: Skip only the added review when directives are absent
+
+If no applicable code-quality directives are present, skip only the added review. Missing `AGENTS.md` files are not errors or findings. Do not invent directives or require those files to be created.
+
+Verified by: [AC5](#ac5-the-added-review-is-skipped-when-no-applicable-directives-exist)
+
+### REQ5: Limit quality review to code affected by the approved change
+
+Code-quality review covers only code affected by the approved change. It does not audit unrelated project code.
+
+Verified by: [AC4](#ac4-code-quality-review-is-required-within-the-approved-change-when-directives-exist)
 
 ## 3. Technical decisions and prototypes
 

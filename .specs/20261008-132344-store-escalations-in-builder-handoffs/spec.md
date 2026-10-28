@@ -17,25 +17,38 @@ Model the implementation as if standalone escalation storage never existed. Remo
 
 ## 2. Requirements and constraints
 
-### Builder handoffs
+### REQ1: Save each builder outcome in a numbered handoff
 
 Each builder pass that returns `done` or `escalation` saves the next `handoffs/builder/B<number>.json` file.
 These handoffs contain `version`, `specId`, `status`, `summary`, `acceptanceCriteria`, `notes`, and `escalations`.
+
+Verified by: [AC1](#ac1-one-builder-handoff-contains-multiple-escalation-questions); [AC6](#ac6-builder-outcomes-use-the-existing-phase-transitions); [AC8](#ac8-builder-run-results-contain-the-saved-active-handoff)
+
+### REQ2: Validate builder outcomes and preserve actual probe results
 
 An `escalation` outcome requires at least one escalation. Criterion results record the actual probe outcomes, including incomplete probes.
 A `done` outcome requires `escalations: []`. Keep the existing requirement that every recorded probe passes.
 
 An escalation outcome can report only passed probes when an owner decision remains necessary.
 Its handoff still records every spec criterion and its actual result.
+
+Verified by: [AC5](#ac5-invalid-builder-submissions-perform-no-protocol-write); [AC6](#ac6-builder-outcomes-use-the-existing-phase-transitions)
+
+### REQ3: Keep handoff format versions unchanged
+
 Keep the `version` field in builder and verifier handoffs at `1.0.0`, despite the breaking change.
 
-### Test coverage
+Verified by: Not established. No matching AC or exact existing test scenario has been confirmed.
+
+### REQ4: Reuse or update existing tests before adding coverage
 
 Do not add new tests if a current test already covers an acceptance criterion. Use that test as evidence.
 If a current test needs changes to cover the required behavior, update it instead of adding a duplicate test.
 Add a new test only when no current test covers the required scenario.
 
-### Embedded escalation contract
+Verified by: Not established. No matching AC or exact existing test scenario has been confirmed.
+
+### REQ5: Embed questions and restart their IDs in each handoff
 
 Each escalation contains `id`, `question`, `context`, `options`, `recommendation`, `notes`, and `resolution`.
 The enclosing handoff owns `version` and `specId`. Do not repeat those fields inside an escalation.
@@ -43,30 +56,59 @@ The enclosing handoff owns `version` and `specId`. Do not repeat those fields in
 Assign IDs in array order: `E1`, `E2`, and so on. Restart at `E1` for each builder handoff.
 The builder supplies these IDs. Identify questions with both IDs, such as `B1/E1` or `B2/E1`.
 
+Verified by: [AC1](#ac1-one-builder-handoff-contains-multiple-escalation-questions); [AC2](#ac2-escalation-ids-restart-in-each-builder-handoff); [AC7](#ac7-runtime-tools-and-instructions-use-the-unified-handoff-and-batch-decision-contract)
+
+### REQ6: Validate options, recommendations, and unresolved submissions
+
 Each escalation has at least one option. Each option contains `id`, `description`, `consequences`, and `nextStep`.
 Option IDs are unique within that escalation.
 A recommendation is `null` or contains `optionId` and `reason`. Its option ID must exist in that escalation.
 New submissions require `resolution: null`. The builder cannot submit an owner resolution.
 
+Verified by: [AC1](#ac1-one-builder-handoff-contains-multiple-escalation-questions); [AC5](#ac5-invalid-builder-submissions-perform-no-protocol-write)
+
+### REQ7: Require an explicit owner decision and reason
+
 An owner resolution contains `selectedOptionId`, `decision`, and `reason`.
 The decision and reason must contain non-whitespace text.
 `selectedOptionId` is an option ID from that escalation or `null` for an owner decision outside the listed options.
 
-### Owner decisions and history
+Verified by: [AC3](#ac3-batch-decisions-update-only-the-active-handoffs-resolutions); [AC4](#ac4-invalid-decision-batches-perform-no-protocol-write)
+
+### REQ8: Resolve the complete active batch without altering other content
 
 When the contract remains unchanged, record exactly one resolution for every escalation in the active builder handoff, in one call.
 Save the resolutions inside that handoff. Preserve its other content and all earlier handoffs.
 Reject missing, duplicate, or unknown escalation IDs and invalid option references before any protocol write.
 Reject resolution attempts outside `escalation-decision`, against a non-escalation handoff, or against already resolved questions.
 
+Verified by: [AC3](#ac3-batch-decisions-update-only-the-active-handoffs-resolutions); [AC4](#ac4-invalid-decision-batches-perform-no-protocol-write); [AC10](#ac10-batch-resolution-saves-ready-for-builder)
+
+### REQ9: Keep earlier questions historical after a spec revision
+
 Keep the existing spec revision path. After an approved contract revision, earlier unresolved escalations remain historical context.
 They do not block a new builder pass and do not require resolutions against the revised contract.
 
-### Storage boundary
+Verified by: [AC3](#ac3-batch-decisions-update-only-the-active-handoffs-resolutions)
+
+### REQ10: Remove standalone escalation storage
 
 Workflow creation, submission, result reading, and resolution use only builder handoffs for escalations.
 Do not create or use `handoffs/escalations/` or standalone escalation files.
 Remove standalone escalation path APIs and path fields from creation and tool results.
+
+Verified by: [AC7](#ac7-runtime-tools-and-instructions-use-the-unified-handoff-and-batch-decision-contract)
+
+Coverage gap: AC7 inspects tools and instructions; creation results and path APIs have no explicit probe here.
+
+### REQ11: Return only a consistent saved active builder handoff
+
+`maestro_run_builder` returns the saved active builder handoff for `done` and `escalation`, including all escalations when present.
+It checks the handoff spec identity, schema, and status against the saved phase.
+In `escalation-decision`, every returned escalation must remain unresolved.
+A missing or inconsistent handoff is a protocol error. Do not fall back to another artifact.
+
+Verified by: [AC8](#ac8-builder-run-results-contain-the-saved-active-handoff); [AC9](#ac9-inconsistent-saved-builder-results-produce-protocol-errors)
 
 ## 3. Technical decisions
 
@@ -85,11 +127,6 @@ An escalation submission saves `escalation-decision`.
 A complete valid decision batch saves `ready-for-builder`.
 Keep the `done` transition to `ready-for-verifier`.
 Do not introduce workflow phases or change the verifier finding contract.
-
-`maestro_run_builder` returns the saved active builder handoff for `done` and `escalation`, including all escalations when present.
-It checks the handoff spec identity, schema, and status against the saved phase.
-In `escalation-decision`, every returned escalation must remain unresolved.
-A missing or inconsistent handoff is a protocol error. Do not fall back to another artifact.
 
 Update builder, verifier, and Maestro runtime instructions to use embedded escalation questions and resolutions.
 Maestro presents all current questions with handoff-qualified IDs and collects all decisions before batch submission.
