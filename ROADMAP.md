@@ -30,6 +30,7 @@ Item identifiers remain stable when priorities change. The `owner` approves chan
 | R-08 | [Change agent models before a builder run](#r-08-change-agent-models-before-a-builder-run)                                   | Later       | Let the `owner` change `builder` and `verifier` models before subsequent `runs`.                                   |
 | R-09 | [Define workflow reconciliation](#r-09-define-workflow-reconciliation)                                                       | Later       | Define how `Maestro` can reconcile saved `artifacts` and workflow state.                                           |
 | R-21 | [Add a simplifier with one clear purpose per agent](#r-21-add-a-simplifier-with-one-clear-purpose-per-agent)                 | Implemented | Run the `simplifier` after accepted verification, with a Git-only file scope and separate report.                  |
+| R-22 | [Display specs in a browser](#r-22-display-specs-in-a-browser)                                                               | Later       | Display `specs` in a browser to improve readability and human comprehension.                                        |
 
 ## Completed
 
@@ -317,3 +318,13 @@ Explore how `Maestro` can reconcile saved `artifacts` and workflow state. The re
 #### Completed when
 
 Not yet defined. The `owner` must define the intended outcome, recovery boundaries, and completion condition before this item can move forward.
+
+### R-22: Display specs in a browser
+
+#### Objective
+
+Display the `spec` documents in a browser to improve readability and help the `owner` understand the proposed change, requirements, and `acceptance criteria`.
+
+#### Completed when
+
+The `owner` can read the `spec` documents in a browser with formatting designed for human comprehension.
