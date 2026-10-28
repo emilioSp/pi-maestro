@@ -2,7 +2,7 @@
 
 <!--
 Write for the owner, not only for agents. Keep detail proportional to the change.
-State each requirement once. Refer to it from acceptance criteria instead of repeating it.
+State each requirement once. Link its verification from Verified by instead of repeating the requirement in acceptance criteria.
 Use the topics below as guidance, not a checklist to fill. Omit empty subsections and these instructions.
 Leave local implementation choices, test code, fixtures, mocks, and commands to the builder.
 -->
@@ -17,13 +17,15 @@ Leave local implementation choices, test code, fixtures, mocks, and commands to 
 
 ## 2. Requirements and constraints
 
-<Describe required behavior and measurable limits. Include performance, reliability, accessibility, or other quality requirements only when relevant.>
+<Give each requirement its own ### REQ<number>: <title> heading and a unique, stable ID. Include required behavior, measurable limits, constraints, preserved behavior, edge cases, and error handling as relevant. Do not copy repository or agent instructions.>
 
-<Include non-negotiable boundaries and existing behavior that this change must preserve. Do not copy repository or agent instructions.>
+<Each requirement must have Verified by with Markdown links to one or more acceptance criteria. Use each criterion's actual heading anchor and update links when headings change. If an existing test covers the exact scenario, link its file relative to spec.md and include the exact test scenario name instead of creating a duplicate criterion. A requirement can reference both criteria and existing tests. Check that their combined coverage verifies the whole requirement. Keep the mapping only here, not in the acceptance criteria.>
 
-### Edge cases and error handling
+### REQ1: <short required behavior>
 
-<Describe boundary conditions, failures, and required recovery behavior not already covered above. Keep these requirements even when existing tests cover their scenarios.>
+<Describe the requirement once, including relevant boundary conditions and expected failure or recovery behavior. Keep it documented even when existing tests cover it.>
+
+Verified by: [AC1](#ac1-short-observable-claim)
 
 ## 3. Technical decisions and prototypes
 
@@ -43,7 +45,7 @@ Leave local implementation choices, test code, fixtures, mocks, and commands to 
 
 ## 4. Acceptance criteria
 
-<Inspect existing tests before writing criteria. Omit a criterion only if a test covers the same starting conditions, action, and expected result. Keep criteria when coverage is partial or uncertain. During review, remove criteria already covered by tests. Keep numbering continuous from AC1 and update affected references. Keep required behavior in section 2 even when its criterion is omitted.>
+<Inspect existing tests before writing criteria. Omit a criterion only if a test covers the same starting conditions, action, and expected result. Keep criteria when coverage is partial or uncertain. During review, remove criteria already covered by tests. Keep numbering continuous from AC1 and update affected references, including Verified by links. Keep required behavior in section 2 and link the covering tests from its Verified by field even when its criterion is omitted.>
 
 <Give each criterion a unique ID, one observable claim, and one coverage label. A probe is the scenario used to check that claim. Describe it in plain language. Use success for a valid action that produces the required result. Use failure for an invalid action that is correctly rejected. Use unchanged when the criterion explicitly checks existing behavior that the change must preserve. The label describes the scenario, not the test outcome. A failure scenario passes when the invalid action is correctly rejected. Do not require all three categories.>
 
