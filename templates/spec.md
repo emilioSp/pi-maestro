@@ -1,7 +1,5 @@
 # <id>: <short, outcome-oriented title>
 
-> After owner approval, this specification is the contract for the builder and verifier.
-
 <!--
 Write for the owner, not only for agents. Keep detail proportional to the change.
 State each requirement once. Refer to it from acceptance criteria instead of repeating it.
