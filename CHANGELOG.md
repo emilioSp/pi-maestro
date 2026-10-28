@@ -3,6 +3,11 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
+## Unreleased
+
+1. Added stable `REQ` identifiers and a `Verified by` field to the `spec` template and `Maestro` guidance. Each requirement links to its `acceptance criteria` or exact
+   existing test scenarios. Review checks complete coverage and current links, including during revisions. Approval validation and `handoff` formats remain unchanged.
+
 ## 0.11.0
 
 1. Added the `simplifier` after successful verification or rejection of all current `findings`, without another approval or verification cycle.
