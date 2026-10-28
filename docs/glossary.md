@@ -30,20 +30,24 @@
 
 An ID is an identifier that names one record. These labels refer to records within one `spec`, not across all workflows.
 
-| Label        | Meaning                                                           | Location or scope                                                               |
-| ------------ | ----------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `<spec-id>`  | The identifier shared by the `spec` and its workflow `artifacts`. | The directory name under `<project-root>/.specs/` by default.                   |
-| `B1`, `B2`   | `Builder` `handoff` 1, `builder` `handoff` 2.                     | `handoffs/builder/B1.json`, `handoffs/builder/B2.json`.                         |
-| `V1`, `V2`   | `Verifier` `handoff` 1, `verifier` `handoff` 2.                   | `handoffs/verifier/V1.json`, `handoffs/verifier/V2.json`.                       |
-| `S.json`     | The fixed, unnumbered `simplifier` `handoff`.                     | `handoffs/simplifier/S.json`.                                                   |
-| `E1`, `E2`   | `Escalation` 1, `escalation` 2 within one `builder` report.       | Entries in that report's `escalations` list.                                    |
-| `F1`, `F2`   | `Finding` 1, `finding` 2 within one `verifier` report.            | Entries in that report's `findings` list.                                       |
-| `AC1`, `AC2` | `Acceptance criterion` 1, `acceptance criterion` 2.               | Criteria in `spec.md` and the matching `acceptanceCriteria` entries in reports. |
-| `B1/E1`      | `Escalation` 1 in `builder` `handoff` 1.                          | The question with `id: "E1"` inside `handoffs/builder/B1.json`.                 |
-| `V1/F2`      | `Finding` 2 in `verifier` `handoff` 1.                            | The `finding` with `id: "F2"` inside `handoffs/verifier/V1.json`.               |
+| Label          | Meaning                                                           | Location or scope                                                               |
+| -------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `<spec-id>`    | The identifier shared by the `spec` and its workflow `artifacts`. | The directory name under `<project-root>/.specs/` by default.                   |
+| `B1`, `B2`     | `Builder` `handoff` 1, `builder` `handoff` 2.                     | `handoffs/builder/B1.json`, `handoffs/builder/B2.json`.                         |
+| `V1`, `V2`     | `Verifier` `handoff` 1, `verifier` `handoff` 2.                   | `handoffs/verifier/V1.json`, `handoffs/verifier/V2.json`.                       |
+| `S.json`       | The fixed, unnumbered `simplifier` `handoff`.                     | `handoffs/simplifier/S.json`.                                                   |
+| `E1`, `E2`     | `Escalation` 1, `escalation` 2 within one `builder` report.       | Entries in that report's `escalations` list.                                    |
+| `F1`, `F2`     | `Finding` 1, `finding` 2 within one `verifier` report.            | Entries in that report's `findings` list.                                       |
+| `REQ1`, `REQ2` | Requirement 1, requirement 2.                                     | Requirements in `spec.md`, each with a `Verified by` field.                     |
+| `AC1`, `AC2`   | `Acceptance criterion` 1, `acceptance criterion` 2.               | Criteria in `spec.md` and the matching `acceptanceCriteria` entries in reports. |
+| `B1/E1`        | `Escalation` 1 in `builder` `handoff` 1.                          | The question with `id: "E1"` inside `handoffs/builder/B1.json`.                 |
+| `V1/F2`        | `Finding` 2 in `verifier` `handoff` 1.                            | The `finding` with `id: "F2"` inside `handoffs/verifier/V1.json`.               |
 
 All paths in this table are relative to the `spec` directory unless stated otherwise. The [configuration](configuration.md#path-rules) can change the directory that
 contains `specs`.
+
+Requirement IDs use the `REQ` prefix. They are unique within the `spec` and remain stable during revisions. Each requirement links to its verification through
+`Verified by`. See [Requirement coverage](workflow.md#requirement-coverage).
 
 The `AC` prefix is the template's naming convention. Criterion IDs must be unique within the `spec`. Reports use the exact IDs from the `spec`.
 
