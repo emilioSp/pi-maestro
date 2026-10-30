@@ -2,7 +2,7 @@
 
 An Architecture Decision Record (ADR) explains an important architectural choice, its context, and its consequences. This file contains one numbered record per decision.
 
-Requirements and routine project rules belong in the [roadmap](https://linear.app/emilio-spatola/team/MAESTRO/overview) or other relevant documentation.
+Requirements and routine project rules belong in the [roadmap](ROADMAP.md) or other relevant documentation.
 
 When a new decision replaces an accepted decision, add a new record, mark the earlier record as superseded, and link both records.
 
@@ -168,7 +168,7 @@ approval.
 
 ### Status
 
-Accepted. Implemented.
+Superseded by [ADR-007](#adr-007-maintain-the-roadmap-in-the-repository).
 
 ### Context
 
@@ -190,3 +190,32 @@ commit-pinned links to repository evidence. Removing the local roadmap also remo
 ### Evidence
 
 [Linear roadmap](https://linear.app/emilio-spatola/team/MAESTRO/overview) and [repository instructions](AGENTS.md).
+
+## ADR-007: Maintain the roadmap in the repository
+
+### Status
+
+Accepted. Supersedes [ADR-006](#adr-006-maintain-the-roadmap-in-linear).
+
+### Context
+
+The `owner` reported excessive token use when accessing Linear and requested restoration of the Markdown roadmap. The `owner` also explicitly prohibited changes to the
+Linear project.
+
+### Decision
+
+Maintain the roadmap in `ROADMAP.md` as the source of truth. Restore project items from Linear through read-only access, preserving existing `MAESTRO` identifiers, scope,
+and evidence. Do not transfer Linear onboarding or test issues.
+
+Keep Linear unchanged as historical reference. Routine roadmap reading and maintenance use local files, not MCP.
+
+### Consequences
+
+Planning no longer requires Linear access. Repository instructions, documentation audit guidance, links, and published package contents refer to the local roadmap. Later
+roadmap changes do not need synchronization with Linear.
+
+Conflicting imported status and acceptance evidence remain explicit rather than being treated as proof of final `owner` acceptance.
+
+### Evidence
+
+[Roadmap](ROADMAP.md) and [repository instructions](AGENTS.md).

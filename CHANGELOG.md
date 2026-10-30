@@ -3,6 +3,11 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
+## Unreleased
+
+1. Restored `ROADMAP.md` as the planning source of truth from the current Linear issues, retaining their identifiers and recorded evidence. Updated repository guidance,
+   documentation links, and package contents so roadmap maintenance no longer requires Linear. Linear data remains unchanged.
+
 ## 0.13.0
 
 1. Automatically turn off `Maestro` after successfully delivering the final summary of a completed workflow, including when Git is unavailable and simplification is
