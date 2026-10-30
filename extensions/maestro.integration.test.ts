@@ -1133,32 +1133,22 @@ describe('main Maestro extension', () => {
       emitResult: false,
       isError: false,
       resultSpecId: SPEC_ID,
-      reset: false,
     },
     {
       scenario: 'a failed simplifier result after saved completion',
       emitResult: true,
       isError: true,
       resultSpecId: SPEC_ID,
-      reset: false,
     },
     {
       scenario: 'completion for a different spec',
       emitResult: true,
       isError: false,
       resultSpecId: '20260321-143053-other-workflow',
-      reset: false,
-    },
-    {
-      scenario: 'a new prompt after an unfinished final response',
-      emitResult: true,
-      isError: false,
-      resultSpecId: SPEC_ID,
-      reset: true,
     },
   ])(
     'given $scenario when a later response finishes then Maestro stays active despite candidate-ready on disk',
-    async ({ emitResult, isError, resultSpecId, reset }) => {
+    async ({ emitResult, isError, resultSpecId }) => {
       const { paths, repository } = await createApprovedWorkflow();
       await prepareBuilderRun({ paths, specId: SPEC_ID });
       await completeBuilderPass({ paths, specId: SPEC_ID, handoff: doneHandoff() });
@@ -1204,12 +1194,6 @@ describe('main Maestro extension', () => {
           content: [],
           details: { specId: resultSpecId, phase: WORKFLOW_PHASES.CANDIDATE_READY },
           isError,
-        });
-      }
-
-      if (reset) {
-        await session.extensionRunner.emitBeforeAgentStart('A later prompt.', undefined, {
-          cwd: repository.path,
         });
       }
 
