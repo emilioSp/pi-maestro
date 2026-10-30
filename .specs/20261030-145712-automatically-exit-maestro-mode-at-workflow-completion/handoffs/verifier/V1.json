@@ -1,0 +1,40 @@
+{
+  "version": "1.0.0",
+  "specId": "20261030-145712-automatically-exit-maestro-mode-at-workflow-completion",
+  "summary": "Independently checked all five criteria against the live candidate. All observed results matched the contract; no technical findings.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Read the integration probe and ran ./node_modules/.bin/vitest run --config vitest.config.ts extensions/maestro.integration.test.ts -t 'when the final response finishes|when a later response finishes'. Completed simplification saved S.json with 'No simplification needed'; the real registered simplifier tool reached candidate-ready and successful scripted final delivery deactivated Maestro without a command.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Same focused Vitest command: Git readiness false exercised the registered simplifier skip path, saved candidate-ready, delivered the skip summary, and observed automatic deactivation.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "Same focused Vitest command: tool_execution_end and streamed text_delta observations both retained active mode and spec selection before successful message completion, including summary 'Simplified counting'.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Same focused Vitest command: error, session.abort cancellation, and length-truncated final responses retained active Maestro despite saved candidate-ready. Saved-state-only, failed tool, different spec, and unfinished-response reset scenarios also retained active mode.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Same focused Vitest command: after successful delivery, active spec was null, status unset, and tools were exactly read and foreign_tool. Subsequent prompt retained foreign instructions without Maestro instructions. Queued follow-up also observed restored tools and prompt context. Saved spec, workflow, verifier and available simplifier reports were byte-identical.",
+      "probeStatus": "passed"
+    }
+  ],
+  "findings": [],
+  "notes": [
+    "Confirmed the supplied spec and verifier-running phase. Read proposal, spec, B1, applicable instructions and relevant implementation. No design, prototypes, earlier handoffs, or finding decisions were present.",
+    "Focused run: 11 scenarios passed. npm run check: 262 tests across 40 files passed, including formatting, lint, typecheck and coverage thresholds. git diff --check passed.",
+    "Retained exact file contents before the fixing repository check. Formatting and lint changed no candidate files. Coverage HTML changes were restored to their original bytes; full before/after file-content comparison confirmed restoration. No temporary verification files remain.",
+    "Linear MCP discovery returned no tools; MAESTRO-26 could not be read or updated. No roadmap completion or owner acceptance is claimed.",
+    "Integration evidence uses real Pi sessions and the registered simplifier tool with scripted model streams and child completion; no external model requests or dependency installation were needed."
+  ]
+}

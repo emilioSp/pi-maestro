@@ -1,0 +1,40 @@
+{
+  "status": "done",
+  "summary": "Implemented automatic exit after successful final-summary delivery for completed and skipped simplification. Preserved workflow files, unrelated tools, and foreign prompt sections. Updated coordinator guidance and user documentation.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Ran ./node_modules/.bin/vitest run --config vitest.config.ts extensions/maestro.integration.test.ts -t 'when the final response finishes|when a later response finishes'. The completed-simplification scenario uses the real registered tool and saved S.json with summary 'No simplification needed'; Maestro becomes inactive after the scripted final response completes without /maestro.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Ran ./node_modules/.bin/vitest run --config vitest.config.ts extensions/maestro.integration.test.ts -t 'when the final response finishes|when a later response finishes'. The skipped-simplification scenario returns false from Git readiness, saves candidate-ready through the real tool, delivers the skip summary, and observes Maestro inactive afterward.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "Ran ./node_modules/.bin/vitest run --config vitest.config.ts extensions/maestro.integration.test.ts -t 'when the final response finishes|when a later response finishes'. Real Pi tool-execution and text-delta events show Maestro still active after the terminal tool result and during final-summary streaming, including the 'Simplified counting' report. It exits only when the response finishes successfully.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Ran ./node_modules/.bin/vitest run --config vitest.config.ts extensions/maestro.integration.test.ts -t 'when the final response finishes|when a later response finishes'. Failed, cancelled via session.abort(), and truncated final responses all leave Maestro active after candidate-ready is saved. Additional scenarios confirm saved completion alone, a failed terminal tool result, another spec's completion, and a later prompt without completed delivery do not trigger exit.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Ran ./node_modules/.bin/vitest run --config vitest.config.ts extensions/maestro.integration.test.ts -t 'when the final response finishes|when a later response finishes'. Successful scenarios start with read, foreign_tool, and Maestro tools; afterward the active spec is null, only read and foreign_tool remain active, status is unset, and the next prompt preserves foreign instructions without Maestro's section. A real queued-follow-up request also observes restored mode, tools, and prompt sections. Saved workflow, spec, verifier report, and available simplifier report remain byte-identical.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "npm run check passed: formatting, lint, typecheck, and all 262 tests across 40 files, including coverage thresholds. The final focused acceptance/regression run passed all 11 selected scenarios. git diff --check passed.",
+    "Pi processes queued follow-ups before agent_end. Automatic exit therefore uses the successful assistant message_end boundary, with agent_end clearing unfinished pending delivery. Inactive request-context filtering removes only Maestro's named prompt section without editing saved history.",
+    "Linear MCP tools were unavailable, so MAESTRO-26 could not be read or updated. Existing approved documents identify and link the issue. No owner acceptance or roadmap completion is claimed.",
+    "No dependencies or structural files were added. Test fixtures use existing temporary-project cleanup; no temporary verification files were added to the project."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261030-145712-automatically-exit-maestro-mode-at-workflow-completion"
+}

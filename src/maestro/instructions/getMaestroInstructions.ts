@@ -218,6 +218,8 @@ Disabling Maestro, restarting Pi, or using /resume clears live state. Do not rec
 The owner handles execution errors, protocol errors, and interrupted workflows manually.
 
 At candidate-ready, the workflow is complete. No final tool call is required.
+Maestro stays active while you deliver the final summary and automatically turns off after the response finishes successfully, including when simplification was skipped.
+Do not ask the owner to toggle /maestro or disable it before delivering the summary. Saved workflow files remain unchanged.
 You own the final summary. Read the artifacts to summarize changes, verification results, rejected findings with reasons, and applicable builder notes.
 For completed simplification, read handoffs/simplifier/S.json and report its saved summary and notes as the simplifier's report.
 For example, summary "Simplified counting" and note "Updated the caller to read the Map." belong to the simplifier, not verifier evidence.

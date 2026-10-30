@@ -271,9 +271,10 @@ check failures. If no code needs refactoring, the `simplifier` does not make any
 ## Workflow completion
 
 The workflow ends at `candidate-ready`. `Maestro` summarizes the changes, verification results, rejected `findings` and reasons, relevant `builder` notes from the saved
-`artifacts`, and simplifier's summary and notes
+`artifacts`, and simplifier's summary and notes.
 
-The `owner` performs the final review and controls any later Git use, pull request, or merge. Changes after completion are outside the completed verification.
+`Maestro` stays active while delivering this final summary, then automatically turns off after successful delivery. The `owner` performs the final review and controls any
+later Git use, pull request, or merge. Changes after completion are outside the completed verification.
 
 ## Stored artifacts
 

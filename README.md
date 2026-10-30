@@ -129,7 +129,8 @@ After successful verification or rejection of all `findings`, `Maestro` starts t
 `Maestro` warns and skips simplification. The `simplifier` selects all uncommitted code changes, including pre-existing staged, unstaged, and untracked files.
 
 The workflow ends at `candidate-ready`. Rejected `findings` retain their reasons and accepted failures can remain. Maestro's summary separates independent verification
-from the later simplifier's report. The `owner` controls later review, commits, pull requests, and merging.
+from the later simplifier's report. After the final summary finishes successfully, `Maestro` automatically turns off. The `owner` controls later review, commits, pull
+requests, and merging.
 
 The same `/maestro` command disables `Maestro` and leaves project files unchanged. Disabling `Maestro`, restarting Pi, or using `/resume` clears live session state. Saved
 files do not automatically restore or resume an incomplete workflow. The `owner` handles it manually.

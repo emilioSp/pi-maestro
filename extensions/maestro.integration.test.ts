@@ -8,6 +8,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 
+import { type AssistantMessage, createAssistantMessageEventStream } from '@earendil-works/pi-ai';
 import type { ExtensionAPI, wrapRegisteredTool } from '@earendil-works/pi-coding-agent';
 import { getAgentDir } from '@earendil-works/pi-coding-agent';
 import { stripTerminalSequences } from '@earendil-works/pi-tui';
@@ -59,7 +60,9 @@ import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
+import { WORKFLOW_EVENTS, WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
+import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
+import { transitionWorkflow } from '#workflow/transitions.ts';
 import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
 import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 
@@ -877,6 +880,200 @@ describe('main Maestro extension', () => {
     expect(event.systemPromptOptions.sections.maestro).toContain('You own the final summary.');
     expect(event.systemPromptOptions.sections.maestro).toContain('No final tool call is required.');
   });
+
+  it.each([
+    {
+      scenario: 'completed simplification',
+      completionEvent: WORKFLOW_EVENTS.SIMPLIFIER_DONE,
+      summary: 'No simplification needed',
+      stopReason: 'stop' as const,
+    },
+    {
+      scenario: 'a streamed simplifier report',
+      completionEvent: WORKFLOW_EVENTS.SIMPLIFIER_DONE,
+      summary: 'Simplified counting',
+      stopReason: 'stop' as const,
+    },
+    {
+      scenario: 'skipped simplification',
+      completionEvent: WORKFLOW_EVENTS.SIMPLIFIER_SKIPPED,
+      summary: 'Simplifier skipped: Git repository unavailable.',
+      stopReason: 'stop' as const,
+    },
+    {
+      scenario: 'a failed final response',
+      completionEvent: WORKFLOW_EVENTS.SIMPLIFIER_DONE,
+      summary: 'Simplified counting',
+      stopReason: 'error' as const,
+    },
+    {
+      scenario: 'a cancelled final response',
+      completionEvent: WORKFLOW_EVENTS.SIMPLIFIER_DONE,
+      summary: 'Simplified counting',
+      stopReason: 'aborted' as const,
+    },
+    {
+      scenario: 'a truncated final response',
+      completionEvent: WORKFLOW_EVENTS.SIMPLIFIER_DONE,
+      summary: 'Simplified counting',
+      stopReason: 'length' as const,
+    },
+  ])(
+    'given $scenario when the final response finishes then Maestro exits only after successful delivery',
+    async ({ completionEvent, summary, stopReason }) => {
+      const { paths, repository } = await createApprovedWorkflow();
+      await prepareBuilderRun({ paths, specId: SPEC_ID });
+      await completeBuilderPass({ paths, specId: SPEC_ID, handoff: doneHandoff() });
+      await prepareVerifierRun({ paths, specId: SPEC_ID });
+      await completeVerifierPass({
+        paths,
+        specId: SPEC_ID,
+        handoff: {
+          version: VERIFIER_HANDOFF_VERSION,
+          specId: SPEC_ID,
+          summary: 'Verified weather alerts',
+          acceptanceCriteria: doneHandoff().acceptanceCriteria,
+          findings: [],
+          notes: [],
+        },
+      });
+
+      await writeWorkflowState({
+        path: paths.getWorkflowPath(SPEC_ID),
+        state: transitionWorkflow({
+          state: await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
+          event: completionEvent,
+        }),
+      });
+
+      const extension = (pi: ExtensionAPI): void => {
+        maestroExtension(pi);
+        pi.on('before_agent_start', (event) => {
+          event.systemPromptOptions.sections.foreign = 'Keep foreign instructions';
+        });
+      };
+
+      const { session, setStatus } = await piTestSessions.create({
+        cwd: repository.path,
+        extensions: [foreignExtension, extension, successfulPingExtension],
+      });
+
+      await session.prompt('/maestro');
+      maestroSessionState.setActiveSpecId(SPEC_ID);
+      session.setActiveToolsByName(['read', FOREIGN_TOOL, ...MAIN_TOOL_NAMES]);
+      const approvedSpec = await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8');
+
+      const verified = await readFile(
+        paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
+        'utf8',
+      );
+
+      await session.extensionRunner.emitToolResult({
+        type: 'tool_result',
+        toolName: RUN_SIMPLIFIER_TOOL.NAME,
+        toolCallId: 'simplify',
+        input: { specId: SPEC_ID },
+        content: [],
+        details: { specId: SPEC_ID, phase: WORKFLOW_PHASES.CANDIDATE_READY },
+        isError: false,
+      });
+
+      const summaryStarted = Promise.withResolvers<void>();
+      session.subscribe((event) => {
+        if (event.type === 'message_update' && event.assistantMessageEvent.type === 'text_delta') {
+          summaryStarted.resolve();
+        }
+      });
+      const summaryStream = createAssistantMessageEventStream();
+
+      const finalMessage: AssistantMessage = {
+        role: 'assistant',
+        api: 'openai-completions',
+        provider: 'openai-codex',
+        model: 'gpt-6.1-sol',
+        content: [
+          { type: 'text', text: `Verification: weather alerts passed. Simplifier: ${summary}` },
+        ],
+        stopReason,
+        usage: {
+          input: 0,
+          output: 0,
+          cacheRead: 0,
+          cacheWrite: 0,
+          totalTokens: 0,
+          cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+        },
+        timestamp: 0,
+      };
+
+      vi.spyOn(session.agent, 'streamFunction').mockImplementationOnce(() => {
+        summaryStream.push({ type: 'start', partial: finalMessage });
+        summaryStream.push({ type: 'text_start', contentIndex: 0, partial: finalMessage });
+        summaryStream.push({
+          type: 'text_delta',
+          contentIndex: 0,
+          delta: 'Verification: weather alerts passed.',
+          partial: finalMessage,
+        });
+
+        return summaryStream;
+      });
+
+      const response = session.prompt('Report the final summary.');
+      await summaryStarted.promise;
+
+      expect(maestroSessionState.isActive()).toBe(true);
+      expect(maestroSessionState.getActiveSpecId()).toBe(SPEC_ID);
+      expect(session.getActiveToolNames()).toEqual(['read', FOREIGN_TOOL, ...MAIN_TOOL_NAMES]);
+      const savedWorkflow = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
+      expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
+        phase: WORKFLOW_PHASES.CANDIDATE_READY,
+      });
+
+      if (stopReason === 'error' || stopReason === 'aborted') {
+        const cancellation = stopReason === 'aborted' ? session.abort() : undefined;
+        summaryStream.push({ type: 'error', reason: stopReason, error: finalMessage });
+        await cancellation;
+      } else {
+        summaryStream.push({ type: 'done', reason: stopReason, message: finalMessage });
+      }
+
+      await response;
+
+      const maestroIsActive = stopReason !== 'stop';
+      expect(maestroSessionState.isActive()).toBe(maestroIsActive);
+      expect(maestroSessionState.getActiveSpecId()).toBe(maestroIsActive ? SPEC_ID : null);
+      expect(session.getActiveToolNames()).toEqual(
+        maestroIsActive ? ['read', FOREIGN_TOOL, ...MAIN_TOOL_NAMES] : ['read', FOREIGN_TOOL],
+      );
+      expect(setStatus.mock.calls.at(-1)?.[0]).toBe(MAESTRO_STATUS_KEY);
+      expect(setStatus.mock.calls.at(-1)?.[1] !== undefined).toBe(maestroIsActive);
+
+      const nextPrompt = await session.extensionRunner.emitBeforeAgentStart(
+        'Discuss something else.',
+        undefined,
+        {
+          cwd: repository.path,
+          sections: { maestro: 'Stale instructions', foreign: 'Keep foreign instructions' },
+        },
+      );
+
+      expect(nextPrompt.systemPromptOptions.sections.foreign).toBe('Keep foreign instructions');
+      expect(nextPrompt.systemPromptOptions.sections.maestro !== undefined).toBe(maestroIsActive);
+      expect(Object.keys(nextPrompt.systemPromptOptions.sections)).toEqual(
+        maestroIsActive ? ['maestro', 'foreign'] : ['foreign'],
+      );
+
+      expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(savedWorkflow);
+      expect(await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8')).toBe(approvedSpec);
+      expect(
+        await readFile(
+          paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
+          'utf8',
+        ),
+      ).toBe(verified);
+    },
+  );
 
   type PrepareSpecRevisionPhaseInput = {
     paths: MaestroPaths;

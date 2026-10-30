@@ -3,6 +3,12 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
+## Unreleased
+
+1. Automatically turn off `Maestro` after successfully delivering the final summary of a completed workflow, including when Git is unavailable and simplification is
+   skipped. Clear live tools, status, instructions, and active `spec` selection while preserving saved workflow files and other extensions. See
+   [MAESTRO-26](https://linear.app/emilio-spatola/issue/MAESTRO-26).
+
 ## 0.12.0
 
 1. Added stable `REQ` identifiers and a `Verified by` field to the `spec` template and `Maestro` guidance. Each requirement links to its `acceptance criteria` or exact

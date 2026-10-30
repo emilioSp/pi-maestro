@@ -1,0 +1,12 @@
+{
+  "specId": "20261030-145712-automatically-exit-maestro-mode-at-workflow-completion",
+  "refactoredFiles": [],
+  "summary": "No simplification needed. The accepted code is already clear and remains unchanged.",
+  "notes": [
+    "Discovered all staged, unstaged, and untracked changes using NUL-separated Git status. Reviewed the four changed code files and relevant callers against the approved proposal, spec, B1, and V1.",
+    "npm run check passed formatting, lint, typecheck, and all 262 tests across 40 files, including coverage thresholds. git diff --check passed. These results match the accepted baseline.",
+    "Restored only check-generated coverage changes. A complete before/after file-content comparison confirmed no remaining content changes or new directories before submission. All pre-existing changes were preserved.",
+    "Linear MCP discovery returned no tools, so MAESTRO-26 could not be read or updated. No roadmap completion or owner acceptance is claimed."
+  ],
+  "version": "1.0.0"
+}

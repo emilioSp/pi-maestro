@@ -23,6 +23,7 @@ import {
 import { RUN_BUILDER_TOOL, registerRunBuilderTool } from '#tools/main/run-builder.ts';
 import { RUN_SIMPLIFIER_TOOL, registerRunSimplifierTool } from '#tools/main/run-simplifier.ts';
 import { RUN_VERIFIER_TOOL, registerRunVerifierTool } from '#tools/main/run-verifier.ts';
+import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 
 const MAIN_TOOL_NAMES: readonly string[] = [
   CREATE_SPEC_TOOL.NAME,
@@ -33,6 +34,19 @@ const MAIN_TOOL_NAMES: readonly string[] = [
   RESOLVE_FINDINGS_TOOL.NAME,
   RUN_SIMPLIFIER_TOOL.NAME,
 ];
+
+type CompletedWorkflowResult = {
+  specId: string;
+  phase: typeof WORKFLOW_PHASES.CANDIDATE_READY;
+};
+
+const isCompletedWorkflowResult = (details: unknown): details is CompletedWorkflowResult =>
+  typeof details === 'object' &&
+  details !== null &&
+  'specId' in details &&
+  typeof details.specId === 'string' &&
+  'phase' in details &&
+  details.phase === WORKFLOW_PHASES.CANDIDATE_READY;
 
 export default (pi: ExtensionAPI): void => {
   registerCreateSpecTool(pi);
@@ -125,8 +139,45 @@ export default (pi: ExtensionAPI): void => {
   // Pi fires this after a tool returns, before its result reaches the AI.
   // Refresh status after main Maestro tools, without changing the tool result.
   pi.on('tool_result', async (event, context) => {
+    if (!event.isError && isCompletedWorkflowResult(event.details)) {
+      maestroSessionState.setWaitingForFinalResponseMode(event.details.specId);
+    }
+
     if (MAIN_TOOL_NAMES.includes(event.toolName)) {
       await refreshMaestroStatus(context);
     }
+  });
+
+  // Finish at the response boundary, before Pi can process a queued follow-up.
+  // Assistant messages that request tools are still preparing the final summary.
+  pi.on('message_end', async (event, context) => {
+    const message = event.message;
+
+    if (
+      !maestroSessionState.isWaitingForFinalResponse() ||
+      message.role !== 'assistant' ||
+      message.stopReason === 'toolUse'
+    ) {
+      return;
+    }
+
+    maestroSessionState.stopWaitingForFinalResponse();
+
+    if (
+      !maestroSessionState.isActive() ||
+      context.signal?.aborted ||
+      message.stopReason !== 'stop' ||
+      !message.content.some((part) => part.type === 'text' && part.text.trim() !== '')
+    ) {
+      return;
+    }
+
+    maestroSessionState.deactivate();
+    syncMainTools();
+    await refreshMaestroStatus(context);
+  });
+
+  pi.on('agent_end', () => {
+    maestroSessionState.stopWaitingForFinalResponse();
   });
 };
