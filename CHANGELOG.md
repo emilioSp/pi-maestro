@@ -3,7 +3,7 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
-## Unreleased
+## 0.13.1
 
 1. Restored `ROADMAP.md` as the planning source of truth from the current Linear issues, retaining their identifiers and recorded evidence. Updated repository guidance,
    documentation links, and package contents so roadmap maintenance no longer requires Linear. Linear data remains unchanged.
