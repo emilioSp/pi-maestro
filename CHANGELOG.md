@@ -3,7 +3,7 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
-## Unreleased
+## 0.13.0
 
 1. Automatically turn off `Maestro` after successfully delivering the final summary of a completed workflow, including when Git is unavailable and simplification is
    skipped. Clear live tools, status, instructions, and active `spec` selection while preserving saved workflow files and other extensions. See
