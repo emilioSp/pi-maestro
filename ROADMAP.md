@@ -3,11 +3,37 @@
 This file is the source of truth for planned outcomes and recorded completion. Roadmap entries are not permission to implement them. The `owner` selects work and approves
 its `specification` before implementation starts. Detailed requirements, technical decisions, and `acceptance criteria` belong in that `specification`.
 
-Items were restored from the Linear `MAESTRO` team. Existing identifiers remain stable; Linear is historical reference only and does not need to be read or updated.
 Backlog items have no agreed order or date. The `owner` approves priority and scope changes.
 
 Completed entries preserve recorded outcomes and evidence, which may describe behavior later changed. Completion requires `owner` acceptance, not only passing checks or
 reaching `candidate-ready`. Linear onboarding and test issues are not project roadmap items and are omitted.
+
+## Overview
+
+| ID         | Item                                                                                                                               | Status                                |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| MAESTRO-6  | [Display specs in a browser](#maestro-6-display-specs-in-a-browser)                                                                | Backlog                               |
+| MAESTRO-7  | [Route builder failures through owner escalations](#maestro-7-route-builder-failures-through-owner-escalations)                    | Completed                             |
+| MAESTRO-8  | [Store escalations and owner decisions in builder handoffs](#maestro-8-store-escalations-and-owner-decisions-in-builder-handoffs)  | Completed                             |
+| MAESTRO-9  | [Format glossary terms consistently](#maestro-9-format-glossary-terms-consistently)                                                | Completed                             |
+| MAESTRO-10 | [Improve status presentation and activation feedback](#maestro-10-improve-status-presentation-and-activation-feedback)             | Completed                             |
+| MAESTRO-11 | [Introduce Maestro at activation](#maestro-11-introduce-maestro-at-activation)                                                     | Completed                             |
+| MAESTRO-12 | [Verify code quality against AGENTS.md instructions](#maestro-12-verify-code-quality-against-agentsmd-instructions)                | Completed                             |
+| MAESTRO-13 | [Check subagent extensions at activation](#maestro-13-check-subagent-extensions-at-activation)                                     | Completed                             |
+| MAESTRO-14 | [Rename the test support directory](#maestro-14-rename-the-test-support-directory)                                                 | Completed                             |
+| MAESTRO-15 | [Match handoff criteria to the approved spec](#maestro-15-match-handoff-criteria-to-the-approved-spec)                             | Completed                             |
+| MAESTRO-16 | [Route finding-driven spec revisions through drafting-spec](#maestro-16-route-finding-driven-spec-revisions-through-drafting-spec) | Completed                             |
+| MAESTRO-17 | [Keep acceptance criterion numbering continuous](#maestro-17-keep-acceptance-criterion-numbering-continuous)                       | Completed                             |
+| MAESTRO-18 | [Record escalation resolutions when the spec changes](#maestro-18-record-escalation-resolutions-when-the-spec-changes)             | Completed                             |
+| MAESTRO-19 | [Guide initial configuration](#maestro-19-guide-initial-configuration)                                                             | Backlog                               |
+| MAESTRO-20 | [Rename the npm package](#maestro-20-rename-the-npm-package)                                                                       | Backlog                               |
+| MAESTRO-21 | [Label acceptance criterion coverage](#maestro-21-label-acceptance-criterion-coverage)                                             | Completed                             |
+| MAESTRO-22 | [Avoid acceptance criteria already covered by tests](#maestro-22-avoid-acceptance-criteria-already-covered-by-tests)               | Completed                             |
+| MAESTRO-23 | [Change agent models before a builder run](#maestro-23-change-agent-models-before-a-builder-run)                                   | Backlog                               |
+| MAESTRO-24 | [Add a simplifier with one clear purpose per agent](#maestro-24-add-a-simplifier-with-one-clear-purpose-per-agent)                 | Completed                             |
+| MAESTRO-25 | [Define workflow reconciliation](#maestro-25-define-workflow-reconciliation)                                                       | Backlog                               |
+| MAESTRO-26 | [Exit Maestro mode automatically at workflow completion](#maestro-26-exit-maestro-mode-automatically-at-workflow-completion)       | Implemented, acceptance not confirmed |
+| MAESTRO-27 | [Make verifier and simplifier phases optional](#maestro-27-make-verifier-and-simplifier-phases-optional)                           | Backlog                               |
 
 ## Backlog
 
