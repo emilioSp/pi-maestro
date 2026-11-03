@@ -6,9 +6,7 @@
 import { Value } from 'typebox/value';
 
 import {
-  MAX_TIMEOUT_MINUTES,
   MaestroConfigInputSchema,
-  MIN_TIMEOUT_MINUTES,
   type PartialMaestroConfig,
   SUPPORTED_CONFIG_VERSION,
   THINKING_LEVELS,
@@ -32,10 +30,6 @@ const formatError = (error: SchemaValidationError): string => {
 
   if (path.endsWith('thinking')) {
     return `Invalid thinking level at "${path}". Allowed: ${Object.values(THINKING_LEVELS).join(', ')}.`;
-  }
-
-  if (path.endsWith('timeoutMinutes')) {
-    return `Invalid timeout at "${path}". Must be an integer between ${MIN_TIMEOUT_MINUTES} and ${MAX_TIMEOUT_MINUTES}.`;
   }
 
   if (path.endsWith('model')) {

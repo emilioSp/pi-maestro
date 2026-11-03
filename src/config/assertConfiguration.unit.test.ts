@@ -14,12 +14,10 @@ describe('configuration input validation', () => {
         builder: {
           model: 'openai-codex/gpt-5.6-luna',
           thinking: THINKING_LEVELS.HIGH,
-          timeoutMinutes: 60,
         },
         verifier: {
           model: 'openai-codex/gpt-5.6-sol',
           thinking: THINKING_LEVELS.MEDIUM,
-          timeoutMinutes: 60,
         },
       }),
     ).not.toThrow();
@@ -123,16 +121,6 @@ describe('configuration input validation', () => {
       scenario: 'an unsupported verifier thinking level',
       fixture: 'invalid-thinking-level.json',
       message: 'Invalid thinking level at "verifier.thinking".',
-    },
-    {
-      scenario: 'a builder timeout of zero',
-      fixture: 'invalid-timeout-zero.json',
-      message: 'Invalid timeout at "builder.timeoutMinutes".',
-    },
-    {
-      scenario: 'a builder timeout above the maximum',
-      fixture: 'invalid-timeout-too-large.json',
-      message: 'Invalid timeout at "builder.timeoutMinutes".',
     },
     {
       scenario: 'an unknown top-level field',

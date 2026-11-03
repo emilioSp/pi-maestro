@@ -53,13 +53,11 @@ describe('configuration loading', () => {
           required: true,
           model: 'anthropic/claude-3-7-sonnet',
           thinking: THINKING_LEVELS.MAX,
-          timeoutMinutes: 120,
         },
         verifier: {
           required: true,
           model: 'anthropic/claude-3-5-haiku',
           thinking: 'low',
-          timeoutMinutes: 30,
         },
       });
     } finally {
@@ -67,55 +65,19 @@ describe('configuration loading', () => {
     }
   });
 
-  it.each([
-    {
-      scenario: 'no simplifier settings',
-      simplifier: undefined,
-      timeoutMinutes: 60,
-    },
-    {
-      scenario: 'only a 90-minute simplifier timeout',
-      simplifier: { timeoutMinutes: 90 },
-      timeoutMinutes: 90,
-    },
-  ])(
-    'given configuration with $scenario when loaded then the simplifier uses its default model and thinking with a $timeoutMinutes-minute timeout and other agents keep their defaults',
-    async ({ simplifier, timeoutMinutes }) => {
-      const workspace = await createTemporaryProject();
-
-      try {
-        await mkdir(join(workspace.path, '.pi'));
-        await writeFile(
-          join(workspace.path, '.pi/maestro.json'),
-          JSON.stringify({ version: '1.0.0', simplifier }),
-        );
-        const config = await loadConfiguration(workspace.path);
-        expect(config.simplifier).toEqual({
-          required: true,
-          model: 'openai-codex/gpt-6.1-sol',
-          thinking: 'high',
-          timeoutMinutes,
-        });
-        expect(config.builder).toEqual(DEFAULT_CONFIG.builder);
-        expect(config.verifier).toEqual(DEFAULT_CONFIG.verifier);
-      } finally {
-        await workspace.cleanup();
-      }
-    },
-  );
-
-  it('given a simplifier timeout of zero when configuration is loaded then loading fails and identifies simplifier.timeoutMinutes', async () => {
+  it('given configuration without agent settings when loaded then every agent keeps its default settings', async () => {
     const workspace = await createTemporaryProject();
 
     try {
       await mkdir(join(workspace.path, '.pi'));
       await writeFile(
         join(workspace.path, '.pi/maestro.json'),
-        JSON.stringify({ version: '1.0.0', simplifier: { timeoutMinutes: 0 } }),
+        JSON.stringify({ version: '1.0.0' }),
       );
-      await expect(loadConfiguration(workspace.path)).rejects.toThrow(
-        'Invalid timeout at "simplifier.timeoutMinutes"',
-      );
+      const config = await loadConfiguration(workspace.path);
+      expect(config.simplifier).toEqual(DEFAULT_CONFIG.simplifier);
+      expect(config.builder).toEqual(DEFAULT_CONFIG.builder);
+      expect(config.verifier).toEqual(DEFAULT_CONFIG.verifier);
     } finally {
       await workspace.cleanup();
     }
@@ -186,12 +148,6 @@ describe('configuration loading', () => {
   );
 
   it.each([
-    {
-      scenario: 'only a custom builder timeout',
-      fixture: 'valid-partial-builder-timeout.json',
-      specDirectory: DEFAULT_CONFIG.specDirectory,
-      builder: { ...DEFAULT_CONFIG.builder, timeoutMinutes: 90 },
-    },
     {
       scenario: 'only a custom spec directory',
       fixture: 'valid-partial-directories.json',

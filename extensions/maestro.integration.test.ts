@@ -137,8 +137,7 @@ describe('main Maestro extension', () => {
     expect(setStatus).toHaveBeenLastCalledWith(MAESTRO_STATUS_KEY, undefined);
 
     const event = await session.extensionRunner.emitBeforeAgentStart(
-      'Discuss the next change.',
-      undefined,
+      { messageType: 'user', prompt: 'Discuss the next change.' },
       {
         cwd: session.extensionRunner.createContext().cwd,
         sections: { foreign: 'Keep foreign instructions' },
@@ -180,8 +179,7 @@ describe('main Maestro extension', () => {
     );
 
     const event = await session.extensionRunner.emitBeforeAgentStart(
-      'Discuss the next change.',
-      undefined,
+      { messageType: 'user', prompt: 'Discuss the next change.' },
       {
         cwd: session.extensionRunner.createContext().cwd,
         sections: { foreign: 'Keep foreign instructions' },
@@ -534,8 +532,7 @@ describe('main Maestro extension', () => {
     const workflow = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
 
     const event = await session.extensionRunner.emitBeforeAgentStart(
-      'Discuss the next change.',
-      undefined,
+      { messageType: 'user', prompt: 'Discuss the next change.' },
       {
         cwd: session.extensionRunner.createContext().cwd,
         sections: { foreign: 'Keep foreign instructions' },
@@ -547,8 +544,7 @@ describe('main Maestro extension', () => {
     await session.prompt('/maestro');
 
     const inactivePrompt = await session.extensionRunner.emitBeforeAgentStart(
-      'Discuss the next change.',
-      undefined,
+      { messageType: 'user', prompt: 'Discuss the next change.' },
       event.systemPromptOptions,
     );
 
@@ -943,8 +939,7 @@ describe('main Maestro extension', () => {
     expect(await readFile(productPath, 'utf8')).toBe(productContents);
 
     const event = await session.extensionRunner.emitBeforeAgentStart(
-      'Discuss the next change.',
-      undefined,
+      { messageType: 'user', prompt: 'Discuss the next change.' },
       {
         cwd: session.extensionRunner.createContext().cwd,
         sections: { foreign: 'Keep foreign instructions' },
@@ -1131,8 +1126,7 @@ describe('main Maestro extension', () => {
       expect(setStatus.mock.calls.at(-1)?.[1] !== undefined).toBe(maestroIsActive);
 
       const nextPrompt = await session.extensionRunner.emitBeforeAgentStart(
-        'Discuss something else.',
-        undefined,
+        { messageType: 'user', prompt: 'Discuss something else.' },
         {
           cwd: repository.path,
           sections: { maestro: 'Stale instructions', foreign: 'Keep foreign instructions' },
@@ -1428,8 +1422,7 @@ describe('main Maestro extension', () => {
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
     const event = await session.extensionRunner.emitBeforeAgentStart(
-      'Discuss the next change.',
-      undefined,
+      { messageType: 'user', prompt: 'Discuss the next change.' },
       {
         cwd: session.extensionRunner.createContext().cwd,
         sections: { foreign: 'Keep foreign instructions' },

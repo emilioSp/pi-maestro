@@ -13,6 +13,9 @@ import {
 
 // pi-subagents exports SubagentDelegationStatus as a type, not runtime values.
 // TypeScript erases the type, so the adapter needs these constants for comparisons.
+// Fixed deadline passed to pi-subagents in place of the removed per-agent timeout configuration.
+export const SUBAGENT_TIMEOUT_MS = 9_999 * 60_000;
+
 export const DELEGATION_STATUSES = {
   COMPLETED: 'completed',
   FAILED: 'failed',

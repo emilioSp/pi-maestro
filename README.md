@@ -83,7 +83,7 @@ An `escalation` asks the `owner` to decide an implementation question. A `findin
 
 1. macOS.
 2. Node.js 26 or later.
-3. Pi 1.0.0 or later.
+3. Pi 1.5.0 or later.
 4. `pi-subagents` installed and enabled in Pi when `builder` is enabled.
 5. Access to the models for enabled agents.
 6. A project directory that Pi trusts.
@@ -151,9 +151,9 @@ files do not automatically restore or resume an incomplete workflow. The `owner`
 ## Configuration
 
 `Maestro` uses default values when `.pi/maestro.json` is absent from the project root. The `owner` can add this file to change the `spec` directory, models, thinking
-levels, timeouts, or selected phases. Each agent has a `required` boolean that defaults to `true`. Set flags before activation and keep configuration unchanged during the
-workflow. With `builder.required: false`, approval finishes with only an approved `spec` for implementation elsewhere. Otherwise `verifier` and `simplifier` can be
-disabled independently. Skipped work is identified in the final summary and is not claimed as completed. See [Configuration](docs/configuration.md#phase-selection).
+levels, or selected phases. Each agent has a `required` boolean that defaults to `true`. Set flags before activation and keep configuration unchanged during the workflow.
+With `builder.required: false`, approval finishes with only an approved `spec` for implementation elsewhere. Otherwise `verifier` and `simplifier` can be disabled
+independently. Skipped work is identified in the final summary and is not claimed as completed. See [Configuration](docs/configuration.md#phase-selection).
 
 ## Documentation
 
@@ -161,7 +161,7 @@ The reading order is:
 
 1. [Glossary](docs/glossary.md): terms and identifiers used in `specs`, reports, and `Maestro` messages. Read this before the first workflow.
 2. [Workflow](docs/workflow.md): approvals, decisions, and how each `run` produces `artifacts`.
-3. [Configuration](docs/configuration.md): project paths, models, and timeouts.
+3. [Configuration](docs/configuration.md): project paths, models, and thinking levels.
 4. [Subagent integration](docs/subagent-integration.md): agent context, execution, and activity tracking.
 
 ## Project constitution

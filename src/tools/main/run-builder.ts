@@ -20,6 +20,7 @@ import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import {
   assertDelegationResponse,
+  SUBAGENT_TIMEOUT_MS,
   waitForDelegationResponse,
 } from '#tools/utils/pi-subagent-delegation.ts';
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
@@ -42,8 +43,6 @@ const RunBuilderToolParameters = Type.Object(
   },
   { additionalProperties: false },
 );
-
-const MILLISECONDS_PER_MINUTE = 60_000;
 
 type BuilderRunResult =
   | {
@@ -186,7 +185,7 @@ export const registerRunBuilderTool = (pi: ExtensionAPI): void => {
         cwd: projectRoot,
         model: config.builder.model,
         thinking: config.builder.thinking,
-        timeoutMs: config.builder.timeoutMinutes * MILLISECONDS_PER_MINUTE,
+        timeoutMs: SUBAGENT_TIMEOUT_MS,
         result: { kind: 'text' },
       };
 

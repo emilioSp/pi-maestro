@@ -17,45 +17,39 @@ For example, if Pi starts in `/work/app/src`, `Maestro` reads `/work/app/src/.pi
   "builder": {
     "required": true,
     "model": "openai-codex/gpt-5.6-luna",
-    "thinking": "max",
-    "timeoutMinutes": 60
+    "thinking": "max"
   },
   "simplifier": {
     "required": true,
     "model": "openai-codex/gpt-6.1-sol",
-    "thinking": "high",
-    "timeoutMinutes": 60
+    "thinking": "high"
   },
   "verifier": {
     "required": true,
     "model": "openai-codex/gpt-6.1-sol",
-    "thinking": "high",
-    "timeoutMinutes": 60
+    "thinking": "high"
   }
 }
 ```
 
 ## Fields
 
-| Field                       |                  Required | Default                     | Rules                                                           |
-| --------------------------- | ------------------------: | --------------------------- | --------------------------------------------------------------- |
-| `version`                   | Yes, when the file exists | `1.0.0`                     | Configuration format version. Only `1.0.0` is supported.        |
-| `specDirectory`             |                        No | `.specs`                    | Relative path below the project root.                           |
-| `builder`                   |                        No | `Builder` defaults          | Overrides supported `builder` fields.                           |
-| `builder.required`          |                        No | `true`                      | Boolean selecting the `builder` phase.                          |
-| `builder.model`             |                        No | `openai-codex/gpt-5.6-luna` | Model string passed unchanged to Pi.                            |
-| `builder.thinking`          |                        No | `max`                       | One supported thinking level.                                   |
-| `builder.timeoutMinutes`    |                        No | `60`                        | Integer from `1` to `1440`. Applies to each `builder` `run`.    |
-| `verifier`                  |                        No | `Verifier` defaults         | Overrides supported `verifier` fields.                          |
-| `verifier.required`         |                        No | `true`                      | Boolean selecting the `verifier` phase.                         |
-| `verifier.model`            |                        No | `openai-codex/gpt-6.1-sol`  | Model string passed unchanged to Pi.                            |
-| `verifier.thinking`         |                        No | `high`                      | One supported thinking level.                                   |
-| `verifier.timeoutMinutes`   |                        No | `60`                        | Integer from `1` to `1440`. Applies to each `verifier` `run`.   |
-| `simplifier`                |                        No | `Simplifier` defaults       | Overrides supported `simplifier` fields.                        |
-| `simplifier.required`       |                        No | `true`                      | Boolean selecting the `simplifier` phase.                       |
-| `simplifier.model`          |                        No | `openai-codex/gpt-6.1-sol`  | Model string passed unchanged to Pi.                            |
-| `simplifier.thinking`       |                        No | `high`                      | One supported thinking level.                                   |
-| `simplifier.timeoutMinutes` |                        No | `60`                        | Integer from `1` to `1440`. Applies to each `simplifier` `run`. |
+| Field                 |                  Required | Default                     | Rules                                                    |
+| --------------------- | ------------------------: | --------------------------- | -------------------------------------------------------- |
+| `version`             | Yes, when the file exists | `1.0.0`                     | Configuration format version. Only `1.0.0` is supported. |
+| `specDirectory`       |                        No | `.specs`                    | Relative path below the project root.                    |
+| `builder`             |                        No | `Builder` defaults          | Overrides supported `builder` fields.                    |
+| `builder.required`    |                        No | `true`                      | Boolean selecting the `builder` phase.                   |
+| `builder.model`       |                        No | `openai-codex/gpt-5.6-luna` | Model string passed unchanged to Pi.                     |
+| `builder.thinking`    |                        No | `max`                       | One supported thinking level.                            |
+| `verifier`            |                        No | `Verifier` defaults         | Overrides supported `verifier` fields.                   |
+| `verifier.required`   |                        No | `true`                      | Boolean selecting the `verifier` phase.                  |
+| `verifier.model`      |                        No | `openai-codex/gpt-6.1-sol`  | Model string passed unchanged to Pi.                     |
+| `verifier.thinking`   |                        No | `high`                      | One supported thinking level.                            |
+| `simplifier`          |                        No | `Simplifier` defaults       | Overrides supported `simplifier` fields.                 |
+| `simplifier.required` |                        No | `true`                      | Boolean selecting the `simplifier` phase.                |
+| `simplifier.model`    |                        No | `openai-codex/gpt-6.1-sol`  | Model string passed unchanged to Pi.                     |
+| `simplifier.thinking` |                        No | `high`                      | One supported thinking level.                            |
 
 Model values use the full `provider/model` identifier supplied by Pi's model registry, such as `openrouter/~openai/gpt-mini-latest`. Model IDs may contain additional
 slashes. `Maestro` does not apply a separate format rule; it matches the complete identifier against Pi's available models and passes it unchanged through `pi-subagents`.
@@ -80,12 +74,12 @@ Only `version` is required when the file exists. Each other field overrides its 
 {
   "version": "1.0.0",
   "builder": {
-    "timeoutMinutes": 90
+    "thinking": "high"
   }
 }
 ```
 
-This example keeps every default except the `builder` timeout.
+This example keeps every default except the `builder` thinking level.
 
 ## Phase selection
 

@@ -34,7 +34,7 @@ reaching `candidate-ready`. Linear onboarding and test issues are not project ro
 | MAESTRO-25     | [Define workflow reconciliation](#maestro-25-define-workflow-reconciliation)                                                       | Backlog   |
 | MAESTRO-26     | [Exit Maestro mode automatically at workflow completion](#maestro-26-exit-maestro-mode-automatically-at-workflow-completion)       | Completed |
 | MAESTRO-27     | [Make all implementation phases optional](#maestro-27-make-all-implementation-phases-optional)                                     | Completed |
-| MAESTRO-FREE-1 | [Require Pi 1.5.0](#maestro-free-1-require-pi-150)                                                                                 | Backlog   |
+| MAESTRO-FREE-1 | [Require Pi 1.5.0](#maestro-free-1-require-pi-150)                                                                                 | Completed |
 | MAESTRO-FREE-2 | [Remove Maestro run timeouts](#maestro-free-2-remove-maestro-run-timeouts)                                                         | Backlog   |
 | MAESTRO-FREE-3 | [Run the builder through the Pi SDK](#maestro-free-3-run-the-builder-through-the-pi-sdk)                                           | Backlog   |
 | MAESTRO-FREE-4 | [Run the verifier through the Pi SDK](#maestro-free-4-run-the-verifier-through-the-pi-sdk)                                         | Backlog   |
@@ -97,22 +97,6 @@ Explore how `Maestro` can reconcile saved `artifacts` and workflow state. The re
 
 Not yet defined. The `owner` must define the intended outcome, recovery boundaries, and completion condition before this item can move forward.
 
-### MAESTRO-FREE-1: Require Pi 1.5.0
-
-#### Objective
-
-Adopt Pi 1.5.0 as the minimum supported host and verification baseline for [ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation), without changing the
-delegation engine or adding compatibility fallbacks.
-
-#### Completed when
-
-1. Declared requirements and the development verification environment use the selected Pi baseline consistently.
-2. The existing extension and `pi-subagents` workflow continue to work on Pi 1.5.0.
-
-#### Reversibility
-
-Reverting restores the previous requirements and verification setup. Later SDK changes relying on the new baseline must be reverted first.
-
 ### MAESTRO-FREE-2: Remove Maestro run timeouts
 
 #### Objective
@@ -125,10 +109,6 @@ Remove schema fields, defaults, delegation timeout inputs, and related configura
 1. `Maestro` no longer supplies a per-agent deadline. Elapsed-time display and timeouts internal to Pi, tools, or the remaining `pi-subagents` integration are unchanged.
 2. Configuration without `timeoutMinutes` works; configuration retaining it fails existing TypeBox validation with no migration or compatibility handling.
 3. Other configuration behavior and the existing workflow remain unchanged.
-
-#### Reversibility
-
-Reverting restores the optional settings, their defaults, and the previous deadline behavior. Removing the fields requires no saved workflow or `handoff` migration.
 
 ### MAESTRO-FREE-3: Run the builder through the Pi SDK
 
@@ -160,11 +140,6 @@ status remains available in the meantime.
    a `builder`-only workflow uses the SDK without requiring a `pi-subagents` availability reply.
 7. Each `run` waits for its child to finish or be interrupted before another starts. Existing optional-phase behavior remains intact.
 
-#### Reversibility
-
-Reverting restores `builder` delegation and its activation checks to `pi-subagents`, which remains installed. Saved `specs`, workflow files, and `handoffs` retain their
-formats; SDK session logs can remain on disk. Revert later consumers of the SDK operation before removing it.
-
 ### MAESTRO-FREE-4: Run the verifier through the Pi SDK
 
 #### Objective
@@ -180,11 +155,6 @@ Move the `verifier` to the SDK execution operation delivered by [MAESTRO-FREE-3]
 3. Activation no longer asks `pi-subagents` to check or execute the `verifier`. Its remaining checks apply only to enabled roles still on that engine.
 4. Workflows with verification enabled or disabled retain their existing routes. If the `simplifier` is not yet migrated, it continues to use `pi-subagents` unchanged.
 
-#### Reversibility
-
-Reverting restores only the verifier's `pi-subagents` route and checks. The SDK `builder` continues working, and saved report formats need no migration. Revert dependency
-removal first if it has already been applied.
-
 ### MAESTRO-FREE-5: Run the simplifier through the Pi SDK
 
 #### Objective
@@ -198,11 +168,6 @@ Move the `simplifier` to the SDK execution operation delivered by [MAESTRO-FREE-
 2. Successful execution saves the existing unnumbered `S.json` `handoff` and reaches `candidate-ready`; optional-phase behavior remains unchanged.
 3. It reuses the established context, tools, persistence, cancellation, cleanup, and error policy.
 4. Activation no longer asks `pi-subagents` to check or execute the `simplifier`. Once all roles have migrated, no workflow path requires its ping or launch preflight.
-
-#### Reversibility
-
-Reverting restores only the simplifier's `pi-subagents` route and checks, without changing Git semantics or saved reports. Revert dependency removal first if it has
-already been applied.
 
 ### MAESTRO-FREE-6: Show SDK agent activity through Pi
 
@@ -219,10 +184,6 @@ each role as it is migrated.
 3. Intermediate text stays out of the main model's context. Final workflow results, saved session contents, and cancellation behavior remain unchanged.
 4. Progress subscriptions are released when the child finishes, fails, or is interrupted. Roles still on `pi-subagents` retain their existing presentation.
 
-#### Reversibility
-
-Reverting removes only the live SDK progress presentation. Agent execution, saved session files, and existing workflow-phase status continue to work.
-
 ### MAESTRO-FREE-7: Remove the pi-subagents dependency
 
 #### Objective
@@ -237,15 +198,6 @@ Finish [ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation) 
    longer require it. Historical records remain historical evidence.
 2. A clean installation can activate and complete workflows without `pi-subagents` installed or enabled, including the supported optional-phase combinations.
 3. Existing workflow and `handoff` formats remain unchanged. No compatibility framework, engine-selection flags, or migration of interrupted workflows is added.
-
-#### Reversibility
-
-Reverting restores the dependency and integration metadata without changing the working SDK routes. Restoring an old role implementation later requires restoring its own
-route and checks as well; saved workflow `artifacts` need no conversion.
-
-Each `MAESTRO-FREE` entry is intended to become one separately approved `spec`. These are backlog items, not completed work. Each change must pass its end-to-end
-verification before the next starts. Reversibility does not imply independence: revert dependent changes before their prerequisites, and do not delete saved evidence as
-part of a code revert. Each item updates documentation for the behavior it actually delivers; no long-lived integration branch or combined merge is required.
 
 ## Implemented, acceptance not confirmed
 
@@ -267,6 +219,24 @@ Linear marks this item Done, but its description still says final `owner` accept
 
 Completed entries include historical records imported from Linear and work explicitly accepted by the `owner`. Historical verification evidence alone does not establish
 final `owner` acceptance.
+
+### MAESTRO-FREE-1: Require Pi 1.5.0
+
+#### Objective
+
+Adopt Pi 1.5.0 as the minimum supported host and verification baseline for [ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation), without changing the
+delegation engine or adding compatibility fallbacks.
+
+#### Completed when
+
+1. Declared requirements and the development verification environment use the selected Pi baseline consistently.
+2. The existing extension and `pi-subagents` workflow continue to work on Pi 1.5.0.
+
+#### Implementation and evidence
+
+The `owner` confirmed completion. `README.md` declares Pi 1.5.0 as the minimum host. Development dependencies for the four Pi packages are pinned to 1.5.0, so type checks
+and tests run against that baseline. Schema enums use TypeBox `Type.Enum` with an explicit string type. `npm run check` passes on 1.5.0, including the extension and
+`pi-subagents` integration tests.
 
 ### MAESTRO-27: Make all implementation phases optional
 

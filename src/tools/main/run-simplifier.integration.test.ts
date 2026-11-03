@@ -27,7 +27,7 @@ import {
 } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { registerRunSimplifierTool } from '#tools/main/run-simplifier.ts';
-import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
+import { DELEGATION_STATUSES, SUBAGENT_TIMEOUT_MS } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { completeSimplifierPass } from '#workflow/simplifier/completeSimplifierPass.ts';
@@ -84,6 +84,7 @@ describe('run simplifier', () => {
         stdout: 'false\n',
         stderr: '',
         killed: false,
+        truncated: false,
       });
       registerRunSimplifierTool(pi);
     };
@@ -177,7 +178,7 @@ describe('run simplifier', () => {
       cwd: repository.path,
       model: DEFAULT_CONFIG.simplifier.model,
       thinking: DEFAULT_CONFIG.simplifier.thinking,
-      timeoutMs: 60 * 60_000,
+      timeoutMs: SUBAGENT_TIMEOUT_MS,
       task: expect.stringContaining(SPEC_ID),
     });
     expect(requests[0][1]).toMatchObject({

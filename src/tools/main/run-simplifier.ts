@@ -16,6 +16,7 @@ import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import {
   assertDelegationResponse,
+  SUBAGENT_TIMEOUT_MS,
   waitForDelegationResponse,
 } from '#tools/utils/pi-subagent-delegation.ts';
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
@@ -36,8 +37,6 @@ const RunSimplifierToolParameters = Type.Object(
   { specId: Type.String({ pattern: SPEC_ID_PATTERN.source }) },
   { additionalProperties: false },
 );
-
-const MILLISECONDS_PER_MINUTE = 60_000;
 
 const GIT_SKIP_WARNING = 'Simplifier skipped: Git repository unavailable.';
 
@@ -147,7 +146,7 @@ export const registerRunSimplifierTool = (pi: ExtensionAPI): void => {
         cwd: projectRoot,
         model: config.simplifier.model,
         thinking: config.simplifier.thinking,
-        timeoutMs: config.simplifier.timeoutMinutes * MILLISECONDS_PER_MINUTE,
+        timeoutMs: SUBAGENT_TIMEOUT_MS,
         result: { kind: 'text' },
       };
 

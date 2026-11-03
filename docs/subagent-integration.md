@@ -16,8 +16,8 @@ The package supplies all three roles and the tools that save their results:
 Each `run` starts with a fresh conversation, not the main session's conversation history. All three agents inherit project instructions, the owner's global `AGENTS.md`,
 and available skills. The global file normally lives at `~/.pi/agent/AGENTS.md`.
 
-`Maestro` supplies the `spec` ID, project directory, model, thinking level, and timeout. The agents read all approved documents (`proposal.md`, `spec.md`, and `design.md`
-when present) and saved `artifacts` to understand the work. Earlier `artifacts` provide context, not proof.
+`Maestro` supplies the `spec` ID, project directory, model, and thinking level. The agents read all approved documents (`proposal.md`, `spec.md`, and `design.md` when
+present) and saved `artifacts` to understand the work. Earlier `artifacts` provide context, not proof.
 
 The `owner` does not call agent tools directly. `Maestro` starts the enabled `builder` after `GREEN FLAG` approval. The enabled `verifier` starts after successful
 `builder` completion. The enabled `simplifier` follows the selected preceding phases. Disabled agents are not delegated. See
@@ -38,8 +38,8 @@ If a `run` fails or returns without a valid saved result, `Maestro` reports the 
 ## External configuration
 
 The `pi-subagents` extension must be installed and enabled in Pi when `builder` is enabled. Workflows with only an approved `spec` need no agent availability or ping.
-`Builder`, `verifier`, and `simplifier` model choices, thinking levels, and timeouts come from [Maestro configuration](configuration.md). Other `pi-subagents`
-configuration remains the owner's responsibility.
+`Builder`, `verifier`, and `simplifier` model choices and thinking levels come from [Maestro configuration](configuration.md). `Maestro` does not supply a per-agent
+deadline. Other `pi-subagents` configuration remains the owner's responsibility.
 
 Only `maestro_run_simplifier` checks Git readiness, with `git rev-parse --is-inside-work-tree`. If readiness cannot be confirmed, it warns and completes without
 delegation. The `simplifier` uses Git to select all uncommitted code changes. `Maestro` does not change the Git index or create commits or checkpoints.

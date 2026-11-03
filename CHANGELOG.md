@@ -3,6 +3,17 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
+## 0.16.0
+
+1. Required Pi 1.5.0 or later and pinned the development Pi dependencies to that baseline, so type checks and tests run against the declared host. The extension now uses
+   TypeBox `Type.Enum` with an explicit string type instead of the `StringEnum` helper, calls `before_agent_start` with Pi's message object, and expects the `truncated`
+   field on `exec` results. See [PR #46](https://github.com/emilioSp/pi-maestro/pull/46).
+2. Breaking: removed `timeoutMinutes` from the agent configuration. Configuration files that still contain the field fail validation until the `owner` removes it; no
+   migration or legacy handling is provided.
+3. Replaced the configured per-agent timeout with a fixed, non-configurable deadline passed to `pi-subagents` for every `run`. A `run` is no longer bounded by a
+   configured duration.
+4. Updated `ADR.md`, `ROADMAP.md`, `README.md`, and `docs/` for the new baseline and the removed timeout settings. `MAESTRO-FREE-1` is recorded as completed.
+
 ## 0.15.0
 
 1. Added per-agent `required` booleans in `.pi/maestro.json`, all defaulting to `true`. Disabling `builder` completes the workflow at `spec` approval without agents;
