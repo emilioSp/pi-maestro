@@ -41,7 +41,14 @@ independently and which issues it found.
 
 ## Main flow
 
-The green arrows and lines show the path without `escalations` or `findings`.
+The diagram shows the default flow with all three agents enabled. The green arrows and lines show the path without `escalations` or `findings`.
+
+The `owner` selects phases through each agent's `required` boolean before activation and leaves configuration unchanged during the workflow. All flags default to `true`.
+See [Phase selection](configuration.md#phase-selection).
+
+With `builder` disabled, approval moves directly to `candidate-ready` and all agents are skipped. Otherwise, after `builder` completion, disabled verification is
+bypassed: the workflow enters `simplifier-running` if simplification is enabled, or `candidate-ready` otherwise. Successful verification and rejection of all current
+`findings` also move directly to `candidate-ready` when simplification is disabled. Skipped agents are not delegated and need no `handoffs`.
 
 ```mermaid
 flowchart TD
@@ -84,17 +91,17 @@ alone does not establish a completed action.
 
 The default path is `.specs/<spec-id>/workflow.json`. The `spec` directory is [configurable](configuration.md).
 
-| Phase                  | Meaning                                                                                                                        |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `drafting-spec`        | The `owner` and `Maestro` prepare the initial `spec` or revise it after recorded `escalation` answers or `finding` decisions.  |
-| `ready-for-builder`    | The approved `spec` or recorded `owner` decisions permit a `builder` `run`.                                                    |
-| `builder-running`      | A `builder` `run` is active.                                                                                                   |
-| `escalation-decisions` | The `owner` must decide how to handle every `escalation` question.                                                             |
-| `ready-for-verifier`   | The `builder` completed the work and the `verifier` can start.                                                                 |
-| `verifier-running`     | A `verifier` `run` is active.                                                                                                  |
-| `finding-decisions`    | The `owner` must decide how to handle every current `finding`.                                                                 |
-| `simplifier-running`   | Verification succeeded or the `owner` rejected all current `findings`. The `simplifier` can run or skip if Git is unavailable. |
-| `candidate-ready`      | Simplification completed. The workflow is complete.                                                                            |
+| Phase                  | Meaning                                                                                                                       |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `drafting-spec`        | The `owner` and `Maestro` prepare the initial `spec` or revise it after recorded `escalation` answers or `finding` decisions. |
+| `ready-for-builder`    | The approved `spec` or recorded `owner` decisions permit a `builder` `run`.                                                   |
+| `builder-running`      | A `builder` `run` is active.                                                                                                  |
+| `escalation-decisions` | The `owner` must decide how to handle every `escalation` question.                                                            |
+| `ready-for-verifier`   | The `builder` completed the work and the `verifier` can start.                                                                |
+| `verifier-running`     | A `verifier` `run` is active.                                                                                                 |
+| `finding-decisions`    | The `owner` must decide how to handle every current `finding`.                                                                |
+| `simplifier-running`   | Selected preceding phases finished. The enabled `simplifier` can run or skip if Git is unavailable.                           |
+| `candidate-ready`      | The selected phases completed or were skipped. The workflow is complete.                                                      |
 
 ## Specification documents
 
@@ -112,9 +119,9 @@ For the initial `spec`:
 
 1. `Maestro` creates `proposal.md`, `spec.md`, and `workflow.json` in `drafting-spec`, then prepares the documents with the `owner`. It adds `design.md` only when needed.
 2. The `owner` reviews the complete document set: motivation, scope, requirements, `acceptance criteria`, and any approved technical decisions.
-3. `Maestro` asks the `owner` to inspect `proposal.md`, `spec.md`, and `design.md` when present and reply `GREEN FLAG` once to approve the entire set and start the
-   `builder`.
-4. After that reply, `Maestro` saves `ready-for-builder` and starts the `builder` in the foreground.
+3. `Maestro` asks the `owner` to inspect `proposal.md`, `spec.md`, and `design.md` when present and reply `GREEN FLAG` once to approve the entire set and proceed through
+   the selected phases.
+4. After that reply, `Maestro` saves `ready-for-builder` and starts the enabled `builder` in the foreground, or saves `candidate-ready` with all agents skipped.
 
 Approval freezes all present `spec` documents and visual prototypes together. None may change during `builder`, `verifier`, or `simplifier` execution. See
 [Spec revision](#spec-revision) for permitted revisions.
@@ -230,11 +237,11 @@ that file's `findings` list, not a separate `F2.json` file. `Finding` numbers re
 `Maestro` records `owner` decisions in the same `verifier` report, e.g. decisions about `V1/F2` update `V1.json`, not a new `V2.json`. A new `verifier` result creates the
 next report (`V2.json`).
 
-| Decision      | Result                                                                                                         |
-| ------------- | -------------------------------------------------------------------------------------------------------------- |
-| `reject`      | Records the owner's reason. If every `finding` is rejected, the workflow reaches `simplifier-running`.         |
-| `fix-code`    | Keeps the current `spec` and returns to `ready-for-builder` for code fixes when no decision requires revision. |
-| `revise-spec` | Records the owner's reason and agreed requirement change, then returns to `drafting-spec`.                     |
+| Decision      | Result                                                                                                                                           |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `reject`      | Records the owner's reason. If every `finding` is rejected, the workflow reaches `simplifier-running` when enabled, otherwise `candidate-ready`. |
+| `fix-code`    | Keeps the current `spec` and returns to `ready-for-builder` for code fixes when no decision requires revision.                                   |
+| `revise-spec` | Records the owner's reason and agreed requirement change, then returns to `drafting-spec`.                                                       |
 
 `Maestro` saves every current decision together before the phase changes. If any `finding` requires revision, revision takes priority over code fixes and rejections. See
 [Spec revision](#spec-revision).
@@ -262,8 +269,8 @@ Cleanup relies on the `verifier`. If cleanup cannot finish safely, the `verifier
 
 ## Simplification
 
-After a successful verification, Maestro starts the `simplifier`. The `simplifier` runs only if Git is available, if not, a warning is displayed:
-`Simplifier skipped: Git repository unavailable.`
+When enabled, `Maestro` starts the `simplifier` after successful verification, rejection of all `findings`, or `builder` completion with verification disabled. The
+`simplifier` runs only if Git is available, if not, a warning is displayed: `Simplifier skipped: Git repository unavailable.`
 
 The `simplifier` starts from all staged, unstaged, and untracked code changes, including pre-existing changes. It preserves observable behavior and introduces no new
 check failures. If no code needs refactoring, the `simplifier` does not make any change.
@@ -271,7 +278,9 @@ check failures. If no code needs refactoring, the `simplifier` does not make any
 ## Workflow completion
 
 The workflow ends at `candidate-ready`. `Maestro` summarizes the changes, verification results, rejected `findings` and reasons, relevant `builder` notes from the saved
-`artifacts`, and simplifier's summary and notes.
+`artifacts`, and simplifier's summary and notes, only for phases that ran. It identifies every skipped phase and its reason. An approved `spec` alone does not mean code
+was implemented or verified. `Builder` checks and the simplifier's report are not independent verification when `verifier` is disabled. The `owner` can use an approved
+`spec` for implementation in another workflow without further `Maestro` execution.
 
 `Maestro` stays active while delivering this final summary, then automatically turns off after successful delivery. The `owner` performs the final review and controls any
 later Git use, pull request, or merge. Changes after completion are outside the completed verification.
