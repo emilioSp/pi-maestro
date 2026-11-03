@@ -13,6 +13,7 @@ import {
 } from '#artifacts/builder-handoff/schema.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { loadConfiguration } from '#config/loadConfiguration.ts';
+import type { PartialMaestroConfig } from '#config/schema.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 import { createSpec } from '#specs/create.ts';
@@ -27,10 +28,12 @@ const cleanupFunctions: Array<() => Promise<void>> = [];
 
 type CreateApprovedWorkflowInput = {
   specDirectory?: string;
+  agents?: Pick<PartialMaestroConfig, 'builder' | 'verifier' | 'simplifier'>;
 };
 
 export const createApprovedWorkflow = async ({
   specDirectory = '.specs',
+  agents = {},
 }: CreateApprovedWorkflowInput = {}) => {
   const repository = await createTemporaryProject();
   cleanupFunctions.push(repository.cleanup);
@@ -39,7 +42,7 @@ export const createApprovedWorkflow = async ({
   await mkdir(configDirectory, { recursive: true });
   await writeFile(
     join(configDirectory, 'maestro.json'),
-    JSON.stringify({ version: DEFAULT_CONFIG.version, specDirectory }, null, 2),
+    JSON.stringify({ version: DEFAULT_CONFIG.version, specDirectory, ...agents }, null, 2),
     'utf8',
   );
 
@@ -51,11 +54,7 @@ export const createApprovedWorkflow = async ({
     activeWorkflowSpecId: null,
     instant: INSTANT,
   });
-  await markSpecReady({
-    paths,
-    specId: SPEC_ID,
-    activeWorkflowSpecId: SPEC_ID,
-  });
+  await markSpecReady({ config, paths, specId: SPEC_ID, activeWorkflowSpecId: SPEC_ID });
   maestroSessionState.activate();
   maestroSessionState.setActiveSpecId(SPEC_ID);
 
