@@ -3,12 +3,10 @@
   "specDirectory": "custom-specs",
   "builder": {
     "model": "anthropic/claude-3-7-sonnet",
-    "thinking": "max",
-    "timeoutMinutes": 120
+    "thinking": "max"
   },
   "verifier": {
     "model": "anthropic/claude-3-5-haiku",
-    "thinking": "low",
-    "timeoutMinutes": 30
+    "thinking": "low"
   }
 }
