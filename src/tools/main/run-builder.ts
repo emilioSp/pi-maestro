@@ -14,7 +14,7 @@ import {
   BUILDER_HANDOFF_STATUSES,
   type BuilderHandoff,
 } from '#artifacts/builder-handoff/schema.ts';
-import { AGENTS } from '#config/schema.ts';
+import { AGENTS, type MaestroConfig } from '#config/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
@@ -26,7 +26,8 @@ import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
+import { WORKFLOW_PHASES, WORKFLOW_EVENTS, type WorkflowState } from '#workflow/state/schema.ts';
+import { transitionWorkflow } from '#workflow/transitions.ts';
 
 export const RUN_BUILDER_TOOL = {
   NAME: 'maestro_run_builder',
@@ -48,7 +49,10 @@ type BuilderRunResult =
   | {
       outcome: typeof BUILDER_HANDOFF_STATUSES.DONE;
       specId: string;
-      phase: typeof WORKFLOW_PHASES.READY_FOR_VERIFIER;
+      phase:
+        | typeof WORKFLOW_PHASES.READY_FOR_VERIFIER
+        | typeof WORKFLOW_PHASES.SIMPLIFIER_RUNNING
+        | typeof WORKFLOW_PHASES.CANDIDATE_READY;
       handoff: BuilderHandoff;
     }
   | {
@@ -59,11 +63,15 @@ type BuilderRunResult =
     };
 
 type ReadBuilderResultInput = {
+  config: MaestroConfig;
+  builderRunningState: WorkflowState;
   paths: MaestroPaths;
   specId: string;
 };
 
 const readBuilderResult = async ({
+  config,
+  builderRunningState,
   paths,
   specId,
 }: ReadBuilderResultInput): Promise<BuilderRunResult> => {
@@ -74,10 +82,22 @@ const readBuilderResult = async ({
       throw new Error(`Workflow spec ID mismatch: expected "${specId}", found "${state.specId}".`);
     }
 
+    const donePhase = transitionWorkflow({
+      state: builderRunningState,
+      event: WORKFLOW_EVENTS.BUILDER_DONE,
+      config,
+    }).phase;
+
     if (
       state.phase !== WORKFLOW_PHASES.READY_FOR_VERIFIER &&
+      state.phase !== WORKFLOW_PHASES.SIMPLIFIER_RUNNING &&
+      state.phase !== WORKFLOW_PHASES.CANDIDATE_READY &&
       state.phase !== WORKFLOW_PHASES.ESCALATION_DECISIONS
     ) {
+      throw new Error(`Builder returned with unexpected workflow phase "${state.phase}".`);
+    }
+
+    if (state.phase !== WORKFLOW_PHASES.ESCALATION_DECISIONS && state.phase !== donePhase) {
       throw new Error(`Builder returned with unexpected workflow phase "${state.phase}".`);
     }
 
@@ -87,7 +107,7 @@ const readBuilderResult = async ({
     });
 
     const expectedStatus =
-      state.phase === WORKFLOW_PHASES.READY_FOR_VERIFIER
+      state.phase !== WORKFLOW_PHASES.ESCALATION_DECISIONS
         ? BUILDER_HANDOFF_STATUSES.DONE
         : BUILDER_HANDOFF_STATUSES.ESCALATION;
 
@@ -95,7 +115,7 @@ const readBuilderResult = async ({
       throw new Error(`Builder handoff status does not match workflow phase "${state.phase}".`);
     }
 
-    if (state.phase === WORKFLOW_PHASES.READY_FOR_VERIFIER) {
+    if (state.phase !== WORKFLOW_PHASES.ESCALATION_DECISIONS) {
       return {
         outcome: BUILDER_HANDOFF_STATUSES.DONE,
         specId,
@@ -122,11 +142,19 @@ const readBuilderResult = async ({
 };
 
 const formatBuilderResult = (result: BuilderRunResult): string => {
-  if (result.outcome === BUILDER_HANDOFF_STATUSES.DONE) {
-    return `Builder completed spec ${result.specId}. The workflow is ready-for-verifier.`;
+  if (result.outcome !== BUILDER_HANDOFF_STATUSES.DONE) {
+    return `Builder submitted escalation questions for spec ${result.specId}. The workflow is waiting for an owner decision.`;
   }
 
-  return `Builder submitted escalation questions for spec ${result.specId}. The workflow is waiting for an owner decision.`;
+  if (result.phase === WORKFLOW_PHASES.CANDIDATE_READY) {
+    return `Builder completed spec ${result.specId}. The workflow is candidate-ready. Verifier and simplifier skipped by configuration. No independent verification was performed.`;
+  }
+
+  if (result.phase === WORKFLOW_PHASES.SIMPLIFIER_RUNNING) {
+    return `Builder completed spec ${result.specId}. The workflow is simplifier-running. Verifier skipped by configuration. Call maestro_run_simplifier next.`;
+  }
+
+  return `Builder completed spec ${result.specId}. The workflow is ${result.phase}.`;
 };
 
 export const registerRunBuilderTool = (pi: ExtensionAPI): void => {
@@ -138,7 +166,12 @@ export const registerRunBuilderTool = (pi: ExtensionAPI): void => {
     async execute(toolCallId, { specId }, _signal, _onUpdate, context) {
       const { paths, config } = await resolveToolRunContext(context.cwd);
 
-      const run = await prepareBuilderRun({ paths, specId });
+      const { projectRoot, state: builderRunningState } = await prepareBuilderRun({
+        config,
+        paths,
+        specId,
+      });
+
       await refreshMaestroStatus(context);
 
       const request: SubagentDelegationRequest = {
@@ -148,9 +181,9 @@ export const registerRunBuilderTool = (pi: ExtensionAPI): void => {
         // pi-subagents loads this name from agents/builder.md through package.json.
         // See docs/subagent-integration.md.
         agent: AGENTS.BUILDER,
-        task: `Implement specId "${specId}" in the project directory "${run.projectRoot}".`,
+        task: `Implement specId "${specId}" in the project directory "${projectRoot}".`,
         context: 'fresh',
-        cwd: run.projectRoot,
+        cwd: projectRoot,
         model: config.builder.model,
         thinking: config.builder.thinking,
         timeoutMs: config.builder.timeoutMinutes * MILLISECONDS_PER_MINUTE,
@@ -163,7 +196,7 @@ export const registerRunBuilderTool = (pi: ExtensionAPI): void => {
       });
 
       assertDelegationResponse(response);
-      const result = await readBuilderResult({ paths, specId });
+      const result = await readBuilderResult({ paths, specId, config, builderRunningState });
 
       return {
         content: [{ type: 'text', text: formatBuilderResult(result) }],
