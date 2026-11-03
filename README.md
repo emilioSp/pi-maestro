@@ -83,7 +83,7 @@ An `escalation` asks the `owner` to decide an implementation question. A `findin
 
 1. macOS.
 2. Node.js 26 or later.
-3. Pi 1.0.0 or later.
+3. Pi 1.5.0 or later.
 4. `pi-subagents` installed and enabled in Pi when `builder` is enabled.
 5. Access to the models for enabled agents.
 6. A project directory that Pi trusts.

@@ -3,7 +3,6 @@
  * Used: When the owner invokes the resolve-findings tool.
  */
 
-import { StringEnum } from '@earendil-works/pi-ai';
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
 
@@ -27,7 +26,7 @@ const FindingDecisionFields = {
 const RejectFindingDecisionSchema = Type.Object(
   {
     ...FindingDecisionFields,
-    decision: StringEnum([FINDING_DECISIONS.REJECT] as const),
+    decision: Type.Enum([FINDING_DECISIONS.REJECT] as const, { type: 'string' }),
     reason: Type.String({ minLength: 1 }),
   },
   {
@@ -38,7 +37,7 @@ const RejectFindingDecisionSchema = Type.Object(
 const FixCodeFindingDecisionSchema = Type.Object(
   {
     ...FindingDecisionFields,
-    decision: StringEnum([FINDING_DECISIONS.FIX_CODE] as const),
+    decision: Type.Enum([FINDING_DECISIONS.FIX_CODE] as const, { type: 'string' }),
   },
   {
     additionalProperties: false,
@@ -48,7 +47,7 @@ const FixCodeFindingDecisionSchema = Type.Object(
 const ReviseSpecFindingDecisionSchema = Type.Object(
   {
     ...FindingDecisionFields,
-    decision: StringEnum([FINDING_DECISIONS.REVISE_SPEC] as const),
+    decision: Type.Enum([FINDING_DECISIONS.REVISE_SPEC] as const, { type: 'string' }),
     reason: Type.String({ minLength: 1, pattern: '\\S' }),
     specChange: Type.String({ minLength: 1, pattern: '\\S' }),
   },

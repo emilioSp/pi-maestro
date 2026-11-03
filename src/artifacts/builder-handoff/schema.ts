@@ -3,7 +3,6 @@
  * Used: When Maestro handles builder handoff artifacts.
  */
 
-import { StringEnum } from '@earendil-works/pi-ai';
 import { type Static, Type } from 'typebox';
 
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
@@ -26,7 +25,7 @@ export const PROBE_STATUSES = {
 
 export type ProbeStatus = (typeof PROBE_STATUSES)[keyof typeof PROBE_STATUSES];
 
-const ProbeStatusSchema = StringEnum(Object.values(PROBE_STATUSES));
+const ProbeStatusSchema = Type.Enum(PROBE_STATUSES, { type: 'string' });
 
 export const BuilderAcceptanceCriterionSchema = Type.Object(
   {
