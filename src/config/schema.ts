@@ -23,8 +23,6 @@ export const THINKING_LEVELS = {
 
 export type ThinkingLevel = (typeof THINKING_LEVELS)[keyof typeof THINKING_LEVELS];
 
-export const MODEL_PATTERN = '^[^/\\s]+/[^/\\s]+$';
-
 export const SUPPORTED_CONFIG_VERSION = '1.0.0';
 
 export const MIN_TIMEOUT_MINUTES = 1;
@@ -43,7 +41,7 @@ export const ThinkingSchema = Type.Union([
 
 export const PartialAgentConfigSchema = Type.Object(
   {
-    model: Type.Optional(Type.String({ pattern: MODEL_PATTERN })),
+    model: Type.Optional(Type.String()),
     thinking: Type.Optional(ThinkingSchema),
     timeoutMinutes: Type.Optional(
       Type.Integer({
@@ -68,7 +66,7 @@ export const MaestroConfigInputSchema = Type.Object(
 
 export const ResolvedAgentConfigSchema = Type.Object(
   {
-    model: Type.String({ pattern: MODEL_PATTERN }),
+    model: Type.String(),
     thinking: ThinkingSchema,
     timeoutMinutes: Type.Integer({
       minimum: MIN_TIMEOUT_MINUTES,

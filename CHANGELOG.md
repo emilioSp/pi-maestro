@@ -3,6 +3,12 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
+## Unreleased
+
+1. Removed Maestro's model format regex while retaining activation checks against Pi's available model registry. Complete identifiers, including
+   `openrouter/~openai/gpt-mini-latest`, are matched without truncation and passed unchanged to `pi-subagents`. Maestro's other configuration validation remains
+   unchanged.
+
 ## 0.13.1
 
 1. Restored `ROADMAP.md` as the planning source of truth from the current Linear issues, retaining their identifiers and recorded evidence. Updated repository guidance,

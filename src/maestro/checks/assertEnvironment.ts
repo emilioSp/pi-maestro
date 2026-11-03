@@ -57,9 +57,7 @@ function assertModelsAvailable({ context, config }: AssertModelsAvailableInput):
   const availableModels = context.modelRegistry.getAvailable();
 
   for (const model of [config.builder.model, config.verifier.model, config.simplifier.model]) {
-    const [provider, id] = model.split('/');
-
-    if (!availableModels.some((entry) => entry.provider === provider && entry.id === id)) {
+    if (!availableModels.some((entry) => `${entry.provider}/${entry.id}` === model)) {
       throw new Error(`Configured model is not available: "${model}".`);
     }
   }

@@ -39,19 +39,22 @@ For example, if Pi starts in `/work/app/src`, `Maestro` reads `/work/app/src/.pi
 | `version`                   | Yes, when the file exists | `1.0.0`                     | Configuration format version. Only `1.0.0` is supported.        |
 | `specDirectory`             |                        No | `.specs`                    | Relative path below the project root.                           |
 | `builder`                   |                        No | `Builder` defaults          | Overrides supported `builder` fields.                           |
-| `builder.model`             |                        No | `openai-codex/gpt-5.6-luna` | Full `provider/model` identifier.                               |
+| `builder.model`             |                        No | `openai-codex/gpt-5.6-luna` | Model string passed unchanged to Pi.                            |
 | `builder.thinking`          |                        No | `max`                       | One supported thinking level.                                   |
 | `builder.timeoutMinutes`    |                        No | `60`                        | Integer from `1` to `1440`. Applies to each `builder` `run`.    |
 | `verifier`                  |                        No | `Verifier` defaults         | Overrides supported `verifier` fields.                          |
-| `verifier.model`            |                        No | `openai-codex/gpt-6.1-sol`  | Full `provider/model` identifier.                               |
+| `verifier.model`            |                        No | `openai-codex/gpt-6.1-sol`  | Model string passed unchanged to Pi.                            |
 | `verifier.thinking`         |                        No | `high`                      | One supported thinking level.                                   |
 | `verifier.timeoutMinutes`   |                        No | `60`                        | Integer from `1` to `1440`. Applies to each `verifier` `run`.   |
 | `simplifier`                |                        No | `Simplifier` defaults       | Overrides supported `simplifier` fields.                        |
-| `simplifier.model`          |                        No | `openai-codex/gpt-6.1-sol`  | Full `provider/model` identifier.                               |
+| `simplifier.model`          |                        No | `openai-codex/gpt-6.1-sol`  | Model string passed unchanged to Pi.                            |
 | `simplifier.thinking`       |                        No | `high`                      | One supported thinking level.                                   |
 | `simplifier.timeoutMinutes` |                        No | `60`                        | Integer from `1` to `1440`. Applies to each `simplifier` `run`. |
 
-Model identifiers use the full `provider/model` form shown in the defaults. `Maestro` accepts these thinking levels:
+Model values use the full `provider/model` identifier supplied by Pi's model registry, such as `openrouter/~openai/gpt-mini-latest`. Model IDs may contain additional
+slashes. `Maestro` does not apply a separate format rule; it matches the complete identifier against Pi's available models and passes it unchanged through `pi-subagents`.
+
+`Maestro` accepts these thinking levels:
 
 ```text
 off
@@ -95,7 +98,8 @@ For example, `specDirectory: "planning/specs"` places `specs` in `<project-root>
 
 ## Model access
 
-`Maestro` checks all three configured models during activation. Each model must exist and have valid authentication.
+During activation, `Maestro` checks all three configured models against `context.modelRegistry.getAvailable()`. Pi's registry is the source of truth for model
+availability; `Maestro` does not maintain a separate model list or authentication check. A missing model stops activation and identifies the full configured identifier.
 
-A model error stops activation and identifies the affected model. The `owner` can correct the model identifier or authenticate the provider, then run `/maestro` again.
-Agent names and context are described in [Subagent integration](subagent-integration.md#roles-and-context).
+The `owner` can correct the identifier or authenticate the provider in Pi, then retry `/maestro`. Authentication or provider errors during delegation still appear as
+`run` failures. Agent names and context are described in [Subagent integration](subagent-integration.md#roles-and-context).
