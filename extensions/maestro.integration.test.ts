@@ -189,6 +189,12 @@ describe('main Maestro extension', () => {
     );
 
     expect(event.systemPromptOptions.sections.maestro).toContain('You are Maestro');
+    expect(event.systemPromptOptions.sections.maestro).toContain(
+      'Always identify every skipped phase and why. Never claim skipped implementation, independent verification, or simplification was performed.',
+    );
+    expect(event.systemPromptOptions.sections.maestro).toContain(
+      'Do not require handoffs for skipped phases.',
+    );
     expect(event.systemPromptOptions.sections.foreign).toBe('Keep foreign instructions');
 
     setStatus.mockClear();
@@ -922,10 +928,16 @@ describe('main Maestro extension', () => {
     'given $scenario when the final response finishes then Maestro exits only after successful delivery',
     async ({ completionEvent, summary, stopReason }) => {
       const { paths, repository } = await createApprovedWorkflow();
-      await prepareBuilderRun({ paths, specId: SPEC_ID });
-      await completeBuilderPass({ paths, specId: SPEC_ID, handoff: doneHandoff() });
-      await prepareVerifierRun({ paths, specId: SPEC_ID });
+      await prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
+      await completeBuilderPass({
+        config: DEFAULT_CONFIG,
+        paths,
+        specId: SPEC_ID,
+        handoff: doneHandoff(),
+      });
+      await prepareVerifierRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
       await completeVerifierPass({
+        config: DEFAULT_CONFIG,
         paths,
         specId: SPEC_ID,
         handoff: {
@@ -941,6 +953,7 @@ describe('main Maestro extension', () => {
       await writeWorkflowState({
         path: paths.getWorkflowPath(SPEC_ID),
         state: transitionWorkflow({
+          config: DEFAULT_CONFIG,
           state: await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
           event: completionEvent,
         }),
@@ -1084,10 +1097,11 @@ describe('main Maestro extension', () => {
     paths,
     phase,
   }: PrepareSpecRevisionPhaseInput): Promise<void> => {
-    await prepareBuilderRun({ paths, specId: SPEC_ID });
+    await prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
 
     if (phase === WORKFLOW_PHASES.ESCALATION_DECISIONS) {
       await completeBuilderPass({
+        config: DEFAULT_CONFIG,
         paths,
         specId: SPEC_ID,
         handoff: unavailableCompilerEscalation,
@@ -1098,12 +1112,14 @@ describe('main Maestro extension', () => {
 
     // phase === WORKFLOW_PHASES.FINDING_DECISIONS
     await completeBuilderPass({
+      config: DEFAULT_CONFIG,
       paths,
       specId: SPEC_ID,
       handoff: doneHandoff(),
     });
-    await prepareVerifierRun({ paths, specId: SPEC_ID });
+    await prepareVerifierRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
     await completeVerifierPass({
+      config: DEFAULT_CONFIG,
       paths,
       specId: SPEC_ID,
       handoff: {
@@ -1257,6 +1273,7 @@ describe('main Maestro extension', () => {
 
       try {
         await completeBuilderPass({
+          config: DEFAULT_CONFIG,
           paths,
           specId: SPEC_ID,
           handoff: unavailableCompilerEscalation,
