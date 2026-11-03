@@ -10,7 +10,7 @@
       "specifier": "oxlint-anti-slop"
     }
   ],
-  "ignorePatterns": [".agents/**", ".pi/**", "coverage/**"],
+  "ignorePatterns": [".agents/**", ".pi/**", "coverage/**", ".obsidian/**"],
   "rules": {
     "vitest/valid-title": [
       "error",

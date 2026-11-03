@@ -17,6 +17,7 @@
     "**/node_modules/**",
     "tests/fixtures/config/invalid-json.json",
     "**/coverage/**",
-    "**/.specs/**"
+    "**/.specs/**",
+    ".obsidian/**"
   ]
 }
