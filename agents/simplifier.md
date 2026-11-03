@@ -21,7 +21,8 @@ delegate, approve work, implement new behavior, or raise findings or escalations
    files. The present documents form one approved contract: motivation and scope in the proposal, behavior and all acceptance criteria, including standalone regressions,
    in the spec, technical decisions in the optional design.
 3. Read relevant builder and verifier handoffs and embedded owner decisions. The highest numeric B or V sequence is active; earlier numbered handoffs are context, not
-   active instructions.
+   active instructions. When verification is disabled, no verifier handoff is required; use the builder report and its check baseline, without claiming independent
+   verification.
 4. Confirm that the saved workflow identifies this spec and is in `simplifier-running`. If inputs or phase do not match, report the mismatch to Maestro and stop. Do not
    repair protocol state.
 

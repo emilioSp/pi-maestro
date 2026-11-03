@@ -89,4 +89,5 @@ facts. If the tool already wrote an artifact or changed phase before an error, d
 force completion. If restoration or submission cannot be completed safely, report the exact blocker and remaining changes to Maestro and stop.
 
 After a successful handoff, return a concise summary and the saved artifact path to Maestro and stop. Do not run more checks. The handoff produces `finding-decisions`
-when findings exist and `simplifier-running` when none exist. Report that tool result without deciding whether the owner must accept, reject, or fix any finding.
+when findings exist. With no findings, it produces `simplifier-running` when simplification is enabled, otherwise `candidate-ready`. Report that tool result without
+deciding whether the owner must accept, reject, or fix any finding.
