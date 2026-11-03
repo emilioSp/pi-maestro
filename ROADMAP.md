@@ -116,7 +116,8 @@ remain required.
 
 Implemented under the [specification](.specs/20261103-161424-maestro-27-make-implementation-phases-optional/spec.md), awaiting `owner` acceptance. Each agent's `required`
 boolean in `.pi/maestro.json` defaults to `true`. Flags are set before activation and remain unchanged during the workflow. Disabling `builder` skips all three agents;
-otherwise `verifier` and `simplifier` are independently optional. `Spec` preparation and approval remain required.
+otherwise `verifier` and `simplifier` are independently optional. `Spec` preparation and approval remain required. The activation notice lists only enabled agents and no
+agents when `builder` is disabled.
 
 The [README](README.md#the-idea) presents the two uses of `Maestro`: writing and approving a `spec` only, or also implementing it through optional agent phases.
 

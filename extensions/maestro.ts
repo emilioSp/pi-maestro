@@ -87,29 +87,27 @@ export default (pi: ExtensionAPI): void => {
       try {
         await assertEnvironment({ context, piEventsBus: pi.events });
         const config = await loadConfiguration(context.cwd);
+        const isImplementationEnabled = config.builder.required;
 
         maestroSessionState.activate();
         syncMainTools();
         await refreshMaestroStatus(context);
 
-        // Introduce Maestro and show configured agents only in the UI.
+        // Introduce Maestro and show enabled agents only in the UI.
         context.ui.notify(
           [
             context.ui.theme.fg('muted', 'Maestro active'),
             'Maestro helps the owner define a spec, then coordinates implementation and independent verification.',
             'Ask how Maestro works for a short explanation.',
-            context.ui.theme.fg(
-              'accent',
-              `Builder (${config.builder.model} ${config.builder.thinking})`,
-            ),
-            context.ui.theme.fg(
-              'accent',
-              `Verifier (${config.verifier.model} ${config.verifier.thinking})`,
-            ),
-            context.ui.theme.fg(
-              'accent',
-              `Simplifier (${config.simplifier.model} ${config.simplifier.thinking})`,
-            ),
+            ...[
+              { label: 'Builder', settings: config.builder },
+              { label: 'Verifier', settings: config.verifier },
+              { label: 'Simplifier', settings: config.simplifier },
+            ]
+              .filter(({ settings }) => isImplementationEnabled && settings.required)
+              .map(({ label, settings }) =>
+                context.ui.theme.fg('accent', `${label} (${settings.model} ${settings.thinking})`),
+              ),
           ].join('\n'),
           'info',
         );
