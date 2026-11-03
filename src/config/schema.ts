@@ -41,6 +41,7 @@ export const ThinkingSchema = Type.Union([
 
 export const PartialAgentConfigSchema = Type.Object(
   {
+    required: Type.Optional(Type.Boolean()),
     model: Type.Optional(Type.String()),
     thinking: Type.Optional(ThinkingSchema),
     timeoutMinutes: Type.Optional(
@@ -66,6 +67,7 @@ export const MaestroConfigInputSchema = Type.Object(
 
 export const ResolvedAgentConfigSchema = Type.Object(
   {
+    required: Type.Boolean(),
     model: Type.String(),
     thinking: ThinkingSchema,
     timeoutMinutes: Type.Integer({
