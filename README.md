@@ -101,7 +101,8 @@ Activate `Maestro`:
 /maestro
 ```
 
-During activation, `Maestro` checks project trust, configuration, models, and agent availability. If a check fails, `Maestro` stays disabled and reports the problem.
+During activation, `Maestro` checks project trust, configuration, models, and agent availability. Model availability comes from Pi's model registry. If a check fails,
+`Maestro` stays disabled and reports the problem.
 
 The `owner` follows this workflow:
 

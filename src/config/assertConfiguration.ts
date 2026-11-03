@@ -39,7 +39,7 @@ const formatError = (error: SchemaValidationError): string => {
   }
 
   if (path.endsWith('model')) {
-    return `Invalid model identifier at "${path}". Must use "provider/model" format.`;
+    return `Invalid model at "${path}": expected a string.`;
   }
 
   if (path === 'builder' || path === 'verifier' || path === 'simplifier') {

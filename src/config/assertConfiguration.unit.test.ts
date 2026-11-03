@@ -25,6 +25,46 @@ describe('configuration input validation', () => {
     ).not.toThrow();
   });
 
+  it.each(['builder', 'verifier', 'simplifier'])(
+    'given %s has a providerless model when configuration is validated then it is accepted',
+    (agent) => {
+      expect(() =>
+        assertConfiguration({
+          version: SUPPORTED_CONFIG_VERSION,
+          [agent]: { model: 'gpt-mini-latest' },
+        }),
+      ).not.toThrow();
+    },
+  );
+
+  it.each([
+    { scenario: 'a slash-containing model ID', model: 'openrouter/~openai/gpt-mini-latest' },
+    { scenario: 'an empty model string', model: '' },
+    { scenario: 'a display label', model: '(openrouter) ~openai/gpt-mini-latest' },
+  ])(
+    'given $scenario when configuration is validated then the model string is left for Pi to interpret',
+    ({ model }) => {
+      expect(() =>
+        assertConfiguration({
+          version: SUPPORTED_CONFIG_VERSION,
+          builder: { model },
+        }),
+      ).not.toThrow();
+    },
+  );
+
+  it.each(['builder', 'verifier', 'simplifier'])(
+    'given %s has a numeric model when configuration is validated then it is rejected as a non-string',
+    (agent) => {
+      expect(() =>
+        assertConfiguration({
+          version: SUPPORTED_CONFIG_VERSION,
+          [agent]: { model: 123 },
+        }),
+      ).toThrow(`Invalid model at "${agent}.model": expected a string.`);
+    },
+  );
+
   it('given configuration containing only the supported version when validated then it is accepted', () => {
     expect(() => assertConfiguration({ version: SUPPORTED_CONFIG_VERSION })).not.toThrow();
   });
@@ -78,11 +118,6 @@ describe('configuration input validation', () => {
       scenario: 'no version field',
       fixture: 'missing-version.json',
       message: "Missing configuration version. The 'version' field is required.",
-    },
-    {
-      scenario: 'a model name without a provider',
-      fixture: 'invalid-model-format.json',
-      message: 'Invalid model identifier at "builder.model".',
     },
     {
       scenario: 'an unsupported verifier thinking level',

@@ -84,30 +84,34 @@ describe('assertEnvironment', () => {
     ).rejects.toThrow('Maestro configuration check failed:');
   });
 
-  it('given the configured builder model is unavailable when activation requirements are checked then the error names that model', async () => {
-    const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
-    await mkdir(join(repository.path, CONFIG_DIRECTORY_NAME));
-    await writeFile(
-      join(repository.path, CONFIG_FILE_PATH),
-      JSON.stringify({
-        version: DEFAULT_CONFIG_VERSION,
-        builder: { model: 'openai-codex/missing' },
-      }),
-    );
+  it.each(['builder', 'verifier', 'simplifier'])(
+    'given the %s model is absent from Pi’s registry when activation is checked then it reports the full unavailable ID',
+    async (agent) => {
+      const repository = await createTemporaryProject();
+      cleanupFunctions.push(repository.cleanup);
+      const model = 'openrouter/~openai/gpt-mini-latest';
+      await mkdir(join(repository.path, CONFIG_DIRECTORY_NAME));
+      await writeFile(
+        join(repository.path, CONFIG_FILE_PATH),
+        JSON.stringify({
+          version: DEFAULT_CONFIG_VERSION,
+          [agent]: { model },
+        }),
+      );
 
-    const { session, events } = await piTestSessions.create({
-      cwd: repository.path,
-      extensions: [],
-    });
+      const { session, events } = await piTestSessions.create({
+        cwd: repository.path,
+        extensions: [],
+      });
 
-    await expect(
-      assertEnvironment({
-        context: session.extensionRunner.createContext(),
-        piEventsBus: events,
-      }),
-    ).rejects.toThrow('Configured model is not available: "openai-codex/missing".');
-  });
+      await expect(
+        assertEnvironment({
+          context: session.extensionRunner.createContext(),
+          piEventsBus: events,
+        }),
+      ).rejects.toThrow(`Configured model is not available: "${model}".`);
+    },
+  );
 
   it('given pi-subagents replies that its availability check failed when activation requirements are checked then the error reports the installation requirement and invalid reply', async () => {
     const { session, events } = await piTestSessions.create({
