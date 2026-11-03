@@ -25,10 +25,6 @@ export type ThinkingLevel = (typeof THINKING_LEVELS)[keyof typeof THINKING_LEVEL
 
 export const SUPPORTED_CONFIG_VERSION = '1.0.0';
 
-export const MIN_TIMEOUT_MINUTES = 1;
-
-export const MAX_TIMEOUT_MINUTES = 1440;
-
 export const ThinkingSchema = Type.Union([
   Type.Literal(THINKING_LEVELS.OFF),
   Type.Literal(THINKING_LEVELS.MINIMAL),
@@ -44,12 +40,6 @@ export const PartialAgentConfigSchema = Type.Object(
     required: Type.Optional(Type.Boolean()),
     model: Type.Optional(Type.String()),
     thinking: Type.Optional(ThinkingSchema),
-    timeoutMinutes: Type.Optional(
-      Type.Integer({
-        minimum: MIN_TIMEOUT_MINUTES,
-        maximum: MAX_TIMEOUT_MINUTES,
-      }),
-    ),
   },
   { additionalProperties: false },
 );
@@ -70,10 +60,6 @@ export const ResolvedAgentConfigSchema = Type.Object(
     required: Type.Boolean(),
     model: Type.String(),
     thinking: ThinkingSchema,
-    timeoutMinutes: Type.Integer({
-      minimum: MIN_TIMEOUT_MINUTES,
-      maximum: MAX_TIMEOUT_MINUTES,
-    }),
   },
   { additionalProperties: false },
 );

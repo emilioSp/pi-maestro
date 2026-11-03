@@ -17,6 +17,7 @@ import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import {
   assertDelegationResponse,
+  SUBAGENT_TIMEOUT_MS,
   waitForDelegationResponse,
 } from '#tools/utils/pi-subagent-delegation.ts';
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
@@ -39,8 +40,6 @@ const RunVerifierToolParameters = Type.Object(
   },
   { additionalProperties: false },
 );
-
-const MILLISECONDS_PER_MINUTE = 60_000;
 
 type VerifierTerminalPhase =
   | typeof WORKFLOW_PHASES.CANDIDATE_READY
@@ -149,7 +148,7 @@ export const registerRunVerifierTool = (pi: ExtensionAPI): void => {
         cwd: run.projectRoot,
         model: config.verifier.model,
         thinking: config.verifier.thinking,
-        timeoutMs: config.verifier.timeoutMinutes * MILLISECONDS_PER_MINUTE,
+        timeoutMs: SUBAGENT_TIMEOUT_MS,
         result: { kind: 'text' },
       };
 

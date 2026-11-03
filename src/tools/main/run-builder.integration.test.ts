@@ -22,7 +22,7 @@ import {
 import piTestSessions from '#tests/support/pi-session.ts';
 import { registerRecordBuilderHandoffTool } from '#tools/child/record-builder-handoff.ts';
 import { registerRunBuilderTool } from '#tools/main/run-builder.ts';
-import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
+import { DELEGATION_STATUSES, SUBAGENT_TIMEOUT_MS } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
@@ -218,7 +218,7 @@ describe('run builder tool', () => {
       cwd: repository.path,
       model: DEFAULT_CONFIG.builder.model,
       thinking: DEFAULT_CONFIG.builder.thinking,
-      timeoutMs: DEFAULT_CONFIG.builder.timeoutMinutes * 60_000,
+      timeoutMs: SUBAGENT_TIMEOUT_MS,
       task: expect.stringContaining(SPEC_ID),
       result: { kind: 'text' },
     });

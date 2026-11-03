@@ -30,7 +30,7 @@ import {
 import piTestSessions from '#tests/support/pi-session.ts';
 import { registerRecordVerifierHandoffTool } from '#tools/child/record-verifier-handoff.ts';
 import { registerRunVerifierTool } from '#tools/main/run-verifier.ts';
-import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
+import { DELEGATION_STATUSES, SUBAGENT_TIMEOUT_MS } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -160,7 +160,7 @@ describe('run verifier tool', () => {
       cwd: workflow.repository.path,
       model: DEFAULT_CONFIG.verifier.model,
       thinking: DEFAULT_CONFIG.verifier.thinking,
-      timeoutMs: DEFAULT_CONFIG.verifier.timeoutMinutes * 60_000,
+      timeoutMs: SUBAGENT_TIMEOUT_MS,
       task: expect.stringContaining(SPEC_ID),
       result: { kind: 'text' },
     });
