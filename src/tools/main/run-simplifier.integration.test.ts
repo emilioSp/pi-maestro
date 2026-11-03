@@ -84,6 +84,7 @@ describe('run simplifier', () => {
         stdout: 'false\n',
         stderr: '',
         killed: false,
+        truncated: false,
       });
       registerRunSimplifierTool(pi);
     };
