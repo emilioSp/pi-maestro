@@ -3,6 +3,7 @@
  * Used: When a workflow event moves Maestro to its next phase.
  */
 
+import type { MaestroConfig } from '#config/schema.ts';
 import {
   assertWorkflowState,
   WORKFLOW_EVENTS,
@@ -14,13 +15,26 @@ import {
 
 type WorkflowTransition = {
   from: WorkflowPhase[];
-  to: WorkflowPhase;
+  to: WorkflowPhase | ((config: MaestroConfig) => WorkflowPhase);
 };
+
+const hasDynamicDestinationBasedOnConfig = (
+  destination: WorkflowTransition['to'],
+): destination is (config: MaestroConfig) => WorkflowPhase => typeof destination === 'function';
+
+const getSimplifierDestination = (config: MaestroConfig): WorkflowPhase =>
+  config.simplifier.required ? WORKFLOW_PHASES.SIMPLIFIER_RUNNING : WORKFLOW_PHASES.CANDIDATE_READY;
+
+const getSpecReadyDestination = (config: MaestroConfig): WorkflowPhase =>
+  config.builder.required ? WORKFLOW_PHASES.READY_FOR_BUILDER : WORKFLOW_PHASES.CANDIDATE_READY;
+
+const getBuilderDoneDestination = (config: MaestroConfig): WorkflowPhase =>
+  config.verifier.required ? WORKFLOW_PHASES.READY_FOR_VERIFIER : getSimplifierDestination(config);
 
 export const WORKFLOW_TRANSITIONS: Record<WorkflowEvent, WorkflowTransition> = {
   [WORKFLOW_EVENTS.MARK_SPEC_READY]: {
     from: [WORKFLOW_PHASES.DRAFTING_SPEC],
-    to: WORKFLOW_PHASES.READY_FOR_BUILDER,
+    to: getSpecReadyDestination,
   },
   [WORKFLOW_EVENTS.RUN_BUILDER]: {
     from: [WORKFLOW_PHASES.READY_FOR_BUILDER],
@@ -40,7 +54,7 @@ export const WORKFLOW_TRANSITIONS: Record<WorkflowEvent, WorkflowTransition> = {
   },
   [WORKFLOW_EVENTS.BUILDER_DONE]: {
     from: [WORKFLOW_PHASES.BUILDER_RUNNING],
-    to: WORKFLOW_PHASES.READY_FOR_VERIFIER,
+    to: getBuilderDoneDestination,
   },
   [WORKFLOW_EVENTS.RUN_VERIFIER]: {
     from: [WORKFLOW_PHASES.READY_FOR_VERIFIER],
@@ -52,11 +66,11 @@ export const WORKFLOW_TRANSITIONS: Record<WorkflowEvent, WorkflowTransition> = {
   },
   [WORKFLOW_EVENTS.VERIFIER_DONE]: {
     from: [WORKFLOW_PHASES.VERIFIER_RUNNING],
-    to: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
+    to: getSimplifierDestination,
   },
   [WORKFLOW_EVENTS.OWNER_REJECT_FINDINGS]: {
     from: [WORKFLOW_PHASES.FINDING_DECISIONS],
-    to: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
+    to: getSimplifierDestination,
   },
   [WORKFLOW_EVENTS.SIMPLIFIER_DONE]: {
     from: [WORKFLOW_PHASES.SIMPLIFIER_RUNNING],
@@ -75,9 +89,14 @@ export const WORKFLOW_TRANSITIONS: Record<WorkflowEvent, WorkflowTransition> = {
 type TransitionWorkflowInput = {
   state: WorkflowState;
   event: WorkflowEvent;
+  config: MaestroConfig;
 };
 
-export const transitionWorkflow = ({ state, event }: TransitionWorkflowInput): WorkflowState => {
+export const transitionWorkflow = ({
+  state,
+  event,
+  config,
+}: TransitionWorkflowInput): WorkflowState => {
   assertWorkflowState(state);
   const transition = WORKFLOW_TRANSITIONS[event];
 
@@ -92,6 +111,8 @@ export const transitionWorkflow = ({ state, event }: TransitionWorkflowInput): W
   return {
     version: state.version,
     specId: state.specId,
-    phase: transition.to,
+    phase: hasDynamicDestinationBasedOnConfig(transition.to)
+      ? transition.to(config)
+      : transition.to,
   };
 };
