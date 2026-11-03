@@ -15,6 +15,7 @@ import {
   BuilderHandoffSubmissionSchema,
 } from '#artifacts/builder-handoff/schema.ts';
 import { writeBuilderHandoff } from '#artifacts/builder-handoff/writeBuilderHandoff.ts';
+import type { MaestroConfig } from '#config/schema.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { getWorkflowEventByBuilderHandoff } from '#workflow/builder/utils/getWorkflowEventByBuilderHandoff.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -39,12 +40,14 @@ function assertBuilderHandoffSubmission(
 }
 
 type CompleteBuilderPassInput = {
+  config: MaestroConfig;
   paths: MaestroPaths;
   specId: string;
   handoff: BuilderHandoffSubmissionInput;
 };
 
 export const completeBuilderPass = async ({
+  config,
   paths,
   specId,
   handoff: draftHandoff,
@@ -84,6 +87,7 @@ export const completeBuilderPass = async ({
   });
 
   const nextState = transitionWorkflow({
+    config,
     state: currentState,
     event: getWorkflowEventByBuilderHandoff(handoff),
   });

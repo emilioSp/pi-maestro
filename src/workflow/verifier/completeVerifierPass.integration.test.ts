@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BUILDER_HANDOFF_STATUSES, PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
 import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
+import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -57,12 +58,10 @@ const approvedHandoff = {
 const prepareRunningVerifier = async () => {
   const workflow = await createApprovedWorkflow();
 
-  await prepareBuilderRun({
-    paths: workflow.paths,
-    specId: SPEC_ID,
-  });
+  await prepareBuilderRun({ config: DEFAULT_CONFIG, paths: workflow.paths, specId: SPEC_ID });
 
   await completeBuilderPass({
+    config: DEFAULT_CONFIG,
     paths: workflow.paths,
     specId: SPEC_ID,
     handoff: {
@@ -80,10 +79,7 @@ const prepareRunningVerifier = async () => {
     },
   });
 
-  await prepareVerifierRun({
-    paths: workflow.paths,
-    specId: SPEC_ID,
-  });
+  await prepareVerifierRun({ config: DEFAULT_CONFIG, paths: workflow.paths, specId: SPEC_ID });
 
   return workflow;
 };
@@ -110,6 +106,7 @@ describe('verifier completion', () => {
 
     await expect(
       completeVerifierPass({
+        config: DEFAULT_CONFIG,
         paths,
         specId: SPEC_ID,
         handoff: { ...approvedHandoff, summary: 'Checked greeting' },
@@ -134,6 +131,7 @@ describe('verifier completion', () => {
     const { paths, repository } = await prepareRunningVerifier();
 
     const completed = await completeVerifierPass({
+      config: DEFAULT_CONFIG,
       paths,
       specId: SPEC_ID,
       handoff: approvedHandoff,
@@ -154,6 +152,7 @@ describe('verifier completion', () => {
 
     await expect(
       completeVerifierPass({
+        config: DEFAULT_CONFIG,
         paths,
         specId: SPEC_ID,
         handoff: {

@@ -50,11 +50,13 @@ describe('configuration loading', () => {
         specDirectory: join(workspace.path, 'custom-specs'),
         simplifier: DEFAULT_CONFIG.simplifier,
         builder: {
+          required: true,
           model: 'anthropic/claude-3-7-sonnet',
           thinking: THINKING_LEVELS.MAX,
           timeoutMinutes: 120,
         },
         verifier: {
+          required: true,
           model: 'anthropic/claude-3-5-haiku',
           thinking: 'low',
           timeoutMinutes: 30,
@@ -89,6 +91,7 @@ describe('configuration loading', () => {
         );
         const config = await loadConfiguration(workspace.path);
         expect(config.simplifier).toEqual({
+          required: true,
           model: 'openai-codex/gpt-6.1-sol',
           thinking: 'high',
           timeoutMinutes,

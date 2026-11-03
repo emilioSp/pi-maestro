@@ -7,6 +7,7 @@ import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
 import { assertSimplifierHandoff } from '#artifacts/simplifier-handoff/assertSimplifierHandoff.ts';
+import type { MaestroConfig } from '#config/schema.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { writeJson } from '#utils/write-json.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -15,12 +16,14 @@ import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 
 type CompleteSimplifierPassInput = {
+  config: MaestroConfig;
   paths: MaestroPaths;
   specId: string;
   handoff: unknown;
 };
 
 export const completeSimplifierPass = async ({
+  config,
   paths,
   specId,
   handoff,
@@ -46,6 +49,7 @@ export const completeSimplifierPass = async ({
   await writeJson({ path: handoffPath, data: input.handoff });
 
   const nextState = transitionWorkflow({
+    config,
     state,
     event: WORKFLOW_EVENTS.SIMPLIFIER_DONE,
   });

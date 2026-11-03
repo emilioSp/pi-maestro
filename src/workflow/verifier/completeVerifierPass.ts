@@ -8,6 +8,7 @@ import { mkdir, readFile } from 'node:fs/promises';
 import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifierHandoff.ts';
 import type { VerifierHandoff } from '#artifacts/verifier-handoff/schema.ts';
 import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
+import type { MaestroConfig } from '#config/schema.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
@@ -24,12 +25,14 @@ export type CompletedVerifierPass = {
 };
 
 type CompleteVerifierPassInput = {
+  config: MaestroConfig;
   paths: MaestroPaths;
   specId: string;
   handoff: unknown;
 };
 
 export const completeVerifierPass = async ({
+  config,
   paths,
   specId,
   handoff: draftHandoff,
@@ -64,6 +67,7 @@ export const completeVerifierPass = async ({
   });
 
   const nextState = transitionWorkflow({
+    config,
     state: currentState,
     event: getWorkflowEventByVerifierHandoff(handoff),
   });
