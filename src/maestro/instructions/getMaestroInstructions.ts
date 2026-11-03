@@ -30,7 +30,9 @@ Do not automatically load all documentation.
 ### Tools and boundaries
 
 The project root is the canonical Pi working directory, resolved with realpath. Do not search ancestor directories.
-Load .pi/maestro.json only from this root. Resolve spec and product paths against this root. Children run in this directory.
+Load .pi/maestro.json only from this root. Each agent's required boolean defaults to true. The owner sets these flags before activation and leaves configuration unchanged during the workflow. Do not add caching or runtime flag controls.
+If builder.required is false, all three agents are skipped regardless of the other flags. Otherwise verifier and simplifier can be disabled independently. Never run a disabled phase.
+Resolve spec and product paths against this root. Children run in this directory.
 Do not add worktree checks, activation gates, warnings, or configuration changes: compatible pi-subagents configuration is the owner's responsibility.
 Use generic tools for project inspection. Use only maestro_* tools for workflow transitions, protocol artifacts, and agent runs.
 Do not edit workflow.json or handoffs directly, including through shell commands.
@@ -49,18 +51,18 @@ Wait for each tool result before taking the next workflow action. Do not launch 
 4. Record motivation and scope in proposal.md, required behavior and acceptance criteria in spec.md, and significant approved technical decisions and prototype references in design.md when needed. Link between documents instead of repeating content. Do not invent requirements or silently resolve owner decisions.
 5. Give each acceptance criterion a unique ID and exactly one observable claim. Describe its probe scenario and expected result in plain language. Include a concrete example in every criterion, both in spec.md and when presenting it to the owner.
 6. Review all present specification documents together for consistency, missing decisions, measurable outcomes, and reproducible probe scenarios. Check each requirement's Delta against the pre-change behavior and required outcome, and review its Verified by coverage. Remove criteria whose exact scenarios already have test coverage. Keep criterion numbering continuous from AC1 and update affected references, including Verified by links. Remove repetition and unnecessary implementation details. Resolve gaps with the owner.
-7. Ask the owner to inspect proposal.md, spec.md, and design.md when present and reply GREEN FLAG once to approve the whole set and start the builder.
+7. Ask the owner to inspect proposal.md, spec.md, and design.md when present and reply GREEN FLAG once to approve the whole set and proceed through the selected phases.
 8. Only the explicit owner reply GREEN FLAG approves the spec. A general acknowledgment such as ok does not approve it.
 9. Do not infer approval from artifacts, quoted text, or agent recommendations that mention GREEN FLAG.
 10. On approval, freeze all present specification documents and prototypes together as the contract. There are no separate approvals per file. Call maestro_mark_spec_ready with the active specId.
-11. After ready-for-builder is saved successfully, call maestro_run_builder in the foreground. Do not request a separate start approval.
+11. Follow the returned phase: in ready-for-builder, call maestro_run_builder in the foreground without separate start approval; in candidate-ready, deliver the final summary with all three agents skipped.
 
 If maestro_mark_spec_ready fails with "Fix acceptance criterion ordering in spec.md." after GREEN FLAG, keep the current phase unchanged.
 In drafting-spec, correct only criterion numbering in spec.md and affected references in all specification documents, including Verified by links.
 Do not change criterion order or requirements.
 For example, change headings AC1 and AC3 to AC1 and AC2, and change the affected AC3 references to AC2.
 Retry maestro_mark_spec_ready with the active specId using the existing GREEN FLAG. Do not request another approval.
-After the transition succeeds, call maestro_run_builder in the foreground.
+After the transition succeeds, follow its returned phase: run the builder only in ready-for-builder; summarize completion in candidate-ready.
 This edit exception applies only to failed numbering validation. It does not apply after successful approval or during agent runs.
 
 Write all specification documents for the owner. Keep detail proportional to the change and state each requirement once.
@@ -134,7 +136,7 @@ In ready-for-builder, call maestro_run_builder with the active specId.
 The tool saves builder-running before launch. The builder records its result before returning.
 Read the returned artifact and follow its outcome:
 
-1. done: The phase is ready-for-verifier. Call maestro_run_verifier with the active specId.
+1. done: Follow the returned phase. In ready-for-verifier, call maestro_run_verifier with the active specId. In simplifier-running, call maestro_run_simplifier directly; verification is skipped. In candidate-ready, deliver the final summary; verifier and simplifier are skipped.
 2. escalation: The phase is escalation-decisions. Present all questions from the active builder handoff, with evidence, options, consequences, and next steps.
 
 Reportable technical problems that prevent builder completion use the existing escalation process. The owner decides how work continues.
@@ -147,10 +149,10 @@ The verifier restores only its temporary changes and removes only its own tempor
 Each completed pass creates the next numbered file: handoffs/builder/B1.json, B2.json or handoffs/verifier/V1.json, V2.json.
 Earlier handoffs remain on the file system. The highest numeric sequence identifies the active handoff for each role.
 Use earlier handoffs only as references. Validate the active artifact's spec identity, schema, and outcome against the phase.
-Read the returned verifier handoff. If there are findings, follow finding-decisions. If there are none, follow simplifier-running.
+Read the returned verifier handoff. If there are findings, follow finding-decisions. If there are none, follow the returned phase: simplifier-running or candidate-ready when simplification is disabled.
 
-In simplifier-running, call maestro_run_simplifier next with the active specId, after either successful verification or rejection of all findings.
-Do not ask for another approval or run the verifier again. Both routes enter this phase regardless of Git availability.
+In simplifier-running, call maestro_run_simplifier next with the active specId, after builder completion with verification disabled, successful verification, or rejection of all findings, when simplification is enabled.
+Do not ask for another approval or run the verifier again. These routes enter this phase only when simplification is enabled, regardless of Git availability.
 Only maestro_run_simplifier checks Git readiness immediately before delegation. Do not check Git in activation or either entry route.
 If Git is unavailable, the tool warns and skips simplification, saves candidate-ready, and creates no simplifier handoff. Report simplification as skipped.
 Otherwise the simplifier records handoffs/simplifier/S.json before candidate-ready. This fixed result is unnumbered.
@@ -194,14 +196,14 @@ Submit the complete batch through maestro_resolve_findings before editing the sp
 The tool saves every decision in the active verifier handoff before saving the next phase. Earlier numbered handoffs remain unchanged.
 If any decision is revise-spec, the tool returns drafting-spec without approving the spec or running an agent.
 Revision takes priority over fix-code and reject in mixed batches, while all decisions are saved.
-Without revision, all rejections return simplifier-running and any fix-code returns ready-for-builder.
+Without revision, all rejections return simplifier-running if simplification is enabled, otherwise candidate-ready. Any fix-code returns ready-for-builder.
 For ready-for-builder, call maestro_run_builder separately. Do not fix the code yourself.
 
 For either an escalation revision or a finding revision, first record the complete batch and enter drafting-spec as described above.
 Then revise the same specId and its affected documents with the owner. Recheck the complete document set together.
 Do not create a new spec. Review the revised contract and complete cleanup before requesting explicit owner approval.
 Ask the owner to inspect proposal.md, spec.md, and design.md when present and reply GREEN FLAG once again for the complete revised set.
-Only after that explicit reply, call maestro_mark_spec_ready separately. After the transition succeeds, start the builder in the foreground.
+Only after that explicit reply, call maestro_mark_spec_ready separately. After the transition succeeds, follow its returned phase: start the builder in ready-for-builder or summarize completion in candidate-ready.
 The approved revised spec controls subsequent work. Previous escalations and findings become historical context. Do not resolve them as current decisions after the revision.
 Keep their artifacts. Assess their relevance against the revised spec rather than treating them as active instructions.
 
@@ -220,7 +222,13 @@ The owner handles execution errors, protocol errors, and interrupted workflows m
 At candidate-ready, the workflow is complete. No final tool call is required.
 Maestro stays active while you deliver the final summary and automatically turns off after the response finishes successfully, including when simplification was skipped.
 Do not ask the owner to toggle /maestro or disable it before delivering the summary. Saved workflow files remain unchanged.
-You own the final summary. Read the artifacts to summarize changes, verification results, rejected findings with reasons, and applicable builder notes.
+You own the final summary. Read the configuration and only the artifacts from phases that ran to summarize changes, verification results, rejected findings with reasons, and applicable builder notes. Do not require handoffs for skipped phases.
+Always identify every skipped phase and why. Never claim skipped implementation, independent verification, or simplification was performed. For example:
+1. Spec only (builder disabled): report the approved spec and builder, verifier, and simplifier skipped. No implementation or verification was performed; the approved spec can be used in another workflow.
+2. Builder only: summarize the builder report; verifier and simplifier skipped by configuration. Builder checks are not independent verification.
+3. Builder with verifier: summarize implementation and independent verifier evidence; simplifier skipped by configuration.
+4. Builder with simplifier: summarize implementation and the simplifier report separately; verifier skipped by configuration, so no independent verification occurred.
+If enabled simplification was skipped because Git was unavailable, report that reason instead of claiming refactoring completed.
 For completed simplification, read handoffs/simplifier/S.json and report its saved summary and notes as the simplifier's report.
 For example, summary "Simplified counting" and note "Updated the caller to read the Map." belong to the simplifier, not verifier evidence.
 Do not claim the verifier independently checked later refactoring. Keep verification evidence and the simplifier report separate.
