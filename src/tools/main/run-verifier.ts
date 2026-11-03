@@ -11,7 +11,7 @@ import { Type } from 'typebox';
 
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import type { VerifierHandoff } from '#artifacts/verifier-handoff/schema.ts';
-import { AGENTS } from '#config/schema.ts';
+import { AGENTS, type MaestroConfig } from '#config/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
@@ -22,7 +22,8 @@ import {
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
+import { WORKFLOW_PHASES, WORKFLOW_EVENTS, type WorkflowState } from '#workflow/state/schema.ts';
+import { transitionWorkflow } from '#workflow/transitions.ts';
 import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 
 export const RUN_VERIFIER_TOOL = {
@@ -42,6 +43,7 @@ const RunVerifierToolParameters = Type.Object(
 const MILLISECONDS_PER_MINUTE = 60_000;
 
 type VerifierTerminalPhase =
+  | typeof WORKFLOW_PHASES.CANDIDATE_READY
   | typeof WORKFLOW_PHASES.SIMPLIFIER_RUNNING
   | typeof WORKFLOW_PHASES.FINDING_DECISIONS;
 
@@ -53,11 +55,15 @@ type VerifierRunResult = {
 };
 
 type ReadVerifierResultInput = {
+  config: MaestroConfig;
+  runningState: WorkflowState;
   paths: MaestroPaths;
   specId: string;
 };
 
 const readVerifierResult = async ({
+  config,
+  runningState,
   paths,
   specId,
 }: ReadVerifierResultInput): Promise<VerifierRunResult> => {
@@ -74,6 +80,7 @@ const readVerifierResult = async ({
 
     if (
       state.phase !== WORKFLOW_PHASES.SIMPLIFIER_RUNNING &&
+      state.phase !== WORKFLOW_PHASES.CANDIDATE_READY &&
       state.phase !== WORKFLOW_PHASES.FINDING_DECISIONS
     ) {
       throw new Error(`Verifier returned with unexpected workflow phase "${state.phase}".`);
@@ -87,7 +94,8 @@ const readVerifierResult = async ({
     const expectedPhase =
       handoff.findings.length > 0
         ? WORKFLOW_PHASES.FINDING_DECISIONS
-        : WORKFLOW_PHASES.SIMPLIFIER_RUNNING;
+        : transitionWorkflow({ state: runningState, event: WORKFLOW_EVENTS.VERIFIER_DONE, config })
+            .phase;
 
     if (state.phase !== expectedPhase) {
       throw new Error(`Verifier handoff findings do not match workflow phase "${state.phase}".`);
@@ -107,6 +115,10 @@ const readVerifierResult = async ({
 };
 
 const formatVerifierResult = (result: VerifierRunResult): string => {
+  if (result.outcome === WORKFLOW_PHASES.CANDIDATE_READY) {
+    return `Verifier completed spec ${result.specId}. The workflow is candidate-ready. Simplifier skipped by configuration.`;
+  }
+
   if (result.outcome === WORKFLOW_PHASES.SIMPLIFIER_RUNNING) {
     return `Verifier completed spec ${result.specId}. The workflow is simplifier-running. Call maestro_run_simplifier next with this specId, without another approval or verifier pass.`;
   }
@@ -123,7 +135,7 @@ export const registerRunVerifierTool = (pi: ExtensionAPI): void => {
     async execute(toolCallId, { specId }, _signal, _onUpdate, context) {
       const { paths, config } = await resolveToolRunContext(context.cwd);
 
-      const run = await prepareVerifierRun({ paths, specId });
+      const run = await prepareVerifierRun({ config, paths, specId });
       await refreshMaestroStatus(context);
 
       const request: SubagentDelegationRequest = {
@@ -147,7 +159,7 @@ export const registerRunVerifierTool = (pi: ExtensionAPI): void => {
       });
 
       assertDelegationResponse(response);
-      const result = await readVerifierResult({ paths, specId });
+      const result = await readVerifierResult({ paths, specId, config, runningState: run.state });
 
       return {
         content: [{ type: 'text', text: formatVerifierResult(result) }],

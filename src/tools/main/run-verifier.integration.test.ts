@@ -19,6 +19,7 @@ import {
   VERIFIER_HANDOFF_VERSION,
 } from '#artifacts/verifier-handoff/schema.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
+import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { AGENTS } from '#config/schema.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import {
@@ -27,6 +28,7 @@ import {
   SPEC_ID,
 } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
+import { registerRecordVerifierHandoffTool } from '#tools/child/record-verifier-handoff.ts';
 import { registerRunVerifierTool } from '#tools/main/run-verifier.ts';
 import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
@@ -35,15 +37,15 @@ import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
 
-const createReadyForVerifierWorkflow = async () => {
-  const workflow = await createApprovedWorkflow();
-
-  await prepareBuilderRun({
-    paths: workflow.paths,
-    specId: SPEC_ID,
+const createReadyForVerifierWorkflow = async (simplifierRequired: boolean = true) => {
+  const workflow = await createApprovedWorkflow({
+    agents: { simplifier: { required: simplifierRequired } },
   });
 
+  await prepareBuilderRun({ config: DEFAULT_CONFIG, paths: workflow.paths, specId: SPEC_ID });
+
   await completeBuilderPass({
+    config: DEFAULT_CONFIG,
     paths: workflow.paths,
     specId: SPEC_ID,
     handoff: {
@@ -74,6 +76,7 @@ const recordVerifierHandoff = async ({
   findings = [],
 }: RecordVerifierHandoffInput): Promise<void> => {
   await completeVerifierPass({
+    config: await loadConfiguration(paths.getProjectRoot()),
     paths,
     specId: SPEC_ID,
     handoff: {
@@ -355,4 +358,50 @@ describe('run verifier tool', () => {
       ),
     ).rejects.toMatchObject({ code: 'ENOENT' });
   });
+});
+
+it('given simplifier disabled when verification completes without findings then candidate-ready is saved without simplifier delegation', async () => {
+  const workflow = await createReadyForVerifierWorkflow(false);
+
+  const { tool, events, emit } = await piTestSessions.createRegisteredTool({
+    cwd: workflow.repository.path,
+    extension: registerRunVerifierTool,
+  });
+
+  const { tool: childTool } = await piTestSessions.createRegisteredTool({
+    cwd: workflow.repository.path,
+    extension: registerRecordVerifierHandoffTool,
+  });
+
+  events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
+    // JUSTIFICATION: The run tool emits a delegation request on this channel.
+    const request = payload as SubagentDelegationRequest;
+    await childTool.execute('record-verifier', {
+      specId: SPEC_ID,
+      summary: 'Verified weather alerts',
+      acceptanceCriteria: [
+        { id: 'AC1', probe: 'Acceptance check', probeStatus: PROBE_STATUSES.PASSED },
+      ],
+      findings: [],
+      notes: [],
+    });
+    events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
+      requestId: request.requestId,
+      ownerRunId: request.ownerRunId,
+      nodeId: request.nodeId,
+      status: DELEGATION_STATUSES.COMPLETED,
+      result: { kind: 'text', text: 'Saved' },
+    });
+  });
+  const result = await tool.execute('verifier-without-simplifier', { specId: SPEC_ID });
+  expect(result.details).toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
+  await expect(readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
+    phase: WORKFLOW_PHASES.CANDIDATE_READY,
+  });
+  expect(emit.mock.calls.filter(([event]) => event === SUBAGENT_DELEGATION_REQUEST_EVENT)).toEqual([
+    [SUBAGENT_DELEGATION_REQUEST_EVENT, expect.objectContaining({ agent: AGENTS.VERIFIER })],
+  ]);
+  expect(result.content).toEqual([
+    { type: 'text', text: expect.stringContaining('Simplifier skipped by configuration') },
+  ]);
 });
