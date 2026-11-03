@@ -44,12 +44,13 @@ export const registerRecordSimplifierHandoffTool = (pi: ExtensionAPI): void => {
     async execute(_toolCallId, params, _signal, _onUpdate, context) {
       assertSimplifierSubmission(params);
 
-      const { paths } = await resolveWorkflowContext({
+      const { paths, config } = await resolveWorkflowContext({
         cwd: context.cwd,
         specId: params.specId,
       });
 
       const completed = await completeSimplifierPass({
+        config,
         paths,
         specId: params.specId,
         handoff: { ...params, version: SIMPLIFIER_HANDOFF_VERSION },

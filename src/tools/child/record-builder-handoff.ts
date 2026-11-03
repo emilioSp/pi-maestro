@@ -47,16 +47,12 @@ export const registerRecordBuilderHandoffTool = (pi: ExtensionAPI): void => {
     async execute(_toolCallId, params, _signal, _onUpdate, context) {
       const { specId, ...handoff } = params;
 
-      const { paths } = await resolveWorkflowContext({
+      const { paths, config } = await resolveWorkflowContext({
         cwd: context.cwd,
         specId,
       });
 
-      const completed = await completeBuilderPass({
-        paths,
-        specId,
-        handoff,
-      });
+      const completed = await completeBuilderPass({ config, paths, specId, handoff });
 
       return {
         content: [

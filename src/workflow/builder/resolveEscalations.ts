@@ -10,6 +10,7 @@ import {
   type EscalationResolution,
 } from '#artifacts/builder-handoff/schema.ts';
 import { writeBuilderHandoff } from '#artifacts/builder-handoff/writeBuilderHandoff.ts';
+import type { MaestroConfig } from '#config/schema.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { getWorkflowEventBySpecChangeRequired } from '#workflow/builder/utils/getWorkflowEventBySpecChangeRequired.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -57,6 +58,7 @@ const applyEscalationDecisions = ({ escalations, decisions }: ApplyEscalationDec
 };
 
 type ResolveEscalationsInput = {
+  config: MaestroConfig;
   paths: MaestroPaths;
   specId: string;
   specChangeRequired: boolean;
@@ -64,6 +66,7 @@ type ResolveEscalationsInput = {
 };
 
 export const resolveEscalations = async ({
+  config,
   paths,
   specId,
   specChangeRequired,
@@ -95,6 +98,7 @@ export const resolveEscalations = async ({
   const nextHandoff = { ...handoff, escalations };
 
   const nextState = transitionWorkflow({
+    config,
     state,
     event: getWorkflowEventBySpecChangeRequired(specChangeRequired),
   });

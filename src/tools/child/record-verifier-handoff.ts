@@ -53,7 +53,7 @@ export const registerRecordVerifierHandoffTool = (pi: ExtensionAPI): void => {
     async execute(_toolCallId, params, _signal, _onUpdate, context) {
       const { specId, ...submission } = params;
 
-      const { paths } = await resolveWorkflowContext({
+      const { paths, config } = await resolveWorkflowContext({
         cwd: context.cwd,
         specId,
       });
@@ -69,11 +69,7 @@ export const registerRecordVerifierHandoffTool = (pi: ExtensionAPI): void => {
         notes: submission.notes,
       };
 
-      const completed = await completeVerifierPass({
-        paths,
-        specId,
-        handoff,
-      });
+      const completed = await completeVerifierPass({ config, paths, specId, handoff });
 
       return {
         content: [

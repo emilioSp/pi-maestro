@@ -3,15 +3,17 @@
  * Used: Before Maestro runs a builder pass.
  */
 
+import type { MaestroConfig } from '#config/schema.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
+import { WORKFLOW_EVENTS, WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 
 export type BuilderRun = {
+  state: WorkflowState;
   specId: string;
   projectRoot: string;
 };
@@ -38,11 +40,13 @@ async function assertBuilderRunBase({ paths, specId }: AssertBuilderRunBaseInput
 }
 
 type PrepareBuilderRunInput = {
+  config: MaestroConfig;
   paths: MaestroPaths;
   specId: string;
 };
 
 export const prepareBuilderRun = async ({
+  config,
   paths,
   specId,
 }: PrepareBuilderRunInput): Promise<BuilderRun> => {
@@ -60,6 +64,7 @@ export const prepareBuilderRun = async ({
   const currentState = await readWorkflowState(workflowPath);
 
   const nextState = transitionWorkflow({
+    config,
     state: currentState,
     event: WORKFLOW_EVENTS.RUN_BUILDER,
   });
@@ -70,6 +75,7 @@ export const prepareBuilderRun = async ({
   });
 
   return {
+    state: nextState,
     specId,
     projectRoot: paths.getProjectRoot(),
   };
