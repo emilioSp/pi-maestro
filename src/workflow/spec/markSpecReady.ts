@@ -5,6 +5,7 @@
 
 import { readFile } from 'node:fs/promises';
 
+import type { MaestroConfig } from '#config/schema.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -22,12 +23,14 @@ function assertAcceptanceCriterionOrdering(markdown: string): void {
 }
 
 type MarkSpecReadyInput = {
+  config: MaestroConfig;
   paths: MaestroPaths;
   specId: string;
   activeWorkflowSpecId: string | null;
 };
 
 export const markSpecReady = async ({
+  config,
   paths,
   specId,
   activeWorkflowSpecId,
@@ -62,6 +65,7 @@ export const markSpecReady = async ({
   }
 
   const state = transitionWorkflow({
+    config,
     state: current,
     event: WORKFLOW_EVENTS.MARK_SPEC_READY,
   });
