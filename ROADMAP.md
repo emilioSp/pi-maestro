@@ -10,30 +10,37 @@ reaching `candidate-ready`. Linear onboarding and test issues are not project ro
 
 ## Overview
 
-| ID         | Item                                                                                                                               | Status                                |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| MAESTRO-6  | [Display specs in a browser](#maestro-6-display-specs-in-a-browser)                                                                | Backlog                               |
-| MAESTRO-7  | [Route builder failures through owner escalations](#maestro-7-route-builder-failures-through-owner-escalations)                    | Completed                             |
-| MAESTRO-8  | [Store escalations and owner decisions in builder handoffs](#maestro-8-store-escalations-and-owner-decisions-in-builder-handoffs)  | Completed                             |
-| MAESTRO-9  | [Format glossary terms consistently](#maestro-9-format-glossary-terms-consistently)                                                | Completed                             |
-| MAESTRO-10 | [Improve status presentation and activation feedback](#maestro-10-improve-status-presentation-and-activation-feedback)             | Completed                             |
-| MAESTRO-11 | [Introduce Maestro at activation](#maestro-11-introduce-maestro-at-activation)                                                     | Completed                             |
-| MAESTRO-12 | [Verify code quality against AGENTS.md instructions](#maestro-12-verify-code-quality-against-agentsmd-instructions)                | Completed                             |
-| MAESTRO-13 | [Check subagent extensions at activation](#maestro-13-check-subagent-extensions-at-activation)                                     | Completed                             |
-| MAESTRO-14 | [Rename the test support directory](#maestro-14-rename-the-test-support-directory)                                                 | Completed                             |
-| MAESTRO-15 | [Match handoff criteria to the approved spec](#maestro-15-match-handoff-criteria-to-the-approved-spec)                             | Completed                             |
-| MAESTRO-16 | [Route finding-driven spec revisions through drafting-spec](#maestro-16-route-finding-driven-spec-revisions-through-drafting-spec) | Completed                             |
-| MAESTRO-17 | [Keep acceptance criterion numbering continuous](#maestro-17-keep-acceptance-criterion-numbering-continuous)                       | Completed                             |
-| MAESTRO-18 | [Record escalation resolutions when the spec changes](#maestro-18-record-escalation-resolutions-when-the-spec-changes)             | Completed                             |
-| MAESTRO-19 | [Guide initial configuration](#maestro-19-guide-initial-configuration)                                                             | Backlog                               |
-| MAESTRO-20 | [Rename the npm package](#maestro-20-rename-the-npm-package)                                                                       | Backlog                               |
-| MAESTRO-21 | [Label acceptance criterion coverage](#maestro-21-label-acceptance-criterion-coverage)                                             | Completed                             |
-| MAESTRO-22 | [Avoid acceptance criteria already covered by tests](#maestro-22-avoid-acceptance-criteria-already-covered-by-tests)               | Completed                             |
-| MAESTRO-23 | [Change agent models before a builder run](#maestro-23-change-agent-models-before-a-builder-run)                                   | Backlog                               |
-| MAESTRO-24 | [Add a simplifier with one clear purpose per agent](#maestro-24-add-a-simplifier-with-one-clear-purpose-per-agent)                 | Completed                             |
-| MAESTRO-25 | [Define workflow reconciliation](#maestro-25-define-workflow-reconciliation)                                                       | Backlog                               |
-| MAESTRO-26 | [Exit Maestro mode automatically at workflow completion](#maestro-26-exit-maestro-mode-automatically-at-workflow-completion)       | Completed                             |
-| MAESTRO-27 | [Make all implementation phases optional](#maestro-27-make-all-implementation-phases-optional)                                     | Implemented, acceptance not confirmed |
+| ID             | Item                                                                                                                               | Status    |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| MAESTRO-6      | [Display specs in a browser](#maestro-6-display-specs-in-a-browser)                                                                | Backlog   |
+| MAESTRO-7      | [Route builder failures through owner escalations](#maestro-7-route-builder-failures-through-owner-escalations)                    | Completed |
+| MAESTRO-8      | [Store escalations and owner decisions in builder handoffs](#maestro-8-store-escalations-and-owner-decisions-in-builder-handoffs)  | Completed |
+| MAESTRO-9      | [Format glossary terms consistently](#maestro-9-format-glossary-terms-consistently)                                                | Completed |
+| MAESTRO-10     | [Improve status presentation and activation feedback](#maestro-10-improve-status-presentation-and-activation-feedback)             | Completed |
+| MAESTRO-11     | [Introduce Maestro at activation](#maestro-11-introduce-maestro-at-activation)                                                     | Completed |
+| MAESTRO-12     | [Verify code quality against AGENTS.md instructions](#maestro-12-verify-code-quality-against-agentsmd-instructions)                | Completed |
+| MAESTRO-13     | [Check subagent extensions at activation](#maestro-13-check-subagent-extensions-at-activation)                                     | Completed |
+| MAESTRO-14     | [Rename the test support directory](#maestro-14-rename-the-test-support-directory)                                                 | Completed |
+| MAESTRO-15     | [Match handoff criteria to the approved spec](#maestro-15-match-handoff-criteria-to-the-approved-spec)                             | Completed |
+| MAESTRO-16     | [Route finding-driven spec revisions through drafting-spec](#maestro-16-route-finding-driven-spec-revisions-through-drafting-spec) | Completed |
+| MAESTRO-17     | [Keep acceptance criterion numbering continuous](#maestro-17-keep-acceptance-criterion-numbering-continuous)                       | Completed |
+| MAESTRO-18     | [Record escalation resolutions when the spec changes](#maestro-18-record-escalation-resolutions-when-the-spec-changes)             | Completed |
+| MAESTRO-19     | [Guide initial configuration](#maestro-19-guide-initial-configuration)                                                             | Backlog   |
+| MAESTRO-20     | [Rename the npm package](#maestro-20-rename-the-npm-package)                                                                       | Backlog   |
+| MAESTRO-21     | [Label acceptance criterion coverage](#maestro-21-label-acceptance-criterion-coverage)                                             | Completed |
+| MAESTRO-22     | [Avoid acceptance criteria already covered by tests](#maestro-22-avoid-acceptance-criteria-already-covered-by-tests)               | Completed |
+| MAESTRO-23     | [Change agent models before a builder run](#maestro-23-change-agent-models-before-a-builder-run)                                   | Backlog   |
+| MAESTRO-24     | [Add a simplifier with one clear purpose per agent](#maestro-24-add-a-simplifier-with-one-clear-purpose-per-agent)                 | Completed |
+| MAESTRO-25     | [Define workflow reconciliation](#maestro-25-define-workflow-reconciliation)                                                       | Backlog   |
+| MAESTRO-26     | [Exit Maestro mode automatically at workflow completion](#maestro-26-exit-maestro-mode-automatically-at-workflow-completion)       | Completed |
+| MAESTRO-27     | [Make all implementation phases optional](#maestro-27-make-all-implementation-phases-optional)                                     | Completed |
+| MAESTRO-FREE-1 | [Require Pi 1.5.0](#maestro-free-1-require-pi-150)                                                                                 | Backlog   |
+| MAESTRO-FREE-2 | [Remove Maestro run timeouts](#maestro-free-2-remove-maestro-run-timeouts)                                                         | Backlog   |
+| MAESTRO-FREE-3 | [Run the builder through the Pi SDK](#maestro-free-3-run-the-builder-through-the-pi-sdk)                                           | Backlog   |
+| MAESTRO-FREE-4 | [Run the verifier through the Pi SDK](#maestro-free-4-run-the-verifier-through-the-pi-sdk)                                         | Backlog   |
+| MAESTRO-FREE-5 | [Run the simplifier through the Pi SDK](#maestro-free-5-run-the-simplifier-through-the-pi-sdk)                                     | Backlog   |
+| MAESTRO-FREE-6 | [Show SDK agent activity through Pi](#maestro-free-6-show-sdk-agent-activity-through-pi)                                           | Backlog   |
+| MAESTRO-FREE-7 | [Remove the pi-subagents dependency](#maestro-free-7-remove-the-pi-subagents-dependency)                                           | Backlog   |
 
 ## Backlog
 
@@ -90,7 +97,176 @@ Explore how `Maestro` can reconcile saved `artifacts` and workflow state. The re
 
 Not yet defined. The `owner` must define the intended outcome, recovery boundaries, and completion condition before this item can move forward.
 
+### MAESTRO-FREE-1: Require Pi 1.5.0
+
+#### Objective
+
+Adopt Pi 1.5.0 as the minimum supported host and verification baseline for [ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation), without changing the
+delegation engine or adding compatibility fallbacks.
+
+#### Completed when
+
+1. Declared requirements and the development verification environment use the selected Pi baseline consistently.
+2. The existing extension and `pi-subagents` workflow continue to work on Pi 1.5.0.
+
+#### Reversibility
+
+Reverting restores the previous requirements and verification setup. Later SDK changes relying on the new baseline must be reverted first.
+
+### MAESTRO-FREE-2: Remove Maestro run timeouts
+
+#### Objective
+
+Remove Maestro's per-agent deadline and the three `timeoutMinutes` settings, as decided in [ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation).
+Remove schema fields, defaults, delegation timeout inputs, and related configuration documentation together.
+
+#### Completed when
+
+1. `Maestro` no longer supplies a per-agent deadline. Elapsed-time display and timeouts internal to Pi, tools, or the remaining `pi-subagents` integration are unchanged.
+2. Configuration without `timeoutMinutes` works; configuration retaining it fails existing TypeBox validation with no migration or compatibility handling.
+3. Other configuration behavior and the existing workflow remain unchanged.
+
+#### Reversibility
+
+Reverting restores the optional settings, their defaults, and the previous deadline behavior. Removing the fields requires no saved workflow or `handoff` migration.
+
+### MAESTRO-FREE-3: Run the builder through the Pi SDK
+
+#### Objective
+
+Replace `builder` delegation with `createAgentSession()` and deliver a complete, usable SDK `builder` `run`, following
+[ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation). This item includes the internal execution operation used by later role migrations; do not
+release an incomplete `builder` pending separate context, cancellation, or persistence work.
+
+#### Scope and dependencies
+
+Requires [MAESTRO-FREE-1](#maestro-free-1-require-pi-150) and [MAESTRO-FREE-2](#maestro-free-2-remove-maestro-run-timeouts). Keep the `verifier` and `simplifier` on
+`pi-subagents`. The temporary routing is fixed in code, not a configurable engine selector or a general-purpose delegation framework. Human documentation must describe
+the actual mixed-engine state. Live SDK progress is covered separately by [MAESTRO-FREE-6](#maestro-free-6-show-sdk-agent-activity-through-pi); existing workflow-phase
+status remains available in the meantime.
+
+#### Completed when
+
+1. An approved `spec` can be implemented by an SDK `builder` with fresh conversation history, the configured model and thinking level, role guidance, global and project
+   instructions, skills, working tools, and existing `handoff` tools.
+2. Enabled global and project extensions load through Pi, excluding the main `Maestro` extension. Instructions forbid further delegation; there are no additional tool
+   filters, integration health gates, compatibility adapters, or automatic retries.
+3. `done` and `escalation` outcomes preserve existing saved `handoffs`, validation, phase transitions, and subsequent workflow routes. A later `builder` `pass` starts
+   fresh and reads saved decisions rather than restoring the previous conversation.
+4. Errors stop the workflow without rollback or repair. Manual cancellation reaches `session.abort()`, and child sessions and subscriptions are cleaned up on every exit.
+5. Native Pi session files are saved beneath the project's Pi session directory in `subagents/`. The `owner` receives the saved path on completion or failure when a file
+   exists; it can be inspected or exported with Pi, without automatic resumption.
+6. Existing trust, configuration, and model checks remain applicable. `pi-subagents` ping and launch-contract checks apply only to enabled roles still using that engine;
+   a `builder`-only workflow uses the SDK without requiring a `pi-subagents` availability reply.
+7. Each `run` waits for its child to finish or be interrupted before another starts. Existing optional-phase behavior remains intact.
+
+#### Reversibility
+
+Reverting restores `builder` delegation and its activation checks to `pi-subagents`, which remains installed. Saved `specs`, workflow files, and `handoffs` retain their
+formats; SDK session logs can remain on disk. Revert later consumers of the SDK operation before removing it.
+
+### MAESTRO-FREE-4: Run the verifier through the Pi SDK
+
+#### Objective
+
+Move the `verifier` to the SDK execution operation delivered by [MAESTRO-FREE-3](#maestro-free-3-run-the-builder-through-the-pi-sdk), following
+[ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation). Do not redesign verification or its reports.
+
+#### Completed when
+
+1. The SDK `verifier` independently checks the approved `spec` and saves existing numbered `handoffs`, preserving criterion validation, `finding` decisions, and phase
+   transitions.
+2. It reuses the established fresh-session context, tools, persistence, cancellation, cleanup, and error policy without a second execution mechanism.
+3. Activation no longer asks `pi-subagents` to check or execute the `verifier`. Its remaining checks apply only to enabled roles still on that engine.
+4. Workflows with verification enabled or disabled retain their existing routes. If the `simplifier` is not yet migrated, it continues to use `pi-subagents` unchanged.
+
+#### Reversibility
+
+Reverting restores only the verifier's `pi-subagents` route and checks. The SDK `builder` continues working, and saved report formats need no migration. Revert dependency
+removal first if it has already been applied.
+
+### MAESTRO-FREE-5: Run the simplifier through the Pi SDK
+
+#### Objective
+
+Move the `simplifier` to the SDK execution operation delivered by [MAESTRO-FREE-3](#maestro-free-3-run-the-builder-through-the-pi-sdk), following
+[ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation). Keep its existing purpose and Git-only scope.
+
+#### Completed when
+
+1. The SDK `simplifier` preserves the current Git readiness decision, skip behavior, and entry routes. No Git readiness check moves into activation or an earlier phase.
+2. Successful execution saves the existing unnumbered `S.json` `handoff` and reaches `candidate-ready`; optional-phase behavior remains unchanged.
+3. It reuses the established context, tools, persistence, cancellation, cleanup, and error policy.
+4. Activation no longer asks `pi-subagents` to check or execute the `simplifier`. Once all roles have migrated, no workflow path requires its ping or launch preflight.
+
+#### Reversibility
+
+Reverting restores only the simplifier's `pi-subagents` route and checks, without changing Git semantics or saved reports. Revert dependency removal first if it has
+already been applied.
+
+### MAESTRO-FREE-6: Show SDK agent activity through Pi
+
+#### Objective
+
+Show activity for SDK-based agent `runs` through Pi's standard `onUpdate` presentation, as decided in
+[ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation). Requires [MAESTRO-FREE-3](#maestro-free-3-run-the-builder-through-the-pi-sdk) and applies to
+each role as it is migrated.
+
+#### Completed when
+
+1. Progress reports the role, elapsed time, current tool, and recent normal assistant text, including activity while the agent produces no text.
+2. Pi controls layout, truncation, and expansion. There is no custom renderer, fixed line count, transcript inspector, or artificial progress prompting.
+3. Intermediate text stays out of the main model's context. Final workflow results, saved session contents, and cancellation behavior remain unchanged.
+4. Progress subscriptions are released when the child finishes, fails, or is interrupted. Roles still on `pi-subagents` retain their existing presentation.
+
+#### Reversibility
+
+Reverting removes only the live SDK progress presentation. Agent execution, saved session files, and existing workflow-phase status continue to work.
+
+### MAESTRO-FREE-7: Remove the pi-subagents dependency
+
+#### Objective
+
+Finish [ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation) by removing the package dependency, bundling, and remaining integration metadata after
+[MAESTRO-FREE-3](#maestro-free-3-run-the-builder-through-the-pi-sdk), [MAESTRO-FREE-4](#maestro-free-4-run-the-verifier-through-the-pi-sdk), and
+[MAESTRO-FREE-5](#maestro-free-5-run-the-simplifier-through-the-pi-sdk). This is dependency removal, not another execution-engine switch.
+
+#### Completed when
+
+1. `Maestro` neither imports nor bundles `pi-subagents`, and package metadata, role frontmatter, tests, installation instructions, and current human documentation no
+   longer require it. Historical records remain historical evidence.
+2. A clean installation can activate and complete workflows without `pi-subagents` installed or enabled, including the supported optional-phase combinations.
+3. Existing workflow and `handoff` formats remain unchanged. No compatibility framework, engine-selection flags, or migration of interrupted workflows is added.
+
+#### Reversibility
+
+Reverting restores the dependency and integration metadata without changing the working SDK routes. Restoring an old role implementation later requires restoring its own
+route and checks as well; saved workflow `artifacts` need no conversion.
+
+Each `MAESTRO-FREE` entry is intended to become one separately approved `spec`. These are backlog items, not completed work. Each change must pass its end-to-end
+verification before the next starts. Reversibility does not imply independence: revert dependent changes before their prerequisites, and do not delete saved evidence as
+part of a code revert. Each item updates documentation for the behavior it actually delivers; no long-lived integration branch or combined merge is required.
+
 ## Implemented, acceptance not confirmed
+
+### MAESTRO-26: Exit Maestro mode automatically at workflow completion
+
+Implemented in `0.13.0`. `Maestro` automatically turns off after successfully delivering the final summary of a completed workflow, including when Git is unavailable and
+simplification is skipped. Live tools, status, instructions, and active `spec` selection are cleared; saved workflow files and other extensions remain unchanged.
+Intermediate phases and interrupted workflows do not trigger automatic exit.
+
+Linear marks this item Done, but its description still says final `owner` acceptance is pending. Acceptance is not inferred from that status or the release.
+
+#### Evidence
+
+[Changelog](CHANGELOG.md#0130), [merged PR #43](https://github.com/emilioSp/pi-maestro/pull/43),
+[specification](.specs/20261030-145712-automatically-exit-maestro-mode-at-workflow-completion/spec.md), and
+[original issue](https://linear.app/emilio-spatola/issue/MAESTRO-26/feat-exit-maestro-mode-automatically-at-workflow-completion).
+
+## Completed
+
+Completed entries include historical records imported from Linear and work explicitly accepted by the `owner`. Historical verification evidence alone does not establish
+final `owner` acceptance.
 
 ### MAESTRO-27: Make all implementation phases optional
 
@@ -114,10 +290,10 @@ remain required.
 
 #### Implementation and evidence
 
-Implemented under the [specification](.specs/20261103-161424-maestro-27-make-implementation-phases-optional/spec.md), awaiting `owner` acceptance. Each agent's `required`
-boolean in `.pi/maestro.json` defaults to `true`. Flags are set before activation and remain unchanged during the workflow. Disabling `builder` skips all three agents;
-otherwise `verifier` and `simplifier` are independently optional. `Spec` preparation and approval remain required. The activation notice lists only enabled agents and no
-agents when `builder` is disabled.
+Implemented under the [specification](.specs/20261103-161424-maestro-27-make-implementation-phases-optional/spec.md). The `owner` confirmed completion. Each agent's
+`required` boolean in `.pi/maestro.json` defaults to `true`. Flags are set before activation and remain unchanged during the workflow. Disabling `builder` skips all three
+agents; otherwise `verifier` and `simplifier` are independently optional. `Spec` preparation and approval remain required. The activation notice lists only enabled agents
+and no agents when `builder` is disabled.
 
 The [README](README.md#the-idea) presents the two uses of `Maestro`: writing and approving a `spec` only, or also implementing it through optional agent phases.
 
@@ -126,24 +302,6 @@ The [README](README.md#the-idea) presents the two uses of `Maestro`: writing and
 [MAESTRO-24](#maestro-24-add-a-simplifier-with-one-clear-purpose-per-agent) introduced the `simplifier`. Its existing Git-unavailable skip is not an explicit `owner`
 choice. This item originally made only the post-`builder` phases optional. The `owner` expanded the scope to include the `builder`, so `Maestro` can also be used solely
 for writing and approving a `spec`.
-
-### MAESTRO-26: Exit Maestro mode automatically at workflow completion
-
-Implemented in `0.13.0`. `Maestro` automatically turns off after successfully delivering the final summary of a completed workflow, including when Git is unavailable and
-simplification is skipped. Live tools, status, instructions, and active `spec` selection are cleared; saved workflow files and other extensions remain unchanged.
-Intermediate phases and interrupted workflows do not trigger automatic exit.
-
-Linear marks this item Done, but its description still says final `owner` acceptance is pending. Acceptance is not inferred from that status or the release.
-
-#### Evidence
-
-[Changelog](CHANGELOG.md#0130), [merged PR #43](https://github.com/emilioSp/pi-maestro/pull/43),
-[specification](.specs/20261030-145712-automatically-exit-maestro-mode-at-workflow-completion/spec.md), and
-[original issue](https://linear.app/emilio-spatola/issue/MAESTRO-26/feat-exit-maestro-mode-automatically-at-workflow-completion).
-
-## Completed
-
-These entries were recorded as Done in Linear. Their historical verification evidence does not independently establish final `owner` acceptance.
 
 ### MAESTRO-7: Route builder failures through owner escalations
 
