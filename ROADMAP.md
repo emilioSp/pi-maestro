@@ -33,7 +33,7 @@ reaching `candidate-ready`. Linear onboarding and test issues are not project ro
 | MAESTRO-24 | [Add a simplifier with one clear purpose per agent](#maestro-24-add-a-simplifier-with-one-clear-purpose-per-agent)                 | Completed                             |
 | MAESTRO-25 | [Define workflow reconciliation](#maestro-25-define-workflow-reconciliation)                                                       | Backlog                               |
 | MAESTRO-26 | [Exit Maestro mode automatically at workflow completion](#maestro-26-exit-maestro-mode-automatically-at-workflow-completion)       | Implemented, acceptance not confirmed |
-| MAESTRO-27 | [Make verifier and simplifier phases optional](#maestro-27-make-verifier-and-simplifier-phases-optional)                           | Backlog                               |
+| MAESTRO-27 | [Make all implementation phases optional](#maestro-27-make-all-implementation-phases-optional)                                   | Backlog                               |
 
 ## Backlog
 
@@ -90,32 +90,38 @@ Explore how `Maestro` can reconcile saved `artifacts` and workflow state. The re
 
 Not yet defined. The `owner` must define the intended outcome, recovery boundaries, and completion condition before this item can move forward.
 
-### MAESTRO-27: Make verifier and simplifier phases optional
+### MAESTRO-27: Make all implementation phases optional
 
 #### Objective
 
-Make the `builder` the only required agent phase. Let the `owner` independently enable or disable the `verifier` and `simplifier` phases.
+Make the entire implementation stage optional, including the `builder`, `verifier`, and `simplifier` phases. Let the `owner` use `Maestro` only to prepare and approve a
+`spec`, leaving implementation to another workflow.
 
-This request concerns agent execution phases, not removal of `spec` preparation or approval.
+When implementation runs in `Maestro`, the `owner` can still independently enable or disable the `verifier` and `simplifier` phases. `Spec` preparation and approval
+remain required.
 
 #### Completed when
 
-1. The `builder` remains mandatory.
-2. The `owner` can select any of these combinations: `builder` only; `builder` and `verifier`; `builder` and `simplifier`; or all three.
-3. Disabled phases are not delegated and do not block workflow completion.
-4. The workflow reaches `candidate-ready` after the selected phases complete and any required `owner` decisions are resolved.
-5. The final summary clearly identifies skipped phases and does not describe skipped verification as passed.
+1. The `owner` can complete a workflow with only an approved `spec`, without running the `builder`, `verifier`, or `simplifier`.
+2. Implementation can be performed through another workflow using the approved `spec`, without requiring further execution in `Maestro`.
+3. The existing requested combinations remain available: `builder` only; `builder` and `verifier`; `builder` and `simplifier`; or all three.
+4. Disabled phases are not delegated and do not block workflow completion.
+5. The workflow reaches `candidate-ready` after `spec` approval when no agent phases are selected, or after the selected phases complete and any required `owner`
+   decisions are resolved.
+6. The final summary clearly identifies skipped phases and does not claim that skipped implementation or verification has been completed.
 
 #### Decisions to define in the spec
 
 1. Where and when phase selection is configured.
 2. Default selections.
 3. Whether selections can change after a workflow starts.
+4. Whether the `verifier` or `simplifier` can run without a `builder` phase in the same workflow.
 
 #### Context
 
 [MAESTRO-24](#maestro-24-add-a-simplifier-with-one-clear-purpose-per-agent) introduced the `simplifier`. Its existing Git-unavailable skip is not an explicit `owner`
-choice. This issue adds independent optionality for both post-`builder` agent phases.
+choice. This item originally made only the post-`builder` phases optional. The `owner` expanded the scope to include the `builder`, so `Maestro` can also be used solely
+for writing and approving a `spec`.
 
 ## Implemented, acceptance not confirmed
 
