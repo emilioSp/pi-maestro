@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import {
   WORKFLOW_EVENTS,
   WORKFLOW_PHASES,
@@ -21,6 +22,7 @@ describe('workflow transitions', () => {
     (phase) => {
       expect(
         transitionWorkflow({
+          config: DEFAULT_CONFIG,
           state: state(phase),
           event: WORKFLOW_EVENTS.OWNER_REQUEST_SPEC_REVISION,
         }),
@@ -32,6 +34,7 @@ describe('workflow transitions', () => {
     for (const event of Object.values(WORKFLOW_EVENTS)) {
       expect(() =>
         transitionWorkflow({
+          config: DEFAULT_CONFIG,
           state: state(WORKFLOW_PHASES.CANDIDATE_READY),
           event,
         }),
@@ -43,10 +46,28 @@ describe('workflow transitions', () => {
     const current = state(WORKFLOW_PHASES.READY_FOR_BUILDER);
 
     transitionWorkflow({
+      config: DEFAULT_CONFIG,
       state: current,
       event: WORKFLOW_EVENTS.RUN_BUILDER,
     });
 
     expect(current).toEqual(state(WORKFLOW_PHASES.READY_FOR_BUILDER));
   });
+});
+
+it('given a frozen draft and configuration with builder disabled when approval is calculated then only the returned state reaches candidate-ready', () => {
+  const current = Object.freeze(state(WORKFLOW_PHASES.DRAFTING_SPEC));
+
+  const config = Object.freeze({
+    ...DEFAULT_CONFIG,
+    builder: Object.freeze({ ...DEFAULT_CONFIG.builder, required: false }),
+    verifier: Object.freeze({ ...DEFAULT_CONFIG.verifier }),
+    simplifier: Object.freeze({ ...DEFAULT_CONFIG.simplifier }),
+  });
+
+  expect(
+    transitionWorkflow({ state: current, event: WORKFLOW_EVENTS.MARK_SPEC_READY, config }),
+  ).toEqual(state(WORKFLOW_PHASES.CANDIDATE_READY));
+  expect(current).toEqual(state(WORKFLOW_PHASES.DRAFTING_SPEC));
+  expect(config.builder.required).toBe(false);
 });

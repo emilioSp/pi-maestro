@@ -1,0 +1,61 @@
+{
+  "status": "done",
+  "summary": "Implemented optional implementation phases through required configuration flags, centralized configuration-aware transitions, enabled-only activation checks, phase-aware tool results, and skipped-work summary guidance. Updated documentation and added regression coverage.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npm run check: loadConfiguration.unit.test.ts loads all nine combinations of builder/verifier/simplifier required fields with string \"false\", number 0, and null; every load rejects the nonboolean field.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "npm run check: loadConfiguration.unit.test.ts covers omitted flags, omitted agent sections, builder disabled with later sections absent, and no configuration file. Resolved flags match the required true defaults.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "npm run check: mark-spec-ready.integration.test.ts approves builder-disabled drafts for all four verifier/simplifier combinations, asserting saved candidate-ready and no delegation. extensions/maestro.integration.test.ts also exercises spec-only activation through approval and completion recognition.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "npm run check: run-builder.integration.test.ts executes the parent builder tool and registered child handoff tool with verifier disabled and simplifier enabled/disabled. Saved phases are simplifier-running/candidate-ready, with only builder delegated. Extension integration tests exercise both shortened workflows.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "npm run check: run-verifier.integration.test.ts completes the registered verifier and child handoff tools with simplifier disabled and no findings, asserting candidate-ready and only verifier delegation. Extension integration also exercises builder with verifier to completion.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "npm run check: resolve-findings.integration.test.ts rejects current V1/F1 with reason \"Outside approved scope\" and simplifier disabled; the rejection and reason persist, saved phase is candidate-ready, and no agent is delegated.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "Inspected the final-summary guidance for spec only, builder only, builder with verifier, and builder with simplifier. Ran node --input-type=module assertions against getMaestroInstructions() confirming all four cases explicitly identify skipped work and prohibit false implementation/verification claims. npm run check also verifies shortened-route tool messages, final-summary prompt instructions, and completion recognition for all four routes.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "npm run check: assertEnvironment.integration.test.ts checks true/false/true, true/true/false, and true/false/false configurations using real preflight discovery with only enabled agent files available and unavailable model IDs for disabled agents. Each activation check succeeds with exactly one successful ping.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC9",
+      "probe": "npm run check: assertEnvironment.integration.test.ts covers builder disabled with all four later-flag combinations, no available agents or models, and no ping responder. Checks succeed with no model lookup or event emission. Extension integration additionally activates the spec-only workflow without a ping responder.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "Final npm run check passed formatting, lint, TypeScript, all 299 tests across 40 files, and coverage thresholds. Coverage: statements 95.71%, branches 88.62%, functions 99.47%, lines 95.79%. git diff --check passed.",
+    "Summary behavior was checked through static instruction inspection and offline integration tests, not live model-generated summary trials. Child AI work is scripted while registered tools, saved artifacts, transitions, and Pi sessions are real.",
+    "The existing failed pi-subagents availability reply regression passed. Configuration-aware transitions remain pure and centralized; a frozen-input test confirms approval does not mutate state or configuration.",
+    "Updated ADR.md and linked the approved spec from MAESTRO-27 in ROADMAP.md. Its status records implementation with owner acceptance still pending.",
+    "Temporary test projects were cleaned by test teardown; generated coverage output was removed. No dependencies, configuration flags for this running workflow, or frozen specification documents were changed."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261103-161424-maestro-27-make-implementation-phases-optional"
+}

@@ -16,7 +16,7 @@ export const resolveWorkflowContext = async ({ cwd, specId }: ResolveWorkflowCon
     throw new Error(`Invalid spec ID: "${specId}".`);
   }
 
-  const { paths, projectRoot } = await resolveToolRunContext(cwd);
+  const { paths, projectRoot, config } = await resolveToolRunContext(cwd);
 
-  return { paths, specId, projectRoot };
+  return { paths, specId, projectRoot, config };
 };

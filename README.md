@@ -2,23 +2,34 @@
 
 [![Coverage](https://img.shields.io/codecov/c/github/emiliosp/pi-maestro?logo=codecov)](https://codecov.io/gh/emiliosp/pi-maestro)
 
-Pi extension for a spec-driven multiagent development workflow.
+Pi extension for writing a `spec` and optionally implementing it through a spec-driven multiagent workflow.
 
 ![Maestro workflow](docs/maestro.png)
 
 ## The idea
 
-- A `specification` (`spec`) describes one reversible change.
-- The `builder` implements it.
-- An independent `verifier` checks every `acceptance criterion`.
-- A `simplifier` then refactors accepted code without changing behavior.
-- The `owner` performs the final review.
+`Maestro` has two goals:
+
+1. Help the `owner` write and approve a `specification` (`spec`) for one reversible change.
+2. Implement the approved `spec` through a multiagent workflow.
+
+The `owner` can use `Maestro` only to write and approve a `spec`, leaving implementation to another workflow, or to write the `spec` and implement it within `Maestro`.
+`Spec` preparation and approval are required. The entire implementation stage is optional, and each of its phases is optional too:
+
+1. The `builder` implements the approved `spec`.
+2. The independent `verifier` checks every `acceptance criterion`.
+3. The `simplifier` refactors accepted code without changing behavior.
+
+Disabling the `builder` skips the entire implementation stage. With the `builder` enabled, the `verifier` and `simplifier` can be disabled independently. All three are
+enabled by default. See [Phase selection](docs/configuration.md#phase-selection).
+
+The `owner` performs the final review.
 
 Five principles hold the workflow together:
 
 1. The approved `spec` defines the required work for the `builder` and `verifier`.
 2. No agent approves its own work.
-3. Every `acceptance criterion` is checked independently.
+3. When enabled, the `verifier` checks every `acceptance criterion` independently.
 4. The `owner` decides requirements, scope, and unresolved questions.
 5. Each agent has one and only one role. Specific and with clear instruction.
 
@@ -73,8 +84,8 @@ An `escalation` asks the `owner` to decide an implementation question. A `findin
 1. macOS.
 2. Node.js 26 or later.
 3. Pi 1.0.0 or later.
-4. `pi-subagents` installed and enabled in Pi.
-5. Access to the configured `builder`, `verifier`, and `simplifier` models.
+4. `pi-subagents` installed and enabled in Pi when `builder` is enabled.
+5. Access to the models for enabled agents.
 6. A project directory that Pi trusts.
 
 ## Installation
@@ -101,20 +112,20 @@ Activate `Maestro`:
 /maestro
 ```
 
-During activation, `Maestro` checks project trust, configuration, models, and agent availability. Model availability comes from Pi's model registry. If a check fails,
-`Maestro` stays disabled and reports the problem.
+During activation, `Maestro` checks project trust, configuration, and enabled agent and model availability. With `builder` disabled, only project trust and configuration
+are checked. Model availability comes from Pi's model registry. If a check fails, `Maestro` stays disabled and reports the problem.
 
 The `owner` follows this workflow:
 
 1. Describes one change to `Maestro`.
 2. Reviews the `spec`, including its `acceptance criteria` and concrete examples.
-3. Replies `GREEN FLAG` when `Maestro` asks for approval. `Maestro` records the approval and starts the `builder`.
+3. Replies `GREEN FLAG` when `Maestro` asks for approval. `Maestro` records the approval and starts the selected phases.
 4. Reviews every current `builder` `escalation` and gives `Maestro` an answer and reason for each question.
 5. Reviews `verifier` `findings` and chooses an action for every `finding`.
 6. Reads Maestro's summary at `candidate-ready` and performs the final review.
 
-`Maestro` starts the `verifier` after a successful `builder` `run`. All three agents run in the foreground: Pi waits for each `run` to finish and `Maestro` shows the
-current phase in Pi's status, while `pi-subagents` FleetView and `/subagents-fleet` show agent activity and transcripts.
+`Maestro` starts the `verifier`, when enabled, after a successful `builder` `run`. Selected agents run in the foreground: Pi waits for each `run` to finish and `Maestro`
+shows the current phase in Pi's status, while `pi-subagents` FleetView and `/subagents-fleet` show agent activity and transcripts.
 
 The `owner` must not edit product files while the workflow runs. `Maestro` can perform temporary experiments with `owner` agreement during `spec` preparation and
 permitted revisions. See [Workflow](docs/workflow.md#spec-approval).
@@ -126,8 +137,9 @@ changing phase.
 If any decision requires a `spec` change, the workflow returns to `drafting-spec` before the `owner` and `Maestro` revise the same `spec`. The `owner` reviews the revised
 `spec` and replies `GREEN FLAG` again. `Maestro` records renewed approval separately before another `builder` `run`.
 
-After successful verification or rejection of all `findings`, `Maestro` starts the `simplifier`. Only this step requires Git. If Git readiness cannot be confirmed,
-`Maestro` warns and skips simplification. The `simplifier` selects all uncommitted code changes, including pre-existing staged, unstaged, and untracked files.
+When enabled, `Maestro` starts the `simplifier` after successful verification, rejection of all `findings`, or `builder` completion with verification disabled. Only this
+step requires Git. If Git readiness cannot be confirmed, `Maestro` warns and skips simplification. The `simplifier` selects all uncommitted code changes, including
+pre-existing staged, unstaged, and untracked files.
 
 The workflow ends at `candidate-ready`. Rejected `findings` retain their reasons and accepted failures can remain. Maestro's summary separates independent verification
 from the later simplifier's report. After the final summary finishes successfully, `Maestro` automatically turns off. The `owner` controls later review, commits, pull
@@ -139,7 +151,9 @@ files do not automatically restore or resume an incomplete workflow. The `owner`
 ## Configuration
 
 `Maestro` uses default values when `.pi/maestro.json` is absent from the project root. The `owner` can add this file to change the `spec` directory, models, thinking
-levels, or timeouts. See [Configuration](docs/configuration.md).
+levels, timeouts, or selected phases. Each agent has a `required` boolean that defaults to `true`. Set flags before activation and keep configuration unchanged during the
+workflow. With `builder.required: false`, approval finishes with only an approved `spec` for implementation elsewhere. Otherwise `verifier` and `simplifier` can be
+disabled independently. Skipped work is identified in the final summary and is not claimed as completed. See [Configuration](docs/configuration.md#phase-selection).
 
 ## Documentation
 

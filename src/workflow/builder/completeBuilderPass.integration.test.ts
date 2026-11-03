@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import { BUILDER_HANDOFF_STATUSES, PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
+import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
 import { unavailableCompilerEscalation } from '#tests/fixtures/unavailable-compiler-escalation.ts';
 import {
@@ -27,7 +28,7 @@ afterEach(async () => {
 describe('builder completion', () => {
   it('given the builder is running when it submits a done report with passed probes then the current project workflow moves to ready-for-verifier', async () => {
     const { paths, repository } = await createApprovedWorkflow();
-    await prepareBuilderRun({ paths, specId: SPEC_ID });
+    await prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
 
     const handoff = {
       status: BUILDER_HANDOFF_STATUSES.DONE,
@@ -44,6 +45,7 @@ describe('builder completion', () => {
     };
 
     const completed = await completeBuilderPass({
+      config: DEFAULT_CONFIG,
       paths,
       specId: SPEC_ID,
       handoff,
@@ -60,7 +62,7 @@ describe('builder completion', () => {
     'given a compiler escalation with a probe marked %s when the owner answers it and the next builder run succeeds then B1 keeps the answer, B2 records success, and the workflow becomes ready-for-verifier',
     async (probeStatus) => {
       const { paths, repository } = await createApprovedWorkflow();
-      await prepareBuilderRun({ paths, specId: SPEC_ID });
+      await prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
 
       const { tool } = await piTestSessions.createRegisteredTool({
         cwd: repository.path,
@@ -103,6 +105,7 @@ describe('builder completion', () => {
         access(`${paths.getSpecPath(SPEC_ID)}/handoffs/escalations`),
       ).rejects.toMatchObject({ code: 'ENOENT' });
       await resolveEscalations({
+        config: DEFAULT_CONFIG,
         paths,
         specId: SPEC_ID,
         specChangeRequired: false,
@@ -115,7 +118,7 @@ describe('builder completion', () => {
           },
         ],
       });
-      await prepareBuilderRun({ paths, specId: SPEC_ID });
+      await prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
 
       const { tool: nextBuilder } = await piTestSessions.createRegisteredTool({
         cwd: repository.path,
@@ -171,7 +174,7 @@ describe('builder completion', () => {
 
   it('given a compiler escalation with passed, failed, and unrun probes when the builder submits its report then every probe result is preserved and the workflow enters escalation-decisions', async () => {
     const { paths, repository } = await createApprovedWorkflow();
-    await prepareBuilderRun({ paths, specId: SPEC_ID });
+    await prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
 
     const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
@@ -352,7 +355,7 @@ describe('builder completion', () => {
     'given %s when a builder report is submitted then submission fails without saving a report or changing the workflow',
     async (_name, handoff, message) => {
       const { paths, repository } = await createApprovedWorkflow();
-      await prepareBuilderRun({ paths, specId: SPEC_ID });
+      await prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
       const before = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
 
       const { tool } = await piTestSessions.createRegisteredTool({
@@ -381,7 +384,7 @@ describe('builder spec criterion presence', () => {
         new URL('../../../tests/fixtures/two-acceptance-criteria-spec.md', import.meta.url),
       ),
     );
-    await prepareBuilderRun({ paths, specId: SPEC_ID });
+    await prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
     const workflowBefore = await readFile(paths.getWorkflowPath(SPEC_ID));
 
     const entriesBefore = await readdir(paths.getSpecPath(SPEC_ID), {

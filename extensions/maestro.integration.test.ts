@@ -189,6 +189,12 @@ describe('main Maestro extension', () => {
     );
 
     expect(event.systemPromptOptions.sections.maestro).toContain('You are Maestro');
+    expect(event.systemPromptOptions.sections.maestro).toContain(
+      'Always identify every skipped phase and why. Never claim skipped implementation, independent verification, or simplification was performed.',
+    );
+    expect(event.systemPromptOptions.sections.maestro).toContain(
+      'Do not require handoffs for skipped phases.',
+    );
     expect(event.systemPromptOptions.sections.foreign).toBe('Keep foreign instructions');
 
     setStatus.mockClear();
@@ -266,6 +272,74 @@ describe('main Maestro extension', () => {
       'info',
     );
   });
+
+  it.each([
+    {
+      scenario: 'builder only',
+      builder: true,
+      verifier: false,
+      simplifier: false,
+      expectedAgents: [
+        `Builder (${DEFAULT_CONFIG.builder.model} ${DEFAULT_CONFIG.builder.thinking})`,
+      ],
+    },
+    {
+      scenario: 'builder and verifier',
+      builder: true,
+      verifier: true,
+      simplifier: false,
+      expectedAgents: [
+        `Builder (${DEFAULT_CONFIG.builder.model} ${DEFAULT_CONFIG.builder.thinking})`,
+        `Verifier (${DEFAULT_CONFIG.verifier.model} ${DEFAULT_CONFIG.verifier.thinking})`,
+      ],
+    },
+    {
+      scenario: 'builder and simplifier',
+      builder: true,
+      verifier: false,
+      simplifier: true,
+      expectedAgents: [
+        `Builder (${DEFAULT_CONFIG.builder.model} ${DEFAULT_CONFIG.builder.thinking})`,
+        `Simplifier (${DEFAULT_CONFIG.simplifier.model} ${DEFAULT_CONFIG.simplifier.thinking})`,
+      ],
+    },
+    {
+      scenario: 'builder disabled despite enabled later phases',
+      builder: false,
+      verifier: true,
+      simplifier: true,
+      expectedAgents: [],
+    },
+  ])(
+    'given $scenario when Maestro is activated then the notice lists only enabled agents',
+    async ({ builder, verifier, simplifier, expectedAgents }) => {
+      const repository = await createTemporaryProject();
+      cleanupFunctions.push(repository.cleanup);
+      await mkdir(join(repository.path, '.pi'));
+      await writeFile(
+        join(repository.path, '.pi/maestro.json'),
+        JSON.stringify({
+          version: SUPPORTED_CONFIG_VERSION,
+          builder: { required: builder },
+          verifier: { required: verifier },
+          simplifier: { required: simplifier },
+        }),
+      );
+
+      const { session, notify } = await piTestSessions.create({
+        cwd: repository.path,
+        extensions: [maestroExtension, successfulPingExtension],
+      });
+
+      await session.prompt('/maestro');
+
+      expect(notify).toHaveBeenCalledOnce();
+      expect(notify.mock.calls[0][1]).toBe('info');
+      expect(stripTerminalSequences(notify.mock.calls[0][0]).split('\n').slice(3)).toEqual(
+        expectedAgents,
+      );
+    },
+  );
 
   it('given an unavailable simplifier model when activation is requested then Maestro stays disabled and reports which model is unavailable', async () => {
     const repository = await createTemporaryProject();
@@ -922,10 +996,16 @@ describe('main Maestro extension', () => {
     'given $scenario when the final response finishes then Maestro exits only after successful delivery',
     async ({ completionEvent, summary, stopReason }) => {
       const { paths, repository } = await createApprovedWorkflow();
-      await prepareBuilderRun({ paths, specId: SPEC_ID });
-      await completeBuilderPass({ paths, specId: SPEC_ID, handoff: doneHandoff() });
-      await prepareVerifierRun({ paths, specId: SPEC_ID });
+      await prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
+      await completeBuilderPass({
+        config: DEFAULT_CONFIG,
+        paths,
+        specId: SPEC_ID,
+        handoff: doneHandoff(),
+      });
+      await prepareVerifierRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
       await completeVerifierPass({
+        config: DEFAULT_CONFIG,
         paths,
         specId: SPEC_ID,
         handoff: {
@@ -941,6 +1021,7 @@ describe('main Maestro extension', () => {
       await writeWorkflowState({
         path: paths.getWorkflowPath(SPEC_ID),
         state: transitionWorkflow({
+          config: DEFAULT_CONFIG,
           state: await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
           event: completionEvent,
         }),
@@ -1084,10 +1165,11 @@ describe('main Maestro extension', () => {
     paths,
     phase,
   }: PrepareSpecRevisionPhaseInput): Promise<void> => {
-    await prepareBuilderRun({ paths, specId: SPEC_ID });
+    await prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
 
     if (phase === WORKFLOW_PHASES.ESCALATION_DECISIONS) {
       await completeBuilderPass({
+        config: DEFAULT_CONFIG,
         paths,
         specId: SPEC_ID,
         handoff: unavailableCompilerEscalation,
@@ -1098,12 +1180,14 @@ describe('main Maestro extension', () => {
 
     // phase === WORKFLOW_PHASES.FINDING_DECISIONS
     await completeBuilderPass({
+      config: DEFAULT_CONFIG,
       paths,
       specId: SPEC_ID,
       handoff: doneHandoff(),
     });
-    await prepareVerifierRun({ paths, specId: SPEC_ID });
+    await prepareVerifierRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
     await completeVerifierPass({
+      config: DEFAULT_CONFIG,
       paths,
       specId: SPEC_ID,
       handoff: {
@@ -1257,6 +1341,7 @@ describe('main Maestro extension', () => {
 
       try {
         await completeBuilderPass({
+          config: DEFAULT_CONFIG,
           paths,
           specId: SPEC_ID,
           handoff: unavailableCompilerEscalation,

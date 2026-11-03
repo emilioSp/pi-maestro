@@ -32,8 +32,8 @@ reaching `candidate-ready`. Linear onboarding and test issues are not project ro
 | MAESTRO-23 | [Change agent models before a builder run](#maestro-23-change-agent-models-before-a-builder-run)                                   | Backlog                               |
 | MAESTRO-24 | [Add a simplifier with one clear purpose per agent](#maestro-24-add-a-simplifier-with-one-clear-purpose-per-agent)                 | Completed                             |
 | MAESTRO-25 | [Define workflow reconciliation](#maestro-25-define-workflow-reconciliation)                                                       | Backlog                               |
-| MAESTRO-26 | [Exit Maestro mode automatically at workflow completion](#maestro-26-exit-maestro-mode-automatically-at-workflow-completion)       | Implemented, acceptance not confirmed |
-| MAESTRO-27 | [Make all implementation phases optional](#maestro-27-make-all-implementation-phases-optional)                                   | Backlog                               |
+| MAESTRO-26 | [Exit Maestro mode automatically at workflow completion](#maestro-26-exit-maestro-mode-automatically-at-workflow-completion)       | Completed                             |
+| MAESTRO-27 | [Make all implementation phases optional](#maestro-27-make-all-implementation-phases-optional)                                     | Implemented, acceptance not confirmed |
 
 ## Backlog
 
@@ -90,6 +90,8 @@ Explore how `Maestro` can reconcile saved `artifacts` and workflow state. The re
 
 Not yet defined. The `owner` must define the intended outcome, recovery boundaries, and completion condition before this item can move forward.
 
+## Implemented, acceptance not confirmed
+
 ### MAESTRO-27: Make all implementation phases optional
 
 #### Objective
@@ -110,20 +112,20 @@ remain required.
    decisions are resolved.
 6. The final summary clearly identifies skipped phases and does not claim that skipped implementation or verification has been completed.
 
-#### Decisions to define in the spec
+#### Implementation and evidence
 
-1. Where and when phase selection is configured.
-2. Default selections.
-3. Whether selections can change after a workflow starts.
-4. Whether the `verifier` or `simplifier` can run without a `builder` phase in the same workflow.
+Implemented under the [specification](.specs/20261103-161424-maestro-27-make-implementation-phases-optional/spec.md), awaiting `owner` acceptance. Each agent's `required`
+boolean in `.pi/maestro.json` defaults to `true`. Flags are set before activation and remain unchanged during the workflow. Disabling `builder` skips all three agents;
+otherwise `verifier` and `simplifier` are independently optional. `Spec` preparation and approval remain required. The activation notice lists only enabled agents and no
+agents when `builder` is disabled.
+
+The [README](README.md#the-idea) presents the two uses of `Maestro`: writing and approving a `spec` only, or also implementing it through optional agent phases.
 
 #### Context
 
 [MAESTRO-24](#maestro-24-add-a-simplifier-with-one-clear-purpose-per-agent) introduced the `simplifier`. Its existing Git-unavailable skip is not an explicit `owner`
 choice. This item originally made only the post-`builder` phases optional. The `owner` expanded the scope to include the `builder`, so `Maestro` can also be used solely
 for writing and approving a `spec`.
-
-## Implemented, acceptance not confirmed
 
 ### MAESTRO-26: Exit Maestro mode automatically at workflow completion
 

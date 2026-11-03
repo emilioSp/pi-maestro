@@ -40,14 +40,16 @@ const execFileAsync = promisify(execFile);
 
 const createSimplifierWorkflow = async () => {
   const workflow = await createApprovedWorkflow();
-  await prepareBuilderRun({ paths: workflow.paths, specId: SPEC_ID });
+  await prepareBuilderRun({ config: DEFAULT_CONFIG, paths: workflow.paths, specId: SPEC_ID });
   await completeBuilderPass({
+    config: DEFAULT_CONFIG,
     paths: workflow.paths,
     specId: SPEC_ID,
     handoff: doneHandoff(),
   });
-  await prepareVerifierRun({ paths: workflow.paths, specId: SPEC_ID });
+  await prepareVerifierRun({ config: DEFAULT_CONFIG, paths: workflow.paths, specId: SPEC_ID });
   await completeVerifierPass({
+    config: DEFAULT_CONFIG,
     paths: workflow.paths,
     specId: SPEC_ID,
     handoff: {
@@ -141,6 +143,7 @@ describe('run simplifier', () => {
           theme.fg('accent', 'Simplifier running'),
       );
       await completeSimplifierPass({
+        config: DEFAULT_CONFIG,
         paths,
         specId: SPEC_ID,
         handoff: {

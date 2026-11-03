@@ -3,23 +3,27 @@
  * Used: When Maestro starts a verifier pass.
  */
 
+import type { MaestroConfig } from '#config/schema.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
+import { WORKFLOW_EVENTS, WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 
 export type VerifierRun = {
+  state: WorkflowState;
   specId: string;
   projectRoot: string;
 };
 
 type PrepareVerifierRunInput = {
+  config: MaestroConfig;
   paths: MaestroPaths;
   specId: string;
 };
 
 export const prepareVerifierRun = async ({
+  config,
   paths,
   specId,
 }: PrepareVerifierRunInput): Promise<VerifierRun> => {
@@ -40,6 +44,7 @@ export const prepareVerifierRun = async ({
   }
 
   const nextState = transitionWorkflow({
+    config,
     state: currentState,
     event: WORKFLOW_EVENTS.RUN_VERIFIER,
   });
@@ -50,6 +55,7 @@ export const prepareVerifierRun = async ({
   });
 
   return {
+    state: nextState,
     specId,
     projectRoot,
   };

@@ -118,6 +118,7 @@ export const registerRunSimplifierTool = (pi: ExtensionAPI): void => {
 
       if (!(await isGitReady({ pi, projectRoot }))) {
         const nextState = transitionWorkflow({
+          config,
           state,
           event: WORKFLOW_EVENTS.SIMPLIFIER_SKIPPED,
         });

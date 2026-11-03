@@ -4,7 +4,7 @@
  */
 
 import { deepStrictEqual, strictEqual } from 'node:assert';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -32,7 +32,7 @@ type CreatePiSessionInput = {
   extensions: ExtensionFactory[];
   additionalExtensionPaths?: string[];
   projectTrusted?: boolean;
-  maestroAgentsAvailable?: boolean;
+  maestroAgentsAvailable?: boolean | string[];
   sessionStartEvent?: SessionStartEvent;
 };
 
@@ -74,11 +74,23 @@ class PiTestSessions {
     await writeFile(
       join(agentDir, 'settings.json'),
       JSON.stringify({
-        packages: maestroAgentsAvailable
-          ? [dirname(fileURLToPath(import.meta.resolve('#package.json')))]
-          : [],
+        packages:
+          maestroAgentsAvailable === true
+            ? [dirname(fileURLToPath(import.meta.resolve('#package.json')))]
+            : [],
       }),
     );
+
+    if (Array.isArray(maestroAgentsAvailable)) {
+      await mkdir(join(agentDir, 'agents'));
+
+      for (const role of maestroAgentsAvailable) {
+        await writeFile(
+          join(agentDir, 'agents', `${role}.md`),
+          await readFile(new URL(import.meta.resolve(`#agents/${role}.md`)), 'utf8'),
+        );
+      }
+    }
 
     const modelRuntime = await ModelRuntime.create({
       authPath: join(agentDir, 'auth.json'),

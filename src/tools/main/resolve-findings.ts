@@ -96,6 +96,10 @@ const formatResolution = (details: FindingResolutionDetails): string => {
     return `${summary} The workflow is ready-for-builder. Run the builder separately.`;
   }
 
+  if (details.phase === WORKFLOW_PHASES.CANDIDATE_READY) {
+    return `${summary} The workflow is candidate-ready. Simplifier skipped by configuration.`;
+  }
+
   return `${summary} The workflow is simplifier-running. Call maestro_run_simplifier next with this specId, without another approval or verifier pass.`;
 };
 
@@ -106,13 +110,9 @@ export const registerResolveFindingsTool = (pi: ExtensionAPI): void => {
     description: RESOLVE_FINDINGS_TOOL.DESCRIPTION,
     parameters: ResolveFindingsToolParameters,
     async execute(_toolCallId, { specId, decisions }, _signal, _onUpdate, context) {
-      const { paths } = await resolveToolRunContext(context.cwd);
+      const { paths, config } = await resolveToolRunContext(context.cwd);
 
-      const resolved = await resolveFindings({
-        paths,
-        specId,
-        decisions,
-      });
+      const resolved = await resolveFindings({ config, paths, specId, decisions });
 
       const details: FindingResolutionDetails = {
         specId: resolved.state.specId,

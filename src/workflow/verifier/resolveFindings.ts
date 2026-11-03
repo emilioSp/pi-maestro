@@ -7,6 +7,7 @@ import { assertVerifierHandoff } from '#artifacts/verifier-handoff/assertVerifie
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import type { VerifierFinding, VerifierHandoff } from '#artifacts/verifier-handoff/schema.ts';
 import { FINDING_DECISIONS } from '#artifacts/verifier-handoff/schema.ts';
+import type { MaestroConfig } from '#config/schema.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { writeJson } from '#utils/write-json.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -127,12 +128,14 @@ const getSavedFindingDecision = (decision: FindingDecision | undefined): SavedFi
 };
 
 type ResolveFindingsInput = {
+  config: MaestroConfig;
   paths: MaestroPaths;
   specId: string;
   decisions: FindingDecision[];
 };
 
 export const resolveFindings = async ({
+  config,
   paths,
   specId,
   decisions,
@@ -147,6 +150,7 @@ export const resolveFindings = async ({
   const nextHandoff = { ...handoff, findings };
 
   const nextState = transitionWorkflow({
+    config,
     state,
     event: getWorkflowEventByVerifierHandoff(nextHandoff),
   });

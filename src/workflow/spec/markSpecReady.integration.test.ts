@@ -76,6 +76,7 @@ describe('markSpecReady', () => {
 
     await expect(
       markSpecReady({
+        config: DEFAULT_CONFIG,
         paths,
         specId: OTHER_SPEC_ID,
         activeWorkflowSpecId: SPEC_ID,
@@ -85,6 +86,7 @@ describe('markSpecReady', () => {
     );
     await expect(
       markSpecReady({
+        config: DEFAULT_CONFIG,
         paths,
         specId: SPEC_ID,
         activeWorkflowSpecId: SPEC_ID,
@@ -111,7 +113,12 @@ describe('markSpecReady', () => {
     await writeFile(created.specFilePath, markdown, 'utf8');
 
     await expect(
-      markSpecReady({ paths, specId: SPEC_ID, activeWorkflowSpecId: SPEC_ID }),
+      markSpecReady({
+        config: DEFAULT_CONFIG,
+        paths,
+        specId: SPEC_ID,
+        activeWorkflowSpecId: SPEC_ID,
+      }),
     ).rejects.toThrow('Fix acceptance criterion ordering in spec.md.');
     await expect(readFile(created.specFilePath, 'utf8')).resolves.toBe(markdown);
     await expect(readWorkflowState(created.workflowPath)).resolves.toEqual(created.state);
@@ -178,6 +185,7 @@ describe('markSpecReady', () => {
 
       await expect(
         markSpecReady({
+          config: DEFAULT_CONFIG,
           paths,
           specId: SPEC_ID,
           activeWorkflowSpecId: SPEC_ID,
@@ -207,6 +215,7 @@ describe('markSpecReady', () => {
 
       await expect(
         markSpecReady({
+          config: DEFAULT_CONFIG,
           paths,
           specId: SPEC_ID,
           activeWorkflowSpecId: SPEC_ID,
@@ -229,6 +238,7 @@ describe('markSpecReady', () => {
 
     await expect(
       markSpecReady({
+        config: DEFAULT_CONFIG,
         paths,
         specId: SPEC_ID,
         activeWorkflowSpecId: SPEC_ID,
@@ -243,7 +253,12 @@ describe('markSpecReady', () => {
     await rm(created.proposalFilePath);
 
     await expect(
-      markSpecReady({ paths, specId: SPEC_ID, activeWorkflowSpecId: SPEC_ID }),
+      markSpecReady({
+        config: DEFAULT_CONFIG,
+        paths,
+        specId: SPEC_ID,
+        activeWorkflowSpecId: SPEC_ID,
+      }),
     ).rejects.toThrow(`Proposal file is missing: ${created.proposalFilePath}.`);
     await expect(readWorkflowState(created.workflowPath)).resolves.toEqual(created.state);
   });
@@ -254,6 +269,7 @@ describe('markSpecReady', () => {
 
     await expect(
       markSpecReady({
+        config: DEFAULT_CONFIG,
         paths,
         specId: SPEC_ID,
         activeWorkflowSpecId: SPEC_ID,

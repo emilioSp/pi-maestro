@@ -1,0 +1,14 @@
+{
+  "specId": "20261103-161424-maestro-27-make-implementation-phases-optional",
+  "refactoredFiles": [
+    "src/tools/main/run-builder.ts"
+  ],
+  "summary": "Flattened builder result formatting with an early return, preserving all messages and behavior.",
+  "notes": [
+    "Discovered 41 uncommitted code files using NUL-separated Git status, including staged, unstaged, and untracked scope. Other reviewed code was left unchanged.",
+    "npm run check passed formatting, lint, typechecking, all 299 tests across 40 files, and coverage thresholds. Coverage matches the accepted baseline: statements 95.71%, branches 88.62%, functions 99.47%, lines 95.79%. git diff --check passed.",
+    "Preserved the owner's rejection of V1/F1 and its accepted generated-summary verification limitation. No generated-summary trials or new verifier pass were performed; AC7 is not represented as independently verified.",
+    "No tests, frozen documents, earlier handoffs, Git index, or history were changed. Checks made no additional source changes. Removed generated coverage output and the temporary diff view."
+  ],
+  "version": "1.0.0"
+}

@@ -16,9 +16,11 @@ import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
+  doneHandoff,
   SPEC_ID,
 } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
+import { registerRecordBuilderHandoffTool } from '#tools/child/record-builder-handoff.ts';
 import { registerRunBuilderTool } from '#tools/main/run-builder.ts';
 import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
@@ -44,6 +46,7 @@ describe('run builder tool', () => {
       // JUSTIFICATION: The run tool emits a delegation request on this channel.
       const request = payload as SubagentDelegationRequest;
       await completeBuilderPass({
+        config: DEFAULT_CONFIG,
         paths,
         specId: SPEC_ID,
         handoff: csvExportEscalation,
@@ -94,6 +97,7 @@ describe('run builder tool', () => {
         const request = payload as SubagentDelegationRequest;
 
         const completed = await completeBuilderPass({
+          config: DEFAULT_CONFIG,
           paths,
           specId: SPEC_ID,
           handoff: csvExportEscalation,
@@ -166,6 +170,7 @@ describe('run builder tool', () => {
       });
 
       await completeBuilderPass({
+        config: DEFAULT_CONFIG,
         paths,
         specId: SPEC_ID,
         handoff: {
@@ -243,6 +248,7 @@ describe('run builder tool', () => {
       const request = payload as SubagentDelegationRequest;
 
       const opened = await completeBuilderPass({
+        config: DEFAULT_CONFIG,
         paths,
         specId: SPEC_ID,
         handoff: csvExportEscalation,
@@ -442,3 +448,61 @@ describe('run builder tool', () => {
     });
   });
 });
+
+it.each([
+  { simplifier: true, phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING },
+  { simplifier: false, phase: WORKFLOW_PHASES.CANDIDATE_READY },
+])(
+  'given verifier disabled and simplifier=$simplifier when builder completes then $phase is saved without verifier delegation',
+  async ({ simplifier, phase }) => {
+    const { paths, repository } = await createApprovedWorkflow({
+      agents: {
+        verifier: { required: false },
+        simplifier: { required: simplifier },
+      },
+    });
+
+    const { tool, events, emit } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerRunBuilderTool,
+    });
+
+    const { tool: childTool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerRecordBuilderHandoffTool,
+    });
+
+    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
+      // JUSTIFICATION: The run tool emits a delegation request on this channel.
+      const request = payload as SubagentDelegationRequest;
+      await childTool.execute('record-builder', { specId: SPEC_ID, ...doneHandoff() });
+      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
+        requestId: request.requestId,
+        ownerRunId: request.ownerRunId,
+        nodeId: request.nodeId,
+        status: DELEGATION_STATUSES.COMPLETED,
+        result: { kind: 'text', text: 'Saved' },
+      });
+    });
+    const result = await tool.execute('builder-without-verifier', { specId: SPEC_ID });
+    expect(result.details).toMatchObject({ phase, outcome: BUILDER_HANDOFF_STATUSES.DONE });
+    await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
+      phase,
+    });
+    expect(
+      emit.mock.calls.filter(([event]) => event === SUBAGENT_DELEGATION_REQUEST_EVENT),
+    ).toEqual([
+      [SUBAGENT_DELEGATION_REQUEST_EVENT, expect.objectContaining({ agent: AGENTS.BUILDER })],
+    ]);
+    expect(result.content).toEqual([
+      {
+        type: 'text',
+        text: expect.stringContaining(
+          simplifier
+            ? 'Verifier skipped by configuration'
+            : 'Verifier and simplifier skipped by configuration',
+        ),
+      },
+    ]);
+  },
+);

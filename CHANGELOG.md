@@ -3,6 +3,14 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
+## 0.15.0
+
+1. Added per-agent `required` booleans in `.pi/maestro.json`, all defaulting to `true`. Disabling `builder` completes the workflow at `spec` approval without agents;
+   otherwise `verifier` and `simplifier` can be disabled independently. See [PR #45](https://github.com/emilioSp/pi-maestro/pull/45).
+2. Limited activation checks and displayed agent details to enabled phases. With `builder` disabled, activation requires no agents, models, or `pi-subagents` ping.
+3. Updated workflow transitions, tool messages, agent guidance, and documentation for optional phases. Final-summary guidance identifies skipped work without claiming
+   implementation, independent verification, or simplification occurred.
+
 ## 0.14.0
 
 1. Removed Maestro's model format regex while retaining activation checks against Pi's available model registry. Complete identifiers, including

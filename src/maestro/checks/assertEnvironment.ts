@@ -50,21 +50,29 @@ const getActivationConfiguration = async (
 
 type AssertModelsAvailableInput = {
   context: ExtensionContext;
-  config: Awaited<ReturnType<typeof loadConfiguration>>;
+  models: string[];
 };
 
-function assertModelsAvailable({ context, config }: AssertModelsAvailableInput): void {
+function assertModelsAvailable({ context, models }: AssertModelsAvailableInput): void {
   const availableModels = context.modelRegistry.getAvailable();
 
-  for (const model of [config.builder.model, config.verifier.model, config.simplifier.model]) {
+  for (const model of models) {
     if (!availableModels.some((entry) => `${entry.provider}/${entry.id}` === model)) {
       throw new Error(`Configured model is not available: "${model}".`);
     }
   }
 }
 
-async function assertAgentsAvailable(projectRoot: string): Promise<void> {
-  for (const agent of [AGENTS.BUILDER, AGENTS.VERIFIER, AGENTS.SIMPLIFIER]) {
+type AssertAgentsAvailableInput = {
+  projectRoot: string;
+  agents: string[];
+};
+
+async function assertAgentsAvailable({
+  projectRoot,
+  agents,
+}: AssertAgentsAvailableInput): Promise<void> {
+  for (const agent of agents) {
     const result = await resolveSubagentLaunchContract({
       agent,
       cwd: projectRoot,
@@ -138,18 +146,25 @@ export async function assertEnvironment({
   piEventsBus,
 }: AssertEnvironmentInput): Promise<void> {
   const projectRoot = await getProjectRoot(context);
+  const config = await getActivationConfiguration(projectRoot);
+
+  if (!config.builder.required) return;
+
+  const enabledAgents = [
+    { agent: AGENTS.BUILDER, settings: config.builder },
+    { agent: AGENTS.VERIFIER, settings: config.verifier },
+    { agent: AGENTS.SIMPLIFIER, settings: config.simplifier },
+  ].filter(({ settings }) => settings.required);
 
   try {
-    await assertAgentsAvailable(projectRoot);
+    await assertAgentsAvailable({ projectRoot, agents: enabledAgents.map(({ agent }) => agent) });
   } catch (error) {
     throw new Error(
       `Builder, verifier, or simplifier agent check failed: ${getErrorMessage(error)}`,
     );
   }
 
-  const config = await getActivationConfiguration(projectRoot);
-
-  assertModelsAvailable({ context, config });
+  assertModelsAvailable({ context, models: enabledAgents.map(({ settings }) => settings.model) });
 
   try {
     await assertSubagentsRespond(piEventsBus);

@@ -247,3 +247,31 @@ failures during delegation still use the existing `run` failure path. Workflow r
 
 [Configuration](docs/configuration.md#model-access), [activation checks](src/maestro/checks/assertEnvironment.ts), and
 [delegation](src/tools/utils/pi-subagent-delegation.ts).
+
+## ADR-009: Select optional phases in the transition table
+
+### Status
+
+Accepted. Implemented under MAESTRO-27.
+
+### Context
+
+The `owner` selected configuration flags to support workflows with only an approved `spec` and independently optional later agents without a separate phase-selection
+interface.
+
+### Decision
+
+Each agent has a `required` boolean that defaults to `true`. Disabling `builder` skips all agents. Otherwise `verifier` and `simplifier` can be disabled independently.
+Flags are set before activation and stay unchanged during the workflow. Keep existing configuration reads, without caching or runtime controls.
+
+Keep destination selection in `src/workflow/transitions.ts`. A transition destination is either a fixed phase or a pure function of resolved configuration. Callers pass
+configuration to `transitionWorkflow` and save its returned state. No new workflow states, events, or persisted selection fields are needed.
+
+### Consequences
+
+Approval can finish at `candidate-ready` without agent execution. Agent and model availability checks apply only to selected phases; activation with only an approved
+`spec` needs no `pi-subagents` ping. Final summaries identify skipped work, without claiming implementation or independent verification occurred.
+
+### Evidence
+
+[Approved design](.specs/20261103-161424-maestro-27-make-implementation-phases-optional/design.md) and [phase selection](docs/configuration.md#phase-selection).

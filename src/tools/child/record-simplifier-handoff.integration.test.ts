@@ -7,6 +7,7 @@ import { readFile } from 'node:fs/promises';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -24,13 +25,14 @@ import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 
 const createRunningVerifier = async () => {
   const workflow = await createApprovedWorkflow();
-  await prepareBuilderRun({ paths: workflow.paths, specId: SPEC_ID });
+  await prepareBuilderRun({ config: DEFAULT_CONFIG, paths: workflow.paths, specId: SPEC_ID });
   await completeBuilderPass({
+    config: DEFAULT_CONFIG,
     paths: workflow.paths,
     specId: SPEC_ID,
     handoff: doneHandoff(),
   });
-  await prepareVerifierRun({ paths: workflow.paths, specId: SPEC_ID });
+  await prepareVerifierRun({ config: DEFAULT_CONFIG, paths: workflow.paths, specId: SPEC_ID });
 
   return workflow;
 };
@@ -53,6 +55,7 @@ describe('record simplifier handoff', () => {
   it('given verification has passed when the simplifier submits changed files, a summary, and notes then S.json preserves those fields and the workflow becomes candidate-ready', async () => {
     const { paths, repository } = await createRunningVerifier();
     await completeVerifierPass({
+      config: DEFAULT_CONFIG,
       paths,
       specId: SPEC_ID,
       handoff: verifiedHandoff,
