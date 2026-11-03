@@ -31,16 +31,19 @@ export const DEFAULT_CONFIG: MaestroConfig = {
   version: DEFAULT_CONFIG_VERSION,
   specDirectory: DEFAULT_SPEC_DIRECTORY,
   builder: {
+    required: true,
     model: DEFAULT_BUILDER_MODEL,
     thinking: DEFAULT_BUILDER_THINKING,
     timeoutMinutes: DEFAULT_TIMEOUT_MINUTES,
   },
   simplifier: {
+    required: true,
     model: DEFAULT_SIMPLIFIER_MODEL,
     thinking: THINKING_LEVELS.HIGH,
     timeoutMinutes: DEFAULT_TIMEOUT_MINUTES,
   },
   verifier: {
+    required: true,
     model: DEFAULT_VERIFIER_MODEL,
     thinking: DEFAULT_VERIFIER_THINKING,
     timeoutMinutes: DEFAULT_TIMEOUT_MINUTES,
