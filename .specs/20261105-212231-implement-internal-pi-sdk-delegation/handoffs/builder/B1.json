@@ -1,0 +1,91 @@
+{
+  "status": "done",
+  "summary": "Implemented the standalone native Pi SDK executor, fresh persisted sessions, native resource and tool discovery with pre-load Maestro exclusion, cooperative cancellation, and extension shutdown. Existing workflow delegation remains on pi-subagents. All 15 criteria passed manual probes; npm run check passed 284 tests.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Ran node .tmp-sdk-proof.mjs with an isolated directory and no workflow, supplying sdk-proof/proof (available through a loopback OpenAI-compatible provider), high thinking, Italian role guidance, and message.txt containing ciao. Inspected the actual child model/thinking settings and native read result; returned text was ciao.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "The temporary manual harness created a native parent containing PARENT_ONLY_42, executed a first task containing CHILD_ONLY_17, then a second task without either marker. Compared saved session identities and the second child's initial native context: identities differed and neither marker appeared.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "In node .tmp-sdk-proof.mjs, native before_agent_start observation confirmed GLOBAL_CHECK_1 from isolated global AGENTS.md, PROJECT_CHECK_2 from project AGENTS.md, and supplied ROLE_CHECK_3 in effective instructions. Also confirmed native APPEND_SYSTEM.md content remained present.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Made sdk-proof discoverable with description Check a sample file and body marker SKILL_BODY_8. The manual harness asserted that the initial catalog contained the skill and description but not the body marker, then read SKILL.md through the native tool and found SKILL_BODY_8 in the saved tool result.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Executed the manual TOOLS scenario through the SDK: native read returned value.txt content 7 and invocation-only double_value returned 14 for input 7. Read both results with SessionManager.open; no Maestro handoff extension was supplied.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "Configured isolated global_echo and project_echo extensions, native codemode and tool_search activation, and a local stdio MCP echo server with deferred exposure. The manual EXTENSIONS scenario executed both extension tools, discovered mcp__proof__echo using tool_search, and called it through codemode. Saved results contained global, project, and mcp-ok without tool errors.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "Loaded the main Maestro extension in a native parent, activated it on 20261105-120000-sample-change, and executed independent children. Inspected loaded child extension paths and used an installed-copy fixture whose main entry throws if loaded. Neither main entry loaded; after child cleanup the parent's active mode, selected spec, and owned resource remained intact.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "Ran a child whose cooperative_wait remained pending behind an explicit release gate. After 200 ms the caller was still pending and had not started its next awaited child. Released the gate and asserted first-child disposal before second-child startup. Source inspection and the final inline Node assertions confirmed no executor timer or deadline.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC9",
+      "probe": "The manual harness requested missing-provider/missing-model and observed an availability diagnostic, no session launch, and no provider request. Separately returned terminal HTTP 400 manual-proof-failure from the configured provider: TaskExecutionError retained that diagnostic and cause, with exactly one child and one failed provider request, and no replacement execution.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC10",
+      "probe": "Cancelled a child inside an abort-aware cooperative tool after writing partial.txt. Observed the tool signal abort, held its final stop behind another release gate, and confirmed the invocation remained pending until released. Then received AbortError after idle shutdown; partial.txt and the native saved session remained, and the cancellation listener was removed.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC11",
+      "probe": "Exercised an already-aborted signal and a separate cancellation while bindExtensions preparation was gated. Neither submitted a provider task or created should-not-exist.txt. Both reported interruption without an invented saved path; preparation resources and cancellation listeners were cleaned up. The already-cancelled boundary also passed its colocated unit test.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC12",
+      "probe": "Instrumented native bind, subscribe/unsubscribe, and dispose in the temporary harness. Global and project extensions acquired file descriptors on session_start and closed them on session_shutdown. Success, post-start preparation fault injection, terminal execution failure, and cancellation all shut down while idle and disposed their sessions. All 12 acquired children were disposed, subscription balances were zero, caller abort listeners were removed, and the parent resource stayed open until its own shutdown.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC13",
+      "probe": "Completed the manual file-reading task and opened its returned sessionFile through SessionManager.open. Verified user task, assistant messages, and native read result. The readable native file was beneath SessionManager.create(cwd).getSessionDir()/subagents, and no transcript directory was created in the project.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC14",
+      "probe": "Inspected TaskExecutionError.sessionFile for the manual terminal provider failure and active cancellation. Both paths existed and were readable through SessionManager.open, containing respectively the failed task and cooperative tool conversation. Missing-model and pre-submission failures exposed no saved path.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC15",
+      "probe": "Compared README.md, docs/subagent-integration.md, ROADMAP.md, and the executor with all three unchanged role tools. Final inline Node assertions checked documented inputs, cancellation and storage, the specification link, explicit non-acceptance wording, and unchanged pi-subagents imports. npm run check passed all 284 tests and coverage thresholds; git diff --check passed.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "Manual probes used real Pi 1.5.0 SDK sessions and native tools with a controlled loopback provider producing scripted responses, plus a real local stdio MCP fixture. No external live-model generation or package installation was used.",
+    "The temporary harness was executed with node .tmp-sdk-proof.mjs. Its script, temporary instructions, extensions, provider/MCP fixtures, and temporary session files were removed after inspection. Prototype instrumentation was restored in finally blocks. No standalone automated integration tests were added; two preparation-boundary unit tests were added.",
+    "Pi's extensionsOverride runs after extension code has loaded. The implementation first uses native package discovery to resolve enabled extension paths, excludes the main Maestro entry including installed copies, then loads those paths through native resource services. Native APPEND_SYSTEM discovery is preserved alongside supplied role guidance.",
+    "Final npm run check: 41 test files and 284 tests passed. Coverage: statements 89.57%, branches 82.1%, functions 90.9%, lines 90.2%. Existing workflow tools, dependency declarations, and workflow routing code were not changed.",
+    "Roadmap evidence records implementation and manual verification, not final owner acceptance. No new architectural decision was introduced beyond the approved design, so ADR.md was not changed."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261105-212231-implement-internal-pi-sdk-delegation"
+}

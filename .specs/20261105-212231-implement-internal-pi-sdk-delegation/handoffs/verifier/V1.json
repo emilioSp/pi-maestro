@@ -1,0 +1,91 @@
+{
+  "version": "1.0.0",
+  "specId": "20261105-212231-implement-internal-pi-sdk-delegation",
+  "summary": "Independently exercised all 15 criteria against the live candidate. Native SDK manual probes and repository checks matched expected results. No findings recorded.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "node .tmp-verifier-sdk.mjs: invoked executeTask without a workflow using loopback proof/proof, high thinking, Italian role guidance, and message.txt. Inspected the native session settings and read result; returned ciao.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "node .tmp-verifier-sdk.mjs: created a native parent conversation with PARENT_ONLY_42, completed a child task with CHILD_ONLY_17, and executed a second independent task. Second provider context contained neither marker and its saved session identity differed.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "node .tmp-verifier-sdk.mjs: inspected the actual initial provider payload. Discovered GLOBAL_CHECK_1, PROJECT_CHECK_2, and supplied ROLE_CHECK_3 were all present.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "node .tmp-verifier-sdk.mjs: initial context listed sdk-proof and its description without SKILL_BODY_8. Native read of its SKILL.md subsequently placed that body marker in the saved conversation.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "node .tmp-verifier-sdk.mjs: native read returned value.txt content 7; invocation-only double_value executed with 7 and returned 14. Native session records contained both results and the child had no Maestro handoff tools.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "node .tmp-verifier-sdk.mjs: enabled isolated global/project echo extensions, native tool_search and codemode, and a real local stdio MCP echo server. Executed both extension tools, searched for MCP echo, and called tools.mcp__proof__echo through codemode. Results contained global, project, and mcp-ok with no tool errors.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "node .tmp-verifier-sdk.mjs: activated the parent's Maestro state with selected spec 20261105-120000-sample-change. Configured the actual main extension and an installed-copy main entry that throws if loaded. Child loaded-extension lists excluded both; completed child disposal preserved active mode and selected spec.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "node .tmp-verifier-sdk.mjs: held a cooperative child tool behind an explicit release gate. After 100 ms the awaiting caller had not advanced. Following release, verified disposal before starting the second awaited child. Inspected executeTask.ts for absence of executor timers or deadlines.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC9",
+      "probe": "node .tmp-verifier-sdk.mjs: missing-provider/missing-model reported model unavailability without creating a child. A terminal HTTP 400 manual-proof-failure retained its diagnostic cause and produced exactly one child and one provider request, without replacement execution.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC10",
+      "probe": "node .tmp-verifier-sdk.mjs: child wrote partial.txt and entered an abort-aware tool. Caller cancellation reached the tool and session.abort; invocation remained pending until a separate stop gate was released. Received AbortError after disposal, retained partial.txt and saved conversation, and observed no remaining caller abort listener.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC11",
+      "probe": "node .tmp-verifier-sdk.mjs: exercised an already-aborted signal and cancellation while native bindExtensions preparation was gated. Neither submitted a provider request or created should-not-exist.txt; preparation child was disposed, listener removed, and no saved path invented.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC12",
+      "probe": "node .tmp-verifier-sdk.mjs: observed native session_start/session_shutdown, dispose, abort, and subscribe/unsubscribe across success, injected preparation failure after extension startup, terminal execution failure, and active cancellation. All 12 children were disposed, global/project startup and shutdown counts balanced, and event subscription balances were zero.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC13",
+      "probe": "node .tmp-verifier-sdk.mjs: opened the completed conversation with SessionManager.open and verified user, assistant, and tool-result records. Saved path was beneath SessionManager.create(canonicalCwd).getSessionDir()/subagents, with no transcript directory in the project.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC14",
+      "probe": "node .tmp-verifier-sdk.mjs: terminal provider failure exposed a readable session containing Persisted failing task; active cancellation exposed its saved tool conversation. A missing-model failure before conversation creation exposed no sessionFile.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC15",
+      "probe": "Compared README.md, docs/subagent-integration.md, and ROADMAP.md with executeTask.ts and all three role tools. Documentation states inputs, cooperative cancellation, native storage, internal-only status, continued pi-subagents use, spec/evidence links, and no owner acceptance. Confirmed unchanged pi-subagent-delegation imports. npm run check and git diff --check succeeded.",
+      "probeStatus": "passed"
+    }
+  ],
+  "findings": [],
+  "notes": [
+    "Manual probes used real Pi 1.5.0 SDK sessions on Node.js 26.7.0 with a controlled loopback provider and local stdio MCP server. No external model generation, package installation, workflow-role migration, or new automated integration tests were performed.",
+    "The independent temporary harness exercised 12 child sessions and 20 provider requests per complete run. It was removed along with isolated instructions, extensions, MCP fixtures, and native session files. Process-local prototype instrumentation was restored.",
+    "The initial AC13 harness assertion used the noncanonical macOS /var alias while the executor canonicalizes it to /private/var. Repeated the full harness using the canonical working directory for the native API comparison; all assertions passed. No candidate change was made.",
+    "npm run check passed 41 test files and 284 tests with coverage thresholds satisfied. Its formatting and lint-fix steps changed no candidate source or documentation. Pre-existing coverage reports were restored to their exact original bytes after the check.",
+    "Read B1 and compared its described manual scenarios with the approved criteria. Its temporary harness had already been removed, so evidence was regenerated independently rather than relying on its recorded results.",
+    "All temporary changes were removed or restored. Approved documents, workflow state, builder handoff, and pre-existing candidate changes were preserved before submission."
+  ]
+}
