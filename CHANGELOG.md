@@ -3,6 +3,15 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
+## Unreleased
+
+1. Added a standalone internal Pi SDK executor. Each invocation starts a fresh conversation with supplied model, thinking
+   level, role guidance, working directory, and additional tools. Native resource discovery loads instructions, skills, enabled extensions, and configured MCP, codemode,
+   and tool search support, excluding the main `Maestro` extension.
+2. Added native child session persistence in `subagents/` beneath Pi's project session directory.
+
+The `builder`, `verifier`, and `simplifier` still use `pi-subagents`. Workflow migration and dependency removal remain separate work.
+
 ## 0.16.0
 
 1. Required Pi 1.5.0 or later and pinned the development Pi dependencies to that baseline, so type checks and tests run against the declared host. The extension now uses
