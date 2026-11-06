@@ -1,23 +1,23 @@
 # Two acceptance criteria
 
-### REQ1: Persist saved titles
+### REQ1: The system MUST persist saved titles
 
 Delta: added
-
-Saving and reopening an item must retain its title.
 
 Verified by: [AC1](#ac1-saved-title-is-persisted)
 
 #### AC1: Saved title is persisted
 
-1. Probe: Change and save an item's title, then reopen it.
-2. Expected result: The saved title is present.
-3. Example: Change "Draft" to "Shopping", save, and reopen the item. Its title is "Shopping".
+- GIVEN a saved item.
+- WHEN its title is changed and saved, then the item is reopened.
+- THEN the saved title is present.
+- Example: Change "Draft" to "Shopping", save, and reopen the item. Its title is "Shopping".
 
 ## Regression checks
 
 ### AC2: Existing descriptions remain saved
 
-1. Probe: Change and save the title of an item with a saved description, then reopen it.
-2. Expected result: The description is unchanged.
-3. Example: An item with the saved description "Buy milk" is renamed and reopened. Its description remains "Buy milk".
+- GIVEN an item with a saved description.
+- WHEN its title is changed and saved, then the item is reopened.
+- THEN the description is unchanged.
+- Example: An item with the saved description "Buy milk" is renamed and reopened. Its description remains "Buy milk".
