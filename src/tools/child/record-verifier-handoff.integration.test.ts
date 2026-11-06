@@ -10,7 +10,7 @@ import {
   SPEC_ID,
 } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
-import { registerRecordVerifierHandoffTool } from '#tools/child/record-verifier-handoff.ts';
+import { recordVerifierHandoffTool } from '#tools/child/record-verifier-handoff.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 
 const createHandoffInput = () => ({
@@ -29,7 +29,9 @@ afterEach(async () => {
 describe('verifier handoff tool', () => {
   it('given verifier report inputs when the tool schema is checked then a report is accepted but unknown fields and owner decisions are rejected', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
-      extension: registerRecordVerifierHandoffTool,
+      extension: (pi) => {
+        pi.registerTool(recordVerifierHandoffTool);
+      },
     });
 
     const input = createHandoffInput();
@@ -62,7 +64,9 @@ describe('verifier handoff tool', () => {
 
     const { tool } = await piTestSessions.createRegisteredTool({
       cwd: workflow.repository.path,
-      extension: registerRecordVerifierHandoffTool,
+      extension: (pi) => {
+        pi.registerTool(recordVerifierHandoffTool);
+      },
     });
 
     await expect(tool.execute('test-call', createHandoffInput())).rejects.toThrow(
@@ -83,7 +87,9 @@ describe('verifier handoff tool', () => {
 
     const { tool } = await piTestSessions.createRegisteredTool({
       cwd: workflow.repository.path,
-      extension: registerRecordVerifierHandoffTool,
+      extension: (pi) => {
+        pi.registerTool(recordVerifierHandoffTool);
+      },
     });
 
     await expect(tool.execute('test-call', createHandoffInput())).rejects.toThrow(

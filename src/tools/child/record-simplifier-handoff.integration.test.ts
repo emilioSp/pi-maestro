@@ -15,7 +15,7 @@ import {
   SPEC_ID,
 } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
-import { registerRecordSimplifierHandoffTool } from '#tools/child/record-simplifier-handoff.ts';
+import { recordSimplifierHandoffTool } from '#tools/child/record-simplifier-handoff.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -63,7 +63,9 @@ describe('record simplifier handoff', () => {
 
     const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
-      extension: registerRecordSimplifierHandoffTool,
+      extension: (pi) => {
+        pi.registerTool(recordSimplifierHandoffTool);
+      },
     });
 
     const submission = {
