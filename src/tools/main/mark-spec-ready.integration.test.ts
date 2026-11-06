@@ -2,17 +2,20 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { Value } from 'typebox/value';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { loadConfiguration } from '#config/loadConfiguration.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 import { createSpec } from '#specs/create.ts';
+import { executeTask } from '#src/delegation/executeTask.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { registerMarkSpecReadyTool } from '#tools/main/mark-spec-ready.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES, WORKFLOW_STATE_VERSION } from '#workflow/state/schema.ts';
+
+vi.mock('#src/delegation/executeTask.ts', () => ({ executeTask: vi.fn<typeof executeTask>() }));
 
 const INSTANT = Temporal.Instant.from('2026-03-21T14:30:52Z');
 
@@ -66,6 +69,7 @@ const createWorkflow = async (flags?: PhaseFlags) => {
 };
 
 afterEach(async () => {
+  vi.mocked(executeTask).mockReset();
   await piTestSessions.cleanup();
   maestroSessionState.deactivate();
   await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
@@ -149,6 +153,7 @@ it.each([
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
     });
     expect(emit).not.toHaveBeenCalled();
+    expect(executeTask).not.toHaveBeenCalled();
     expect(result.content).toEqual([
       { type: 'text', text: expect.stringContaining('Builder, verifier, and simplifier skipped') },
     ]);
