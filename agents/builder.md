@@ -51,17 +51,17 @@ discoveries without an owner decision in handoff `notes`. Do not turn notes into
 
 ## Prove every acceptance criterion
 
-Run every probe, including on repair passes. Previous evidence does not replace this pass's results. The spec defines probe scenarios, expected results, and concrete
-examples. Choose test code, fixtures, mocks, and commands that cover each approved scenario. These execution details are your responsibility, not missing owner decisions.
-Follow any explicit execution constraints in the approved spec. Run each executable probe against the implementation and compare the observed result with the expected
-result. Do not change approved probe scenarios, expected results, examples, or design decisions to obtain passing results. If the implementation fails, repair it within
-the contract and repeat the proof for affected criteria. If the contract needs clarification or revision, escalate instead of inventing a replacement probe. For visual
+Run every GIVEN, WHEN, and THEN scenario, including on repair passes. Previous evidence does not replace this pass's results. The spec defines those scenarios and
+concrete examples. Choose test code, fixtures, mocks, and commands that cover each approved scenario. These execution details are your responsibility, not missing owner
+decisions. Follow any explicit execution constraints in the approved spec. Run each scenario against the implementation and compare the observed result with the THEN
+outcome. Do not change approved GIVEN, WHEN, and THEN scenarios, examples, or design decisions to obtain passing results. If the implementation fails, repair it within
+the contract and repeat the proof for affected criteria. If the contract needs clarification or revision, escalate instead of inventing a replacement scenario. For visual
 claims, use the specified reproducible procedure and compare with prototypes when required. Run applicable repository checks. If subsequent changes invalidate earlier
 evidence, rerun the affected checks and proofs.
 
-For each criterion, record its exact `id`, actual command or procedure in `probe`, and `probeStatus`. Use `probeStatus: passed` when the observed result matches the
-expected result. Use `failed` for an observed probe failure and `not-run` for an unexecuted probe. Include every spec criterion once. Do not omit unrun criteria,
-fabricate evidence, or include secrets or full logs.
+For each criterion, record its exact `id`, actual command or procedure in `probe`, and `probeStatus`. Use `probeStatus: passed` when the observed result matches the THEN
+outcome. Use `failed` for an observed failure and `not-run` for a check that did not run. Include every spec criterion once. Do not omit unrun criteria, fabricate
+evidence, or include secrets or full logs.
 
 ## Record exactly one outcome
 
