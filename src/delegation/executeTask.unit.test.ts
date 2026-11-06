@@ -49,6 +49,8 @@ describe('execute task', () => {
         });
       });
 
+    const controller = new AbortController();
+
     const input: ExecuteTaskInput = {
       cwd: process.cwd(),
       prompt: 'Return two lines.',
@@ -56,13 +58,21 @@ describe('execute task', () => {
       model: 'unused/model',
       thinkingLevel: 'high',
       additionalTools: [],
+      signal: controller.signal,
     };
 
     await expect(executeTask(input)).resolves.toEqual({
       text: 'First line\nSecond line',
       sessionFile: '/sessions/project/subagents/task.jsonl',
     });
-    expect(constructor).toHaveBeenCalledExactlyOnceWith(input);
+    expect(constructor).toHaveBeenCalledExactlyOnceWith({
+      roleGuidance: input.roleGuidance,
+      cwd: input.cwd,
+      model: input.model,
+      thinkingLevel: input.thinkingLevel,
+      additionalTools: input.additionalTools,
+      signal: controller.signal,
+    });
     expect(open).toHaveBeenCalledOnce();
     expect(prompt).toHaveBeenCalledExactlyOnceWith('Return two lines.', {
       expandPromptTemplates: false,

@@ -16,13 +16,28 @@ export type TaskExecutionResult = {
   sessionFile?: string;
 };
 
-export const executeTask = async (input: ExecuteTaskInput): Promise<TaskExecutionResult> => {
-  const subSession = new SubSession(input);
+export const executeTask = async ({
+  prompt,
+  roleGuidance,
+  cwd,
+  model,
+  thinkingLevel,
+  additionalTools,
+  signal,
+}: ExecuteTaskInput): Promise<TaskExecutionResult> => {
+  const subSession = new SubSession({
+    roleGuidance,
+    cwd,
+    model,
+    thinkingLevel,
+    additionalTools,
+    signal,
+  });
 
   try {
     try {
       const session = await subSession.open();
-      await session.prompt(input.prompt, { expandPromptTemplates: false });
+      await session.prompt(prompt, { expandPromptTemplates: false });
 
       const text = readTaskResult(
         session.messages.findLast((message) => message.role === 'assistant'),
