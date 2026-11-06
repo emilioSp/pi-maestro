@@ -1,92 +1,501 @@
-import type { AgentSession } from '@earendil-works/pi-coding-agent';
+/**
+ * Objective: Verify SDK task results, native progress, persistence, and cleanup.
+ * Used: With offline sessions and scripted provider responses.
+ */
+
+import { readFile } from 'node:fs/promises';
+
+import { createAssistantMessageEventStream, type AssistantMessage } from '@earendil-works/pi-ai';
+import {
+  AgentSession,
+  type AgentToolUpdateCallback,
+  createAgentSessionServices,
+  SessionManager,
+  ToolExecutionComponent,
+} from '@earendil-works/pi-coding-agent';
+import { ProcessTerminal, TuiMainScreen } from '@earendil-works/pi-tui';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createChildServices } from '#src/delegation/createChildServices.ts';
+import { executeRoleTask } from '#src/delegation/executeRoleTask.ts';
 import { executeTask, type ExecuteTaskInput } from '#src/delegation/executeTask.ts';
-import * as subSessionManagerModule from '#src/delegation/SubSessionManager.ts';
+import { prepareSubagentEnvironment } from '#src/delegation/prepareSubagentEnvironment.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
-import { taskReplyWithTextBlocks } from '#tests/fixtures/task-reply-with-text-blocks.ts';
+import {
+  cleanupBuilderWorkflows,
+  createApprovedWorkflow,
+  SPEC_ID,
+} from '#tests/support/builder-workflow.ts';
+import piTestSessions from '#tests/support/pi-session.ts';
+import { BUILDER_HANDOFF_TOOL } from '#tools/child/record-builder-handoff.ts';
+import { registerRunBuilderTool, RUN_BUILDER_TOOL } from '#tools/main/run-builder.ts';
+import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 
-vi.mock('#src/delegation/createChildServices.ts', () => ({
-  createChildServices: vi.fn<typeof createChildServices>(),
+vi.mock('#src/delegation/prepareSubagentEnvironment.ts', () => ({
+  prepareSubagentEnvironment: vi.fn<typeof prepareSubagentEnvironment>(),
 }));
 
 describe('execute task', () => {
-  afterEach(() => {
+  afterEach(async () => {
+    vi.useRealTimers();
+    await piTestSessions.cleanup();
+    await cleanupBuilderWorkflows();
     vi.resetAllMocks();
     vi.restoreAllMocks();
   });
 
   it('given a successful child session when a task is executed then its final text and saved path are returned and the child is closed', async () => {
-    const prompt = vi.fn<AgentSession['prompt']>().mockResolvedValue(undefined);
-
-    const session = {
-      prompt,
-      messages: [
-        {
-          role: 'assistant',
-          content: [{ type: 'text', text: 'Previous answer' }],
-          stopReason: 'stop',
+    const { session, settingsManager } = await piTestSessions.create({ extensions: [] });
+    vi.mocked(prepareSubagentEnvironment).mockImplementationOnce(({ cwd }) =>
+      createAgentSessionServices({
+        cwd,
+        modelRuntime: session.modelRuntime,
+        settingsManager,
+        resourceLoaderOptions: {
+          noExtensions: true,
+          noSkills: true,
+          noPromptTemplates: true,
+          noThemes: true,
+          noContextFiles: true,
         },
-        { role: 'assistant', ...taskReplyWithTextBlocks },
-      ],
-    };
+      }),
+    );
 
-    const open = vi.fn<() => Promise<typeof session>>().mockResolvedValue(session);
+    const nativePrompt = AgentSession.prototype.prompt;
 
-    const close = vi
-      .fn<subSessionManagerModule.SubSessionManager['close']>()
-      .mockResolvedValue(undefined);
+    const prompt = vi.spyOn(AgentSession.prototype, 'prompt').mockImplementation(async function (
+      this: AgentSession,
+      ...args
+    ) {
+      this.agent.streamFunction = () => {
+        const stream = createAssistantMessageEventStream();
 
-    const getSavedFile = vi
-      .fn<subSessionManagerModule.SubSessionManager['getSavedFile']>()
-      .mockReturnValue('/sessions/project/subagents/task.jsonl');
+        const message: AssistantMessage = {
+          role: 'assistant',
+          api: 'openai-completions',
+          provider: 'openai-codex',
+          model: 'offline',
+          timestamp: 0,
+          stopReason: 'stop',
+          content: [
+            { type: 'text', text: 'First line' },
+            { type: 'thinking', thinking: 'Internal reasoning' },
+            { type: 'text', text: 'Second line' },
+          ],
+          usage: {
+            input: 0,
+            output: 0,
+            cacheRead: 0,
+            cacheWrite: 0,
+            totalTokens: 0,
+            cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+          },
+        };
 
-    const constructor = vi
-      .spyOn(subSessionManagerModule, 'SubSessionManager')
-      .mockImplementationOnce(function () {
-        Object.assign(this, {
-          open,
-          close,
-          getSavedFile,
-        });
-      });
+        stream.push({ type: 'start', partial: { ...message, content: [] } });
+        stream.push({ type: 'done', reason: 'stop', message });
 
-    const controller = new AbortController();
+        return stream;
+      };
+
+      await nativePrompt.apply(this, args);
+    });
+
+    const dispose = vi.spyOn(AgentSession.prototype, 'dispose');
 
     const input: ExecuteTaskInput = {
-      cwd: process.cwd(),
+      cwd: session.sessionManager.getCwd(),
       prompt: 'Return two lines.',
       roleGuidance: 'Do not delegate.',
-      model: 'unused/model',
+      model: `${session.model!.provider}/${session.model!.id}`,
       thinkingLevel: 'high',
       additionalTools: [],
-      signal: controller.signal,
     };
 
-    await expect(executeTask(input)).resolves.toEqual({
-      text: 'First line\nSecond line',
-      sessionFile: '/sessions/project/subagents/task.jsonl',
-    });
-    expect(constructor).toHaveBeenCalledExactlyOnceWith({
-      roleGuidance: input.roleGuidance,
-      cwd: input.cwd,
-      model: input.model,
-      thinkingLevel: input.thinkingLevel,
-      additionalTools: input.additionalTools,
-      signal: controller.signal,
-    });
-    expect(open).toHaveBeenCalledOnce();
+    const result = await executeTask(input);
+
+    expect(result.text).toBe('First line\nSecond line');
+    expect(result.sessionFile).toContain('/subagents/');
+    expect(await readFile(result.sessionFile!, 'utf8')).toContain('Second line');
     expect(prompt).toHaveBeenCalledExactlyOnceWith('Return two lines.', {
       expandPromptTemplates: false,
     });
-    expect(close).toHaveBeenCalledOnce();
-    expect(prompt.mock.invocationCallOrder[0]).toBeLessThan(close.mock.invocationCallOrder[0]);
+    expect(dispose).toHaveBeenCalledOnce();
+    expect(prompt.mock.invocationCallOrder[0]).toBeLessThan(dispose.mock.invocationCallOrder[0]);
   });
+
+  it('given a native child with long progress when the parent runs the builder then one native row expands the full text, the saved child retains it, and subsequent parent context contains only the handoff', async () => {
+    const { repository } = await createApprovedWorkflow({
+      agents: { builder: { model: 'activity-test/child' } },
+    });
+
+    const { session, settingsManager, notify } = await piTestSessions.create({
+      cwd: repository.path,
+      extensions: [registerRunBuilderTool],
+    });
+
+    const builderTool = session.extensionRunner.getAllRegisteredTools()[0].definition;
+    expect(builderTool.renderCall).toBeUndefined();
+    expect(builderTool.renderResult).toBeUndefined();
+
+    const row = new ToolExecutionComponent(
+      RUN_BUILDER_TOOL.NAME,
+      'parent-builder',
+      { specId: SPEC_ID },
+      {},
+      builderTool,
+      new TuiMainScreen(new ProcessTerminal()),
+      repository.path,
+    );
+
+    const longText =
+      'PROGRESS_ONLY_789\n' +
+      Array.from({ length: 30 }, (_, index) => `Line ${index + 1}`).join('\n');
+
+    const reply: AssistantMessage = {
+      role: 'assistant',
+      api: 'openai-completions',
+      provider: 'activity-test',
+      model: 'child',
+      timestamp: 0,
+      stopReason: 'stop',
+      content: [],
+      usage: {
+        input: 0,
+        output: 0,
+        cacheRead: 0,
+        cacheWrite: 0,
+        totalTokens: 0,
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+      },
+    };
+
+    const handoff = {
+      specId: SPEC_ID,
+      status: 'done',
+      summary: 'Implemented the approved task.',
+      acceptanceCriteria: [{ id: 'AC1', probe: 'Offline scenario', probeStatus: 'passed' }],
+      notes: [],
+      escalations: [],
+    };
+
+    let childRequests = 0;
+    session.modelRuntime.registerProvider('activity-test', {
+      api: 'openai-completions',
+      apiKey: 'offline-key',
+      baseUrl: 'http://127.0.0.1:1',
+      models: [
+        {
+          id: 'child',
+          name: 'Offline child',
+          reasoning: true,
+          input: ['text'],
+          cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+          contextWindow: 32000,
+          maxTokens: 1024,
+        },
+      ],
+      streamSimple: () => {
+        childRequests += 1;
+        const stream = createAssistantMessageEventStream();
+
+        const text =
+          childRequests === 1 ? 'Checking files.' : childRequests === 2 ? longText : 'Done.';
+
+        const content: AssistantMessage['content'] =
+          childRequests === 1
+            ? [
+                { type: 'text', text },
+                { type: 'thinking', thinking: 'PRIVATE_REASONING_123' },
+                {
+                  type: 'toolCall',
+                  id: 'child-bash',
+                  name: 'bash',
+                  arguments: { command: 'printf RAW_OUTPUT_456' },
+                },
+              ]
+            : childRequests === 2
+              ? [
+                  { type: 'text', text },
+                  {
+                    type: 'toolCall',
+                    id: 'child-handoff',
+                    name: BUILDER_HANDOFF_TOOL.NAME,
+                    arguments: handoff,
+                  },
+                ]
+              : [{ type: 'text', text }];
+
+        const reason = childRequests < 3 ? 'toolUse' : 'stop';
+        const message: AssistantMessage = { ...reply, content, stopReason: reason };
+
+        stream.push({ type: 'start', partial: { ...reply, content: [] } });
+        stream.push({
+          type: 'text_delta',
+          contentIndex: 0,
+          delta: text,
+          partial: { ...reply, content: [{ type: 'text', text }] },
+        });
+        stream.push({ type: 'done', reason, message });
+
+        return stream;
+      },
+    });
+    await session.modelRuntime.refresh({ allowNetwork: false });
+    vi.mocked(prepareSubagentEnvironment).mockImplementationOnce(({ cwd }) =>
+      createAgentSessionServices({
+        cwd,
+        modelRuntime: session.modelRuntime,
+        settingsManager,
+        resourceLoaderOptions: {
+          noExtensions: true,
+          noSkills: true,
+          noPromptTemplates: true,
+          noThemes: true,
+          noContextFiles: true,
+        },
+      }),
+    );
+    const progress: string[] = [];
+    const collapsed: string[] = [];
+    const expanded: string[] = [];
+    session.subscribe((event) => {
+      if (event.type !== 'tool_execution_update' || event.toolCallId !== 'parent-builder') return;
+      const text = event.partialResult.content[0].text;
+      progress.push(text);
+      row.updateResult({ ...event.partialResult, isError: false }, true);
+
+      if (text.includes(longText)) {
+        collapsed.push(row.render(100).join('\n'));
+        row.setExpanded(true);
+        expanded.push(row.render(100).join('\n'));
+        row.setExpanded(false);
+      }
+    });
+    let parentRequests = 0;
+    const parentContexts: string[] = [];
+    session.agent.streamFunction = (_model, context) => {
+      parentRequests += 1;
+      parentContexts.push(JSON.stringify(context));
+      const stream = createAssistantMessageEventStream();
+
+      const message: AssistantMessage =
+        parentRequests === 1
+          ? {
+              ...reply,
+              content: [
+                {
+                  type: 'toolCall',
+                  id: 'parent-builder',
+                  name: RUN_BUILDER_TOOL.NAME,
+                  arguments: { specId: SPEC_ID },
+                },
+              ],
+              stopReason: 'toolUse',
+            }
+          : { ...reply, content: [{ type: 'text', text: 'Builder finished.' }] };
+
+      stream.push({ type: 'start', partial: { ...reply, content: [] } });
+      stream.push({ type: 'done', reason: parentRequests === 1 ? 'toolUse' : 'stop', message });
+
+      return stream;
+    };
+
+    await session.prompt('Run the approved builder task.');
+    expect(parentRequests).toBe(2);
+    expect(childRequests).toBe(3);
+    expect(progress.some((text) => text.includes('Checking files.'))).toBe(true);
+    expect(
+      progress.some((text) => text.includes(longText) && !text.includes('Checking files.')),
+    ).toBe(true);
+    expect(JSON.stringify(progress)).not.toMatch(/PRIVATE_REASONING_123|RAW_OUTPUT_456/);
+    expect(collapsed.length).toBeGreaterThan(0);
+    expect(collapsed.every((text) => !text.includes('Line 30'))).toBe(true);
+    expect(expanded.every((text) => text.includes('Line 30'))).toBe(true);
+    expect(parentContexts[1]).toContain(handoff.summary);
+    expect(parentContexts[1]).not.toMatch(
+      /PROGRESS_ONLY_789|Line 30|PRIVATE_REASONING_123|RAW_OUTPUT_456/,
+    );
+    const result = session.messages.find((message) => message.role === 'toolResult');
+    expect(JSON.stringify(result)).toContain(handoff.summary);
+    expect(JSON.stringify(result)).not.toContain('PROGRESS_ONLY_789');
+
+    const savedNotice = notify.mock.calls.find(([message]) =>
+      message.startsWith('Saved child session: '),
+    );
+
+    expect(savedNotice).toBeDefined();
+    const sessionFile = String(savedNotice?.[0]).replace('Saved child session: ', '');
+    const entries = SessionManager.open(sessionFile).getEntries();
+    expect(
+      entries.some(
+        (entry) =>
+          entry.type === 'message' &&
+          entry.message.role === 'assistant' &&
+          entry.message.content.some((block) => block.type === 'text' && block.text === longText),
+      ),
+    ).toBe(true);
+    expect(await readFile(sessionFile, 'utf8')).toContain('Line 30');
+  });
+
+  it.each(['completion', 'startup failure', 'provider failure', 'interruption'])(
+    'given a native child with allocated progress when execution ends by %s then the subscription and timer are released and late events are ignored',
+    async (outcome) => {
+      const { session, settingsManager } = await piTestSessions.create({ extensions: [] });
+      const controller = new AbortController();
+      const updates = vi.fn<AgentToolUpdateCallback>();
+
+      const onUpdate: NonNullable<Parameters<typeof executeRoleTask>[0]['onUpdate']> = (result) => {
+        updates(result);
+
+        if (
+          outcome === 'interruption' &&
+          result.content.some(
+            (block) => block.type === 'text' && block.text.includes('Waiting at 40 seconds.'),
+          )
+        )
+          controller.abort();
+      };
+
+      const message: AssistantMessage = {
+        role: 'assistant',
+        api: 'openai-completions',
+        provider: 'activity-test',
+        model: 'child',
+        timestamp: 0,
+        stopReason: outcome === 'provider failure' ? 'error' : 'stop',
+        content: [{ type: 'text', text: 'Waiting at 40 seconds.' }],
+        ...(outcome === 'provider failure' ? { errorMessage: 'Provider unavailable.' } : {}),
+        usage: {
+          input: 0,
+          output: 0,
+          cacheRead: 0,
+          cacheWrite: 0,
+          totalTokens: 0,
+          cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+        },
+      };
+
+      let requests = 0;
+      session.modelRuntime.registerProvider('activity-test', {
+        api: 'openai-completions',
+        apiKey: 'offline-key',
+        baseUrl: 'http://127.0.0.1:1',
+        models: [
+          {
+            id: 'child',
+            name: 'Offline child',
+            reasoning: true,
+            input: ['text'],
+            cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+            contextWindow: 32000,
+            maxTokens: 1024,
+          },
+        ],
+        streamSimple: (_model, _context, options) => {
+          requests += 1;
+          vi.advanceTimersByTime(40_000);
+          const stream = createAssistantMessageEventStream();
+          stream.push({ type: 'start', partial: { ...message, content: [] } });
+          stream.push({
+            type: 'text_delta',
+            contentIndex: 0,
+            delta: 'Waiting at 40 seconds.',
+            partial: message,
+          });
+
+          if (outcome === 'interruption') {
+            options?.signal?.addEventListener(
+              'abort',
+              () => {
+                stream.push({
+                  type: 'error',
+                  reason: 'aborted',
+                  error: { ...message, stopReason: 'aborted', errorMessage: 'Task interrupted.' },
+                });
+              },
+              { once: true },
+            );
+          } else if (outcome === 'provider failure')
+            stream.push({ type: 'error', reason: 'error', error: message });
+          else stream.push({ type: 'done', reason: 'stop', message });
+
+          return stream;
+        },
+      });
+      await session.modelRuntime.refresh({ allowNetwork: false });
+      vi.mocked(prepareSubagentEnvironment).mockImplementationOnce(({ cwd }) =>
+        createAgentSessionServices({
+          cwd,
+          modelRuntime: session.modelRuntime,
+          settingsManager,
+          resourceLoaderOptions: {
+            noExtensions: true,
+            noSkills: true,
+            noPromptTemplates: true,
+            noThemes: true,
+            noContextFiles: true,
+          },
+        }),
+      );
+      const unsubscribes: Array<ReturnType<typeof vi.fn<() => void>>> = [];
+      const listeners: Array<Parameters<AgentSession['subscribe']>[0]> = [];
+      const subscribe = AgentSession.prototype.subscribe;
+      vi.spyOn(AgentSession.prototype, 'subscribe').mockImplementation(function (
+        this: AgentSession,
+        listener,
+      ) {
+        const unsubscribe = vi.fn<() => void>(subscribe.call(this, listener));
+        unsubscribes.push(unsubscribe);
+        listeners.push(listener);
+
+        return unsubscribe;
+      });
+
+      if (outcome === 'startup failure')
+        vi.spyOn(AgentSession.prototype, 'bindExtensions').mockRejectedValueOnce(
+          new Error('Startup failed after subscription.'),
+        );
+      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
+
+      const execution = executeRoleTask({
+        role: WORKFLOW_ROLES.BUILDER,
+        cwd: session.sessionManager.getCwd(),
+        model: 'activity-test/child',
+        thinkingLevel: 'off',
+        prompt: 'Run the offline task.',
+        signal: controller.signal,
+        ui: session.extensionRunner.createContext().ui,
+        onUpdate,
+      });
+
+      const result = await execution.catch((error: unknown) => error);
+
+      const expectedMessage =
+        outcome === 'startup failure'
+          ? /Startup failed/
+          : outcome === 'provider failure'
+            ? /Provider unavailable/
+            : /abort|interrupt/i;
+
+      expect(result instanceof TaskExecutionError).toBe(outcome !== 'completion');
+      expect(result instanceof Error ? result.message : '').toMatch(
+        outcome === 'completion' ? /^$/ : expectedMessage,
+      );
+      expect(requests).toBe(outcome === 'startup failure' ? 0 : 1);
+      expect(unsubscribes).toHaveLength(1);
+      expect(unsubscribes[0]).toHaveBeenCalledOnce();
+      expect(vi.getTimerCount()).toBe(0);
+      const count = updates.mock.calls.length;
+      vi.advanceTimersByTime(25_000);
+
+      for (const listener of listeners) listener({ type: 'message_end', message });
+      expect(updates).toHaveBeenCalledTimes(count);
+    },
+  );
 
   it('given resource discovery fails when a task is prepared then its diagnostic cause reaches the caller without a saved path', async () => {
     const cause = new Error('Resource discovery failed.');
-    vi.mocked(createChildServices).mockRejectedValueOnce(cause);
+    vi.mocked(prepareSubagentEnvironment).mockRejectedValueOnce(cause);
 
     const execution = executeTask({
       cwd: process.cwd(),

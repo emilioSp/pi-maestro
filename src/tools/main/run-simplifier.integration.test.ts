@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { promisify } from 'node:util';
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
+import type { AgentToolUpdateCallback } from '@earendil-works/pi-coding-agent';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -159,7 +160,12 @@ describe('run simplifier', () => {
 
       return { text: 'Completed successfully', sessionFile };
     });
-    const result = await tool.execute('simplify', { specId: SPEC_ID }, controller.signal);
+    const onUpdate = vi.fn<AgentToolUpdateCallback>();
+    const result = await tool.execute('simplify', { specId: SPEC_ID }, controller.signal, onUpdate);
+    expect(onUpdate).toHaveBeenCalledWith({
+      content: [{ type: 'text', text: 'Simplifier | Elapsed: 0m 0s | Active tool: none' }],
+      details: undefined,
+    });
 
     const requests = vi.mocked(executeTask).mock.calls;
 

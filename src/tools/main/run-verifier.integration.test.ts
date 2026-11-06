@@ -6,6 +6,7 @@
 import { access, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import type { AgentToolUpdateCallback } from '@earendil-works/pi-coding-agent';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -143,7 +144,19 @@ describe('run verifier tool', () => {
       return { text: 'Completed successfully', sessionFile };
     });
 
-    const result = await tool.execute('test-call', { specId: SPEC_ID }, controller.signal);
+    const onUpdate = vi.fn<AgentToolUpdateCallback>();
+
+    const result = await tool.execute(
+      'test-call',
+      { specId: SPEC_ID },
+      controller.signal,
+      onUpdate,
+    );
+
+    expect(onUpdate).toHaveBeenCalledWith({
+      content: [{ type: 'text', text: 'Verifier | Elapsed: 0m 0s | Active tool: none' }],
+      details: undefined,
+    });
 
     const receivedRequest = vi.mocked(executeTask).mock.calls[0][0];
     expect(receivedRequest).toMatchObject({

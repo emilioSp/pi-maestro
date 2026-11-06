@@ -12,7 +12,7 @@ import type { MaestroConfig } from '#config/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
-import { executeRoleTask } from '#tools/utils/executeRoleTask.ts';
+import { executeRoleTask } from '#src/delegation/executeRoleTask.ts';
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -124,7 +124,7 @@ export const registerRunVerifierTool = (pi: ExtensionAPI): void => {
     label: RUN_VERIFIER_TOOL.LABEL,
     description: RUN_VERIFIER_TOOL.DESCRIPTION,
     parameters: RunVerifierToolParameters,
-    async execute(_toolCallId, { specId }, signal, _onUpdate, context) {
+    async execute(_toolCallId, { specId }, signal, onUpdate, context) {
       const { paths, config } = await resolveToolRunContext(context.cwd);
 
       const run = await prepareVerifierRun({ config, paths, specId });
@@ -138,6 +138,7 @@ export const registerRunVerifierTool = (pi: ExtensionAPI): void => {
         thinkingLevel: config.verifier.thinking,
         signal,
         ui: context.ui,
+        onUpdate,
       });
 
       const result = await readVerifierResult({ paths, specId, config, runningState: run.state });

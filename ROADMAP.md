@@ -38,7 +38,7 @@ Completed entries preserve recorded outcomes and evidence, which may describe be
 | MAESTRO-FREE-3     | [Run the builder through the Pi SDK](#maestro-free-3-run-the-builder-through-the-pi-sdk)                                           | Completed |
 | MAESTRO-FREE-4     | [Run the verifier through the Pi SDK](#maestro-free-4-run-the-verifier-through-the-pi-sdk)                                         | Completed |
 | MAESTRO-FREE-5     | [Run the simplifier through the Pi SDK](#maestro-free-5-run-the-simplifier-through-the-pi-sdk)                                     | Completed |
-| MAESTRO-FREE-6     | [Show SDK agent activity through Pi](#maestro-free-6-show-sdk-agent-activity-through-pi)                                           | Backlog   |
+| MAESTRO-FREE-6     | [Show SDK agent activity through Pi](#maestro-free-6-show-sdk-agent-activity-through-pi)                                           | Completed |
 | MAESTRO-FREE-7     | [Remove the pi-subagents dependency](#maestro-free-7-remove-the-pi-subagents-dependency)                                           | Completed |
 
 ## MAESTRO-6: Display specs in a browser
@@ -176,6 +176,10 @@ Connect the `simplifier` to the SDK executor delivered by [MAESTRO-FREE-PRE-3](#
 
 ## MAESTRO-FREE-6: Show SDK agent activity through Pi
 
+Implemented under the [approved specification](.specs/20261106-143021-maestro-free-6-show-sdk-agent-activity-through-pi/spec.md), with `builder` checks passing. `Owner`
+acceptance is pending. Review follow-up moved the shared role executor to `src/delegation/executeRoleTask.ts` and separated event tracking in `trackAgentActivity.ts` from
+UI updates in `createAgentProgress.ts`. The full check passes all 293 tests.
+
 ### Objective
 
 Show activity for SDK-based agent `runs` through Pi's standard `onUpdate` presentation, as decided in
@@ -261,7 +265,7 @@ The `pi-subagents` integration then in use still received a fixed deadline of 9,
 ### Implementation and evidence
 
 The standalone executor is implemented under `src/delegation/` against the [approved specification](.specs/20261105-212231-implement-internal-pi-sdk-delegation/spec.md).
-Execution orchestration, session lifecycle, and pure reply interpretation are separated into `executeTask`, `SubSessionManager`, and `readTaskResult`. Manual verification
+Review follow-up consolidated execution orchestration and session lifecycle in `executeTask`; pure reply interpretation remains in `readTaskResult`. Manual verification
 on Pi 1.5.0 exercised fresh context, native and additional tools, MCP through tool search and codemode, sequential waiting, failure, cancellation, cleanup, and native
 session persistence. See [manual evidence](.specs/20261105-212231-implement-internal-pi-sdk-delegation/handoffs/verifier/V1.json). The three workflow roles still use
 `pi-subagents`. The `owner` confirmed completion. The caller's message is named `prompt`, execution is inlined in `executeTask`, and cancellation comments explain Node.js

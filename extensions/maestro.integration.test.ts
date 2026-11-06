@@ -30,8 +30,8 @@ import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { MAESTRO_STATUS_KEY } from '#maestro/status/refreshMaestroStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import type { CreatedSpec } from '#specs/create.ts';
-import { createChildServices } from '#src/delegation/createChildServices.ts';
 import { executeTask, type ExecuteTaskInput } from '#src/delegation/executeTask.ts';
+import { prepareSubagentEnvironment } from '#src/delegation/prepareSubagentEnvironment.ts';
 import { unavailableCompilerEscalation } from '#tests/fixtures/unavailable-compiler-escalation.ts';
 import {
   cleanupBuilderWorkflows,
@@ -601,7 +601,7 @@ describe('main Maestro extension', () => {
     vi.mocked(executeTask).mockImplementation(async (request) => {
       requests.push(request);
 
-      const services = await createChildServices({
+      const services = await prepareSubagentEnvironment({
         cwd: request.cwd,
         roleGuidance: request.roleGuidance,
       });

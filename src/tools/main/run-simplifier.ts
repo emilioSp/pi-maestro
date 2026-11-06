@@ -10,7 +10,7 @@ import { readSimplifierHandoff } from '#artifacts/simplifier-handoff/readSimplif
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
-import { executeRoleTask } from '#tools/utils/executeRoleTask.ts';
+import { executeRoleTask } from '#src/delegation/executeRoleTask.ts';
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -87,7 +87,7 @@ export const registerRunSimplifierTool = (pi: ExtensionAPI): void => {
     label: RUN_SIMPLIFIER_TOOL.LABEL,
     description: RUN_SIMPLIFIER_TOOL.DESCRIPTION,
     parameters: RunSimplifierToolParameters,
-    async execute(_toolCallId, { specId }, signal, _onUpdate, context) {
+    async execute(_toolCallId, { specId }, signal, onUpdate, context) {
       const { paths, config, projectRoot } = await resolveToolRunContext(context.cwd);
 
       const workflowPath = paths.getWorkflowPath(specId);
@@ -136,6 +136,7 @@ export const registerRunSimplifierTool = (pi: ExtensionAPI): void => {
         thinkingLevel: config.simplifier.thinking,
         signal,
         ui: context.ui,
+        onUpdate,
       });
 
       const result = await readSimplifierResult({ paths, specId });

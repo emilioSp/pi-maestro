@@ -51,12 +51,15 @@ const isMainExtension = (path: string): boolean => {
   }
 };
 
-type CreateChildServicesInput = {
+type PrepareSubagentEnvironmentInput = {
   cwd: string;
   roleGuidance: string;
 };
 
-export const createChildServices = async ({ cwd, roleGuidance }: CreateChildServicesInput) => {
+export const prepareSubagentEnvironment = async ({
+  cwd,
+  roleGuidance,
+}: PrepareSubagentEnvironmentInput) => {
   const agentDir = getAgentDir();
   const settingsManager = SettingsManager.create(cwd, agentDir);
 
@@ -92,6 +95,8 @@ export const createChildServices = async ({ cwd, roleGuidance }: CreateChildServ
     agentDir,
     settingsManager,
     resourceLoaderOptions: {
+      // Disable automatic extension discovery; load only the filtered paths below
+      // and the built-in factories, so discovery cannot add Maestro back.
       noExtensions: true,
       additionalExtensionPaths,
       extensionFactories,

@@ -15,7 +15,7 @@ import type { MaestroConfig } from '#config/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
-import { executeRoleTask } from '#tools/utils/executeRoleTask.ts';
+import { executeRoleTask } from '#src/delegation/executeRoleTask.ts';
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { WORKFLOW_ROLES } from '#workflow/roles.ts';
@@ -155,7 +155,7 @@ export const registerRunBuilderTool = (pi: ExtensionAPI): void => {
     label: RUN_BUILDER_TOOL.LABEL,
     description: RUN_BUILDER_TOOL.DESCRIPTION,
     parameters: RunBuilderToolParameters,
-    async execute(_toolCallId, { specId }, signal, _onUpdate, context) {
+    async execute(_toolCallId, { specId }, signal, onUpdate, context) {
       const { paths, config } = await resolveToolRunContext(context.cwd);
 
       const { projectRoot, state: builderRunningState } = await prepareBuilderRun({
@@ -174,6 +174,7 @@ export const registerRunBuilderTool = (pi: ExtensionAPI): void => {
         thinkingLevel: config.builder.thinking,
         signal,
         ui: context.ui,
+        onUpdate,
       });
 
       const result = await readBuilderResult({ paths, specId, config, builderRunningState });
