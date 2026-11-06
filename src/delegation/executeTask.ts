@@ -4,10 +4,13 @@
  */
 
 import { readTaskResult } from '#src/delegation/readTaskResult.ts';
-import { SubSession, type SubSessionInput } from '#src/delegation/SubSession.ts';
+import {
+  SubSessionManager,
+  type SubSessionManagerInput,
+} from '#src/delegation/SubSessionManager.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
 
-export type ExecuteTaskInput = SubSessionInput & {
+export type ExecuteTaskInput = SubSessionManagerInput & {
   prompt: string;
 };
 
@@ -16,23 +19,38 @@ export type TaskExecutionResult = {
   sessionFile?: string;
 };
 
-export const executeTask = async (input: ExecuteTaskInput): Promise<TaskExecutionResult> => {
-  const subSession = new SubSession(input);
+export const executeTask = async ({
+  prompt,
+  roleGuidance,
+  cwd,
+  model,
+  thinkingLevel,
+  additionalTools,
+  signal,
+}: ExecuteTaskInput): Promise<TaskExecutionResult> => {
+  const subSessionManager = new SubSessionManager({
+    roleGuidance,
+    cwd,
+    model,
+    thinkingLevel,
+    additionalTools,
+    signal,
+  });
 
   try {
     try {
-      const session = await subSession.open();
-      await session.prompt(input.prompt, { expandPromptTemplates: false });
+      const session = await subSessionManager.open();
+      await session.prompt(prompt, { expandPromptTemplates: false });
 
       const text = readTaskResult(
         session.messages.findLast((message) => message.role === 'assistant'),
       );
 
-      return { text, sessionFile: subSession.getSavedFile() };
+      return { text, sessionFile: subSessionManager.getSavedFile() };
     } finally {
-      await subSession.close();
+      await subSessionManager.close();
     }
   } catch (cause) {
-    throw new TaskExecutionError({ cause, sessionFile: subSession.getSavedFile() });
+    throw new TaskExecutionError({ cause, sessionFile: subSessionManager.getSavedFile() });
   }
 };

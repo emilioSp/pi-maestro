@@ -10,13 +10,8 @@ import { promisify } from 'node:util';
 
 import { type AssistantMessage, createAssistantMessageEventStream } from '@earendil-works/pi-ai';
 import type { ExtensionAPI, wrapRegisteredTool } from '@earendil-works/pi-coding-agent';
-import { getAgentDir } from '@earendil-works/pi-coding-agent';
+import { createAgentSession, SessionManager } from '@earendil-works/pi-coding-agent';
 import { stripTerminalSequences } from '@earendil-works/pi-tui';
-import {
-  SUBAGENT_DELEGATION_REQUEST_EVENT,
-  SUBAGENT_DELEGATION_RESPONSE_EVENT,
-  type SubagentDelegationRequest,
-} from 'pi-subagents/delegation';
 import { Type } from 'typebox';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -29,14 +24,14 @@ import {
   VERIFIER_HANDOFF_VERSION,
 } from '#artifacts/verifier-handoff/schema.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
-import { AGENTS, SUPPORTED_CONFIG_VERSION, THINKING_LEVELS } from '#config/schema.ts';
-import maestroSubagentExtension from '#extensions/maestro-subagent.ts';
+import { SUPPORTED_CONFIG_VERSION, THINKING_LEVELS } from '#config/schema.ts';
 import maestroExtension from '#extensions/maestro.ts';
-import { SUBAGENT_PING } from '#maestro/checks/assertEnvironment.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { MAESTRO_STATUS_KEY } from '#maestro/status/refreshMaestroStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import type { CreatedSpec } from '#specs/create.ts';
+import { createChildServices } from '#src/delegation/createChildServices.ts';
+import { executeTask, type ExecuteTaskInput } from '#src/delegation/executeTask.ts';
 import { unavailableCompilerEscalation } from '#tests/fixtures/unavailable-compiler-escalation.ts';
 import {
   cleanupBuilderWorkflows,
@@ -56,7 +51,6 @@ import { RESOLVE_FINDINGS_TOOL } from '#tools/main/resolve-findings.ts';
 import { RUN_BUILDER_TOOL } from '#tools/main/run-builder.ts';
 import { RUN_SIMPLIFIER_TOOL } from '#tools/main/run-simplifier.ts';
 import { RUN_VERIFIER_TOOL } from '#tools/main/run-verifier.ts';
-import { DELEGATION_STATUSES } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -66,21 +60,9 @@ import { transitionWorkflow } from '#workflow/transitions.ts';
 import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
 import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 
-const execFileAsync = promisify(execFile);
+vi.mock('#src/delegation/executeTask.ts', () => ({ executeTask: vi.fn<typeof executeTask>() }));
 
-const successfulPingExtension = (pi: ExtensionAPI): void => {
-  pi.events.on(SUBAGENT_PING.REQUEST_EVENT, (payload) => {
-    // JUSTIFICATION: Maestro emits this version 1 ping request.
-    const request = payload as { requestId: string };
-    pi.events.emit(`${SUBAGENT_PING.REPLY_EVENT_PREFIX}${request.requestId}`, {
-      version: SUBAGENT_PING.VERSION,
-      requestId: request.requestId,
-      method: SUBAGENT_PING.METHOD,
-      success: true,
-      data: { version: SUBAGENT_PING.VERSION },
-    });
-  });
-};
+const execFileAsync = promisify(execFile);
 
 const FOREIGN_TOOL = 'foreign_tool';
 
@@ -115,6 +97,7 @@ function assertToolRegistered(tool: RegisteredTool | undefined): asserts tool is
 const cleanupFunctions: Array<() => Promise<void>> = [];
 
 afterEach(async () => {
+  vi.mocked(executeTask).mockReset();
   vi.useRealTimers();
   await piTestSessions.cleanup();
   await cleanupBuilderWorkflows();
@@ -124,8 +107,7 @@ afterEach(async () => {
 describe('main Maestro extension', () => {
   it('given a new Pi session when Maestro loads then its tools register once but stay inactive, with no notice, status, or added instructions', async () => {
     const { session, notify, setStatus } = await piTestSessions.create({
-      extensions: [foreignExtension, maestroExtension, successfulPingExtension],
-      maestroAgentsAvailable: false,
+      extensions: [foreignExtension, maestroExtension],
     });
 
     expect(
@@ -154,7 +136,7 @@ describe('main Maestro extension', () => {
     cleanupFunctions.push(repository.cleanup);
 
     const { session, notify, setStatus } = await piTestSessions.create({
-      extensions: [foreignExtension, maestroExtension, successfulPingExtension],
+      extensions: [foreignExtension, maestroExtension],
       cwd: repository.path,
     });
 
@@ -251,7 +233,7 @@ describe('main Maestro extension', () => {
     );
 
     const { session, notify } = await piTestSessions.create({
-      extensions: [maestroExtension, successfulPingExtension],
+      extensions: [maestroExtension],
       cwd: repository.path,
     });
 
@@ -326,7 +308,7 @@ describe('main Maestro extension', () => {
 
       const { session, notify } = await piTestSessions.create({
         cwd: repository.path,
-        extensions: [maestroExtension, successfulPingExtension],
+        extensions: [maestroExtension],
       });
 
       await session.prompt('/maestro');
@@ -353,7 +335,7 @@ describe('main Maestro extension', () => {
 
     const { session, notify } = await piTestSessions.create({
       cwd: repository.path,
-      extensions: [maestroExtension, successfulPingExtension],
+      extensions: [maestroExtension],
     });
 
     await session.prompt('/maestro');
@@ -364,136 +346,12 @@ describe('main Maestro extension', () => {
     );
   });
 
-  it('given Maestro is active and its agents are no longer available when Maestro is disabled then it skips availability checks and the next activation reports the missing builder', async () => {
-    const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
-
-    const { session, events, notify } = await piTestSessions.create({
-      extensions: [foreignExtension, maestroExtension],
-      cwd: repository.path,
-    });
-
-    // simulate the ping response from pi-subagents
-    const removeResponder = events.on(SUBAGENT_PING.REQUEST_EVENT, (payload) => {
-      // JUSTIFICATION: Maestro emits this version 1 ping request.
-      const request = payload as { requestId: string };
-      events.emit(`${SUBAGENT_PING.REPLY_EVENT_PREFIX}${request.requestId}`, {
-        version: SUBAGENT_PING.VERSION,
-        requestId: request.requestId,
-        method: SUBAGENT_PING.METHOD,
-        success: true,
-        data: { version: SUBAGENT_PING.VERSION },
-      });
-    });
-
-    await session.prompt('/maestro');
-    expect(maestroSessionState.isActive()).toBe(true);
-    removeResponder();
-    const emit = vi.spyOn(events, 'emit');
-
-    await writeFile(join(getAgentDir(), 'settings.json'), JSON.stringify({ packages: [] }));
-    await session.prompt('/maestro');
-    expect(maestroSessionState.isActive()).toBe(false);
-    expect(notify).toHaveBeenCalledOnce();
-    expect(emit).not.toHaveBeenCalled();
-
-    await session.prompt('/maestro');
-    expect(maestroSessionState.isActive()).toBe(false);
-    expect(session.getActiveToolNames()).toEqual(BASE_TOOLS);
-    expect(notify).toHaveBeenCalledTimes(2);
-    expect(notify).toHaveBeenLastCalledWith(
-      expect.stringContaining(`Unknown agent: ${AGENTS.BUILDER}`),
-      'error',
-    );
-  });
-
-  it.each([
-    {
-      label: 'an unsuccessful ping reply',
-      reply: { success: false, error: { message: 'Unavailable' } },
-    },
-    { label: 'a null ping reply', reply: null },
-    {
-      label: 'a ping reply with a bad message version',
-      reply: { version: 2 },
-    },
-    {
-      label: 'a ping reply with the wrong method',
-      reply: { method: 'status' },
-    },
-    { label: 'a ping reply without data', reply: { data: undefined } },
-    {
-      label: 'a ping reply with a bad data version',
-      reply: { data: { version: 2 } },
-    },
-    {
-      label: 'a ping reply without a request ID',
-      reply: { requestId: undefined },
-    },
-  ])(
-    'given pi-subagents sends $label when activation is requested then Maestro stays disabled and reports that pi-subagents must be installed',
-    async ({ reply }) => {
-      const { session, events, notify } = await piTestSessions.create({
-        extensions: [maestroExtension],
-      });
-
-      events.on(SUBAGENT_PING.REQUEST_EVENT, (payload) => {
-        // JUSTIFICATION: Maestro emits this version 1 ping request.
-        const request = payload as { requestId: string };
-        events.emit(
-          `${SUBAGENT_PING.REPLY_EVENT_PREFIX}${request.requestId}`,
-          reply === null
-            ? null
-            : {
-                version: SUBAGENT_PING.VERSION,
-                requestId: request.requestId,
-                method: SUBAGENT_PING.METHOD,
-                success: true,
-                data: { version: SUBAGENT_PING.VERSION },
-                ...reply,
-              },
-        );
-      });
-
-      await session.prompt('/maestro');
-
-      expect(maestroSessionState.isActive()).toBe(false);
-      expect(notify).toHaveBeenCalledExactlyOnceWith(
-        expect.stringContaining(SUBAGENT_PING.INSTALLATION_ERROR),
-        'error',
-      );
-    },
-  );
-
-  it('given the event bus cannot send the pi-subagents availability request when activation is requested then Maestro stays disabled and reports the installation requirement and bus error', async () => {
-    const { session, events, notify } = await piTestSessions.create({
-      extensions: [maestroExtension],
-    });
-
-    const emit = events.emit.bind(events);
-    vi.spyOn(events, 'emit').mockImplementation((channel, payload) => {
-      if (channel === SUBAGENT_PING.REQUEST_EVENT) {
-        throw new Error('Bus unavailable');
-      }
-
-      emit(channel, payload);
-    });
-
-    await session.prompt('/maestro');
-
-    expect(maestroSessionState.isActive()).toBe(false);
-    expect(notify).toHaveBeenCalledExactlyOnceWith(
-      `${SUBAGENT_PING.INSTALLATION_ERROR} Bus unavailable`,
-      'error',
-    );
-  });
-
   it('given an untrusted project when activation is retried then each attempt reports a trust error until the project is trusted and Maestro can activate', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 
     const { session, notify, setStatus, settingsManager } = await piTestSessions.create({
-      extensions: [foreignExtension, maestroExtension, successfulPingExtension],
+      extensions: [foreignExtension, maestroExtension],
       cwd: repository.path,
       projectTrusted: false,
     });
@@ -520,7 +378,7 @@ describe('main Maestro extension', () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { session, notify, setStatus, settingsManager } = await piTestSessions.create({
-      extensions: [foreignExtension, maestroExtension, successfulPingExtension],
+      extensions: [foreignExtension, maestroExtension],
       cwd: repository.path,
     });
 
@@ -575,10 +433,9 @@ describe('main Maestro extension', () => {
     const workflow = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
 
     const { session, notify, setStatus } = await piTestSessions.create({
-      extensions: [foreignExtension, maestroExtension, successfulPingExtension],
+      extensions: [foreignExtension, maestroExtension],
       cwd: repository.path,
       sessionStartEvent: { type: 'session_start', reason: 'resume' },
-      maestroAgentsAvailable: false,
     });
 
     expect(maestroSessionState.isActive()).toBe(false);
@@ -594,8 +451,8 @@ describe('main Maestro extension', () => {
     cleanupFunctions.push(repository.cleanup);
     await execFileAsync('git', ['init', '-q', repository.path]);
 
-    const { session, events, setStatus } = await piTestSessions.create({
-      extensions: [foreignExtension, maestroExtension, successfulPingExtension],
+    const { session, setStatus } = await piTestSessions.create({
+      extensions: [foreignExtension, maestroExtension],
       cwd: repository.path,
     });
 
@@ -695,7 +552,7 @@ describe('main Maestro extension', () => {
 
     const scriptedRuns = [
       {
-        agent: AGENTS.BUILDER,
+        heading: '# Builder',
         runningPhase: WORKFLOW_PHASES.BUILDER_RUNNING,
         statusIcon: '🛠️',
         statusLabel: 'Builder running',
@@ -710,7 +567,7 @@ describe('main Maestro extension', () => {
         },
       },
       {
-        agent: AGENTS.VERIFIER,
+        heading: '# Verifier',
         runningPhase: WORKFLOW_PHASES.VERIFIER_RUNNING,
         statusIcon: '🔍',
         statusLabel: 'Verifier running',
@@ -724,7 +581,7 @@ describe('main Maestro extension', () => {
         },
       },
       {
-        agent: AGENTS.SIMPLIFIER,
+        heading: '# Simplifier',
         runningPhase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
         statusIcon: '🧹',
         statusLabel: 'Simplifier running',
@@ -738,25 +595,41 @@ describe('main Maestro extension', () => {
       },
     ];
 
-    const requests: SubagentDelegationRequest[] = [];
+    const requests: ExecuteTaskInput[] = [];
 
     // Script only the AI work and completion response. Pi sessions, tools, and file operations are real.
-    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: The registered run tools emit delegation requests on this channel.
-      const request = payload as SubagentDelegationRequest;
+    vi.mocked(executeTask).mockImplementation(async (request) => {
       requests.push(request);
 
-      try {
-        const { session: child } = await piTestSessions.create({
-          cwd: request.cwd,
-          extensions: [maestroSubagentExtension],
-        });
+      const services = await createChildServices({
+        cwd: request.cwd,
+        roleGuidance: request.roleGuidance,
+      });
 
-        const scriptedRun = scriptedRuns.find(({ agent }) => agent === request.agent);
+      const { session: child } = await createAgentSession({
+        ...services,
+        modelRuntime: session.modelRuntime,
+        model: session.model,
+        customTools: request.additionalTools,
+        sessionManager: SessionManager.inMemory(request.cwd),
+      });
+
+      try {
+        await child.bindExtensions({ mode: 'print' });
+        expect(child.systemPrompt).toContain(request.roleGuidance);
+        expect(child.systemPrompt).toContain('You are a coding assistant running inside pi');
+
+        const scriptedRun = scriptedRuns.find(({ heading }) =>
+          request.roleGuidance.startsWith(heading),
+        );
 
         if (scriptedRun === undefined) {
-          throw new Error(`Unexpected agent: ${request.agent}`);
+          throw new Error(`Unexpected agent: ${request.roleGuidance.split('\n')[0]}`);
         }
+
+        expect(
+          child.getActiveToolNames().filter((name) => name.startsWith('maestro_record_')),
+        ).toEqual([scriptedRun.handoffToolName]);
 
         await expect(readWorkflowState(workflowPath)).resolves.toMatchObject({
           phase: scriptedRun.runningPhase,
@@ -768,7 +641,7 @@ describe('main Maestro extension', () => {
             theme.fg('accent', scriptedRun.statusLabel),
         );
 
-        if (request.agent === AGENTS.BUILDER) {
+        if (request.roleGuidance.startsWith('# Builder')) {
           await writeFile(productPath, productContents);
         }
 
@@ -777,23 +650,13 @@ describe('main Maestro extension', () => {
         );
 
         assertToolRegistered(tool);
-        await tool.execute(request.requestId, scriptedRun.handoff);
+        await tool.execute('scripted-handoff', scriptedRun.handoff);
 
-        events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-          requestId: request.requestId,
-          ownerRunId: request.ownerRunId,
-          nodeId: request.nodeId,
-          status: DELEGATION_STATUSES.COMPLETED,
-          result: { kind: 'text', text: 'The scripted child work finished.' },
-        });
-      } catch (error) {
-        events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-          requestId: request.requestId,
-          ownerRunId: request.ownerRunId,
-          nodeId: request.nodeId,
-          status: DELEGATION_STATUSES.FAILED,
-          error: String(error),
-        });
+        return { text: 'The scripted child work finished.' };
+      } finally {
+        await child.abort();
+        await child.extensionRunner.emit({ type: 'session_shutdown', reason: 'quit' });
+        child.dispose();
       }
     });
 
@@ -882,22 +745,19 @@ describe('main Maestro extension', () => {
     });
     expect(requests).toMatchObject([
       {
-        agent: AGENTS.BUILDER,
+        roleGuidance: expect.stringContaining('# Builder'),
         cwd: repository.path,
-        context: 'fresh',
-        task: expect.stringContaining(specId),
+        prompt: expect.stringContaining(specId),
       },
       {
-        agent: AGENTS.VERIFIER,
+        roleGuidance: expect.stringContaining('# Verifier'),
         cwd: repository.path,
-        context: 'fresh',
-        task: expect.stringContaining(specId),
+        prompt: expect.stringContaining(specId),
       },
       {
-        agent: AGENTS.SIMPLIFIER,
+        roleGuidance: expect.stringContaining('# Simplifier'),
         cwd: repository.path,
-        context: 'fresh',
-        task: expect.stringContaining(specId),
+        prompt: expect.stringContaining(specId),
       },
     ]);
     expect(setStatus).toHaveBeenLastCalledWith(
@@ -1031,7 +891,7 @@ describe('main Maestro extension', () => {
 
       const { session, setStatus } = await piTestSessions.create({
         cwd: repository.path,
-        extensions: [foreignExtension, extension, successfulPingExtension],
+        extensions: [foreignExtension, extension],
       });
 
       await session.prompt('/maestro');
@@ -1220,7 +1080,7 @@ describe('main Maestro extension', () => {
       await prepareSpecRevisionPhase({ paths, phase });
 
       const { session, setStatus } = await piTestSessions.create({
-        extensions: [foreignExtension, maestroExtension, successfulPingExtension],
+        extensions: [foreignExtension, maestroExtension],
         cwd: repository.path,
       });
 
@@ -1319,47 +1179,26 @@ describe('main Maestro extension', () => {
   it('given the builder reports an unavailable compiler when its run finishes then Maestro returns the escalation and shows that an owner decision is needed', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
-    const { session, events, setStatus } = await piTestSessions.create({
-      extensions: [foreignExtension, maestroExtension, successfulPingExtension],
+    const { session, setStatus } = await piTestSessions.create({
+      extensions: [foreignExtension, maestroExtension],
       cwd: repository.path,
     });
 
     await session.prompt('/maestro');
     const theme = session.extensionRunner.createContext().ui.theme;
     maestroSessionState.setActiveSpecId(SPEC_ID);
-    const requests: SubagentDelegationRequest[] = [];
-    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: This listener receives the request emitted by the registered run tool.
-      const request = payload as SubagentDelegationRequest;
+    const requests: ExecuteTaskInput[] = [];
+    vi.mocked(executeTask).mockImplementation(async (request) => {
       requests.push(request);
 
-      try {
-        await completeBuilderPass({
-          config: DEFAULT_CONFIG,
-          paths,
-          specId: SPEC_ID,
-          handoff: unavailableCompilerEscalation,
-        });
+      await completeBuilderPass({
+        config: DEFAULT_CONFIG,
+        paths,
+        specId: SPEC_ID,
+        handoff: unavailableCompilerEscalation,
+      });
 
-        events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-          requestId: request.requestId,
-          ownerRunId: request.ownerRunId,
-          nodeId: request.nodeId,
-          status: DELEGATION_STATUSES.COMPLETED,
-          result: {
-            kind: 'text',
-            text: 'The builder escalated the compiler problem.',
-          },
-        });
-      } catch (error) {
-        events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-          requestId: request.requestId,
-          ownerRunId: request.ownerRunId,
-          nodeId: request.nodeId,
-          status: DELEGATION_STATUSES.FAILED,
-          error: String(error),
-        });
-      }
+      return { text: 'The scripted child work finished.' };
     });
 
     const runBuilderTool = session.agent.state.tools.find(
@@ -1384,7 +1223,7 @@ describe('main Maestro extension', () => {
     expect(requests).toHaveLength(1);
     expect(requests[0]).toMatchObject({
       cwd: repository.path,
-      context: 'fresh',
+      roleGuidance: expect.stringContaining('# Builder'),
     });
     expect(result.details).toMatchObject({
       outcome: BUILDER_HANDOFF_STATUSES.ESCALATION,
@@ -1414,7 +1253,7 @@ describe('main Maestro extension', () => {
     cleanupFunctions.push(repository.cleanup);
 
     const { session, notify, setStatus } = await piTestSessions.create({
-      extensions: [foreignExtension, maestroExtension, successfulPingExtension],
+      extensions: [foreignExtension, maestroExtension],
       cwd: repository.path,
     });
 

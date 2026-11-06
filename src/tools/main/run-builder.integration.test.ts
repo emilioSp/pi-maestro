@@ -1,17 +1,19 @@
-import { readFile, rm, writeFile } from 'node:fs/promises';
+/**
+ * Objective: Verify builder SDK inputs, saved outcomes, and failure boundaries.
+ * Used: With offline Pi tools and scripted SDK executions.
+ */
 
-import {
-  SUBAGENT_DELEGATION_REQUEST_EVENT,
-  SUBAGENT_DELEGATION_RESPONSE_EVENT,
-  type SubagentDelegationRequest,
-} from 'pi-subagents/delegation';
+import { access, readFile, rm, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
 import { Value } from 'typebox/value';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import { BUILDER_HANDOFF_STATUSES, PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
-import { AGENTS } from '#config/schema.ts';
+import { executeTask } from '#src/delegation/executeTask.ts';
+import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
 import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
 import {
   cleanupBuilderWorkflows,
@@ -20,15 +22,20 @@ import {
   SPEC_ID,
 } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
-import { registerRecordBuilderHandoffTool } from '#tools/child/record-builder-handoff.ts';
+import {
+  BUILDER_HANDOFF_TOOL,
+  recordBuilderHandoffTool,
+} from '#tools/child/record-builder-handoff.ts';
 import { registerRunBuilderTool } from '#tools/main/run-builder.ts';
-import { DELEGATION_STATUSES, SUBAGENT_TIMEOUT_MS } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 
+vi.mock('#src/delegation/executeTask.ts', () => ({ executeTask: vi.fn<typeof executeTask>() }));
+
 afterEach(async () => {
+  vi.mocked(executeTask).mockReset();
   await piTestSessions.cleanup();
   await cleanupBuilderWorkflows();
 });
@@ -37,14 +44,12 @@ describe('run builder tool', () => {
   it('given a ready-for-verifier workflow whose builder report still contains escalations when the builder reports completion then the run fails because the report status and phase disagree', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
-    const { tool, events } = await piTestSessions.createRegisteredTool({
+    const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
       extension: registerRunBuilderTool,
     });
 
-    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: The run tool emits a delegation request on this channel.
-      const request = payload as SubagentDelegationRequest;
+    vi.mocked(executeTask).mockImplementationOnce(async () => {
       await completeBuilderPass({
         config: DEFAULT_CONFIG,
         paths,
@@ -56,13 +61,8 @@ describe('run builder tool', () => {
         path: paths.getWorkflowPath(SPEC_ID),
         state: { ...state, phase: WORKFLOW_PHASES.READY_FOR_VERIFIER },
       });
-      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: request.requestId,
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.COMPLETED,
-        result: { kind: 'text', text: 'Done' },
-      });
+
+      return { text: 'Completed successfully' };
     });
     await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
       'Builder protocol error: Builder handoff status does not match workflow phase "ready-for-verifier".',
@@ -87,15 +87,12 @@ describe('run builder tool', () => {
     async ({ scenario }) => {
       const { paths, repository } = await createApprovedWorkflow();
 
-      const { tool, events } = await piTestSessions.createRegisteredTool({
+      const { tool } = await piTestSessions.createRegisteredTool({
         cwd: repository.path,
         extension: registerRunBuilderTool,
       });
 
-      events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-        // JUSTIFICATION: The run tool emits a delegation request on this channel.
-        const request = payload as SubagentDelegationRequest;
-
+      vi.mocked(executeTask).mockImplementationOnce(async () => {
         const completed = await completeBuilderPass({
           config: DEFAULT_CONFIG,
           paths,
@@ -121,13 +118,8 @@ describe('run builder tool', () => {
           };
 
         if (scenario !== 'missing') await writeFile(completed.handoffPath, JSON.stringify(handoff));
-        events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-          requestId: request.requestId,
-          ownerRunId: request.ownerRunId,
-          nodeId: request.nodeId,
-          status: DELEGATION_STATUSES.COMPLETED,
-          result: { kind: 'text', text: 'Saved' },
-        });
+
+        return { text: 'Completed successfully' };
       });
       await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
         'Builder protocol error:',
@@ -150,25 +142,20 @@ describe('run builder tool', () => {
     ).toBe(false);
   });
 
-  it('given an approved workflow when the builder saves a done report then the run uses the configured agent and current project and returns that report in ready-for-verifier', async () => {
-    const { paths, repository } = await createApprovedWorkflow();
+  it('given an approved workflow when the builder saves a done report then the run uses the configured SDK inputs and current project and returns that report in ready-for-verifier', async () => {
+    const { paths, repository } = await createApprovedWorkflow({
+      agents: { builder: { model: 'openai-codex/gpt-6.1-sol', thinking: 'high' } },
+    });
 
-    const { tool, events, emit, on } = await piTestSessions.createRegisteredTool({
+    const { tool, notify } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
       extension: registerRunBuilderTool,
     });
 
-    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: The run tool emits a delegation request on this channel.
-      const request = payload as SubagentDelegationRequest;
-      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: 'other-request',
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.COMPLETED,
-        result: { kind: 'text', text: 'Ignore this response.' },
-      });
-
+    const sessionFile = join(repository.path, 'child.jsonl');
+    await writeFile(sessionFile, '{}\n');
+    const controller = new AbortController();
+    vi.mocked(executeTask).mockImplementationOnce(async () => {
       await completeBuilderPass({
         config: DEFAULT_CONFIG,
         paths,
@@ -188,16 +175,10 @@ describe('run builder tool', () => {
         },
       });
 
-      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: request.requestId,
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.COMPLETED,
-        result: { kind: 'text', text: 'The builder finished.' },
-      });
+      return { text: 'Completed successfully', sessionFile };
     });
 
-    const result = await tool.execute('test-call', { specId: SPEC_ID });
+    const result = await tool.execute('test-call', { specId: SPEC_ID }, controller.signal);
 
     const saved = await readBuilderHandoff({
       path: await paths.getActiveBuilderHandoffPath(SPEC_ID),
@@ -211,42 +192,41 @@ describe('run builder tool', () => {
       handoff: saved,
     });
 
-    const receivedRequest = emit.mock.calls[0][1];
+    const receivedRequest = vi.mocked(executeTask).mock.calls[0][0];
     expect(receivedRequest).toMatchObject({
-      agent: AGENTS.BUILDER,
-      context: 'fresh',
       cwd: repository.path,
-      model: DEFAULT_CONFIG.builder.model,
-      thinking: DEFAULT_CONFIG.builder.thinking,
-      timeoutMs: SUBAGENT_TIMEOUT_MS,
-      task: expect.stringContaining(SPEC_ID),
-      result: { kind: 'text' },
+      model: 'openai-codex/gpt-6.1-sol',
+      thinkingLevel: 'high',
+      prompt: expect.stringContaining(SPEC_ID),
     });
     expect(receivedRequest).toMatchObject({
-      task: expect.stringContaining(repository.path),
+      prompt: expect.stringContaining(repository.path),
     });
-    expect(on).toHaveBeenLastCalledWith(SUBAGENT_DELEGATION_RESPONSE_EVENT, expect.any(Function));
-    expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
+
     expect(result.details).toMatchObject({
       outcome: BUILDER_HANDOFF_STATUSES.DONE,
       specId: SPEC_ID,
       phase: WORKFLOW_PHASES.READY_FOR_VERIFIER,
       handoff: { status: BUILDER_HANDOFF_STATUSES.DONE, escalations: [] },
     });
+    const input = vi.mocked(executeTask).mock.calls[0][0];
+    expect(input.signal).toBe(controller.signal);
+    expect(input.roleGuidance).toBe(
+      await readFile(new URL('../../../agents/builder.md', import.meta.url), 'utf8'),
+    );
+    expect(input.additionalTools.map((tool) => tool.name)).toEqual([BUILDER_HANDOFF_TOOL.NAME]);
+    expect(notify).toHaveBeenCalledWith(`Saved child session: ${sessionFile}`, 'info');
   });
 
   it('given an approved workflow when the builder saves an escalation report then the run returns that report and the workflow waits in escalation-decisions', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
-    const { tool, events } = await piTestSessions.createRegisteredTool({
+    const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
       extension: registerRunBuilderTool,
     });
 
-    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: The run tool emits a delegation request on this channel.
-      const request = payload as SubagentDelegationRequest;
-
+    vi.mocked(executeTask).mockImplementationOnce(async () => {
       const opened = await completeBuilderPass({
         config: DEFAULT_CONFIG,
         paths,
@@ -256,13 +236,7 @@ describe('run builder tool', () => {
 
       expect(opened.state.phase).toBe(WORKFLOW_PHASES.ESCALATION_DECISIONS);
 
-      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: request.requestId,
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.COMPLETED,
-        result: { kind: 'text', text: 'The builder finished.' },
-      });
+      return { text: 'Completed successfully' };
     });
 
     const result = await tool.execute('test-call', { specId: SPEC_ID });
@@ -286,129 +260,16 @@ describe('run builder tool', () => {
     });
   });
 
-  it('given the builder provider is unavailable when the failed run response arrives then the tool reports the provider error, removes its listener, and leaves builder-running unchanged', async () => {
-    const { paths, repository } = await createApprovedWorkflow();
-
-    const { tool, events, on } = await piTestSessions.createRegisteredTool({
-      cwd: repository.path,
-      extension: registerRunBuilderTool,
-    });
-
-    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-      // JUSTIFICATION: The run tool emits a delegation request on this channel.
-      const request = payload as SubagentDelegationRequest;
-      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: request.requestId,
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.FAILED,
-        error: 'The configured provider is unavailable.',
-      });
-    });
-
-    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
-      'Delegation error: The configured provider is unavailable.',
-    );
-    await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
-      phase: WORKFLOW_PHASES.BUILDER_RUNNING,
-    });
-    expect(on).toHaveBeenLastCalledWith(SUBAGENT_DELEGATION_RESPONSE_EVENT, expect.any(Function));
-    expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
-  });
-
-  it('given the event bus cannot send the builder request when a run is started then the tool reports the request error and removes its response listener', async () => {
-    const { repository } = await createApprovedWorkflow();
-
-    const { tool, emit, on } = await piTestSessions.createRegisteredTool({
-      cwd: repository.path,
-      extension: registerRunBuilderTool,
-    });
-
-    emit.mockImplementationOnce(() => {
-      throw new Error('Request emission failed.');
-    });
-
-    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
-      'Delegation request error: Request emission failed.',
-    );
-    expect(on).toHaveBeenLastCalledWith(SUBAGENT_DELEGATION_RESPONSE_EVENT, expect.any(Function));
-    expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
-  });
-
-  it('given the builder exceeds its timeout when the timeout response arrives then the run fails with a timeout error and the workflow stays in builder-running', async () => {
-    const { paths, repository } = await createApprovedWorkflow();
-
-    const { tool, events } = await piTestSessions.createRegisteredTool({
-      cwd: repository.path,
-      extension: registerRunBuilderTool,
-    });
-
-    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-      // JUSTIFICATION: The run tool emits a delegation request on this channel.
-      const request = payload as SubagentDelegationRequest;
-      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: request.requestId,
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.TIMED_OUT,
-        error: 'The builder exceeded its timeout.',
-      });
-    });
-
-    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
-      'Delegation timeout: The builder exceeded its timeout.',
-    );
-    await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
-      phase: WORKFLOW_PHASES.BUILDER_RUNNING,
-    });
-  });
-
-  it('given the builder is interrupted when the interruption response arrives then the run fails with an interruption error and the workflow stays in builder-running', async () => {
-    const { paths, repository } = await createApprovedWorkflow();
-
-    const { tool, events } = await piTestSessions.createRegisteredTool({
-      cwd: repository.path,
-      extension: registerRunBuilderTool,
-    });
-
-    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-      // JUSTIFICATION: The run tool emits a delegation request on this channel.
-      const request = payload as SubagentDelegationRequest;
-      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: request.requestId,
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.INTERRUPTED,
-        error: 'The builder was interrupted.',
-      });
-    });
-
-    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
-      'Delegation interruption: The builder was interrupted.',
-    );
-    await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
-      phase: WORKFLOW_PHASES.BUILDER_RUNNING,
-    });
-  });
-
   it('given the builder saved no report and left builder-running unchanged when it reports completion then the run fails with an unexpected workflow phase error', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
-    const { tool, events } = await piTestSessions.createRegisteredTool({
+    const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
       extension: registerRunBuilderTool,
     });
 
-    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-      // JUSTIFICATION: The run tool emits a delegation request on this channel.
-      const request = payload as SubagentDelegationRequest;
-      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: request.requestId,
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.COMPLETED,
-        result: { kind: 'text', text: 'No handoff recorded.' },
-      });
+    vi.mocked(executeTask).mockImplementationOnce(async () => {
+      return { text: 'Completed successfully' };
     });
 
     await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
@@ -420,33 +281,58 @@ describe('run builder tool', () => {
       phase: WORKFLOW_PHASES.BUILDER_RUNNING,
     });
   });
+});
 
-  it('given a builder response with an unsupported status when the run tool receives it then a protocol error identifies that status and the workflow stays in builder-running', async () => {
+it.each([
+  { failure: 'model error', message: 'Provider unavailable', interrupted: false },
+  { failure: 'interruption', message: 'Child interrupted', interrupted: true },
+  { failure: 'missing handoff', message: 'Builder protocol error', interrupted: false },
+])(
+  'given a builder $failure with a saved session when execution stops then the path is displayed and the workflow stays builder-running without a handoff',
+  async ({ failure, message, interrupted }) => {
     const { paths, repository } = await createApprovedWorkflow();
 
-    const { tool, events } = await piTestSessions.createRegisteredTool({
+    const { tool, notify } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
       extension: registerRunBuilderTool,
     });
 
-    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-      // JUSTIFICATION: The run tool emits a delegation request on this channel.
-      const request = payload as SubagentDelegationRequest;
-      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: request.requestId,
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: 'unsupported',
-      });
-    });
+    const sessionFile = join(repository.path, 'child.jsonl');
+    await writeFile(sessionFile, '{}\n');
+    const cause = new Error(message);
 
-    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
-      'Protocol error: unsupported final response status "unsupported".',
-    );
-    await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
+    if (interrupted) cause.name = 'AbortError';
+    vi.mocked(executeTask).mockImplementationOnce(async () => {
+      if (failure === 'missing handoff') return { text: 'Completed successfully', sessionFile };
+      throw new TaskExecutionError({ cause, sessionFile });
+    });
+    await expect(tool.execute('failed-run', { specId: SPEC_ID })).rejects.toThrow(message);
+    expect(notify).toHaveBeenCalledExactlyOnceWith(`Saved child session: ${sessionFile}`, 'info');
+    expect(executeTask).toHaveBeenCalledOnce();
+    expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
       phase: WORKFLOW_PHASES.BUILDER_RUNNING,
     });
+    await expect(
+      access(paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 })),
+    ).rejects.toMatchObject({ code: 'ENOENT' });
+  },
+);
+
+it('given a builder execution error without a saved session when execution stops then no session path is displayed', async () => {
+  const { repository } = await createApprovedWorkflow();
+
+  const { tool, notify } = await piTestSessions.createRegisteredTool({
+    cwd: repository.path,
+    extension: registerRunBuilderTool,
   });
+
+  vi.mocked(executeTask).mockRejectedValueOnce(
+    new TaskExecutionError({ cause: new Error('Failed before saving') }),
+  );
+  await expect(tool.execute('failed-run', { specId: SPEC_ID })).rejects.toThrow(
+    'Failed before saving',
+  );
+  expect(notify).not.toHaveBeenCalled();
 });
 
 it.each([
@@ -456,44 +342,30 @@ it.each([
   'given verifier disabled and simplifier=$simplifier when builder completes then $phase is saved without verifier delegation',
   async ({ simplifier, phase }) => {
     const { paths, repository } = await createApprovedWorkflow({
-      agents: {
-        verifier: { required: false },
-        simplifier: { required: simplifier },
-      },
+      agents: { verifier: { required: false }, simplifier: { required: simplifier } },
     });
 
-    const { tool, events, emit } = await piTestSessions.createRegisteredTool({
+    const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
       extension: registerRunBuilderTool,
     });
 
     const { tool: childTool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
-      extension: registerRecordBuilderHandoffTool,
+      extension: (pi) => {
+        pi.registerTool(recordBuilderHandoffTool);
+      },
     });
 
-    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: The run tool emits a delegation request on this channel.
-      const request = payload as SubagentDelegationRequest;
+    vi.mocked(executeTask).mockImplementationOnce(async () => {
       await childTool.execute('record-builder', { specId: SPEC_ID, ...doneHandoff() });
-      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: request.requestId,
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.COMPLETED,
-        result: { kind: 'text', text: 'Saved' },
-      });
+
+      return { text: 'Saved' };
     });
-    const result = await tool.execute('builder-without-verifier', { specId: SPEC_ID });
+    const result = await tool.execute('builder-only', { specId: SPEC_ID });
     expect(result.details).toMatchObject({ phase, outcome: BUILDER_HANDOFF_STATUSES.DONE });
-    await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
-      phase,
-    });
-    expect(
-      emit.mock.calls.filter(([event]) => event === SUBAGENT_DELEGATION_REQUEST_EVENT),
-    ).toEqual([
-      [SUBAGENT_DELEGATION_REQUEST_EVENT, expect.objectContaining({ agent: AGENTS.BUILDER })],
-    ]);
+    expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({ phase });
+    expect(executeTask).toHaveBeenCalledOnce();
     expect(result.content).toEqual([
       {
         type: 'text',

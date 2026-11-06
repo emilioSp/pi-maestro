@@ -17,7 +17,7 @@ import {
   SPEC_ID,
 } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
-import { registerRecordVerifierHandoffTool } from '#tools/child/record-verifier-handoff.ts';
+import { recordVerifierHandoffTool } from '#tools/child/record-verifier-handoff.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -186,7 +186,9 @@ describe('verifier spec criterion presence', () => {
 
     const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
-      extension: registerRecordVerifierHandoffTool,
+      extension: (pi) => {
+        pi.registerTool(recordVerifierHandoffTool);
+      },
     });
 
     await expect(

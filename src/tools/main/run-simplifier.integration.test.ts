@@ -1,24 +1,21 @@
 /**
  * Objective: Prove simplifier delegation, Git skips, and result boundaries.
- * Used: With real Pi tools and scripted delegation responses, without model calls.
+ * Used: With real Pi tools and scripted SDK executions, without model calls.
  */
 
 import { execFile } from 'node:child_process';
-import { access } from 'node:fs/promises';
+import { access, readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { promisify } from 'node:util';
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
-import {
-  SUBAGENT_DELEGATION_REQUEST_EVENT,
-  SUBAGENT_DELEGATION_RESPONSE_EVENT,
-  type SubagentDelegationRequest,
-} from 'pi-subagents/delegation';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
-import { AGENTS } from '#config/schema.ts';
 import { MAESTRO_STATUS_KEY } from '#maestro/status/refreshMaestroStatus.ts';
+import { executeTask } from '#src/delegation/executeTask.ts';
+import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -26,8 +23,8 @@ import {
   SPEC_ID,
 } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
+import { SIMPLIFIER_HANDOFF_TOOL } from '#tools/child/record-simplifier-handoff.ts';
 import { registerRunSimplifierTool } from '#tools/main/run-simplifier.ts';
-import { DELEGATION_STATUSES, SUBAGENT_TIMEOUT_MS } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { completeSimplifierPass } from '#workflow/simplifier/completeSimplifierPass.ts';
@@ -65,7 +62,10 @@ const createSimplifierWorkflow = async () => {
   return workflow;
 };
 
+vi.mock('#src/delegation/executeTask.ts', () => ({ executeTask: vi.fn<typeof executeTask>() }));
+
 afterEach(async () => {
+  vi.mocked(executeTask).mockReset();
   await piTestSessions.cleanup();
   await cleanupBuilderWorkflows();
 });
@@ -89,7 +89,7 @@ describe('run simplifier', () => {
       registerRunSimplifierTool(pi);
     };
 
-    const { tool, emit, notify } = await piTestSessions.createRegisteredTool({
+    const { tool, notify } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
       extension,
     });
@@ -112,7 +112,7 @@ describe('run simplifier', () => {
       'Simplifier skipped: Git repository unavailable.',
       'warning',
     );
-    expect(emit).not.toHaveBeenCalledWith(SUBAGENT_DELEGATION_REQUEST_EVENT, expect.anything());
+    expect(executeTask).not.toHaveBeenCalled();
     expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
     });
@@ -125,14 +125,15 @@ describe('run simplifier', () => {
     const { paths, repository } = await createSimplifierWorkflow();
     await execFileAsync('git', ['init', '-q', repository.path]);
 
-    const { tool, events, emit, session, setStatus } = await piTestSessions.createRegisteredTool({
+    const { tool, notify, session, setStatus } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
       extension: registerRunSimplifierTool,
     });
 
-    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: The registered run tool emits this typed delegation request.
-      const request = payload as SubagentDelegationRequest;
+    const sessionFile = join(repository.path, 'child.jsonl');
+    await writeFile(sessionFile, '{}\n');
+    const controller = new AbortController();
+    vi.mocked(executeTask).mockImplementationOnce(async () => {
       expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
         phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
       });
@@ -155,78 +156,35 @@ describe('run simplifier', () => {
           notes: [],
         },
       });
-      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: request.requestId,
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.COMPLETED,
-        result: { kind: 'text', text: 'Done' },
-      });
-    });
-    const result = await tool.execute('simplify', { specId: SPEC_ID });
 
-    const requests = emit.mock.calls.filter(
-      ([channel]) => channel === SUBAGENT_DELEGATION_REQUEST_EVENT,
-    );
+      return { text: 'Completed successfully', sessionFile };
+    });
+    const result = await tool.execute('simplify', { specId: SPEC_ID }, controller.signal);
+
+    const requests = vi.mocked(executeTask).mock.calls;
 
     expect(requests).toHaveLength(1);
-    expect(requests[0][1]).toMatchObject({
-      ownerRunId: 'simplify',
-      agent: AGENTS.SIMPLIFIER,
-      nodeId: 'simplifier',
-      context: 'fresh',
+    expect(requests[0][0]).toMatchObject({
       cwd: repository.path,
       model: DEFAULT_CONFIG.simplifier.model,
-      thinking: DEFAULT_CONFIG.simplifier.thinking,
-      timeoutMs: SUBAGENT_TIMEOUT_MS,
-      task: expect.stringContaining(SPEC_ID),
+      thinkingLevel: DEFAULT_CONFIG.simplifier.thinking,
+      prompt: expect.stringContaining(SPEC_ID),
     });
-    expect(requests[0][1]).toMatchObject({
-      task: expect.stringContaining(repository.path),
+    expect(requests[0][0]).toMatchObject({
+      prompt: expect.stringContaining(repository.path),
     });
     expect(result.details).toMatchObject({
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
       handoff: { refactoredFiles: [], summary: 'No simplification needed' },
     });
+    const input = vi.mocked(executeTask).mock.calls[0][0];
+    expect(input.signal).toBe(controller.signal);
+    expect(input.roleGuidance).toBe(
+      await readFile(new URL('../../../agents/simplifier.md', import.meta.url), 'utf8'),
+    );
+    expect(input.additionalTools.map((tool) => tool.name)).toEqual([SIMPLIFIER_HANDOFF_TOOL.NAME]);
+    expect(notify).toHaveBeenCalledWith(`Saved child session: ${sessionFile}`, 'info');
   });
-
-  it.each([
-    DELEGATION_STATUSES.COMPLETED,
-    DELEGATION_STATUSES.FAILED,
-    DELEGATION_STATUSES.TIMED_OUT,
-    DELEGATION_STATUSES.INTERRUPTED,
-  ])(
-    'given a simplifier response marked %s without a saved report when the run tool receives it then the call fails and the workflow stays in simplifier-running',
-    async (status) => {
-      const { paths, repository } = await createSimplifierWorkflow();
-      await execFileAsync('git', ['init', '-q', repository.path]);
-
-      const { tool, events } = await piTestSessions.createRegisteredTool({
-        cwd: repository.path,
-        extension: registerRunSimplifierTool,
-      });
-
-      events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-        // JUSTIFICATION: The registered run tool emits this typed delegation request.
-        const request = payload as SubagentDelegationRequest;
-        events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-          requestId: request.requestId,
-          status,
-          error: 'Stopped before saving',
-          result: { kind: 'text', text: 'No saved result' },
-        });
-      });
-      await expect(tool.execute('failure', { specId: SPEC_ID })).rejects.toThrow(
-        status === DELEGATION_STATUSES.COMPLETED ? 'Simplifier protocol error' : 'Delegation',
-      );
-      expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
-        phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
-      });
-      await expect(access(paths.getSimplifierHandoffPath(SPEC_ID))).rejects.toMatchObject({
-        code: 'ENOENT',
-      });
-    },
-  );
 
   it('given a workflow in ready-for-builder when simplification is requested then a phase error stops the call before any Git check or agent request', async () => {
     const { repository } = await createApprovedWorkflow();
@@ -238,7 +196,7 @@ describe('run simplifier', () => {
       registerRunSimplifierTool(pi);
     };
 
-    const { tool, emit } = await piTestSessions.createRegisteredTool({
+    const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
       extension,
     });
@@ -246,6 +204,60 @@ describe('run simplifier', () => {
     await expect(tool.execute('wrong-phase', { specId: SPEC_ID })).rejects.toThrow(
       'Simplifier run requires simplifier-running',
     );
-    expect(emit).not.toHaveBeenCalled();
+    expect(executeTask).not.toHaveBeenCalled();
   });
+});
+
+it.each([
+  { failure: 'model error', message: 'Provider unavailable', interrupted: false },
+  { failure: 'interruption', message: 'Child interrupted', interrupted: true },
+  { failure: 'missing handoff', message: 'Simplifier protocol error', interrupted: false },
+])(
+  'given a simplifier $failure with a saved session when execution stops then the path is displayed and the workflow stays simplifier-running without a handoff',
+  async ({ failure, message, interrupted }) => {
+    const { paths, repository } = await createSimplifierWorkflow();
+    await execFileAsync('git', ['init', '-q', repository.path]);
+
+    const { tool, notify } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerRunSimplifierTool,
+    });
+
+    const sessionFile = join(repository.path, 'child.jsonl');
+    await writeFile(sessionFile, '{}\n');
+    const cause = new Error(message);
+
+    if (interrupted) cause.name = 'AbortError';
+    vi.mocked(executeTask).mockImplementationOnce(async () => {
+      if (failure === 'missing handoff') return { text: 'Completed successfully', sessionFile };
+      throw new TaskExecutionError({ cause, sessionFile });
+    });
+    await expect(tool.execute('failed-run', { specId: SPEC_ID })).rejects.toThrow(message);
+    expect(notify).toHaveBeenCalledExactlyOnceWith(`Saved child session: ${sessionFile}`, 'info');
+    expect(executeTask).toHaveBeenCalledOnce();
+    expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
+      phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
+    });
+    await expect(access(paths.getSimplifierHandoffPath(SPEC_ID))).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
+  },
+);
+
+it('given a simplifier execution error without a saved session when execution stops then no session path is displayed', async () => {
+  const { repository } = await createSimplifierWorkflow();
+  await execFileAsync('git', ['init', '-q', repository.path]);
+
+  const { tool, notify } = await piTestSessions.createRegisteredTool({
+    cwd: repository.path,
+    extension: registerRunSimplifierTool,
+  });
+
+  vi.mocked(executeTask).mockRejectedValueOnce(
+    new TaskExecutionError({ cause: new Error('Failed before saving') }),
+  );
+  await expect(tool.execute('failed-run', { specId: SPEC_ID })).rejects.toThrow(
+    'Failed before saving',
+  );
+  expect(notify).not.toHaveBeenCalled();
 });

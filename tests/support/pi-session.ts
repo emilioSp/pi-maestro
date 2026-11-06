@@ -4,10 +4,9 @@
  */
 
 import { deepStrictEqual, strictEqual } from 'node:assert';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 
 import {
   type AgentSession,
@@ -32,7 +31,6 @@ type CreatePiSessionInput = {
   extensions: ExtensionFactory[];
   additionalExtensionPaths?: string[];
   projectTrusted?: boolean;
-  maestroAgentsAvailable?: boolean | string[];
   sessionStartEvent?: SessionStartEvent;
 };
 
@@ -55,7 +53,6 @@ class PiTestSessions {
     extensions,
     additionalExtensionPaths = [],
     projectTrusted = true,
-    maestroAgentsAvailable = true,
     sessionStartEvent,
   }: CreatePiSessionInput) => {
     initTheme('dark', false);
@@ -68,29 +65,6 @@ class PiTestSessions {
     vi.stubEnv('PI_CODING_AGENT_DIR', agentDir);
     vi.stubEnv('HOME', directory);
     vi.stubEnv('PI_OFFLINE', '1');
-    vi.stubEnv('PI_SUBAGENT_EXTRA_AGENT_DIRS', '');
-
-    // Real preflight discovers this package's agent files, not personal Pi resources.
-    await writeFile(
-      join(agentDir, 'settings.json'),
-      JSON.stringify({
-        packages:
-          maestroAgentsAvailable === true
-            ? [dirname(fileURLToPath(import.meta.resolve('#package.json')))]
-            : [],
-      }),
-    );
-
-    if (Array.isArray(maestroAgentsAvailable)) {
-      await mkdir(join(agentDir, 'agents'));
-
-      for (const role of maestroAgentsAvailable) {
-        await writeFile(
-          join(agentDir, 'agents', `${role}.md`),
-          await readFile(new URL(import.meta.resolve(`#agents/${role}.md`)), 'utf8'),
-        );
-      }
-    }
 
     const modelRuntime = await ModelRuntime.create({
       authPath: join(agentDir, 'auth.json'),

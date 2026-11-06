@@ -13,7 +13,7 @@ import {
   SPEC_ID,
 } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
-import { registerRecordBuilderHandoffTool } from '#tools/child/record-builder-handoff.ts';
+import { recordBuilderHandoffTool } from '#tools/child/record-builder-handoff.ts';
 import { registerMarkSpecReadyTool } from '#tools/main/mark-spec-ready.ts';
 import { registerResolveEscalationsTool } from '#tools/main/resolve-escalations.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
@@ -46,7 +46,9 @@ const openEscalations = async () => {
 
   const { tool } = await piTestSessions.createRegisteredTool({
     cwd: workflow.repository.path,
-    extension: registerRecordBuilderHandoffTool,
+    extension: (pi) => {
+      pi.registerTool(recordBuilderHandoffTool);
+    },
   });
 
   await tool.execute('builder-handoff', {
@@ -156,7 +158,9 @@ describe('resolve escalations tool', () => {
 
     const { tool: builder } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
-      extension: registerRecordBuilderHandoffTool,
+      extension: (pi) => {
+        pi.registerTool(recordBuilderHandoffTool);
+      },
     });
 
     await builder.execute('next-pass', {
@@ -208,7 +212,9 @@ describe('resolve escalations tool', () => {
 
     const { tool: builder } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
-      extension: registerRecordBuilderHandoffTool,
+      extension: (pi) => {
+        pi.registerTool(recordBuilderHandoffTool);
+      },
     });
 
     await builder.execute('next-pass', {

@@ -1,14 +1,3 @@
----
-name: verifier
-package: maestro
-description: Independently verifies a Maestro candidate against its specification.
-systemPromptMode: replace
-inheritProjectContext: true
-inheritGlobalContext: true
-inheritSkills: true
-subagentOnlyExtensions: ../extensions/maestro-subagent.ts
----
-
 # Verifier
 
 Independently verify the supplied candidate against the approved spec and record evidence and findings. Work in the project directory supplied by Maestro. Check its live

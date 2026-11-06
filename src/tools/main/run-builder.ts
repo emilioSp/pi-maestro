@@ -3,10 +3,7 @@
  * Used: When the owner invokes the run-builder tool.
  */
 
-import { randomUUID } from 'node:crypto';
-
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
-import type { SubagentDelegationRequest } from 'pi-subagents/delegation';
 import { Type } from 'typebox';
 
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
@@ -14,15 +11,11 @@ import {
   BUILDER_HANDOFF_STATUSES,
   type BuilderHandoff,
 } from '#artifacts/builder-handoff/schema.ts';
-import { AGENTS, type MaestroConfig } from '#config/schema.ts';
+import type { MaestroConfig } from '#config/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
-import {
-  assertDelegationResponse,
-  SUBAGENT_TIMEOUT_MS,
-  waitForDelegationResponse,
-} from '#tools/utils/pi-subagent-delegation.ts';
+import { executeRoleTask } from '#tools/utils/executeRoleTask.ts';
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { WORKFLOW_ROLES } from '#workflow/roles.ts';
@@ -162,7 +155,7 @@ export const registerRunBuilderTool = (pi: ExtensionAPI): void => {
     label: RUN_BUILDER_TOOL.LABEL,
     description: RUN_BUILDER_TOOL.DESCRIPTION,
     parameters: RunBuilderToolParameters,
-    async execute(toolCallId, { specId }, _signal, _onUpdate, context) {
+    async execute(_toolCallId, { specId }, signal, _onUpdate, context) {
       const { paths, config } = await resolveToolRunContext(context.cwd);
 
       const { projectRoot, state: builderRunningState } = await prepareBuilderRun({
@@ -173,28 +166,16 @@ export const registerRunBuilderTool = (pi: ExtensionAPI): void => {
 
       await refreshMaestroStatus(context);
 
-      const request: SubagentDelegationRequest = {
-        requestId: randomUUID(),
-        ownerRunId: toolCallId,
-        nodeId: WORKFLOW_ROLES.BUILDER,
-        // pi-subagents loads this name from agents/builder.md through package.json.
-        // See docs/subagent-integration.md.
-        agent: AGENTS.BUILDER,
-        task: `Implement specId "${specId}" in the project directory "${projectRoot}".`,
-        context: 'fresh',
+      await executeRoleTask({
+        role: WORKFLOW_ROLES.BUILDER,
+        prompt: `Implement specId "${specId}" in the project directory "${projectRoot}".`,
         cwd: projectRoot,
         model: config.builder.model,
-        thinking: config.builder.thinking,
-        timeoutMs: SUBAGENT_TIMEOUT_MS,
-        result: { kind: 'text' },
-      };
-
-      const response = await waitForDelegationResponse({
-        piEventsBus: pi.events,
-        request,
+        thinkingLevel: config.builder.thinking,
+        signal,
+        ui: context.ui,
       });
 
-      assertDelegationResponse(response);
       const result = await readBuilderResult({ paths, specId, config, builderRunningState });
 
       return {

@@ -34,14 +34,15 @@ reaching `candidate-ready`. Linear onboarding and test issues are not project ro
 | MAESTRO-25         | [Define workflow reconciliation](#maestro-25-define-workflow-reconciliation)                                                       | Backlog     |
 | MAESTRO-26         | [Exit Maestro mode automatically at workflow completion](#maestro-26-exit-maestro-mode-automatically-at-workflow-completion)       | Completed   |
 | MAESTRO-27         | [Make all implementation phases optional](#maestro-27-make-all-implementation-phases-optional)                                     | Completed   |
+| MAESTRO-28         | [Add Maestro role instructions alongside the other agents](#maestro-28-add-maestro-role-instructions-alongside-the-other-agents)   | Backlog     |
 | MAESTRO-FREE-1     | [Require Pi 1.5.0](#maestro-free-1-require-pi-150)                                                                                 | Completed   |
 | MAESTRO-FREE-2     | [Remove Maestro run timeouts](#maestro-free-2-remove-maestro-run-timeouts)                                                         | Completed   |
 | MAESTRO-FREE-PRE-3 | [Implement internal SDK delegation](#maestro-free-pre-3-implement-internal-sdk-delegation)                                         | Completed   |
-| MAESTRO-FREE-3     | [Run the builder through the Pi SDK](#maestro-free-3-run-the-builder-through-the-pi-sdk)                                           | Backlog     |
-| MAESTRO-FREE-4     | [Run the verifier through the Pi SDK](#maestro-free-4-run-the-verifier-through-the-pi-sdk)                                         | Backlog     |
-| MAESTRO-FREE-5     | [Run the simplifier through the Pi SDK](#maestro-free-5-run-the-simplifier-through-the-pi-sdk)                                     | Backlog     |
+| MAESTRO-FREE-3     | [Run the builder through the Pi SDK](#maestro-free-3-run-the-builder-through-the-pi-sdk)                                           | In progress |
+| MAESTRO-FREE-4     | [Run the verifier through the Pi SDK](#maestro-free-4-run-the-verifier-through-the-pi-sdk)                                         | In progress |
+| MAESTRO-FREE-5     | [Run the simplifier through the Pi SDK](#maestro-free-5-run-the-simplifier-through-the-pi-sdk)                                     | In progress |
 | MAESTRO-FREE-6     | [Show SDK agent activity through Pi](#maestro-free-6-show-sdk-agent-activity-through-pi)                                           | Backlog     |
-| MAESTRO-FREE-7     | [Remove the pi-subagents dependency](#maestro-free-7-remove-the-pi-subagents-dependency)                                           | Backlog     |
+| MAESTRO-FREE-7     | [Remove the pi-subagents dependency](#maestro-free-7-remove-the-pi-subagents-dependency)                                           | In progress |
 
 ## Backlog
 
@@ -98,7 +99,20 @@ Explore how `Maestro` can reconcile saved `artifacts` and workflow state. The re
 
 Not yet defined. The `owner` must define the intended outcome, recovery boundaries, and completion condition before this item can move forward.
 
+### MAESTRO-28: Add Maestro role instructions alongside the other agents
+
+#### Objective
+
+Add `agents/maestro.md` for `Maestro` role instructions alongside `agents/builder.md`, `agents/verifier.md`, and `agents/simplifier.md`.
+
+#### Completed when
+
+`Maestro` role instructions are maintained in `agents/maestro.md` alongside the other agent role files.
+
 ### MAESTRO-FREE-3: Run the builder through the Pi SDK
+
+Implementation follows the [approved migration specification](.specs/20261106-092601-feat-migrate-builder-verifier-and-simplifier-to-the-pi-sdk/spec.md). SDK integration
+is implemented; `owner` acceptance is pending. Each role now receives only its own `handoff` tool.
 
 #### Objective
 
@@ -129,6 +143,9 @@ combinations before completing the migration. Human documentation must describe 
 
 ### MAESTRO-FREE-4: Run the verifier through the Pi SDK
 
+Implementation follows the [approved migration specification](.specs/20261106-092601-feat-migrate-builder-verifier-and-simplifier-to-the-pi-sdk/spec.md). SDK integration
+is implemented; `owner` acceptance is pending.
+
 #### Objective
 
 Connect the `verifier` to the SDK executor delivered by [MAESTRO-FREE-PRE-3](#maestro-free-pre-3-implement-internal-sdk-delegation), following
@@ -144,6 +161,9 @@ Connect the `verifier` to the SDK executor delivered by [MAESTRO-FREE-PRE-3](#ma
 4. Workflows with verification enabled or disabled retain their existing routes, with all enabled roles using the common SDK executor.
 
 ### MAESTRO-FREE-5: Run the simplifier through the Pi SDK
+
+Implementation follows the [approved migration specification](.specs/20261106-092601-feat-migrate-builder-verifier-and-simplifier-to-the-pi-sdk/spec.md). SDK integration
+is implemented; `owner` acceptance is pending.
 
 #### Objective
 
@@ -175,6 +195,9 @@ Show activity for SDK-based agent `runs` through Pi's standard `onUpdate` presen
 4. Progress subscriptions are released when the child finishes, fails, or is interrupted.
 
 ### MAESTRO-FREE-7: Remove the pi-subagents dependency
+
+Implementation follows the [approved migration specification](.specs/20261106-092601-feat-migrate-builder-verifier-and-simplifier-to-the-pi-sdk/spec.md). Code cleanup is
+included in this migration. Package declarations, lockfile entries, bundling, and `pi.subagents` metadata remain for the `owner` to remove manually.
 
 #### Objective
 
@@ -248,12 +271,12 @@ the SDK delegation replacement under [ADR-010](ADR.md#adr-010-use-the-pi-sdk-for
 #### Implementation and evidence
 
 The standalone executor is implemented under `src/delegation/` against the [approved specification](.specs/20261105-212231-implement-internal-pi-sdk-delegation/spec.md).
-Execution orchestration, session lifecycle, and pure reply interpretation are separated into `executeTask`, `SubSession`, and `readTaskResult`. Manual verification on Pi
-1.5.0 exercised fresh context, native and additional tools, MCP through tool search and codemode, sequential waiting, failure, cancellation, cleanup, and native session
-persistence. See [manual evidence](docs/subagent-integration.md#manual-verification). The three workflow roles still use `pi-subagents`. The `owner` confirmed
-completion. The caller's message is named `prompt`, execution is inlined in `executeTask`, and cancellation comments explain Node.js `AbortError`. At the
-owner's request, cancellation is forwarded only by the signal listener, without checks before or after the prompt or a retry at `agent_start`. An already cancelled signal
-does not prevent submission, and an aborted signal alone does not turn a normal Pi result into an interruption.
+Execution orchestration, session lifecycle, and pure reply interpretation are separated into `executeTask`, `SubSessionManager`, and `readTaskResult`. Manual verification
+on Pi 1.5.0 exercised fresh context, native and additional tools, MCP through tool search and codemode, sequential waiting, failure, cancellation, cleanup, and native
+session persistence. See [manual evidence](docs/subagent-integration.md#manual-verification). The three workflow roles still use `pi-subagents`. The `owner` confirmed
+completion. The caller's message is named `prompt`, execution is inlined in `executeTask`, and cancellation comments explain Node.js `AbortError`. At the owner's request,
+cancellation is forwarded only by the signal listener, without checks before or after the prompt or a retry at `agent_start`. An already cancelled signal does not prevent
+submission, and an aborted signal alone does not turn a normal Pi result into an interruption.
 
 #### Objective
 

@@ -84,16 +84,14 @@ An `escalation` asks the `owner` to decide an implementation question. A `findin
 1. macOS.
 2. Node.js 26 or later.
 3. Pi 1.5.0 or later.
-4. `pi-subagents` installed and enabled in Pi when `builder` is enabled.
-5. Access to the models for enabled agents.
-6. A project directory that Pi trusts.
+4. Access to the models for enabled agents.
+5. A project directory that Pi trusts.
 
 ## Installation
 
-The `owner` installs `pi-subagents` and `Maestro` with these commands:
+The `owner` installs `Maestro`:
 
 ```bash
-pi install npm:pi-subagents
 pi install npm:@emiliosp/pi-maestro
 ```
 
@@ -112,7 +110,7 @@ Activate `Maestro`:
 /maestro
 ```
 
-During activation, `Maestro` checks project trust, configuration, and enabled agent and model availability. With `builder` disabled, only project trust and configuration
+During activation, `Maestro` checks project trust, configuration, and model availability for enabled agents. With `builder` disabled, only project trust and configuration
 are checked. Model availability comes from Pi's model registry. If a check fails, `Maestro` stays disabled and reports the problem.
 
 The `owner` follows this workflow:
@@ -124,8 +122,14 @@ The `owner` follows this workflow:
 5. Reviews `verifier` `findings` and chooses an action for every `finding`.
 6. Reads Maestro's summary at `candidate-ready` and performs the final review.
 
-`Maestro` starts the `verifier`, when enabled, after a successful `builder` `run`. Selected agents run in the foreground: Pi waits for each `run` to finish and `Maestro`
-shows the current phase in Pi's status, while `pi-subagents` FleetView and `/subagents-fleet` show agent activity and transcripts.
+`Maestro` starts the `verifier`, when enabled, after a successful `builder` `run`. Selected agents use Pi's SDK and run one at a time in the foreground. Pi waits for each
+`run` to finish, and `Maestro` shows the current phase in Pi's status.
+
+When a saved native child session exists, `Maestro` displays its path on completion or failure. The `owner` can inspect that file directly or export it to HTML:
+
+```bash
+pi --export /sessions/weather/subagents/child.jsonl conversation.html
+```
 
 The `owner` must not edit product files while the workflow runs. `Maestro` can perform temporary experiments with `owner` agreement during `spec` preparation and
 permitted revisions. See [Workflow](docs/workflow.md#spec-approval).

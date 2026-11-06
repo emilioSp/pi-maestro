@@ -1,9 +1,9 @@
 /**
- * Objective: Register the verifier handoff tool for the current project.
+ * Objective: Define the verifier handoff tool for the current project.
  * Used: When the verifier reports its terminal review result.
  */
 
-import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
+import type { ToolDefinition } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
 
 import { BuilderAcceptanceCriterionSchema } from '#artifacts/builder-handoff/schema.ts';
@@ -44,46 +44,44 @@ const VerifierHandoffToolParameters = Type.Object(
   { additionalProperties: false },
 );
 
-export const registerRecordVerifierHandoffTool = (pi: ExtensionAPI): void => {
-  pi.registerTool({
-    name: VERIFIER_HANDOFF_TOOL.NAME,
-    label: VERIFIER_HANDOFF_TOOL.LABEL,
-    description: VERIFIER_HANDOFF_TOOL.DESCRIPTION,
-    parameters: VerifierHandoffToolParameters,
-    async execute(_toolCallId, params, _signal, _onUpdate, context) {
-      const { specId, ...submission } = params;
+export const recordVerifierHandoffTool = {
+  name: VERIFIER_HANDOFF_TOOL.NAME,
+  label: VERIFIER_HANDOFF_TOOL.LABEL,
+  description: VERIFIER_HANDOFF_TOOL.DESCRIPTION,
+  parameters: VerifierHandoffToolParameters,
+  async execute(_toolCallId, params, _signal, _onUpdate, context) {
+    const { specId, ...submission } = params;
 
-      const { paths, config } = await resolveWorkflowContext({
-        cwd: context.cwd,
-        specId,
-      });
+    const { paths, config } = await resolveWorkflowContext({
+      cwd: context.cwd,
+      specId,
+    });
 
-      const currentState = await readWorkflowState(paths.getWorkflowPath(specId));
+    const currentState = await readWorkflowState(paths.getWorkflowPath(specId));
 
-      const handoff = {
-        version: VERIFIER_HANDOFF_VERSION,
-        specId: currentState.specId,
-        summary: submission.summary,
-        acceptanceCriteria: submission.acceptanceCriteria,
-        findings: submission.findings,
-        notes: submission.notes,
-      };
+    const handoff = {
+      version: VERIFIER_HANDOFF_VERSION,
+      specId: currentState.specId,
+      summary: submission.summary,
+      acceptanceCriteria: submission.acceptanceCriteria,
+      findings: submission.findings,
+      notes: submission.notes,
+    };
 
-      const completed = await completeVerifierPass({ config, paths, specId, handoff });
+    const completed = await completeVerifierPass({ config, paths, specId, handoff });
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Verifier handoff recorded as ${completed.state.phase}. The handoff and workflow phase are saved. Stop now.`,
-          },
-        ],
-        details: {
-          handoffPath: completed.handoffPath,
-          phase: completed.state.phase,
-          specId: completed.handoff.specId,
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Verifier handoff recorded as ${completed.state.phase}. The handoff and workflow phase are saved. Stop now.`,
         },
-      };
-    },
-  });
-};
+      ],
+      details: {
+        handoffPath: completed.handoffPath,
+        phase: completed.state.phase,
+        specId: completed.handoff.specId,
+      },
+    };
+  },
+} satisfies ToolDefinition<typeof VerifierHandoffToolParameters>;

@@ -52,7 +52,7 @@ For example, if Pi starts in `/work/app/src`, `Maestro` reads `/work/app/src/.pi
 | `simplifier.thinking` |                        No | `high`                      | One supported thinking level.                            |
 
 Model values use the full `provider/model` identifier supplied by Pi's model registry, such as `openrouter/~openai/gpt-mini-latest`. Model IDs may contain additional
-slashes. `Maestro` does not apply a separate format rule; it matches the complete identifier against Pi's available models and passes it unchanged through `pi-subagents`.
+slashes. `Maestro` does not apply a separate format rule; it matches the complete identifier against Pi's available models and uses it unchanged for SDK execution.
 
 `Maestro` accepts these thinking levels:
 
@@ -97,8 +97,8 @@ used for implementation in another workflow. With `builder` enabled, `verifier` 
 | `true`             | `false`             | `true`                | `Builder`, then `simplifier`   |
 | `true`             | `true`              | `true`                | All three, in order            |
 
-Disabled phases do not require agent or model availability and produce no `handoff`. The final summary identifies skipped work rather than claiming it was performed.
-Enabled simplification can still be skipped if Git is unavailable.
+Disabled phases do not require model availability and produce no `handoff`. The final summary identifies skipped work rather than claiming it was performed. Enabled
+simplification can still be skipped if Git is unavailable.
 
 ## Schema version
 
@@ -117,12 +117,11 @@ For example, `specDirectory: "planning/specs"` places `specs` in `<project-root>
 
 ## Model access
 
-During activation, `Maestro` checks only enabled agents and their configured models against `context.modelRegistry.getAvailable()`. Pi's registry is the source of truth
-for model availability; `Maestro` does not maintain a separate model list or authentication check. A missing enabled model stops activation and identifies the full
-configured identifier.
+During activation, `Maestro` checks the configured models for enabled agents against Pi's available model registry. Pi's registry is the source of truth for model
+availability; `Maestro` does not maintain a separate model list or authentication check. A missing enabled model stops activation and identifies the full configured
+identifier.
 
-With `builder` disabled, activation checks only project trust and configuration, with no agent checks, model lookup, or `pi-subagents` ping. With `builder` enabled, the
-availability ping remains required.
+With `builder` disabled, activation checks only project trust and configuration, without a model lookup.
 
-The `owner` can correct the identifier or authenticate the provider in Pi, then retry `/maestro`. Authentication or provider errors during delegation still appear as
-`run` failures. Agent names and context are described in [Subagent integration](subagent-integration.md#roles-and-context).
+The `owner` can correct the identifier or authenticate the provider in Pi, then retry `/maestro`. Authentication or provider errors during execution still appear as `run`
+failures. Agent context are described in [Subagent integration](subagent-integration.md#roles-and-context).

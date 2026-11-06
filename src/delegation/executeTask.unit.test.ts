@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createChildServices } from '#src/delegation/createChildServices.ts';
 import { executeTask, type ExecuteTaskInput } from '#src/delegation/executeTask.ts';
-import * as subSessionModule from '#src/delegation/SubSession.ts';
+import * as subSessionManagerModule from '#src/delegation/SubSessionManager.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
 import { taskReplyWithTextBlocks } from '#tests/fixtures/task-reply-with-text-blocks.ts';
 
@@ -33,14 +33,17 @@ describe('execute task', () => {
     };
 
     const open = vi.fn<() => Promise<typeof session>>().mockResolvedValue(session);
-    const close = vi.fn<subSessionModule.SubSession['close']>().mockResolvedValue(undefined);
+
+    const close = vi
+      .fn<subSessionManagerModule.SubSessionManager['close']>()
+      .mockResolvedValue(undefined);
 
     const getSavedFile = vi
-      .fn<subSessionModule.SubSession['getSavedFile']>()
+      .fn<subSessionManagerModule.SubSessionManager['getSavedFile']>()
       .mockReturnValue('/sessions/project/subagents/task.jsonl');
 
     const constructor = vi
-      .spyOn(subSessionModule, 'SubSession')
+      .spyOn(subSessionManagerModule, 'SubSessionManager')
       .mockImplementationOnce(function () {
         Object.assign(this, {
           open,
@@ -49,6 +52,8 @@ describe('execute task', () => {
         });
       });
 
+    const controller = new AbortController();
+
     const input: ExecuteTaskInput = {
       cwd: process.cwd(),
       prompt: 'Return two lines.',
@@ -56,13 +61,21 @@ describe('execute task', () => {
       model: 'unused/model',
       thinkingLevel: 'high',
       additionalTools: [],
+      signal: controller.signal,
     };
 
     await expect(executeTask(input)).resolves.toEqual({
       text: 'First line\nSecond line',
       sessionFile: '/sessions/project/subagents/task.jsonl',
     });
-    expect(constructor).toHaveBeenCalledExactlyOnceWith(input);
+    expect(constructor).toHaveBeenCalledExactlyOnceWith({
+      roleGuidance: input.roleGuidance,
+      cwd: input.cwd,
+      model: input.model,
+      thinkingLevel: input.thinkingLevel,
+      additionalTools: input.additionalTools,
+      signal: controller.signal,
+    });
     expect(open).toHaveBeenCalledOnce();
     expect(prompt).toHaveBeenCalledExactlyOnceWith('Return two lines.', {
       expandPromptTemplates: false,

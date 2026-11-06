@@ -3,23 +3,16 @@
  * Used: When the owner invokes the run-verifier tool.
  */
 
-import { randomUUID } from 'node:crypto';
-
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
-import type { SubagentDelegationRequest } from 'pi-subagents/delegation';
 import { Type } from 'typebox';
 
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import type { VerifierHandoff } from '#artifacts/verifier-handoff/schema.ts';
-import { AGENTS, type MaestroConfig } from '#config/schema.ts';
+import type { MaestroConfig } from '#config/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
-import {
-  assertDelegationResponse,
-  SUBAGENT_TIMEOUT_MS,
-  waitForDelegationResponse,
-} from '#tools/utils/pi-subagent-delegation.ts';
+import { executeRoleTask } from '#tools/utils/executeRoleTask.ts';
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -131,33 +124,22 @@ export const registerRunVerifierTool = (pi: ExtensionAPI): void => {
     label: RUN_VERIFIER_TOOL.LABEL,
     description: RUN_VERIFIER_TOOL.DESCRIPTION,
     parameters: RunVerifierToolParameters,
-    async execute(toolCallId, { specId }, _signal, _onUpdate, context) {
+    async execute(_toolCallId, { specId }, signal, _onUpdate, context) {
       const { paths, config } = await resolveToolRunContext(context.cwd);
 
       const run = await prepareVerifierRun({ config, paths, specId });
       await refreshMaestroStatus(context);
 
-      const request: SubagentDelegationRequest = {
-        requestId: randomUUID(),
-        ownerRunId: toolCallId,
-        nodeId: WORKFLOW_ROLES.VERIFIER,
-        // pi-subagents loads this name from agents/verifier.md through package.json.
-        agent: AGENTS.VERIFIER,
-        task: `Verify specId "${specId}" in the live project directory "${run.projectRoot}"`,
-        context: 'fresh',
+      await executeRoleTask({
+        role: WORKFLOW_ROLES.VERIFIER,
+        prompt: `Verify specId "${specId}" in the live project directory "${run.projectRoot}".`,
         cwd: run.projectRoot,
         model: config.verifier.model,
-        thinking: config.verifier.thinking,
-        timeoutMs: SUBAGENT_TIMEOUT_MS,
-        result: { kind: 'text' },
-      };
-
-      const response = await waitForDelegationResponse({
-        piEventsBus: pi.events,
-        request,
+        thinkingLevel: config.verifier.thinking,
+        signal,
+        ui: context.ui,
       });
 
-      assertDelegationResponse(response);
       const result = await readVerifierResult({ paths, specId, config, runningState: run.state });
 
       return {

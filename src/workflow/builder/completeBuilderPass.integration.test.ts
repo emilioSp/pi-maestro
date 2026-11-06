@@ -13,7 +13,7 @@ import {
   SPEC_ID,
 } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
-import { registerRecordBuilderHandoffTool } from '#tools/child/record-builder-handoff.ts';
+import { recordBuilderHandoffTool } from '#tools/child/record-builder-handoff.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { resolveEscalations } from '#workflow/builder/resolveEscalations.ts';
@@ -66,7 +66,9 @@ describe('builder completion', () => {
 
       const { tool } = await piTestSessions.createRegisteredTool({
         cwd: repository.path,
-        extension: registerRecordBuilderHandoffTool,
+        extension: (pi) => {
+          pi.registerTool(recordBuilderHandoffTool);
+        },
       });
 
       const specBefore = await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8');
@@ -122,7 +124,9 @@ describe('builder completion', () => {
 
       const { tool: nextBuilder } = await piTestSessions.createRegisteredTool({
         cwd: repository.path,
-        extension: registerRecordBuilderHandoffTool,
+        extension: (pi) => {
+          pi.registerTool(recordBuilderHandoffTool);
+        },
       });
 
       const done = await nextBuilder.execute('done', {
@@ -178,7 +182,9 @@ describe('builder completion', () => {
 
     const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
-      extension: registerRecordBuilderHandoffTool,
+      extension: (pi) => {
+        pi.registerTool(recordBuilderHandoffTool);
+      },
     });
 
     const acceptanceCriteria = [
@@ -360,7 +366,9 @@ describe('builder completion', () => {
 
       const { tool } = await piTestSessions.createRegisteredTool({
         cwd: repository.path,
-        extension: registerRecordBuilderHandoffTool,
+        extension: (pi) => {
+          pi.registerTool(recordBuilderHandoffTool);
+        },
       });
 
       await expect(
@@ -393,7 +401,9 @@ describe('builder spec criterion presence', () => {
 
     const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
-      extension: registerRecordBuilderHandoffTool,
+      extension: (pi) => {
+        pi.registerTool(recordBuilderHandoffTool);
+      },
     });
 
     await expect(

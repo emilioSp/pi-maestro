@@ -85,7 +85,7 @@ export default (pi: ExtensionAPI): void => {
       }
 
       try {
-        await assertEnvironment({ context, piEventsBus: pi.events });
+        await assertEnvironment({ context });
         const config = await loadConfiguration(context.cwd);
         const isImplementationEnabled = config.builder.required;
 

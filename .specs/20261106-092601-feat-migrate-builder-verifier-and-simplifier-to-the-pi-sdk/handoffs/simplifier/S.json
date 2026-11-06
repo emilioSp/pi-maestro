@@ -1,0 +1,11 @@
+{
+  "specId": "20261106-092601-feat-migrate-builder-verifier-and-simplifier-to-the-pi-sdk",
+  "refactoredFiles": [],
+  "summary": "Reviewed all uncommitted code changes; no refactoring was needed.",
+  "notes": [
+    "The SDK role helper, run tools, handoff definitions, activation checks, and adapted tests are already clear. All pre-existing files and changes were preserved.",
+    "npm run check passed: 42 test files and 279 tests, with all coverage thresholds met, matching the B1 check baseline. git diff --check passed. Checks changed no tracked or untracked project files.",
+    "Verification is disabled by configuration. This simplifier review does not constitute independent acceptance verification."
+  ],
+  "version": "1.0.0"
+}

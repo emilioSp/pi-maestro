@@ -17,7 +17,7 @@ import {
 
 import { createChildServices } from '#src/delegation/createChildServices.ts';
 
-export type SubSessionInput = {
+export type SubSessionManagerInput = {
   roleGuidance: string;
   cwd: string;
   model: string;
@@ -26,14 +26,14 @@ export type SubSessionInput = {
   signal?: AbortSignal;
 };
 
-export class SubSession {
+export class SubSessionManager {
   private session?: AgentSession;
   private sessionManager?: SessionManager;
   private abortPromise?: Promise<void>;
 
-  private readonly input: SubSessionInput;
+  private readonly input: SubSessionManagerInput;
 
-  constructor(input: SubSessionInput) {
+  constructor(input: SubSessionManagerInput) {
     this.input = input;
   }
 
@@ -69,7 +69,7 @@ export class SubSession {
       sessionManager: this.sessionManager,
       model,
       thinkingLevel: this.input.thinkingLevel,
-      customTools: this.input.additionalTools,
+      customTools: this.input.additionalTools, // here child tool registration happens through SDK
     });
 
     this.session = session;

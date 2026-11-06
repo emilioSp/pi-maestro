@@ -3,15 +3,11 @@
  * Used: In integration tests for the registered verifier run tool.
  */
 
-import { access } from 'node:fs/promises';
+import { access, readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
-import {
-  SUBAGENT_DELEGATION_REQUEST_EVENT,
-  SUBAGENT_DELEGATION_RESPONSE_EVENT,
-  type SubagentDelegationRequest,
-} from 'pi-subagents/delegation';
 import { Value } from 'typebox/value';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { BUILDER_HANDOFF_STATUSES, PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import {
@@ -20,17 +16,20 @@ import {
 } from '#artifacts/verifier-handoff/schema.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { loadConfiguration } from '#config/loadConfiguration.ts';
-import { AGENTS } from '#config/schema.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
+import { executeTask } from '#src/delegation/executeTask.ts';
+import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
   SPEC_ID,
 } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
-import { registerRecordVerifierHandoffTool } from '#tools/child/record-verifier-handoff.ts';
+import {
+  recordVerifierHandoffTool,
+  VERIFIER_HANDOFF_TOOL,
+} from '#tools/child/record-verifier-handoff.ts';
 import { registerRunVerifierTool } from '#tools/main/run-verifier.ts';
-import { DELEGATION_STATUSES, SUBAGENT_TIMEOUT_MS } from '#tools/utils/pi-subagent-delegation.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -39,7 +38,10 @@ import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts
 
 const createReadyForVerifierWorkflow = async (simplifierRequired: boolean = true) => {
   const workflow = await createApprovedWorkflow({
-    agents: { simplifier: { required: simplifierRequired } },
+    agents: {
+      verifier: { model: 'openai-codex/gpt-6-astra', thinking: 'medium' },
+      simplifier: { required: simplifierRequired },
+    },
   });
 
   await prepareBuilderRun({ config: DEFAULT_CONFIG, paths: workflow.paths, specId: SPEC_ID });
@@ -96,7 +98,10 @@ const recordVerifierHandoff = async ({
   });
 };
 
+vi.mock('#src/delegation/executeTask.ts', () => ({ executeTask: vi.fn<typeof executeTask>() }));
+
 afterEach(async () => {
+  vi.mocked(executeTask).mockReset();
   await piTestSessions.cleanup();
   await cleanupBuilderWorkflows();
 });
@@ -119,56 +124,38 @@ describe('run verifier tool', () => {
     ).toBe(false);
   });
 
-  it('given a ready-for-verifier workflow when verification finishes without findings then the verifier uses the configured agent and project, saves its report, and requests simplification', async () => {
+  it('given a ready-for-verifier workflow when verification finishes without findings then the verifier uses the configured SDK inputs and project, saves its report, and requests simplification', async () => {
     const workflow = await createReadyForVerifierWorkflow();
 
-    const { tool, events, emit, on } = await piTestSessions.createRegisteredTool({
+    const { tool, notify } = await piTestSessions.createRegisteredTool({
       cwd: workflow.repository.path,
       extension: registerRunVerifierTool,
     });
 
-    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: The run tool emits a delegation request on this channel.
-      const request = payload as SubagentDelegationRequest;
-      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: 'other-request',
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.COMPLETED,
-        result: { kind: 'text', text: 'Ignore this response.' },
-      });
-
+    const sessionFile = join(workflow.repository.path, 'child.jsonl');
+    await writeFile(sessionFile, '{}\n');
+    const controller = new AbortController();
+    vi.mocked(executeTask).mockImplementationOnce(async () => {
       await recordVerifierHandoff({
         paths: workflow.paths,
       });
-      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: request.requestId,
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.COMPLETED,
-        result: { kind: 'text', text: 'The verifier finished.' },
-      });
+
+      return { text: 'Completed successfully', sessionFile };
     });
 
-    const result = await tool.execute('test-call', { specId: SPEC_ID });
+    const result = await tool.execute('test-call', { specId: SPEC_ID }, controller.signal);
 
-    const receivedRequest = emit.mock.calls[0][1];
+    const receivedRequest = vi.mocked(executeTask).mock.calls[0][0];
     expect(receivedRequest).toMatchObject({
-      agent: AGENTS.VERIFIER,
-      nodeId: 'verifier',
-      context: 'fresh',
       cwd: workflow.repository.path,
-      model: DEFAULT_CONFIG.verifier.model,
-      thinking: DEFAULT_CONFIG.verifier.thinking,
-      timeoutMs: SUBAGENT_TIMEOUT_MS,
-      task: expect.stringContaining(SPEC_ID),
-      result: { kind: 'text' },
+      model: 'openai-codex/gpt-6-astra',
+      thinkingLevel: 'medium',
+      prompt: expect.stringContaining(SPEC_ID),
     });
     expect(receivedRequest).toMatchObject({
-      task: expect.stringContaining(workflow.repository.path),
+      prompt: expect.stringContaining(workflow.repository.path),
     });
-    expect(on).toHaveBeenLastCalledWith(SUBAGENT_DELEGATION_RESPONSE_EVENT, expect.any(Function));
-    expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
+
     expect(result.details).toMatchObject({
       outcome: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
       specId: SPEC_ID,
@@ -193,19 +180,24 @@ describe('run verifier tool', () => {
         }),
       ),
     ).resolves.toBeUndefined();
+    const input = vi.mocked(executeTask).mock.calls[0][0];
+    expect(input.signal).toBe(controller.signal);
+    expect(input.roleGuidance).toBe(
+      await readFile(new URL('../../../agents/verifier.md', import.meta.url), 'utf8'),
+    );
+    expect(input.additionalTools.map((tool) => tool.name)).toEqual([VERIFIER_HANDOFF_TOOL.NAME]);
+    expect(notify).toHaveBeenCalledWith(`Saved child session: ${sessionFile}`, 'info');
   });
 
-  it('given the verifier saves a report with findings when its run finishes then the tool returns those findings in finding-decisions and removes its response listener', async () => {
+  it('given the verifier saves a report with findings when its run finishes then the tool returns those findings in finding-decisions', async () => {
     const workflow = await createReadyForVerifierWorkflow();
 
-    const { tool, events, on } = await piTestSessions.createRegisteredTool({
+    const { tool } = await piTestSessions.createRegisteredTool({
       cwd: workflow.repository.path,
       extension: registerRunVerifierTool,
     });
 
-    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-      // JUSTIFICATION: The run tool emits a delegation request on this channel.
-      const request = payload as SubagentDelegationRequest;
+    vi.mocked(executeTask).mockImplementationOnce(async () => {
       await recordVerifierHandoff({
         paths: workflow.paths,
         findings: [
@@ -220,13 +212,8 @@ describe('run verifier tool', () => {
           },
         ],
       });
-      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: request.requestId,
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.COMPLETED,
-        result: { kind: 'text', text: 'The verifier finished.' },
-      });
+
+      return { text: 'Completed successfully' };
     });
 
     const result = await tool.execute('test-call', { specId: SPEC_ID });
@@ -236,14 +223,12 @@ describe('run verifier tool', () => {
       phase: WORKFLOW_PHASES.FINDING_DECISIONS,
       handoff: { findings: [{ id: 'F1' }] },
     });
-    expect(on).toHaveBeenLastCalledWith(SUBAGENT_DELEGATION_RESPONSE_EVENT, expect.any(Function));
-    expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
   });
 
-  it('given a workflow in ready-for-builder when a verifier run is requested then it fails before sending a request or adding a response listener', async () => {
+  it('given a workflow in ready-for-builder when a verifier run is requested then it fails before SDK execution', async () => {
     const workflow = await createApprovedWorkflow();
 
-    const { tool, emit, on } = await piTestSessions.createRegisteredTool({
+    const { tool } = await piTestSessions.createRegisteredTool({
       cwd: workflow.repository.path,
       extension: registerRunVerifierTool,
     });
@@ -251,104 +236,25 @@ describe('run verifier tool', () => {
     await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
       'Verifier run requires ready-for-verifier state, found "ready-for-builder".',
     );
-    expect(emit).not.toHaveBeenCalled();
-    expect(on).not.toHaveBeenCalled();
+    expect(executeTask).not.toHaveBeenCalled();
   });
 
-  it('given the verifier provider is unavailable when the failed run response arrives then the tool reports the provider error, removes its listener, and leaves verifier-running unchanged', async () => {
+  it('given the verifier reports completion without saving its report when the run tool receives the response then a protocol error is raised', async () => {
     const workflow = await createReadyForVerifierWorkflow();
 
-    const { tool, events, on } = await piTestSessions.createRegisteredTool({
+    const { tool } = await piTestSessions.createRegisteredTool({
       cwd: workflow.repository.path,
       extension: registerRunVerifierTool,
     });
 
-    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-      // JUSTIFICATION: The run tool emits a delegation request on this channel.
-      const request = payload as SubagentDelegationRequest;
-      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: request.requestId,
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.FAILED,
-        error: 'The configured provider is unavailable.',
-      });
-    });
-
-    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
-      'Delegation error: The configured provider is unavailable.',
-    );
-    await expect(readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject(
-      { phase: WORKFLOW_PHASES.VERIFIER_RUNNING },
-    );
-    expect(on).toHaveBeenLastCalledWith(SUBAGENT_DELEGATION_RESPONSE_EVENT, expect.any(Function));
-    expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
-  });
-
-  it.each([
-    {
-      failure: 'a timeout',
-      status: DELEGATION_STATUSES.TIMED_OUT,
-      error: 'The verifier exceeded its timeout.',
-      expectedMessage: 'Delegation timeout: The verifier exceeded its timeout.',
-    },
-    {
-      failure: 'an interruption',
-      status: DELEGATION_STATUSES.INTERRUPTED,
-      error: 'The verifier was interrupted.',
-      expectedMessage: 'Delegation interruption: The verifier was interrupted.',
-    },
-  ])(
-    'given the verifier reports $failure when the final response arrives then the run fails with the matching error message',
-    async ({ status, error, expectedMessage }) => {
-      const workflow = await createReadyForVerifierWorkflow();
-
-      const { tool, events } = await piTestSessions.createRegisteredTool({
-        cwd: workflow.repository.path,
-        extension: registerRunVerifierTool,
-      });
-
-      events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-        // JUSTIFICATION: The run tool emits a delegation request on this channel.
-        const request = payload as SubagentDelegationRequest;
-        events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-          requestId: request.requestId,
-          ownerRunId: request.ownerRunId,
-          nodeId: request.nodeId,
-          status,
-          error,
-        });
-      });
-
-      await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(expectedMessage);
-    },
-  );
-
-  it('given the verifier reports completion without saving its report when the run tool receives the response then a protocol error is raised and the response listener is removed', async () => {
-    const workflow = await createReadyForVerifierWorkflow();
-
-    const { tool, events, on } = await piTestSessions.createRegisteredTool({
-      cwd: workflow.repository.path,
-      extension: registerRunVerifierTool,
-    });
-
-    events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, (payload) => {
-      // JUSTIFICATION: The run tool emits a delegation request on this channel.
-      const request = payload as SubagentDelegationRequest;
-      events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-        requestId: request.requestId,
-        ownerRunId: request.ownerRunId,
-        nodeId: request.nodeId,
-        status: DELEGATION_STATUSES.COMPLETED,
-        result: { kind: 'text', text: 'The verifier finished.' },
-      });
+    vi.mocked(executeTask).mockImplementationOnce(async () => {
+      return { text: 'Completed successfully' };
     });
 
     await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
       'Verifier protocol error: The verifier returned without recording a valid terminal handoff.',
     );
-    expect(on).toHaveBeenLastCalledWith(SUBAGENT_DELEGATION_RESPONSE_EVENT, expect.any(Function));
-    expect(on.mock.results.at(-1)?.value).toHaveBeenCalledOnce();
+
     await expect(
       access(
         workflow.paths.getVerifierHandoffPath({
@@ -363,19 +269,19 @@ describe('run verifier tool', () => {
 it('given simplifier disabled when verification completes without findings then candidate-ready is saved without simplifier delegation', async () => {
   const workflow = await createReadyForVerifierWorkflow(false);
 
-  const { tool, events, emit } = await piTestSessions.createRegisteredTool({
+  const { tool } = await piTestSessions.createRegisteredTool({
     cwd: workflow.repository.path,
     extension: registerRunVerifierTool,
   });
 
   const { tool: childTool } = await piTestSessions.createRegisteredTool({
     cwd: workflow.repository.path,
-    extension: registerRecordVerifierHandoffTool,
+    extension: (pi) => {
+      pi.registerTool(recordVerifierHandoffTool);
+    },
   });
 
-  events.on(SUBAGENT_DELEGATION_REQUEST_EVENT, async (payload) => {
-    // JUSTIFICATION: The run tool emits a delegation request on this channel.
-    const request = payload as SubagentDelegationRequest;
+  vi.mocked(executeTask).mockImplementationOnce(async () => {
     await childTool.execute('record-verifier', {
       specId: SPEC_ID,
       summary: 'Verified weather alerts',
@@ -385,23 +291,68 @@ it('given simplifier disabled when verification completes without findings then 
       findings: [],
       notes: [],
     });
-    events.emit(SUBAGENT_DELEGATION_RESPONSE_EVENT, {
-      requestId: request.requestId,
-      ownerRunId: request.ownerRunId,
-      nodeId: request.nodeId,
-      status: DELEGATION_STATUSES.COMPLETED,
-      result: { kind: 'text', text: 'Saved' },
-    });
+
+    return { text: 'Completed successfully' };
   });
   const result = await tool.execute('verifier-without-simplifier', { specId: SPEC_ID });
   expect(result.details).toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
   await expect(readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
     phase: WORKFLOW_PHASES.CANDIDATE_READY,
   });
-  expect(emit.mock.calls.filter(([event]) => event === SUBAGENT_DELEGATION_REQUEST_EVENT)).toEqual([
-    [SUBAGENT_DELEGATION_REQUEST_EVENT, expect.objectContaining({ agent: AGENTS.VERIFIER })],
-  ]);
+  expect(executeTask).toHaveBeenCalledOnce();
   expect(result.content).toEqual([
     { type: 'text', text: expect.stringContaining('Simplifier skipped by configuration') },
   ]);
+});
+
+it.each([
+  { failure: 'model error', message: 'Provider unavailable', interrupted: false },
+  { failure: 'interruption', message: 'Child interrupted', interrupted: true },
+  { failure: 'missing handoff', message: 'Verifier protocol error', interrupted: false },
+])(
+  'given a verifier $failure with a saved session when execution stops then the path is displayed and the workflow stays verifier-running without a handoff',
+  async ({ failure, message, interrupted }) => {
+    const { paths, repository } = await createReadyForVerifierWorkflow();
+
+    const { tool, notify } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerRunVerifierTool,
+    });
+
+    const sessionFile = join(repository.path, 'child.jsonl');
+    await writeFile(sessionFile, '{}\n');
+    const cause = new Error(message);
+
+    if (interrupted) cause.name = 'AbortError';
+    vi.mocked(executeTask).mockImplementationOnce(async () => {
+      if (failure === 'missing handoff') return { text: 'Completed successfully', sessionFile };
+      throw new TaskExecutionError({ cause, sessionFile });
+    });
+    await expect(tool.execute('failed-run', { specId: SPEC_ID })).rejects.toThrow(message);
+    expect(notify).toHaveBeenCalledExactlyOnceWith(`Saved child session: ${sessionFile}`, 'info');
+    expect(executeTask).toHaveBeenCalledOnce();
+    expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
+      phase: WORKFLOW_PHASES.VERIFIER_RUNNING,
+    });
+    await expect(
+      access(paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 })),
+    ).rejects.toMatchObject({ code: 'ENOENT' });
+  },
+);
+
+it('given a verifier execution error without a saved session when execution stops then no session path is displayed', async () => {
+  const { repository } = await createReadyForVerifierWorkflow();
+
+  const { tool, notify } = await piTestSessions.createRegisteredTool({
+    cwd: repository.path,
+    extension: registerRunVerifierTool,
+  });
+
+  vi.mocked(executeTask).mockRejectedValueOnce(
+    new TaskExecutionError({ cause: new Error('Failed before saving') }),
+  );
+  await expect(tool.execute('failed-run', { specId: SPEC_ID })).rejects.toThrow(
+    'Failed before saving',
+  );
+  expect(notify).not.toHaveBeenCalled();
 });
