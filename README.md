@@ -33,6 +33,8 @@ Five principles hold the workflow together:
 4. The `owner` decides requirements, scope, and unresolved questions.
 5. Each agent has one and only one role. Specific and with clear instruction.
 
+https://github.com/user-attachments/assets/dffa8bc7-6c79-491f-95df-2ee95b6447aa
+
 ## Inspirations
 
 Pi Maestro is inspired by concepts from [OpenSpec](https://github.com/Fission-AI/OpenSpec) and [GitHub Spec Kit](https://github.com/github/spec-kit). It adapts those
