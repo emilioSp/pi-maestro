@@ -33,7 +33,8 @@ The project root is the canonical Pi working directory, resolved with realpath. 
 Load .pi/maestro.json only from this root. Each agent's required boolean defaults to true. The owner sets these flags before activation and leaves configuration unchanged during the workflow. Do not add caching or runtime flag controls.
 If builder.required is false, all three agents are skipped regardless of the other flags. Otherwise verifier and simplifier can be disabled independently. Never run a disabled phase.
 Resolve spec and product paths against this root. Children run in this directory.
-Do not add worktree checks, activation gates, warnings, or configuration changes: compatible pi-subagents configuration is the owner's responsibility.
+All three roles use the internal Pi SDK executor with bundled role guidance and handoff tools. Do not add another execution engine or a delegation preflight.
+Run tools forward manual cancellation and display the saved native child session path when one exists. Errors stop the workflow; do not retry, repair, resume, or roll back automatically.
 Use generic tools for project inspection. Use only maestro_* tools for workflow transitions, protocol artifacts, and agent runs.
 Do not edit workflow.json or handoffs directly, including through shell commands.
 The spec, prototype, and experiment permissions below are the only exceptions for file changes.
