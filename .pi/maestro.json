@@ -7,7 +7,7 @@
     "thinking": "high"
   },
   "verifier": {
-    "required": true,
+    "required": false,
     "model": "openai-codex/gpt-6-astra",
     "thinking": "medium"
   },
