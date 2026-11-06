@@ -1,44 +1,44 @@
 # Roadmap
 
 This file is the source of truth for planned outcomes and recorded completion. Roadmap entries are not permission to implement them. The `owner` selects work and approves
-its `specification` before implementation starts.
-Backlog items have no agreed order or date. The `owner` approves priority and scope changes.
+its `specification` before implementation starts. Backlog items have no agreed order or date. The `owner` approves priority and scope changes.
 
 Completed entries preserve recorded outcomes and evidence, which may describe behavior later changed.
+
 ## Overview
 
-| ID                 | Item                                                                                                                               | Status      |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| MAESTRO-6          | [Display specs in a browser](#maestro-6-display-specs-in-a-browser)                                                                | Backlog     |
-| MAESTRO-7          | [Route builder failures through owner escalations](#maestro-7-route-builder-failures-through-owner-escalations)                    | Completed   |
-| MAESTRO-8          | [Store escalations and owner decisions in builder handoffs](#maestro-8-store-escalations-and-owner-decisions-in-builder-handoffs)  | Completed   |
-| MAESTRO-9          | [Format glossary terms consistently](#maestro-9-format-glossary-terms-consistently)                                                | Completed   |
-| MAESTRO-10         | [Improve status presentation and activation feedback](#maestro-10-improve-status-presentation-and-activation-feedback)             | Completed   |
-| MAESTRO-11         | [Introduce Maestro at activation](#maestro-11-introduce-maestro-at-activation)                                                     | Completed   |
-| MAESTRO-12         | [Verify code quality against AGENTS.md instructions](#maestro-12-verify-code-quality-against-agentsmd-instructions)                | Completed   |
-| MAESTRO-13         | [Check subagent extensions at activation](#maestro-13-check-subagent-extensions-at-activation)                                     | Completed   |
-| MAESTRO-14         | [Rename the test support directory](#maestro-14-rename-the-test-support-directory)                                                 | Completed   |
-| MAESTRO-15         | [Match handoff criteria to the approved spec](#maestro-15-match-handoff-criteria-to-the-approved-spec)                             | Completed   |
-| MAESTRO-16         | [Route finding-driven spec revisions through drafting-spec](#maestro-16-route-finding-driven-spec-revisions-through-drafting-spec) | Completed   |
-| MAESTRO-17         | [Keep acceptance criterion numbering continuous](#maestro-17-keep-acceptance-criterion-numbering-continuous)                       | Completed   |
-| MAESTRO-18         | [Record escalation resolutions when the spec changes](#maestro-18-record-escalation-resolutions-when-the-spec-changes)             | Completed   |
-| MAESTRO-19         | [Guide initial configuration](#maestro-19-guide-initial-configuration)                                                             | Backlog     |
-| MAESTRO-20         | [Rename the npm package](#maestro-20-rename-the-npm-package)                                                                       | Backlog     |
-| MAESTRO-21         | [Label acceptance criterion coverage](#maestro-21-label-acceptance-criterion-coverage)                                             | Completed   |
-| MAESTRO-22         | [Avoid acceptance criteria already covered by tests](#maestro-22-avoid-acceptance-criteria-already-covered-by-tests)               | Completed   |
-| MAESTRO-23         | [Change agent models before a builder run](#maestro-23-change-agent-models-before-a-builder-run)                                   | Backlog     |
-| MAESTRO-24         | [Add a simplifier with one clear purpose per agent](#maestro-24-add-a-simplifier-with-one-clear-purpose-per-agent)                 | Completed   |
-| MAESTRO-25         | [Define workflow reconciliation](#maestro-25-define-workflow-reconciliation)                                                       | Backlog     |
-| MAESTRO-26         | [Exit Maestro mode automatically at workflow completion](#maestro-26-exit-maestro-mode-automatically-at-workflow-completion)       | Completed   |
-| MAESTRO-27         | [Make all implementation phases optional](#maestro-27-make-all-implementation-phases-optional)                                     | Completed   |
-| MAESTRO-28         | [Add Maestro role instructions alongside the other agents](#maestro-28-add-maestro-role-instructions-alongside-the-other-agents)   | Backlog     |
-| MAESTRO-FREE-1     | [Require Pi 1.5.0](#maestro-free-1-require-pi-150)                                                                                 | Completed   |
-| MAESTRO-FREE-2     | [Remove Maestro run timeouts](#maestro-free-2-remove-maestro-run-timeouts)                                                         | Completed   |
-| MAESTRO-FREE-PRE-3 | [Implement internal SDK delegation](#maestro-free-pre-3-implement-internal-sdk-delegation)                                         | Completed   |
+| ID                 | Item                                                                                                                               | Status    |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| MAESTRO-6          | [Display specs in a browser](#maestro-6-display-specs-in-a-browser)                                                                | Backlog   |
+| MAESTRO-7          | [Route builder failures through owner escalations](#maestro-7-route-builder-failures-through-owner-escalations)                    | Completed |
+| MAESTRO-8          | [Store escalations and owner decisions in builder handoffs](#maestro-8-store-escalations-and-owner-decisions-in-builder-handoffs)  | Completed |
+| MAESTRO-9          | [Format glossary terms consistently](#maestro-9-format-glossary-terms-consistently)                                                | Completed |
+| MAESTRO-10         | [Improve status presentation and activation feedback](#maestro-10-improve-status-presentation-and-activation-feedback)             | Completed |
+| MAESTRO-11         | [Introduce Maestro at activation](#maestro-11-introduce-maestro-at-activation)                                                     | Completed |
+| MAESTRO-12         | [Verify code quality against AGENTS.md instructions](#maestro-12-verify-code-quality-against-agentsmd-instructions)                | Completed |
+| MAESTRO-13         | [Check subagent extensions at activation](#maestro-13-check-subagent-extensions-at-activation)                                     | Completed |
+| MAESTRO-14         | [Rename the test support directory](#maestro-14-rename-the-test-support-directory)                                                 | Completed |
+| MAESTRO-15         | [Match handoff criteria to the approved spec](#maestro-15-match-handoff-criteria-to-the-approved-spec)                             | Completed |
+| MAESTRO-16         | [Route finding-driven spec revisions through drafting-spec](#maestro-16-route-finding-driven-spec-revisions-through-drafting-spec) | Completed |
+| MAESTRO-17         | [Keep acceptance criterion numbering continuous](#maestro-17-keep-acceptance-criterion-numbering-continuous)                       | Completed |
+| MAESTRO-18         | [Record escalation resolutions when the spec changes](#maestro-18-record-escalation-resolutions-when-the-spec-changes)             | Completed |
+| MAESTRO-19         | [Guide initial configuration](#maestro-19-guide-initial-configuration)                                                             | Backlog   |
+| MAESTRO-20         | [Rename the npm package](#maestro-20-rename-the-npm-package)                                                                       | Backlog   |
+| MAESTRO-21         | [Label acceptance criterion coverage](#maestro-21-label-acceptance-criterion-coverage)                                             | Completed |
+| MAESTRO-22         | [Avoid acceptance criteria already covered by tests](#maestro-22-avoid-acceptance-criteria-already-covered-by-tests)               | Completed |
+| MAESTRO-23         | [Change agent models before a builder run](#maestro-23-change-agent-models-before-a-builder-run)                                   | Backlog   |
+| MAESTRO-24         | [Add a simplifier with one clear purpose per agent](#maestro-24-add-a-simplifier-with-one-clear-purpose-per-agent)                 | Completed |
+| MAESTRO-25         | [Define workflow reconciliation](#maestro-25-define-workflow-reconciliation)                                                       | Backlog   |
+| MAESTRO-26         | [Exit Maestro mode automatically at workflow completion](#maestro-26-exit-maestro-mode-automatically-at-workflow-completion)       | Completed |
+| MAESTRO-27         | [Make all implementation phases optional](#maestro-27-make-all-implementation-phases-optional)                                     | Completed |
+| MAESTRO-28         | [Add Maestro role instructions alongside the other agents](#maestro-28-add-maestro-role-instructions-alongside-the-other-agents)   | Backlog   |
+| MAESTRO-FREE-1     | [Require Pi 1.5.0](#maestro-free-1-require-pi-150)                                                                                 | Completed |
+| MAESTRO-FREE-2     | [Remove Maestro run timeouts](#maestro-free-2-remove-maestro-run-timeouts)                                                         | Completed |
+| MAESTRO-FREE-PRE-3 | [Implement internal SDK delegation](#maestro-free-pre-3-implement-internal-sdk-delegation)                                         | Completed |
 | MAESTRO-FREE-3     | [Run the builder through the Pi SDK](#maestro-free-3-run-the-builder-through-the-pi-sdk)                                           | Completed |
 | MAESTRO-FREE-4     | [Run the verifier through the Pi SDK](#maestro-free-4-run-the-verifier-through-the-pi-sdk)                                         | Completed |
 | MAESTRO-FREE-5     | [Run the simplifier through the Pi SDK](#maestro-free-5-run-the-simplifier-through-the-pi-sdk)                                     | Completed |
-| MAESTRO-FREE-6     | [Show SDK agent activity through Pi](#maestro-free-6-show-sdk-agent-activity-through-pi)                                           | Backlog     |
+| MAESTRO-FREE-6     | [Show SDK agent activity through Pi](#maestro-free-6-show-sdk-agent-activity-through-pi)                                           | Backlog   |
 | MAESTRO-FREE-7     | [Remove the pi-subagents dependency](#maestro-free-7-remove-the-pi-subagents-dependency)                                           | Completed |
 
 ## MAESTRO-6: Display specs in a browser
@@ -263,10 +263,10 @@ The `pi-subagents` integration then in use still received a fixed deadline of 9,
 The standalone executor is implemented under `src/delegation/` against the [approved specification](.specs/20261105-212231-implement-internal-pi-sdk-delegation/spec.md).
 Execution orchestration, session lifecycle, and pure reply interpretation are separated into `executeTask`, `SubSessionManager`, and `readTaskResult`. Manual verification
 on Pi 1.5.0 exercised fresh context, native and additional tools, MCP through tool search and codemode, sequential waiting, failure, cancellation, cleanup, and native
-session persistence. See [manual evidence](.specs/20261105-212231-implement-internal-pi-sdk-delegation/handoffs/verifier/V1.json). The three workflow roles still use `pi-subagents`. The `owner` confirmed
-completion. The caller's message is named `prompt`, execution is inlined in `executeTask`, and cancellation comments explain Node.js `AbortError`. At the owner's request,
-cancellation is forwarded only by the signal listener, without checks before or after the prompt or a retry at `agent_start`. An already cancelled signal does not prevent
-submission, and an aborted signal alone does not turn a normal Pi result into an interruption.
+session persistence. See [manual evidence](.specs/20261105-212231-implement-internal-pi-sdk-delegation/handoffs/verifier/V1.json). The three workflow roles still use
+`pi-subagents`. The `owner` confirmed completion. The caller's message is named `prompt`, execution is inlined in `executeTask`, and cancellation comments explain Node.js
+`AbortError`. At the owner's request, cancellation is forwarded only by the signal listener, without checks before or after the prompt or a retry at `agent_start`. An
+already cancelled signal does not prevent submission, and an aborted signal alone does not turn a normal Pi result into an interruption.
 
 ### Objective
 

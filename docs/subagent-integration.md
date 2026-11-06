@@ -17,8 +17,7 @@ Each `run` starts a fresh conversation, without the main session's history or au
 Pi's normal instructions. Global and project instructions, including `AGENTS.md`, and available skills are discovered through Pi. Models and thinking levels come from
 [Maestro configuration](configuration.md).
 
-Enabled global and project extensions load in child sessions. Native Pi tools and configured MCP, codemode, and tool search support
-are available.
+Enabled global and project extensions load in child sessions. Native Pi tools and configured MCP, codemode, and tool search support are available.
 
 The `owner` approves the `spec` and selected phases through the main conversation. See [Phase selection](configuration.md#phase-selection).
 

@@ -399,6 +399,8 @@ execution-error policy: stop and report, retain files, and leave follow-up to th
 interruption through `session.abort()` followed by session cleanup, without a final model turn or synthetic `handoff`, and placed saved child sessions in `subagents/`
 beneath Pi's project session directory, not inside the repository. The `owner` chose Pi 1.5.0 as the minimum supported version, without fallbacks for earlier hosts. The
 `owner` explicitly excluded compatibility handling for external integrations from scope; no custom checks, adapters, or reduced-capacity fallback system are required.
-Existing boundaries are described in [subagent integration](docs/subagent-integration.md), [delegation](https://github.com/emilioSp/pi-maestro/blob/9d020b9177e93333736ade265db5e332fbb2a291/src/tools/utils/pi-subagent-delegation.ts),
-[builder execution](src/tools/main/run-builder.ts), and the [child extension](https://github.com/emilioSp/pi-maestro/blob/9d020b9177e93333736ade265db5e332fbb2a291/extensions/maestro-subagent.ts). These links describe the current implementation, not the
-planned SDK replacement.
+Existing boundaries are described in [subagent integration](docs/subagent-integration.md),
+[delegation](https://github.com/emilioSp/pi-maestro/blob/9d020b9177e93333736ade265db5e332fbb2a291/src/tools/utils/pi-subagent-delegation.ts),
+[builder execution](src/tools/main/run-builder.ts), and the
+[child extension](https://github.com/emilioSp/pi-maestro/blob/9d020b9177e93333736ade265db5e332fbb2a291/extensions/maestro-subagent.ts). These links describe the current
+implementation, not the planned SDK replacement.
