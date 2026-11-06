@@ -112,7 +112,7 @@ Add `agents/maestro.md` for `Maestro` role instructions alongside `agents/builde
 ### MAESTRO-FREE-3: Run the builder through the Pi SDK
 
 Implementation follows the [approved migration specification](.specs/20261106-092601-feat-migrate-builder-verifier-and-simplifier-to-the-pi-sdk/spec.md). SDK integration
-is implemented; `owner` acceptance is pending.
+is implemented; `owner` acceptance is pending. Each role now receives only its own `handoff` tool.
 
 #### Objective
 
