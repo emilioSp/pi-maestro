@@ -34,6 +34,7 @@ reaching `candidate-ready`. Linear onboarding and test issues are not project ro
 | MAESTRO-25         | [Define workflow reconciliation](#maestro-25-define-workflow-reconciliation)                                                       | Backlog     |
 | MAESTRO-26         | [Exit Maestro mode automatically at workflow completion](#maestro-26-exit-maestro-mode-automatically-at-workflow-completion)       | Completed   |
 | MAESTRO-27         | [Make all implementation phases optional](#maestro-27-make-all-implementation-phases-optional)                                     | Completed   |
+| MAESTRO-28         | [Add Maestro role instructions alongside the other agents](#maestro-28-add-maestro-role-instructions-alongside-the-other-agents)  | Backlog     |
 | MAESTRO-FREE-1     | [Require Pi 1.5.0](#maestro-free-1-require-pi-150)                                                                                 | Completed   |
 | MAESTRO-FREE-2     | [Remove Maestro run timeouts](#maestro-free-2-remove-maestro-run-timeouts)                                                         | Completed   |
 | MAESTRO-FREE-PRE-3 | [Implement internal SDK delegation](#maestro-free-pre-3-implement-internal-sdk-delegation)                                         | Completed   |
@@ -97,6 +98,16 @@ Explore how `Maestro` can reconcile saved `artifacts` and workflow state. The re
 #### Completed when
 
 Not yet defined. The `owner` must define the intended outcome, recovery boundaries, and completion condition before this item can move forward.
+
+### MAESTRO-28: Add Maestro role instructions alongside the other agents
+
+#### Objective
+
+Add `agents/maestro.md` for `Maestro` role instructions alongside `agents/builder.md`, `agents/verifier.md`, and `agents/simplifier.md`.
+
+#### Completed when
+
+`Maestro` role instructions are maintained in `agents/maestro.md` alongside the other agent role files.
 
 ### MAESTRO-FREE-3: Run the builder through the Pi SDK
 
