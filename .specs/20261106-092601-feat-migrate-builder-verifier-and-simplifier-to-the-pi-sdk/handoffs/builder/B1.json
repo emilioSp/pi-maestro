@@ -1,0 +1,65 @@
+{
+  "status": "done",
+  "summary": "Migrated builder, verifier, and simplifier to the existing Pi SDK executor with bundled guidance, direct handoff tools, cancellation forwarding, and saved-session notices. Removed legacy delegation and activation checks, adapted integration coverage, and updated owner documentation and roadmap links.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npm run check: run-builder.integration.test.ts verifies configured openai-codex/gpt-6.1-sol/high, canonical temporary project directory, spec ID in prompt, complete builder guidance, three handoff definitions, and the original AbortSignal passed to executeTask.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "npm run check: run-verifier.integration.test.ts verifies configured openai-codex/gpt-6-astra/medium, canonical temporary project directory, spec ID in prompt, complete verifier guidance, three handoff definitions, and the original AbortSignal passed to executeTask.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "npm run check: run-simplifier.integration.test.ts verifies Git readiness, configured openai-codex/gpt-6.1-sol/high, canonical temporary project directory, spec ID in prompt, complete simplifier guidance, three handoff definitions, and the original AbortSignal passed to executeTask.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "npm run check: each run-tool integration test compares guidance with its complete bundled Markdown file. The full workflow in extensions/maestro.integration.test.ts creates real offline SDK sessions through createChildServices for all three roles and checks each effective system prompt contains Pi's normal instructions plus the complete supplied role guidance.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Manually inspected heads and git diff for agents/builder.md, agents/verifier.md, and agents/simplifier.md. Compared each file with git show HEAD:agents/<role>.md | sed '1,11d' using cmp: all begin with their role heading and retain the original Markdown body exactly.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "Manually reviewed removal diffs and ran rg -n 'pi-subagents|SUBAGENT_TIMEOUT|PI_SUBAGENT|subagents:rpc|subagents:delegate|FleetView|subagents-fleet' src extensions tests agents README.md docs TECH_STACK.md: no matches. Package declarations and lockfile were confirmed untouched.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "npm run check: all three run-tool suites return 'Completed successfully' from mocked SDK execution without recording a handoff; each run rejects with its role-specific protocol error and retains its running phase.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "npm run check: completed builder, verifier, and Git-backed simplifier scenarios save valid reports and return an existing session path from executeTask; each asserts the owner UI receives the exact saved path.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC9",
+      "probe": "npm run check: parameterized tests across all three role tools exercise provider errors, AbortError interruptions, and normal completion without a handoff. Each verifies the exact existing session path is displayed, execution occurs once, the running phase remains, and no handoff exists. Additional cases verify errors without saved paths display no invented path.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC10",
+      "probe": "Read updated README.md, docs/configuration.md, docs/subagent-integration.md, and affected docs/workflow.md sections from the owner's perspective. Verified single-package installation, /maestro activation, SDK execution, model configuration, Escape cancellation, displayed session paths, and pi --export /sessions/weather/subagents/child.jsonl conversation.html. Cross-checked cancellation and export commands against installed Pi documentation; legacy setup references are absent.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "npm run check passed on Node.js 26.7.0 and Pi 1.5.0: 42 test files, 279 tests; all coverage thresholds passed. Full-workflow and optional-phase regression scenarios passed. git diff --check also passed.",
+    "Execution input and failure tests script the executeTask boundary without live model calls. Effective prompt composition and direct handoff tool execution use real offline Pi SDK sessions in the full-workflow integration test.",
+    "Package dependency declarations, lockfile entries, bundling, and pi.subagents metadata remain untouched for manual owner cleanup, as approved. Roadmap items link this spec without claiming owner acceptance.",
+    "Manual inspection confirmed no replacement deadline in the role tools, shared role helper, or SDK executor. Temporary test projects and sessions were cleaned up."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261106-092601-feat-migrate-builder-verifier-and-simplifier-to-the-pi-sdk"
+}
