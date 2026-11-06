@@ -271,10 +271,10 @@ the SDK delegation replacement under [ADR-010](ADR.md#adr-010-use-the-pi-sdk-for
 #### Implementation and evidence
 
 The standalone executor is implemented under `src/delegation/` against the [approved specification](.specs/20261105-212231-implement-internal-pi-sdk-delegation/spec.md).
-Execution orchestration, session lifecycle, and pure reply interpretation are separated into `executeTask`, `SubSession`, and `readTaskResult`. Manual verification on Pi
-1.5.0 exercised fresh context, native and additional tools, MCP through tool search and codemode, sequential waiting, failure, cancellation, cleanup, and native session
-persistence. See [manual evidence](docs/subagent-integration.md#manual-verification). The three workflow roles still use `pi-subagents`. The `owner` confirmed completion.
-The caller's message is named `prompt`, execution is inlined in `executeTask`, and cancellation comments explain Node.js `AbortError`. At the owner's request,
+Execution orchestration, session lifecycle, and pure reply interpretation are separated into `executeTask`, `SubSessionManager`, and `readTaskResult`. Manual verification
+on Pi 1.5.0 exercised fresh context, native and additional tools, MCP through tool search and codemode, sequential waiting, failure, cancellation, cleanup, and native
+session persistence. See [manual evidence](docs/subagent-integration.md#manual-verification). The three workflow roles still use `pi-subagents`. The `owner` confirmed
+completion. The caller's message is named `prompt`, execution is inlined in `executeTask`, and cancellation comments explain Node.js `AbortError`. At the owner's request,
 cancellation is forwarded only by the signal listener, without checks before or after the prompt or a retry at `agent_start`. An already cancelled signal does not prevent
 submission, and an aborted signal alone does not turn a normal Pi result into an interruption.
 
