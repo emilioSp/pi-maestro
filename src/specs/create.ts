@@ -44,7 +44,7 @@ export const createSpec = async ({
     throw new Error(`Workflow ${activeWorkflowSpecId} is already active.`);
   }
 
-  const specId = createSpecId({ title, instant });
+  const specId = createSpecId({ title, instant: instant ?? Temporal.Now.instant() });
   const specPath = paths.getSpecPath(specId);
   const proposalFilePath = paths.getProposalFilePath(specId);
   const specFilePath = paths.getSpecFilePath(specId);

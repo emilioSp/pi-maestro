@@ -10,14 +10,13 @@ import type { WorkflowRole } from '#workflow/roles.ts';
 
 type FormatProgressInput = {
   role: WorkflowRole;
-  startedAt: number;
+  elapsedSeconds: number;
   activity: AgentActivitySnapshot;
 };
 
-const formatProgress = ({ role, startedAt, activity }: FormatProgressInput): string => {
-  const seconds = Math.floor((performance.now() - startedAt) / 1000);
+const formatProgress = ({ role, elapsedSeconds, activity }: FormatProgressInput): string => {
   const label = role[0].toUpperCase() + role.slice(1);
-  const elapsed = `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+  const elapsed = `${Math.floor(elapsedSeconds / 60)}m ${elapsedSeconds % 60}s`;
   const tools = [...activity.activeTools.values()].join(', ') || 'none';
   const recentText = activity.assistantText ? `\n\n${activity.assistantText}` : '';
 
@@ -41,7 +40,16 @@ export const createAgentProgress = ({ role, onUpdate }: CreateAgentProgressInput
     latestActivity = activity;
 
     onUpdate?.({
-      content: [{ type: 'text', text: formatProgress({ role, startedAt, activity }) }],
+      content: [
+        {
+          type: 'text',
+          text: formatProgress({
+            role,
+            elapsedSeconds: Math.floor((performance.now() - startedAt) / 1000),
+            activity,
+          }),
+        },
+      ],
       details: undefined,
     });
   };
