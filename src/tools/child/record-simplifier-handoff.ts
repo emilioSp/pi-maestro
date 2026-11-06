@@ -1,9 +1,9 @@
 /**
- * Objective: Register the simplifier's fixed result recording tool.
+ * Objective: Define the simplifier's fixed result recording tool.
  * Used: When a child simplifier completes its refactoring pass.
  */
 
-import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
+import type { ToolDefinition } from '@earendil-works/pi-coding-agent';
 import { type Static, Type } from 'typebox';
 import { Value } from 'typebox/value';
 
@@ -35,40 +35,38 @@ function assertSimplifierSubmission(
   }
 }
 
-export const registerRecordSimplifierHandoffTool = (pi: ExtensionAPI): void => {
-  pi.registerTool({
-    name: SIMPLIFIER_HANDOFF_TOOL.NAME,
-    label: SIMPLIFIER_HANDOFF_TOOL.LABEL,
-    description: SIMPLIFIER_HANDOFF_TOOL.DESCRIPTION,
-    parameters: SimplifierHandoffToolParameters,
-    async execute(_toolCallId, params, _signal, _onUpdate, context) {
-      assertSimplifierSubmission(params);
+export const recordSimplifierHandoffTool = {
+  name: SIMPLIFIER_HANDOFF_TOOL.NAME,
+  label: SIMPLIFIER_HANDOFF_TOOL.LABEL,
+  description: SIMPLIFIER_HANDOFF_TOOL.DESCRIPTION,
+  parameters: SimplifierHandoffToolParameters,
+  async execute(_toolCallId, params, _signal, _onUpdate, context) {
+    assertSimplifierSubmission(params);
 
-      const { paths, config } = await resolveWorkflowContext({
-        cwd: context.cwd,
-        specId: params.specId,
-      });
+    const { paths, config } = await resolveWorkflowContext({
+      cwd: context.cwd,
+      specId: params.specId,
+    });
 
-      const completed = await completeSimplifierPass({
-        config,
-        paths,
-        specId: params.specId,
-        handoff: { ...params, version: SIMPLIFIER_HANDOFF_VERSION },
-      });
+    const completed = await completeSimplifierPass({
+      config,
+      paths,
+      specId: params.specId,
+      handoff: { ...params, version: SIMPLIFIER_HANDOFF_VERSION },
+    });
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: 'Simplifier handoff and candidate-ready phase saved. Stop now.',
-          },
-        ],
-        details: {
-          specId: params.specId,
-          handoffPath: completed.handoffPath,
-          phase: completed.state.phase,
+    return {
+      content: [
+        {
+          type: 'text',
+          text: 'Simplifier handoff and candidate-ready phase saved. Stop now.',
         },
-      };
-    },
-  });
-};
+      ],
+      details: {
+        specId: params.specId,
+        handoffPath: completed.handoffPath,
+        phase: completed.state.phase,
+      },
+    };
+  },
+} satisfies ToolDefinition<typeof SimplifierHandoffToolParameters>;
