@@ -5,10 +5,12 @@ GitHub Releases are not required.
 
 ## Unreleased
 
-1. Added a standalone internal Pi SDK executor. Each invocation starts a fresh conversation with supplied model, thinking
-   level, role guidance, working directory, and additional tools. Native resource discovery loads instructions, skills, enabled extensions, and configured MCP, codemode,
-   and tool search support, excluding the main `Maestro` extension.
+1. Added a standalone internal Pi SDK executor. Each invocation starts a fresh conversation with supplied model, thinking level, role guidance, working directory, and
+   additional tools. Native resource discovery loads instructions, skills, enabled extensions, and configured MCP, codemode, and tool search support, excluding the main
+   `Maestro` extension.
 2. Added native child session persistence in `subagents/` beneath Pi's project session directory.
+3. Replaced the `acceptance criterion` `probe` and `expected result` fields with `GIVEN`, `WHEN`, and `THEN`, keeping the concrete example. Requirement bodies now use a
+   named actor followed by `MUST` in the requirement heading. Added an optional bullet-list `## Assumptions` section to `spec.md`.
 
 The `builder`, `verifier`, and `simplifier` still use `pi-subagents`. Workflow migration and dependency removal remain separate work.
 

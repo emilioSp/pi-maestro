@@ -32,22 +32,21 @@ possessive forms, such as `owner's`, unformatted. Include plurals and capitaliza
 blocks, link targets, or file paths just to apply this formatting.
 
 ## Remove and unchanged behavior
+
 Do not explicit document behavior that are unchanged.
 
-Bad:
-Replaced the `acceptance criterion` `probe` and `expected result` fields with `GIVEN`, `WHEN`, and `THEN`, keeping the concrete example. Requirement bodies now use a
+Bad: Replaced the `acceptance criterion` `probe` and `expected result` fields with `GIVEN`, `WHEN`, and `THEN`, keeping the concrete example. Requirement bodies now use a
 named actor followed by `MUST` in the requirement heading. Added an optional bullet-list `## Assumptions` section to `spec.md`. Saved `handoff` formats are unchanged.
 
-Good:
-Replaced the `acceptance criterion` `probe` and `expected result` fields with `GIVEN`, `WHEN`, and `THEN`, keeping the concrete example. Requirement bodies now use a
-named actor followed by `MUST` in the requirement heading. Added an optional bullet-list `## Assumptions` section to `spec.md`.
+Good: Replaced the `acceptance criterion` `probe` and `expected result` fields with `GIVEN`, `WHEN`, and `THEN`, keeping the concrete example. Requirement bodies now use
+a named actor followed by `MUST` in the requirement heading. Added an optional bullet-list `## Assumptions` section to `spec.md`.
 
 ### Changelog
+
 The changelog is to state the system behavior. Do not write technical changes in it.
 
-Bad:
-The extension now uses TypeBox `Type.Enum` with an explicit string type instead of the `StringEnum` helper, calls `before_agent_start` with Pi's message object, and expects the `truncated`
-field on `exec` results.
+Bad: The extension now uses TypeBox `Type.Enum` with an explicit string type instead of the `StringEnum` helper, calls `before_agent_start` with Pi's message object, and
+expects the `truncated` field on `exec` results.
 
-Good:
-The extension now properly validates option inputs, ensures the agent receives complete message context when starting, and correctly detects when command execution outputs have been truncated.
+Good: The extension now properly validates option inputs, ensures the agent receives complete message context when starting, and correctly detects when command execution
+outputs have been truncated.
