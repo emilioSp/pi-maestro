@@ -36,7 +36,7 @@ reaching `candidate-ready`. Linear onboarding and test issues are not project ro
 | MAESTRO-27         | [Make all implementation phases optional](#maestro-27-make-all-implementation-phases-optional)                                     | Completed   |
 | MAESTRO-FREE-1     | [Require Pi 1.5.0](#maestro-free-1-require-pi-150)                                                                                 | Completed   |
 | MAESTRO-FREE-2     | [Remove Maestro run timeouts](#maestro-free-2-remove-maestro-run-timeouts)                                                         | Completed   |
-| MAESTRO-FREE-PRE-3 | [Implement internal SDK delegation](#maestro-free-pre-3-implement-internal-sdk-delegation)                                         | In progress |
+| MAESTRO-FREE-PRE-3 | [Implement internal SDK delegation](#maestro-free-pre-3-implement-internal-sdk-delegation)                                         | Completed   |
 | MAESTRO-FREE-3     | [Run the builder through the Pi SDK](#maestro-free-3-run-the-builder-through-the-pi-sdk)                                           | Backlog     |
 | MAESTRO-FREE-4     | [Run the verifier through the Pi SDK](#maestro-free-4-run-the-verifier-through-the-pi-sdk)                                         | Backlog     |
 | MAESTRO-FREE-5     | [Run the simplifier through the Pi SDK](#maestro-free-5-run-the-simplifier-through-the-pi-sdk)                                     | Backlog     |
@@ -97,48 +97,6 @@ Explore how `Maestro` can reconcile saved `artifacts` and workflow state. The re
 #### Completed when
 
 Not yet defined. The `owner` must define the intended outcome, recovery boundaries, and completion condition before this item can move forward.
-
-### MAESTRO-FREE-PRE-3: Implement internal SDK delegation
-
-#### Implementation and evidence
-
-The standalone executor is implemented under `src/delegation/` against the [approved specification](.specs/20261105-212231-implement-internal-pi-sdk-delegation/spec.md).
-Execution orchestration, session lifecycle, and pure reply interpretation are separated into `executeTask`, `SubSession`, and `readTaskResult`. Manual verification on Pi
-1.5.0 exercised fresh context, native and additional tools, MCP through tool search and codemode, sequential waiting, failure, cancellation, cleanup, and native session
-persistence. See [manual evidence](docs/subagent-integration.md#manual-verification). The three workflow roles still use `pi-subagents`. Final `owner` acceptance and
-completion are not recorded. The caller's message is named `prompt`, execution is inlined in `executeTask`, and cancellation comments explain Node.js `AbortError`. At the
-owner's request, cancellation is forwarded only by the signal listener, without checks before or after the prompt or a retry at `agent_start`. An already cancelled signal
-does not prevent submission, and an aborted signal alone does not turn a normal Pi result into an interruption.
-
-#### Objective
-
-Implement and verify one internal execution operation using `createAgentSession()`, following [ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation).
-The operation is independent of the `builder`, `verifier`, and `simplifier` roles. Callers supply the task, role instructions, model settings, working directory, and
-additional tools needed for that execution.
-
-#### Scope and dependencies
-
-Requires [MAESTRO-FREE-1](#maestro-free-1-require-pi-150) and [MAESTRO-FREE-2](#maestro-free-2-remove-maestro-run-timeouts). This item implements the execution mechanism
-without switching existing workflow tools away from `pi-subagents`. FREE-3, FREE-4, and FREE-5 connect the three roles to it together after it is verified.
-
-The executor manages child sessions, not the workflow. It does not select phases, interpret role outcomes, or validate `handoffs`. Those responsibilities remain with the
-callers and existing workflow operations. Communication remains task-and-`handoff`, without shared in-memory workflow state or a live supervisor dialogue. This is not a
-new public tool or a general-purpose orchestration framework. Live progress presentation remains in [MAESTRO-FREE-6](#maestro-free-6-show-sdk-agent-activity-through-pi).
-
-#### Completed when
-
-1. The operation executes a supplied task in a fresh SDK conversation with the supplied model and thinking level, role guidance, global and project instructions, skills,
-   working tools, and caller-supplied additional tools. It does not depend on any of the three workflow roles.
-2. Enabled global and project extensions and native Pi tool support load as defined in ADR-010, excluding the main `Maestro` extension. The main session retains its
-   `Maestro` mode while the child executes. No compatibility adapters, integration health gates, or delegation-prevention tool filters are added.
-3. Execution waits for the child to finish, fail, or be interrupted before another child starts. The executor imposes no automatic deadline and does not start a new
-   session to retry or repair failed work.
-4. Manual cancellation reaches `session.abort()` and waits for interruption. Sessions, subscriptions, and owned resources are released on every exit, without rollback,
-   workflow changes, or synthetic `handoffs`. Execution errors propagate to the caller.
-5. Native Pi sessions are persisted in `subagents/` beneath Pi's project session directory, resolved through Pi's API. The saved path is available to the caller on
-   completion or failure when a file exists. Every execution starts fresh; no automatic resumption is introduced.
-6. Successful execution, execution failure, cancellation, context and tool loading, and session persistence are verified independently of the workflow migration. The
-   existing three role tools still use `pi-subagents` at the end of this item.
 
 ### MAESTRO-FREE-3: Run the builder through the Pi SDK
 
@@ -284,6 +242,48 @@ the SDK delegation replacement under [ADR-010](ADR.md#adr-010-use-the-pi-sdk-for
 
 [Changelog](CHANGELOG.md#0160), [PR #46](https://github.com/emilioSp/pi-maestro/pull/46), [configuration schema](src/config/schema.ts), and
 [current delegation deadline](src/tools/utils/pi-subagent-delegation.ts).
+
+### MAESTRO-FREE-PRE-3: Implement internal SDK delegation
+
+#### Implementation and evidence
+
+The standalone executor is implemented under `src/delegation/` against the [approved specification](.specs/20261105-212231-implement-internal-pi-sdk-delegation/spec.md).
+Execution orchestration, session lifecycle, and pure reply interpretation are separated into `executeTask`, `SubSession`, and `readTaskResult`. Manual verification on Pi
+1.5.0 exercised fresh context, native and additional tools, MCP through tool search and codemode, sequential waiting, failure, cancellation, cleanup, and native session
+persistence. See [manual evidence](docs/subagent-integration.md#manual-verification). The three workflow roles still use `pi-subagents`. The `owner` confirmed
+completion. The caller's message is named `prompt`, execution is inlined in `executeTask`, and cancellation comments explain Node.js `AbortError`. At the
+owner's request, cancellation is forwarded only by the signal listener, without checks before or after the prompt or a retry at `agent_start`. An already cancelled signal
+does not prevent submission, and an aborted signal alone does not turn a normal Pi result into an interruption.
+
+#### Objective
+
+Implement and verify one internal execution operation using `createAgentSession()`, following [ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation).
+The operation is independent of the `builder`, `verifier`, and `simplifier` roles. Callers supply the task, role instructions, model settings, working directory, and
+additional tools needed for that execution.
+
+#### Scope and dependencies
+
+Requires [MAESTRO-FREE-1](#maestro-free-1-require-pi-150) and [MAESTRO-FREE-2](#maestro-free-2-remove-maestro-run-timeouts). This item implements the execution mechanism
+without switching existing workflow tools away from `pi-subagents`. FREE-3, FREE-4, and FREE-5 connect the three roles to it together after it is verified.
+
+The executor manages child sessions, not the workflow. It does not select phases, interpret role outcomes, or validate `handoffs`. Those responsibilities remain with the
+callers and existing workflow operations. Communication remains task-and-`handoff`, without shared in-memory workflow state or a live supervisor dialogue. This is not a
+new public tool or a general-purpose orchestration framework. Live progress presentation remains in [MAESTRO-FREE-6](#maestro-free-6-show-sdk-agent-activity-through-pi).
+
+#### Completed when
+
+1. The operation executes a supplied task in a fresh SDK conversation with the supplied model and thinking level, role guidance, global and project instructions, skills,
+   working tools, and caller-supplied additional tools. It does not depend on any of the three workflow roles.
+2. Enabled global and project extensions and native Pi tool support load as defined in ADR-010, excluding the main `Maestro` extension. The main session retains its
+   `Maestro` mode while the child executes. No compatibility adapters, integration health gates, or delegation-prevention tool filters are added.
+3. Execution waits for the child to finish, fail, or be interrupted before another child starts. The executor imposes no automatic deadline and does not start a new
+   session to retry or repair failed work.
+4. Manual cancellation reaches `session.abort()` and waits for interruption. Sessions, subscriptions, and owned resources are released on every exit, without rollback,
+   workflow changes, or synthetic `handoffs`. Execution errors propagate to the caller.
+5. Native Pi sessions are persisted in `subagents/` beneath Pi's project session directory, resolved through Pi's API. The saved path is available to the caller on
+   completion or failure when a file exists. Every execution starts fresh; no automatic resumption is introduced.
+6. Successful execution, execution failure, cancellation, context and tool loading, and session persistence are verified independently of the workflow migration. The
+   existing three role tools still use `pi-subagents` at the end of this item.
 
 ### MAESTRO-27: Make all implementation phases optional
 
