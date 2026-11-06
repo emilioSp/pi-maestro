@@ -30,3 +30,11 @@ In `README.md`, `docs/*.md`, `MISSION.md`, `TECH_STACK.md`, `ROADMAP.md`, `CHANG
 apply this formatting to section titles, blockquotes (`>`), link labels, or text inside quotation marks. Do not format `spec` within `spec-driven` phrases. Leave
 possessive forms, such as `owner's`, unformatted. Include plurals and capitalization variants only when they have the glossary meaning. Do not change wording, code
 blocks, link targets, or file paths just to apply this formatting.
+
+The changelog is to state the system behavior. Do not write technical changes in it.
+This is wrong:
+The extension now uses TypeBox `Type.Enum` with an explicit string type instead of the `StringEnum` helper, calls `before_agent_start` with Pi's message object, and expects the `truncated`
+field on `exec` results.
+
+This is good:
+The extension now properly validates option inputs, ensures the agent receives complete message context when starting, and correctly detects when command execution outputs have been truncated.
