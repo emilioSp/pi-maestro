@@ -196,7 +196,7 @@ Show activity for SDK-based agent `runs` through Pi's standard `onUpdate` presen
 ## MAESTRO-FREE-7: Remove the pi-subagents dependency
 
 Implementation follows the [approved migration specification](.specs/20261106-092601-feat-migrate-builder-verifier-and-simplifier-to-the-pi-sdk/spec.md). Code cleanup is
-included in this migration. Package declarations, lockfile entries, bundling, and `pi.subagents` metadata remain for the `owner` to remove manually.
+included in this migration. Package declarations, lockfile entries, bundling, and `pi.subagents` metadata are removed.
 
 ### Objective
 
@@ -225,8 +225,7 @@ Linear marks this item Done, but its description still says final `owner` accept
 [specification](.specs/20261030-145712-automatically-exit-maestro-mode-at-workflow-completion/spec.md), and
 [original issue](https://linear.app/emilio-spatola/issue/MAESTRO-26/feat-exit-maestro-mode-automatically-at-workflow-completion).
 
-Completed entries include historical records imported from Linear and work explicitly accepted by the `owner`. Historical verification evidence alone does not establish
-final `owner` acceptance.
+Completed entries include historical records imported from Linear.
 
 ## MAESTRO-FREE-1: Require Pi 1.5.0
 
@@ -430,6 +429,8 @@ saved workflow reached `candidate-ready`.
 and [merged PR #34](https://github.com/emilioSp/pi-maestro/pull/34).
 
 ## MAESTRO-13: Check subagent extensions at activation
+
+Historical outcome: activation no longer requires the parent `pi-subagents` availability check after the SDK migration. See [changelog](CHANGELOG.md).
 
 Require a successful parent `pi-subagents` availability reply before activation.
 

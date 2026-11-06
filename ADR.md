@@ -280,7 +280,7 @@ Approval can finish at `candidate-ready` without agent execution. Agent and mode
 
 ### Status
 
-Design decisions confirmed by the `owner`. Not implemented.
+Design decisions confirmed by the `owner`. Implemented.
 
 ### Context
 
