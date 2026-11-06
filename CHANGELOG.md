@@ -5,8 +5,7 @@ GitHub Releases are not required.
 
 ## 0.18.1
 
-1. Running `builder`, `verifier`, and `simplifier` tools now show elapsed time, active tools, and streaming normal assistant text. Elapsed time keeps updating during
-   silent work. Pi controls preview and expansion, while intermediate activity stays out of the main model's context.
+1. Running `builder`, `verifier`, and `simplifier` tools now show elapsed time, active tools, and streaming normal assistant text. Elapsed time keeps updating during silent work. Pi controls preview and expansion, while intermediate activity stays out of the main model's context.
 
 ## 0.18.0
 
