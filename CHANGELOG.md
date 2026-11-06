@@ -3,6 +3,11 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
+## Unreleased
+
+1. The `run` progress for `builder`, `verifier`, and `simplifier` now shows only elapsed time and the latest assistant text. The role name and the active tool no longer
+   appear.
+
 ## 0.18.1
 
 1. Running `builder`, `verifier`, and `simplifier` tools now show elapsed time, active tools, and streaming normal assistant text. Elapsed time keeps updating during silent work. Pi controls preview and expansion, while intermediate activity stays out of the main model's context.

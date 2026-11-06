@@ -65,7 +65,7 @@ const normalAssistantMessage: AssistantMessage = {
 
 describe('native run activity', () => {
   it.each(Object.values(WORKFLOW_ROLES))(
-    'given an executing %s when text and bash arrive at 134 seconds then progress shows the role, duration, tool, and recent text',
+    'given an executing %s when text and bash arrive at 134 seconds then progress shows duration and recent text',
     async (role) => {
       const { session } = await piTestSessions.create({ extensions: [] });
       vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
@@ -80,12 +80,7 @@ describe('native run activity', () => {
           args: {},
         });
         expect(onUpdate).toHaveBeenLastCalledWith({
-          content: [
-            {
-              type: 'text',
-              text: `${role[0].toUpperCase() + role.slice(1)} | Elapsed: 2m 14s | Active tool: bash\n\nRunning the tests.`,
-            },
-          ],
+          content: [{ type: 'text', text: 'Elapsed: 2m 14s\n\nRunning the tests.' }],
           details: undefined,
         });
 
@@ -162,14 +157,11 @@ describe('native run activity', () => {
       onEvent?.({ type: 'tool_execution_start', toolCallId: 'bash-1', toolName: 'bash', args: {} });
       vi.advanceTimersByTime(134_000);
       expect(onUpdate.mock.lastCall?.[0].content).toEqual([
-        { type: 'text', text: expect.stringContaining('2m 14s | Active tool: bash') },
+        { type: 'text', text: 'Elapsed: 2m 14s\n\nRunning the tests.' },
       ]);
       vi.advanceTimersByTime(25_000);
       expect(onUpdate.mock.lastCall?.[0].content).toEqual([
-        { type: 'text', text: expect.stringContaining('2m 39s | Active tool: bash') },
-      ]);
-      expect(onUpdate.mock.lastCall?.[0].content).toEqual([
-        { type: 'text', text: expect.stringContaining('Running the tests.') },
+        { type: 'text', text: 'Elapsed: 2m 39s\n\nRunning the tests.' },
       ]);
 
       return { text: 'Done' };
@@ -185,14 +177,19 @@ describe('native run activity', () => {
     });
   });
 
-  it('given bash is the only active tool when it finishes at 140 seconds then progress indicates no active tool and keeps the recent text', async () => {
+  it('given bash starts and finishes without new assistant text when no periodic refresh is due then neither tool event publishes progress', async () => {
     const { session } = await piTestSessions.create({ extensions: [] });
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
     const onUpdate = vi.fn<AgentToolUpdateCallback>();
     vi.mocked(executeTask).mockImplementationOnce(async ({ onEvent }) => {
       onEvent?.({ type: 'message_end', message: normalAssistantMessage });
+      vi.advanceTimersByTime(134_000);
+      expect(onUpdate).toHaveBeenLastCalledWith({
+        content: [{ type: 'text', text: 'Elapsed: 2m 14s\n\nRunning the tests.' }],
+        details: undefined,
+      });
+      const updatesBeforeTools = onUpdate.mock.calls.length;
       onEvent?.({ type: 'tool_execution_start', toolCallId: 'bash-1', toolName: 'bash', args: {} });
-      vi.advanceTimersByTime(140_000);
       onEvent?.({
         type: 'tool_execution_end',
         toolCallId: 'bash-1',
@@ -200,13 +197,14 @@ describe('native run activity', () => {
         result: {},
         isError: false,
       });
+      expect(onUpdate).toHaveBeenCalledTimes(updatesBeforeTools);
       expect(onUpdate).toHaveBeenLastCalledWith({
-        content: [
-          {
-            type: 'text',
-            text: 'Builder | Elapsed: 2m 20s | Active tool: none\n\nRunning the tests.',
-          },
-        ],
+        content: [{ type: 'text', text: 'Elapsed: 2m 14s\n\nRunning the tests.' }],
+        details: undefined,
+      });
+      vi.advanceTimersByTime(25_000);
+      expect(onUpdate).toHaveBeenLastCalledWith({
+        content: [{ type: 'text', text: 'Elapsed: 2m 39s\n\nRunning the tests.' }],
         details: undefined,
       });
 
@@ -223,47 +221,7 @@ describe('native run activity', () => {
     });
   });
 
-  it('given parallel child tools when one finishes then the other remains active until its own completion', async () => {
-    const { session } = await piTestSessions.create({ extensions: [] });
-    const onUpdate = vi.fn<AgentToolUpdateCallback>();
-    vi.mocked(executeTask).mockImplementationOnce(async ({ onEvent }) => {
-      onEvent?.({ type: 'tool_execution_start', toolCallId: 'bash-1', toolName: 'bash', args: {} });
-      onEvent?.({ type: 'tool_execution_start', toolCallId: 'bash-2', toolName: 'bash', args: {} });
-      onEvent?.({
-        type: 'tool_execution_end',
-        toolCallId: 'bash-1',
-        toolName: 'bash',
-        result: {},
-        isError: false,
-      });
-      expect(onUpdate.mock.lastCall?.[0].content).toEqual([
-        { type: 'text', text: expect.stringContaining('Active tool: bash') },
-      ]);
-      onEvent?.({
-        type: 'tool_execution_end',
-        toolCallId: 'bash-2',
-        toolName: 'bash',
-        result: {},
-        isError: false,
-      });
-      expect(onUpdate.mock.lastCall?.[0].content).toEqual([
-        { type: 'text', text: expect.stringContaining('Active tool: none') },
-      ]);
-
-      return { text: 'Done' };
-    });
-    await executeRoleTask({
-      role: WORKFLOW_ROLES.BUILDER,
-      cwd: session.sessionManager.getCwd(),
-      model: 'unused/model',
-      thinkingLevel: 'off',
-      prompt: 'Implement the task.',
-      ui: session.extensionRunner.createContext().ui,
-      onUpdate,
-    });
-  });
-
-  it('given a completed 180-second builder when a verifier starts then its initial progress has zero elapsed time and no inherited activity', async () => {
+  it('given a completed 180-second builder when a verifier starts then its initial progress has zero elapsed time and no inherited text', async () => {
     const { session } = await piTestSessions.create({ extensions: [] });
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
     const onUpdate = vi.fn<AgentToolUpdateCallback>();
@@ -301,7 +259,7 @@ describe('native run activity', () => {
       onUpdate,
     });
     expect(onUpdate).toHaveBeenCalledExactlyOnceWith({
-      content: [{ type: 'text', text: 'Verifier | Elapsed: 0m 0s | Active tool: none' }],
+      content: [{ type: 'text', text: 'Elapsed: 0m 0s' }],
       details: undefined,
     });
   });
@@ -513,7 +471,7 @@ describe('run builder tool', () => {
     );
 
     expect(onUpdate).toHaveBeenCalledWith({
-      content: [{ type: 'text', text: 'Builder | Elapsed: 0m 0s | Active tool: none' }],
+      content: [{ type: 'text', text: 'Elapsed: 0m 0s' }],
       details: undefined,
     });
 

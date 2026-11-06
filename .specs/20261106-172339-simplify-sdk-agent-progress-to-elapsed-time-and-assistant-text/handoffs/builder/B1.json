@@ -1,0 +1,34 @@
+{
+  "status": "done",
+  "summary": "Progress now shows only `Elapsed: Xm Ys` plus a blank line and the latest normal assistant text. The role label, the active-tool list, and the empty-text placeholder were removed. `trackAgentActivity` no longer tracks tool execution, and `createAgentProgress` no longer takes a role. Verified with the builder, verifier, and simplifier run integration tests and the full `npm run check`.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npx vitest run src/tools/main/run-builder.integration.test.ts (test 'given an executing %s when text and bash arrive at 134 seconds then progress shows only the duration and recent text'): after 134s and a normal assistant message the last update is exactly 'Elapsed: 2m 14s\\n\\nRunning the tests.' for builder, verifier, and simplifier. run-verifier and run-simplifier integration tests also assert only 'Elapsed: 0m 0s'.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Same run-builder test: JSON of all onUpdate calls matches neither /Active tool|bash/ nor the role label (Builder/Verifier/Simplifier).",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "npx vitest run src/tools/main/run-builder.integration.test.ts (test 'given a completed 180-second builder when a verifier starts then its initial progress has zero elapsed time and no inherited text'): the verifier's only update is exactly 'Elapsed: 0m 0s' with no separator or placeholder.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "npx vitest run src/tools/main/run-builder.integration.test.ts (test 'given bash starts and finishes without new assistant text when no periodic refresh is due then neither tool event publishes progress'): tool_execution_start and tool_execution_end add no onUpdate call and the text stays 'Elapsed: 2m 14s\\n\\nRunning the tests.'; the next refresh publishes 'Elapsed: 2m 39s\\n\\nRunning the tests.'.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "Removed the activeTools map and the tool_execution_start/tool_execution_end branches from trackAgentActivity, and removed the WorkflowRole parameter from createAgentProgress, so tool events return undefined and publish no progress.",
+    "Removed the obsolete parallel-tool integration test because tool activity is no longer tracked; the AC4 tool-event test replaces the previous bash-end assertions.",
+    "Full `npm run check` passed (42 files, 292 tests, coverage above thresholds). Its oxfmt step reflows a long CHANGELOG.md line; that formatting-only change was reverted so this pass changes no documentation content."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261106-172339-simplify-sdk-agent-progress-to-elapsed-time-and-assistant-text"
+}
