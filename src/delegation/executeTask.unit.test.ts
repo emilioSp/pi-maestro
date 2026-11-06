@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createChildServices } from '#src/delegation/createChildServices.ts';
 import { executeTask, type ExecuteTaskInput } from '#src/delegation/executeTask.ts';
-import * as subSessionModule from '#src/delegation/SubSession.ts';
+import * as subSessionManagerModule from '#src/delegation/SubSessionManager.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
 import { taskReplyWithTextBlocks } from '#tests/fixtures/task-reply-with-text-blocks.ts';
 
@@ -33,14 +33,17 @@ describe('execute task', () => {
     };
 
     const open = vi.fn<() => Promise<typeof session>>().mockResolvedValue(session);
-    const close = vi.fn<subSessionModule.SubSession['close']>().mockResolvedValue(undefined);
+
+    const close = vi
+      .fn<subSessionManagerModule.SubSessionManager['close']>()
+      .mockResolvedValue(undefined);
 
     const getSavedFile = vi
-      .fn<subSessionModule.SubSession['getSavedFile']>()
+      .fn<subSessionManagerModule.SubSessionManager['getSavedFile']>()
       .mockReturnValue('/sessions/project/subagents/task.jsonl');
 
     const constructor = vi
-      .spyOn(subSessionModule, 'SubSession')
+      .spyOn(subSessionManagerModule, 'SubSessionManager')
       .mockImplementationOnce(function () {
         Object.assign(this, {
           open,
