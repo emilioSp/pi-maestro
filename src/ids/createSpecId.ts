@@ -35,10 +35,8 @@ const normalizeSlug = (value: string): string => {
 
 type CreateSpecIdInput = {
   title: string;
-  instant?: Temporal.Instant;
+  instant: Temporal.Instant;
 };
 
-export const createSpecId = ({
-  title,
-  instant = Temporal.Now.instant(),
-}: CreateSpecIdInput): string => `${formatUtcTimestamp(instant)}-${normalizeSlug(title)}`;
+export const createSpecId = ({ title, instant }: CreateSpecIdInput): string =>
+  `${formatUtcTimestamp(instant)}-${normalizeSlug(title)}`;

@@ -3,6 +3,11 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
+## Unreleased
+
+1. Running `builder`, `verifier`, and `simplifier` tools now show elapsed time, active tools, and streaming normal assistant text. Elapsed time keeps updating during
+   silent work. Pi controls preview and expansion, while intermediate activity stays out of the main model's context.
+
 ## 0.18.0
 
 1. `Builder`, `verifier`, and `simplifier` now run in fresh native Pi SDK sessions. Activation no longer requires a separate agent extension. The `owner` can interrupt

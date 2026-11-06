@@ -6,12 +6,15 @@
 import { access, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import type { AssistantMessage } from '@earendil-works/pi-ai';
+import type { AgentToolUpdateCallback } from '@earendil-works/pi-coding-agent';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import { BUILDER_HANDOFF_STATUSES, PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { DEFAULT_CONFIG } from '#config/defaults.ts';
+import { executeRoleTask } from '#src/delegation/executeRoleTask.ts';
 import { executeTask } from '#src/delegation/executeTask.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
 import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
@@ -28,6 +31,7 @@ import {
 } from '#tools/child/record-builder-handoff.ts';
 import { registerRunBuilderTool } from '#tools/main/run-builder.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
+import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
@@ -35,9 +39,330 @@ import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 vi.mock('#src/delegation/executeTask.ts', () => ({ executeTask: vi.fn<typeof executeTask>() }));
 
 afterEach(async () => {
+  vi.useRealTimers();
   vi.mocked(executeTask).mockReset();
   await piTestSessions.cleanup();
   await cleanupBuilderWorkflows();
+});
+
+const normalAssistantMessage: AssistantMessage = {
+  role: 'assistant',
+  api: 'openai-completions',
+  provider: 'openai-codex',
+  model: 'offline-test',
+  content: [{ type: 'text', text: 'Running the tests.' }],
+  stopReason: 'stop',
+  timestamp: 0,
+  usage: {
+    input: 0,
+    output: 0,
+    cacheRead: 0,
+    cacheWrite: 0,
+    totalTokens: 0,
+    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+  },
+};
+
+describe('native run activity', () => {
+  it.each(Object.values(WORKFLOW_ROLES))(
+    'given an executing %s when text and bash arrive at 134 seconds then progress shows the role, duration, tool, and recent text',
+    async (role) => {
+      const { session } = await piTestSessions.create({ extensions: [] });
+      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
+      const onUpdate = vi.fn<AgentToolUpdateCallback>();
+      vi.mocked(executeTask).mockImplementationOnce(async ({ onEvent }) => {
+        vi.advanceTimersByTime(134_000);
+        onEvent?.({ type: 'message_end', message: normalAssistantMessage });
+        onEvent?.({
+          type: 'tool_execution_start',
+          toolCallId: 'bash-1',
+          toolName: 'bash',
+          args: {},
+        });
+        expect(onUpdate).toHaveBeenLastCalledWith({
+          content: [
+            {
+              type: 'text',
+              text: `${role[0].toUpperCase() + role.slice(1)} | Elapsed: 2m 14s | Active tool: bash\n\nRunning the tests.`,
+            },
+          ],
+          details: undefined,
+        });
+
+        return { text: 'Done' };
+      });
+      await executeRoleTask({
+        role,
+        cwd: session.sessionManager.getCwd(),
+        model: 'unused/model',
+        thinkingLevel: 'off',
+        prompt: 'Implement the approved task.',
+        ui: session.extensionRunner.createContext().ui,
+        onUpdate,
+      });
+    },
+  );
+
+  it('given an open assistant message when another fragment arrives then accumulated text replaces the previous progress before completion', async () => {
+    const { session } = await piTestSessions.create({ extensions: [] });
+    const onUpdate = vi.fn<AgentToolUpdateCallback>();
+    vi.mocked(executeTask).mockImplementationOnce(async ({ onEvent }) => {
+      const partial = {
+        ...normalAssistantMessage,
+        content: [{ type: 'text' as const, text: 'Checking ' }],
+      };
+
+      onEvent?.({
+        type: 'message_update',
+        message: partial,
+        assistantMessageEvent: { type: 'text_delta', contentIndex: 0, delta: 'Checking ', partial },
+      });
+      expect(onUpdate.mock.lastCall?.[0].content).toEqual([
+        { type: 'text', text: expect.stringContaining('Checking ') },
+      ]);
+
+      const accumulated = {
+        ...normalAssistantMessage,
+        content: [{ type: 'text' as const, text: 'Checking validation.' }],
+      };
+
+      onEvent?.({
+        type: 'message_update',
+        message: accumulated,
+        assistantMessageEvent: {
+          type: 'text_delta',
+          contentIndex: 0,
+          delta: 'validation.',
+          partial: accumulated,
+        },
+      });
+      expect(onUpdate.mock.lastCall?.[0].content).toEqual([
+        { type: 'text', text: expect.stringContaining('Checking validation.') },
+      ]);
+
+      return { text: 'Done' };
+    });
+    await executeRoleTask({
+      role: WORKFLOW_ROLES.BUILDER,
+      cwd: session.sessionManager.getCwd(),
+      model: 'unused/model',
+      thinkingLevel: 'off',
+      prompt: 'Implement the task.',
+      ui: session.extensionRunner.createContext().ui,
+      onUpdate,
+    });
+  });
+
+  it('given silent bash at 134 seconds when 25 seconds pass without child events then elapsed advances to 159 seconds and recent text stays visible', async () => {
+    const { session } = await piTestSessions.create({ extensions: [] });
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
+    const onUpdate = vi.fn<AgentToolUpdateCallback>();
+    vi.mocked(executeTask).mockImplementationOnce(async ({ onEvent }) => {
+      onEvent?.({ type: 'message_end', message: normalAssistantMessage });
+      onEvent?.({ type: 'tool_execution_start', toolCallId: 'bash-1', toolName: 'bash', args: {} });
+      vi.advanceTimersByTime(134_000);
+      expect(onUpdate.mock.lastCall?.[0].content).toEqual([
+        { type: 'text', text: expect.stringContaining('2m 14s | Active tool: bash') },
+      ]);
+      vi.advanceTimersByTime(25_000);
+      expect(onUpdate.mock.lastCall?.[0].content).toEqual([
+        { type: 'text', text: expect.stringContaining('2m 39s | Active tool: bash') },
+      ]);
+      expect(onUpdate.mock.lastCall?.[0].content).toEqual([
+        { type: 'text', text: expect.stringContaining('Running the tests.') },
+      ]);
+
+      return { text: 'Done' };
+    });
+    await executeRoleTask({
+      role: WORKFLOW_ROLES.BUILDER,
+      cwd: session.sessionManager.getCwd(),
+      model: 'unused/model',
+      thinkingLevel: 'off',
+      prompt: 'Implement the task.',
+      ui: session.extensionRunner.createContext().ui,
+      onUpdate,
+    });
+  });
+
+  it('given bash is the only active tool when it finishes at 140 seconds then progress indicates no active tool and keeps the recent text', async () => {
+    const { session } = await piTestSessions.create({ extensions: [] });
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
+    const onUpdate = vi.fn<AgentToolUpdateCallback>();
+    vi.mocked(executeTask).mockImplementationOnce(async ({ onEvent }) => {
+      onEvent?.({ type: 'message_end', message: normalAssistantMessage });
+      onEvent?.({ type: 'tool_execution_start', toolCallId: 'bash-1', toolName: 'bash', args: {} });
+      vi.advanceTimersByTime(140_000);
+      onEvent?.({
+        type: 'tool_execution_end',
+        toolCallId: 'bash-1',
+        toolName: 'bash',
+        result: {},
+        isError: false,
+      });
+      expect(onUpdate).toHaveBeenLastCalledWith({
+        content: [
+          {
+            type: 'text',
+            text: 'Builder | Elapsed: 2m 20s | Active tool: none\n\nRunning the tests.',
+          },
+        ],
+        details: undefined,
+      });
+
+      return { text: 'Done' };
+    });
+    await executeRoleTask({
+      role: WORKFLOW_ROLES.BUILDER,
+      cwd: session.sessionManager.getCwd(),
+      model: 'unused/model',
+      thinkingLevel: 'off',
+      prompt: 'Implement the task.',
+      ui: session.extensionRunner.createContext().ui,
+      onUpdate,
+    });
+  });
+
+  it('given parallel child tools when one finishes then the other remains active until its own completion', async () => {
+    const { session } = await piTestSessions.create({ extensions: [] });
+    const onUpdate = vi.fn<AgentToolUpdateCallback>();
+    vi.mocked(executeTask).mockImplementationOnce(async ({ onEvent }) => {
+      onEvent?.({ type: 'tool_execution_start', toolCallId: 'bash-1', toolName: 'bash', args: {} });
+      onEvent?.({ type: 'tool_execution_start', toolCallId: 'bash-2', toolName: 'bash', args: {} });
+      onEvent?.({
+        type: 'tool_execution_end',
+        toolCallId: 'bash-1',
+        toolName: 'bash',
+        result: {},
+        isError: false,
+      });
+      expect(onUpdate.mock.lastCall?.[0].content).toEqual([
+        { type: 'text', text: expect.stringContaining('Active tool: bash') },
+      ]);
+      onEvent?.({
+        type: 'tool_execution_end',
+        toolCallId: 'bash-2',
+        toolName: 'bash',
+        result: {},
+        isError: false,
+      });
+      expect(onUpdate.mock.lastCall?.[0].content).toEqual([
+        { type: 'text', text: expect.stringContaining('Active tool: none') },
+      ]);
+
+      return { text: 'Done' };
+    });
+    await executeRoleTask({
+      role: WORKFLOW_ROLES.BUILDER,
+      cwd: session.sessionManager.getCwd(),
+      model: 'unused/model',
+      thinkingLevel: 'off',
+      prompt: 'Implement the task.',
+      ui: session.extensionRunner.createContext().ui,
+      onUpdate,
+    });
+  });
+
+  it('given a completed 180-second builder when a verifier starts then its initial progress has zero elapsed time and no inherited activity', async () => {
+    const { session } = await piTestSessions.create({ extensions: [] });
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
+    const onUpdate = vi.fn<AgentToolUpdateCallback>();
+    vi.mocked(executeTask).mockImplementationOnce(async ({ onEvent }) => {
+      vi.advanceTimersByTime(180_000);
+      onEvent?.({
+        type: 'message_end',
+        message: {
+          ...normalAssistantMessage,
+          content: [{ type: 'text', text: 'Build complete.' }],
+        },
+      });
+      onEvent?.({ type: 'tool_execution_start', toolCallId: 'bash-1', toolName: 'bash', args: {} });
+
+      return { text: 'Done' };
+    });
+    await executeRoleTask({
+      role: WORKFLOW_ROLES.BUILDER,
+      cwd: session.sessionManager.getCwd(),
+      model: 'unused/model',
+      thinkingLevel: 'off',
+      prompt: 'Implement the task.',
+      ui: session.extensionRunner.createContext().ui,
+      onUpdate,
+    });
+    onUpdate.mockClear();
+    vi.mocked(executeTask).mockResolvedValueOnce({ text: 'Done' });
+    await executeRoleTask({
+      role: WORKFLOW_ROLES.VERIFIER,
+      cwd: session.sessionManager.getCwd(),
+      model: 'unused/model',
+      thinkingLevel: 'off',
+      prompt: 'Verify the task.',
+      ui: session.extensionRunner.createContext().ui,
+      onUpdate,
+    });
+    expect(onUpdate).toHaveBeenCalledExactlyOnceWith({
+      content: [{ type: 'text', text: 'Verifier | Elapsed: 0m 0s | Active tool: none' }],
+      details: undefined,
+    });
+  });
+
+  it('given normal text, thinking, and tool output when child events arrive then progress excludes private reasoning and raw results', async () => {
+    const { session } = await piTestSessions.create({ extensions: [] });
+    const onUpdate = vi.fn<AgentToolUpdateCallback>();
+    vi.mocked(executeTask).mockImplementationOnce(async ({ onEvent }) => {
+      onEvent?.({
+        type: 'message_end',
+        message: {
+          ...normalAssistantMessage,
+          content: [
+            { type: 'text', text: 'Running checks.' },
+            { type: 'thinking', thinking: 'PRIVATE_REASONING_123' },
+          ],
+        },
+      });
+      onEvent?.({ type: 'tool_execution_start', toolCallId: 'bash-1', toolName: 'bash', args: {} });
+      onEvent?.({
+        type: 'tool_execution_update',
+        toolCallId: 'bash-1',
+        toolName: 'bash',
+        args: {},
+        partialResult: { content: [{ type: 'text', text: 'RAW_OUTPUT_456' }] },
+      });
+      onEvent?.({
+        type: 'message_end',
+        message: {
+          role: 'toolResult',
+          toolCallId: 'bash-1',
+          toolName: 'bash',
+          content: [{ type: 'text', text: 'RAW_OUTPUT_456' }],
+          isError: false,
+          timestamp: 0,
+        },
+      });
+      onEvent?.({
+        type: 'tool_execution_end',
+        toolCallId: 'bash-1',
+        toolName: 'bash',
+        result: { content: [{ type: 'text', text: 'RAW_OUTPUT_456' }] },
+        isError: false,
+      });
+      expect(JSON.stringify(onUpdate.mock.calls)).toContain('Running checks.');
+      expect(JSON.stringify(onUpdate.mock.calls)).not.toMatch(
+        /PRIVATE_REASONING_123|RAW_OUTPUT_456/,
+      );
+
+      return { text: 'Done' };
+    });
+    await executeRoleTask({
+      role: WORKFLOW_ROLES.BUILDER,
+      cwd: session.sessionManager.getCwd(),
+      model: 'unused/model',
+      thinkingLevel: 'off',
+      prompt: 'Implement the task.',
+      ui: session.extensionRunner.createContext().ui,
+      onUpdate,
+    });
+  });
 });
 
 describe('run builder tool', () => {
@@ -178,7 +503,19 @@ describe('run builder tool', () => {
       return { text: 'Completed successfully', sessionFile };
     });
 
-    const result = await tool.execute('test-call', { specId: SPEC_ID }, controller.signal);
+    const onUpdate = vi.fn<AgentToolUpdateCallback>();
+
+    const result = await tool.execute(
+      'test-call',
+      { specId: SPEC_ID },
+      controller.signal,
+      onUpdate,
+    );
+
+    expect(onUpdate).toHaveBeenCalledWith({
+      content: [{ type: 'text', text: 'Builder | Elapsed: 0m 0s | Active tool: none' }],
+      details: undefined,
+    });
 
     const saved = await readBuilderHandoff({
       path: await paths.getActiveBuilderHandoffPath(SPEC_ID),

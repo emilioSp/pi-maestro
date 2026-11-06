@@ -1,0 +1,63 @@
+{
+  "status": "done",
+  "summary": "feat: show live SDK activity through native Pi progress for builder, verifier, and simplifier. All ten acceptance criteria and npm run check pass.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npm run check: run-builder.integration.test.ts parameterized native run activity scenario for all three roles advances fake time to 134 seconds, emits Running the tests. and starts bash; each update contains the role, 2m 14s, bash, and assistant text. Each role's run-tool integration test also verifies onUpdate wiring.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "npm run check: run-builder.integration.test.ts open-message scenario delivers text_delta events for Checking followed by validation.; progress contains Checking validation. before any message_end.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "npm run check: run-builder.integration.test.ts finishes the only bash tool at 140 seconds; the next update shows Active tool: none and retains Running the tests. Parallel-tool coverage also confirms one completion does not clear another active call.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "npm run check: run-builder.integration.test.ts completes a 180-second builder with Build complete. and bash, then starts a verifier; its sole initial update is Verifier, 0m 0s, Active tool: none, without inherited text.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "npm run check: run-builder.integration.test.ts silent-bash scenario advances fake time from 134 to 159 seconds without child events; periodic progress changes from 2m 14s to 2m 39s while retaining bash and recent text.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "npm run check: executeTask.unit.test.ts native parent/child scenario feeds successive real onUpdate events into one Pi ToolExecutionComponent at 100 columns. Checking files. is replaced by the complete 30-line message; native collapsed rendering hides Line 30 and expansion reveals it. Registered run tool has no custom renderCall or renderResult.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "npm run check: run-builder.integration.test.ts processes assistant text, thinking, tool updates, tool-result messages, and completion bodies. Its progress includes Running checks. but neither PRIVATE_REASONING_123 nor RAW_OUTPUT_456. The native SDK parent/child scenario independently checks these exclusions.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "npm run check: executeTask.unit.test.ts runs the registered builder through a real native parent SDK tool loop with an offline scripted child. PROGRESS_ONLY_789 appears in progress but not the final tool result or subsequent parent provider context, which contains the saved handoff summary. Exactly two parent requests and three normal child workflow requests occur, with no progress prompts.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC9",
+      "probe": "npm run check: executeTask.unit.test.ts native lifecycle scenarios cover completion, bindExtensions startup failure after subscription allocation, provider failure, and interruption at 40 seconds. Each explicitly observes one subscription removal, zero remaining periodic timers, and no updates after advancing another 25 seconds and delivering a late event.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC10",
+      "probe": "npm run check: executeTask.unit.test.ts native parent/child scenario displays the 30-line message through collapsed and expanded native progress, then reopens the saved child JSONL using SessionManager.open. The saved assistant text exactly equals the complete message containing Line 1 through Line 30.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "Final npm run check passed formatting, lint, type checking, all 293 tests across 42 files, and coverage thresholds. git diff --check passed.",
+    "Native presentation and context-isolation proofs used Pi 1.5.0 with offline scripted providers and the real native tool component, without live model requests or an interactive terminal session. Temporary sessions and generated coverage output were removed. Roadmap owner acceptance remains pending."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261106-143021-maestro-free-6-show-sdk-agent-activity-through-pi"
+}
