@@ -3,22 +3,14 @@
  * Used: After verification succeeds or the owner rejects all findings.
  */
 
-import { randomUUID } from 'node:crypto';
-
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
-import type { SubagentDelegationRequest } from 'pi-subagents/delegation';
 import { Type } from 'typebox';
 
 import { readSimplifierHandoff } from '#artifacts/simplifier-handoff/readSimplifierHandoff.ts';
-import { AGENTS } from '#config/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
-import {
-  assertDelegationResponse,
-  SUBAGENT_TIMEOUT_MS,
-  waitForDelegationResponse,
-} from '#tools/utils/pi-subagent-delegation.ts';
+import { executeRoleTask } from '#tools/utils/executeRoleTask.ts';
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -95,7 +87,7 @@ export const registerRunSimplifierTool = (pi: ExtensionAPI): void => {
     label: RUN_SIMPLIFIER_TOOL.LABEL,
     description: RUN_SIMPLIFIER_TOOL.DESCRIPTION,
     parameters: RunSimplifierToolParameters,
-    async execute(toolCallId, { specId }, _signal, _onUpdate, context) {
+    async execute(_toolCallId, { specId }, signal, _onUpdate, context) {
       const { paths, config, projectRoot } = await resolveToolRunContext(context.cwd);
 
       const workflowPath = paths.getWorkflowPath(specId);
@@ -136,26 +128,16 @@ export const registerRunSimplifierTool = (pi: ExtensionAPI): void => {
         };
       }
 
-      const request: SubagentDelegationRequest = {
-        requestId: randomUUID(),
-        ownerRunId: toolCallId,
-        nodeId: WORKFLOW_ROLES.SIMPLIFIER,
-        agent: AGENTS.SIMPLIFIER,
-        task: `Simplify accepted code for specId "${specId}" in the project directory "${projectRoot}". Discover all current staged, unstaged, and untracked code changes with Git, including pre-existing changes.`,
-        context: 'fresh',
+      await executeRoleTask({
+        role: WORKFLOW_ROLES.SIMPLIFIER,
+        prompt: `Simplify accepted code for specId "${specId}" in the project directory "${projectRoot}". Discover all current staged, unstaged, and untracked code changes with Git, including pre-existing changes.`,
         cwd: projectRoot,
         model: config.simplifier.model,
-        thinking: config.simplifier.thinking,
-        timeoutMs: SUBAGENT_TIMEOUT_MS,
-        result: { kind: 'text' },
-      };
-
-      const response = await waitForDelegationResponse({
-        piEventsBus: pi.events,
-        request,
+        thinkingLevel: config.simplifier.thinking,
+        signal,
+        ui: context.ui,
       });
 
-      assertDelegationResponse(response);
       const result = await readSimplifierResult({ paths, specId });
 
       return {
