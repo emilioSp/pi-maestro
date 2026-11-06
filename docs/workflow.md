@@ -31,7 +31,8 @@ issues.
 
 Maestro's Pi status shows the current phase.
 
-`pi-subagents` FleetView and `/subagents-fleet` show live agent activity and transcripts.
+`Maestro` displays the saved native child session path when one exists, including after a failed or interrupted `run`. The `owner` can inspect the file or export it with
+Pi. See [Inspecting saved sessions](subagent-integration.md#inspecting-saved-sessions).
 
 Saved `handoffs` provide a structured account of each reported `run`. The `builder` reports its outcome, `probe` results, notes, and any `escalation` questions. The
 `verifier` reports its independent checks, results, and `findings`. The `simplifier` reports its refactoring separately. Recorded `owner` decisions explain how questions
@@ -359,9 +360,12 @@ these project-specific checks.
 
 ### No automatic rollback
 
-Launch errors, delegation failures, timeouts, interruptions, cancellations, and missing or invalid `handoffs` stop the workflow without a recovery transition. If a `run`
-saves no completed transition, its saved running phase remains unchanged. Partial protocol writes require manual `owner` follow-up. `Maestro` provides no automatic
-rollback, repair, or recovery for these errors. The files that remain are available for `owner` inspection.
+The `owner` can stop a running agent through Pi's cancel action (`Escape` by default). There is no automatic `Maestro` execution deadline. Cancellation does not request a
+final agent turn or create a synthetic `handoff`.
+
+Launch errors, execution failures, interruptions, cancellations, and missing or invalid `handoffs` stop the workflow without a recovery transition. If a `run` saves no
+completed transition, its saved running phase remains unchanged. Partial protocol writes require manual `owner` follow-up. `Maestro` provides no automatic rollback,
+repair, or recovery for these errors. The files that remain are available for `owner` inspection.
 
 ### No reconciliation
 
