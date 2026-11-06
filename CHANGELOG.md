@@ -3,6 +3,13 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
+## Unreleased
+
+1. `Builder`, `verifier`, and `simplifier` now run in fresh native Pi SDK sessions. Activation no longer requires a separate agent extension, and `runs` have no automatic
+   `Maestro` deadline. The `owner` can interrupt them through Pi's cancel action.
+2. `Maestro` displays saved child session paths on completion or failure, for direct inspection or HTML export with Pi.
+3. Each agent receives only its own role's `handoff` recording tool.
+
 ## 0.17.0
 
 1. Added a standalone internal Pi SDK executor. Each invocation starts a fresh conversation with supplied model, thinking level, role guidance, working directory, and
