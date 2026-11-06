@@ -163,7 +163,7 @@ describe('run simplifier', () => {
     const onUpdate = vi.fn<AgentToolUpdateCallback>();
     const result = await tool.execute('simplify', { specId: SPEC_ID }, controller.signal, onUpdate);
     expect(onUpdate).toHaveBeenCalledWith({
-      content: [{ type: 'text', text: 'Simplifier | Elapsed: 0m 0s | Active tool: none' }],
+      content: [{ type: 'text', text: 'Elapsed: 0m 0s' }],
       details: undefined,
     });
 

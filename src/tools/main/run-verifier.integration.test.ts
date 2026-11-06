@@ -154,7 +154,7 @@ describe('run verifier tool', () => {
     );
 
     expect(onUpdate).toHaveBeenCalledWith({
-      content: [{ type: 'text', text: 'Verifier | Elapsed: 0m 0s | Active tool: none' }],
+      content: [{ type: 'text', text: 'Elapsed: 0m 0s' }],
       details: undefined,
     });
 

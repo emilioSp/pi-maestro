@@ -5,15 +5,15 @@
 
 import { readFile } from 'node:fs/promises';
 
-import type { AgentToolUpdateCallback, ExtensionContext } from '@earendil-works/pi-coding-agent';
+import type {
+  AgentSessionEvent,
+  AgentToolUpdateCallback,
+  ExtensionContext,
+} from '@earendil-works/pi-coding-agent';
 
 import { createAgentProgress } from '#src/delegation/createAgentProgress.ts';
 import { executeTask, type ExecuteTaskInput } from '#src/delegation/executeTask.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
-import {
-  trackAgentActivity,
-  type AgentActivitySnapshot,
-} from '#src/delegation/trackAgentActivity.ts';
 import { recordBuilderHandoffTool } from '#tools/child/record-builder-handoff.ts';
 import { recordSimplifierHandoffTool } from '#tools/child/record-simplifier-handoff.ts';
 import { recordVerifierHandoffTool } from '#tools/child/record-verifier-handoff.ts';
@@ -24,6 +24,17 @@ const HANDOFF_TOOL_BY_ROLE = {
   [WORKFLOW_ROLES.VERIFIER]: recordVerifierHandoffTool,
   [WORKFLOW_ROLES.SIMPLIFIER]: recordSimplifierHandoffTool,
 } as const;
+
+const readAssistantText = (event: AgentSessionEvent): string => {
+  if (event.type !== 'message_update' && event.type !== 'message_end') return '';
+
+  if (event.message.role !== 'assistant') return '';
+
+  return event.message.content
+    .filter((block) => block.type === 'text')
+    .map((block) => block.text)
+    .join('\n');
+};
 
 type ExecuteRoleTaskInput = Pick<
   ExecuteTaskInput,
@@ -46,8 +57,7 @@ export const executeRoleTask = async ({
 }: ExecuteRoleTaskInput): Promise<void> => {
   const roleGuidance = await readFile(new URL(`../../agents/${role}.md`, import.meta.url), 'utf8');
 
-  let snapshot: AgentActivitySnapshot | undefined;
-  const agentProgress = createAgentProgress({ role, onUpdate });
+  const agentProgress = createAgentProgress({ onUpdate });
 
   try {
     agentProgress.startShow();
@@ -64,13 +74,9 @@ export const executeRoleTask = async ({
       roleGuidance,
       additionalTools: [HANDOFF_TOOL_BY_ROLE[role]],
       onEvent: (event) => {
-        const nextSnapshot = trackAgentActivity({ event, snapshot });
+        const assistantText = readAssistantText(event);
 
-        if (!nextSnapshot) return;
-
-        agentProgress.show(nextSnapshot);
-
-        snapshot = nextSnapshot;
+        if (assistantText) agentProgress.show(assistantText);
       },
     });
 
