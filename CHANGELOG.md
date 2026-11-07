@@ -3,6 +3,10 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
+## 0.18.5
+
+1. Added [The Pi Maestro Manifesto](MANIFESTO.md), linked from the README, explaining the project's motivation and approach to spec-driven development.
+
 ## 0.18.2
 
 1. The `run` progress for `builder`, `verifier`, and `simplifier` now shows only elapsed time and the latest assistant text. The role name and the active tool no longer

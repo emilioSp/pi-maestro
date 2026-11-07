@@ -8,6 +8,8 @@ Pi extension for writing a `spec` and optionally implementing it through a spec-
 
 ## The idea
 
+Read [The Pi Maestro Manifesto](MANIFESTO.md) for the motivation behind the project.
+
 `Maestro` has two goals:
 
 1. Help the `owner` write and approve a `specification` (`spec`) for one reversible change.
