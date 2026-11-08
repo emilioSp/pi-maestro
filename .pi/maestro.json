@@ -4,16 +4,16 @@
   "builder": {
     "required": true,
     "model": "openai-codex/gpt-6.1-sol",
-    "thinking": "high"
+    "thinking": "medium"
   },
   "verifier": {
-    "required": false,
+    "required": true,
     "model": "openai-codex/gpt-6-astra",
     "thinking": "medium"
   },
   "simplifier": {
     "required": true,
-    "model": "openai-codex/gpt-6.1-sol",
-    "thinking": "high"
+    "model": "openai-codex/gpt-6-astra",
+    "thinking": "medium"
   }
 }
