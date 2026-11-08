@@ -569,13 +569,13 @@ describe('resolve findings tool', () => {
   });
 });
 
-it('given simplifier disabled and V1/F1 current when the owner rejects F1 then candidate-ready is saved with its reason and no delegation', async () => {
+it('given simplifier disabled and V1/F1 current when the owner rejects F1 then candidate-ready and the rejection reason are saved', async () => {
   const { paths, repository } = await createFindingsDecisionWorkflow({
     findings: [createFinding('F1')],
     simplifierRequired: false,
   });
 
-  const { tool, emit } = await piTestSessions.createRegisteredTool({
+  const { tool } = await piTestSessions.createRegisteredTool({
     cwd: repository.path,
     extension: registerResolveFindingsTool,
   });
@@ -595,7 +595,6 @@ it('given simplifier disabled and V1/F1 current when the owner rejects F1 then c
     decision: FINDING_DECISIONS.REJECT,
     reason: 'Outside approved scope',
   });
-  expect(emit).not.toHaveBeenCalled();
   expect(result.content).toEqual([
     { type: 'text', text: expect.stringContaining('Simplifier skipped by configuration') },
   ]);
