@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { DEFAULT_CONFIG } from '#config/defaults.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -16,7 +16,7 @@ describe('builder run preparation', () => {
   it('given a workflow ready for the builder when a run is prepared then builder-running is saved and the run uses the current project', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
-    const run = await prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
+    const run = await prepareBuilderRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
 
     expect(run).toMatchObject({
       specId: SPEC_ID,
@@ -29,10 +29,10 @@ describe('builder run preparation', () => {
 
   it('given the builder is already running when another builder run is requested then preparation fails with a builder-running phase error', async () => {
     const { paths } = await createApprovedWorkflow();
-    await prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
+    await prepareBuilderRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
 
     await expect(
-      prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID }),
+      prepareBuilderRun({ config: TEST_CONFIG, paths, specId: SPEC_ID }),
     ).rejects.toThrow('Builder run is not valid from phase "builder-running".');
   });
 });

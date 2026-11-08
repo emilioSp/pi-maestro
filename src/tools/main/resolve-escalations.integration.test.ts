@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
-import { DEFAULT_CONFIG } from '#config/defaults.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
 import {
   cleanupBuilderWorkflows,
@@ -42,7 +42,7 @@ const decisions: EscalationDecision[] = [
 
 const openEscalations = async () => {
   const workflow = await createApprovedWorkflow();
-  await prepareBuilderRun({ config: DEFAULT_CONFIG, paths: workflow.paths, specId: SPEC_ID });
+  await prepareBuilderRun({ config: TEST_CONFIG, paths: workflow.paths, specId: SPEC_ID });
 
   const { tool } = await piTestSessions.createRegisteredTool({
     cwd: workflow.repository.path,
@@ -154,7 +154,7 @@ describe('resolve escalations tool', () => {
     });
     expect(await readFile(paths.getSpecFilePath(SPEC_ID), 'utf8')).toBe(specBefore);
     const savedB1 = await readFile(handoffPath, 'utf8');
-    await prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
+    await prepareBuilderRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
 
     const { tool: builder } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
@@ -201,14 +201,14 @@ describe('resolve escalations tool', () => {
   it('given earlier builder report B1 and new questions in B2 when the owner answers them with a spec revision then only B2 changes and separate approval returns the workflow to ready-for-builder', async () => {
     const { paths, repository, handoffPath } = await openEscalations();
     await resolveEscalations({
-      config: DEFAULT_CONFIG,
+      config: TEST_CONFIG,
       paths,
       specId: SPEC_ID,
       specChangeRequired: false,
       decisions,
     });
     const b1Before = await readFile(handoffPath, 'utf8');
-    await prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
+    await prepareBuilderRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
 
     const { tool: builder } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
@@ -414,7 +414,7 @@ describe('resolve escalations tool', () => {
       // Exercise domain validation too, including schema-invalid batches rejected by Pi.
       await expect(
         resolveEscalations({
-          config: DEFAULT_CONFIG,
+          config: TEST_CONFIG,
           paths,
           specId: SPEC_ID,
           specChangeRequired: false,
@@ -457,7 +457,7 @@ describe('resolve escalations tool', () => {
 
       if (scenario.startsWith('resolved'))
         await resolveEscalations({
-          config: DEFAULT_CONFIG,
+          config: TEST_CONFIG,
           paths,
           specId: SPEC_ID,
           specChangeRequired: false,

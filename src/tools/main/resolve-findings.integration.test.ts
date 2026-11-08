@@ -16,8 +16,8 @@ import {
   VERIFIER_HANDOFF_VERSION,
   type VerifierFinding,
 } from '#artifacts/verifier-handoff/schema.ts';
-import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -61,9 +61,9 @@ const createFindingsDecisionWorkflow = async ({
     agents: { simplifier: { required: simplifierRequired } },
   });
 
-  await prepareBuilderRun({ config: DEFAULT_CONFIG, paths: workflow.paths, specId: SPEC_ID });
+  await prepareBuilderRun({ config: TEST_CONFIG, paths: workflow.paths, specId: SPEC_ID });
   await completeBuilderPass({
-    config: DEFAULT_CONFIG,
+    config: TEST_CONFIG,
     paths: workflow.paths,
     specId: SPEC_ID,
     handoff: {
@@ -81,10 +81,10 @@ const createFindingsDecisionWorkflow = async ({
     },
   });
 
-  await prepareVerifierRun({ config: DEFAULT_CONFIG, paths: workflow.paths, specId: SPEC_ID });
+  await prepareVerifierRun({ config: TEST_CONFIG, paths: workflow.paths, specId: SPEC_ID });
 
   await completeVerifierPass({
-    config: DEFAULT_CONFIG,
+    config: TEST_CONFIG,
     paths: workflow.paths,
     specId: SPEC_ID,
     handoff: {
