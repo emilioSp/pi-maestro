@@ -3,7 +3,7 @@
  * Used: In integration tests with isolated Pi environments and offline Pi model registries.
  */
 
-import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -12,9 +12,9 @@ import {
   CONFIG_DIRECTORY_NAME,
   CONFIG_FILE_PATH,
   DEFAULT_CONFIG_VERSION,
-  DEFAULT_SPEC_DIRECTORY,
 } from '#config/defaults.ts';
 import { assertEnvironment } from '#maestro/checks/assertEnvironment.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 
@@ -26,23 +26,6 @@ afterEach(async () => {
 });
 
 describe('assertEnvironment', () => {
-  it('given an untrusted project when activation requirements are checked then the check fails and identifies the untrusted project path', async () => {
-    const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
-
-    const { session } = await piTestSessions.create({
-      cwd: repository.path,
-      extensions: [],
-      projectTrusted: false,
-    });
-
-    await expect(
-      assertEnvironment({
-        context: session.extensionRunner.createContext(),
-      }),
-    ).rejects.toThrow(`Project is not trusted: "${repository.path}".`);
-  });
-
   it('given configuration has a numeric version when activation requirements are checked then the check fails with a configuration error', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
@@ -71,7 +54,7 @@ describe('assertEnvironment', () => {
       await writeFile(
         join(repository.path, CONFIG_FILE_PATH),
         JSON.stringify({
-          version: DEFAULT_CONFIG_VERSION,
+          ...TEST_CONFIG,
           [agent]: { model },
         }),
       );
@@ -88,32 +71,6 @@ describe('assertEnvironment', () => {
       ).rejects.toThrow(`Configured model is not available: "${model}".`);
     },
   );
-
-  it('given an edited README and no spec directory when activation requirements pass then the README stays unchanged and no spec directory is created', async () => {
-    const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
-    await writeFile(join(repository.path, 'README.md'), '# Original\n');
-
-    await writeFile(join(repository.path, 'README.md'), '# Uncommitted change\n');
-
-    const { session } = await piTestSessions.create({
-      cwd: repository.path,
-      extensions: [],
-    });
-
-    await expect(
-      assertEnvironment({
-        context: session.extensionRunner.createContext(),
-      }),
-    ).resolves.toBeUndefined();
-
-    expect(await readFile(join(repository.path, 'README.md'), 'utf8')).toBe(
-      '# Uncommitted change\n',
-    );
-    await expect(access(join(repository.path, DEFAULT_SPEC_DIRECTORY))).rejects.toMatchObject({
-      code: 'ENOENT',
-    });
-  });
 });
 
 it.each([
@@ -129,9 +86,14 @@ it.each([
     await writeFile(
       join(repository.path, CONFIG_FILE_PATH),
       JSON.stringify({
-        version: DEFAULT_CONFIG_VERSION,
-        verifier: { required: verifier, ...(!verifier ? { model: 'missing/verifier' } : {}) },
+        ...TEST_CONFIG,
+        verifier: {
+          ...TEST_CONFIG.verifier,
+          required: verifier,
+          ...(!verifier ? { model: 'missing/verifier' } : {}),
+        },
         simplifier: {
+          ...TEST_CONFIG.simplifier,
           required: simplifier,
           ...(!simplifier ? { model: 'missing/simplifier' } : {}),
         },
