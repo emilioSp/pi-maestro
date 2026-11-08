@@ -3,8 +3,8 @@ import { join, relative } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 
 const SPEC_ID = '20260321-143052-add-weather-alerts';
@@ -25,7 +25,7 @@ describe('Maestro paths', () => {
     const paths = new MaestroPaths({
       projectRoot: project.path,
       config: {
-        ...DEFAULT_CONFIG,
+        ...TEST_CONFIG,
         specDirectory: join(project.path, '.specs'),
       },
     });
@@ -59,7 +59,7 @@ describe('Maestro paths', () => {
     const paths = new MaestroPaths({
       projectRoot,
       config: {
-        ...DEFAULT_CONFIG,
+        ...TEST_CONFIG,
         specDirectory: join(projectRoot, 'custom/specs'),
       },
     });
@@ -90,7 +90,7 @@ describe('Maestro paths', () => {
     const paths = new MaestroPaths({
       projectRoot,
       config: {
-        ...DEFAULT_CONFIG,
+        ...TEST_CONFIG,
         specDirectory: join(projectRoot, '.specs'),
       },
     });
@@ -130,7 +130,7 @@ describe('Maestro paths', () => {
       () =>
         new MaestroPaths({
           projectRoot: '/repo',
-          config: { ...DEFAULT_CONFIG, specDirectory: '/outside' },
+          config: { ...TEST_CONFIG, specDirectory: '/outside' },
         }),
     ).toThrow('Generated Maestro path leaves the project root.');
   });

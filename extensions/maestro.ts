@@ -3,12 +3,16 @@
  * Used: When Pi starts a Maestro main session.
  */
 
+import { join } from 'node:path';
+
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 
+import { CONFIG_FILE_PATH } from '#config/defaults.ts';
 import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { assertEnvironment } from '#maestro/checks/assertEnvironment.ts';
 import { getMaestroInstructions } from '#maestro/instructions/getMaestroInstructions.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
+import { setupConfiguration } from '#maestro/setupConfiguration.ts';
 import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
 import { CREATE_SPEC_TOOL, registerCreateSpecTool } from '#tools/main/create-spec.ts';
 import { MARK_SPEC_READY_TOOL, registerMarkSpecReadyTool } from '#tools/main/mark-spec-ready.ts';
@@ -23,6 +27,7 @@ import {
 import { RUN_BUILDER_TOOL, registerRunBuilderTool } from '#tools/main/run-builder.ts';
 import { RUN_SIMPLIFIER_TOOL, registerRunSimplifierTool } from '#tools/main/run-simplifier.ts';
 import { RUN_VERIFIER_TOOL, registerRunVerifierTool } from '#tools/main/run-verifier.ts';
+import { pathExists } from '#utils/path-exists.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 
 const MAIN_TOOL_NAMES: readonly string[] = [
@@ -85,6 +90,13 @@ export default (pi: ExtensionAPI): void => {
       }
 
       try {
+        if (
+          !(await pathExists(join(context.cwd, CONFIG_FILE_PATH))) &&
+          !(await setupConfiguration(context))
+        ) {
+          return;
+        }
+
         await assertEnvironment({ context });
         const config = await loadConfiguration(context.cwd);
         const isImplementationEnabled = config.builder.required;
