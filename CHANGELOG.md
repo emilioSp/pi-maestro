@@ -47,8 +47,8 @@ The `builder`, `verifier`, and `simplifier` still use `pi-subagents`. Workflow m
   field on `exec` results. See [PR #46](https://github.com/emilioSp/pi-maestro/pull/46).
 - Breaking: removed `timeoutMinutes` from the agent configuration. Configuration files that still contain the field fail validation until the `owner` removes it; no
   migration or legacy handling is provided.
-- Replaced the configured per-agent timeout with a fixed, non-configurable deadline passed to `pi-subagents` for every `run`. A `run` is no longer bounded by a
-  configured duration.
+- Replaced the configured per-agent timeout with a fixed, non-configurable deadline passed to `pi-subagents` for every `run`. A `run` is no longer bounded by a configured
+  duration.
 - Updated `ADR.md`, `ROADMAP.md`, `README.md`, and `docs/` for the new baseline and the removed timeout settings. `MAESTRO-FREE-1` is recorded as completed.
 
 ## 0.15.0
@@ -62,8 +62,7 @@ The `builder`, `verifier`, and `simplifier` still use `pi-subagents`. Workflow m
 ## 0.14.0
 
 - Removed Maestro's model format regex while retaining activation checks against Pi's available model registry. Complete identifiers, including
-  `openrouter/~openai/gpt-mini-latest`, are matched without truncation and passed unchanged to `pi-subagents`. Maestro's other configuration validation remains
-  unchanged.
+  `openrouter/~openai/gpt-mini-latest`, are matched without truncation and passed unchanged to `pi-subagents`. Maestro's other configuration validation remains unchanged.
 
 ## 0.13.1
 
@@ -128,8 +127,8 @@ The `builder`, `verifier`, and `simplifier` still use `pi-subagents`. Workflow m
 - Added numbering validation to `spec` approval. Matched `acceptance criterion` headings must start at `AC1` and continue without gaps. See
   [PR #36](https://github.com/emilioSp/pi-maestro/pull/36).
 - Invalid numbering rejects approval before saving the workflow and leaves all saved files unchanged. No matching headings still permits approval.
-- Added `Maestro` guidance to correct only numbering and affected references, then retry with the existing `GREEN FLAG`. No additional `owner` approval is required
-  before starting the `builder`.
+- Added `Maestro` guidance to correct only numbering and affected references, then retry with the existing `GREEN FLAG`. No additional `owner` approval is required before
+  starting the `builder`.
 
 ## 0.9.3
 

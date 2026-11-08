@@ -80,8 +80,8 @@ public controls instead of rebuilding rendering and navigation. No new library i
 
 ### Verification
 
-[Verifier report](.specs/20261108-141712-maestro-19-guide-initial-configuration-with-pi-selectors/handoffs/verifier/V1.json). Later owner-requested changes are outside that
-independent verification. The latest `npm run check` passed all 301 tests.
+[Verifier report](.specs/20261108-141712-maestro-19-guide-initial-configuration-with-pi-selectors/handoffs/verifier/V1.json). Later owner-requested changes are outside
+that independent verification. The latest `npm run check` passed all 301 tests.
 
 ### Completed when
 
