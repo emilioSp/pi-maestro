@@ -14,13 +14,7 @@ const getErrorMessage = (error: unknown): string =>
 
 const getProjectRoot = async (context: ExtensionContext): Promise<string> => {
   try {
-    const projectRoot = await realpath(context.cwd);
-
-    if (!context.isProjectTrusted()) {
-      throw new Error(`Project is not trusted: "${projectRoot}".`);
-    }
-
-    return projectRoot;
+    return await realpath(context.cwd);
   } catch (error) {
     throw new Error(`Project check failed: ${getErrorMessage(error)}`);
   }
