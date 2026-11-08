@@ -3,6 +3,8 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { saveConfiguration } from '#config/saveConfiguration.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { resolveWorkflowContext } from '#tools/child/utils/resolveWorkflowContext.ts';
 
@@ -26,6 +28,14 @@ describe('workflow context', () => {
       join(repository.path, '.pi/maestro.json'),
       JSON.stringify({ version: '1.0.0', specDirectory: 'parent-specs' }),
     );
+    await saveConfiguration({
+      cwd: childDirectory,
+      agentModelSelections: {
+        builder: TEST_CONFIG.builder,
+        verifier: TEST_CONFIG.verifier,
+        simplifier: TEST_CONFIG.simplifier,
+      },
+    });
     const alias = join(repository.path, 'cwd-alias');
     await symlink(childDirectory, alias);
 

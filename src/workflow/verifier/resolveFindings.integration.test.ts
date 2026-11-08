@@ -10,7 +10,7 @@ import {
   FINDING_SEVERITIES,
   VERIFIER_HANDOFF_VERSION,
 } from '#artifacts/verifier-handoff/schema.ts';
-import { DEFAULT_CONFIG } from '#config/defaults.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -29,20 +29,20 @@ afterEach(cleanupBuilderWorkflows);
 describe('finding resolution', () => {
   it('given one finding is rejected and another requires a code fix when the builder and verifier run again then new numbered reports are saved and earlier reports retain both decisions', async () => {
     const { paths } = await createApprovedWorkflow();
-    await prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
+    await prepareBuilderRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
 
     const firstBuilder = await completeBuilderPass({
-      config: DEFAULT_CONFIG,
+      config: TEST_CONFIG,
       paths,
       specId: SPEC_ID,
       handoff: { ...doneHandoff(), summary: 'Implemented greeting' },
     });
 
     const builderBefore = await readFile(firstBuilder.handoffPath, 'utf8');
-    await prepareVerifierRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
+    await prepareVerifierRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
 
     const firstVerifier = await completeVerifierPass({
-      config: DEFAULT_CONFIG,
+      config: TEST_CONFIG,
       paths,
       specId: SPEC_ID,
       handoff: {
@@ -91,7 +91,7 @@ describe('finding resolution', () => {
     });
 
     const resolved = await resolveFindings({
-      config: DEFAULT_CONFIG,
+      config: TEST_CONFIG,
       paths,
       specId: SPEC_ID,
       decisions: [
@@ -108,19 +108,19 @@ describe('finding resolution', () => {
 
     const verifierAfterDecisions = await readFile(firstVerifier.handoffPath, 'utf8');
 
-    await prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
+    await prepareBuilderRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
 
     const secondBuilder = await completeBuilderPass({
-      config: DEFAULT_CONFIG,
+      config: TEST_CONFIG,
       paths,
       specId: SPEC_ID,
       handoff: { ...doneHandoff(), summary: 'Fixed greeting' },
     });
 
-    await prepareVerifierRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
+    await prepareVerifierRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
 
     const secondVerifier = await completeVerifierPass({
-      config: DEFAULT_CONFIG,
+      config: TEST_CONFIG,
       paths,
       specId: SPEC_ID,
       handoff: {

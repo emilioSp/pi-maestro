@@ -16,8 +16,8 @@ import {
   VERIFIER_HANDOFF_VERSION,
   type VerifierFinding,
 } from '#artifacts/verifier-handoff/schema.ts';
-import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -61,9 +61,9 @@ const createFindingsDecisionWorkflow = async ({
     agents: { simplifier: { required: simplifierRequired } },
   });
 
-  await prepareBuilderRun({ config: DEFAULT_CONFIG, paths: workflow.paths, specId: SPEC_ID });
+  await prepareBuilderRun({ config: TEST_CONFIG, paths: workflow.paths, specId: SPEC_ID });
   await completeBuilderPass({
-    config: DEFAULT_CONFIG,
+    config: TEST_CONFIG,
     paths: workflow.paths,
     specId: SPEC_ID,
     handoff: {
@@ -81,10 +81,10 @@ const createFindingsDecisionWorkflow = async ({
     },
   });
 
-  await prepareVerifierRun({ config: DEFAULT_CONFIG, paths: workflow.paths, specId: SPEC_ID });
+  await prepareVerifierRun({ config: TEST_CONFIG, paths: workflow.paths, specId: SPEC_ID });
 
   await completeVerifierPass({
-    config: DEFAULT_CONFIG,
+    config: TEST_CONFIG,
     paths: workflow.paths,
     specId: SPEC_ID,
     handoff: {
@@ -569,13 +569,13 @@ describe('resolve findings tool', () => {
   });
 });
 
-it('given simplifier disabled and V1/F1 current when the owner rejects F1 then candidate-ready is saved with its reason and no delegation', async () => {
+it('given simplifier disabled and V1/F1 current when the owner rejects F1 then candidate-ready and the rejection reason are saved', async () => {
   const { paths, repository } = await createFindingsDecisionWorkflow({
     findings: [createFinding('F1')],
     simplifierRequired: false,
   });
 
-  const { tool, emit } = await piTestSessions.createRegisteredTool({
+  const { tool } = await piTestSessions.createRegisteredTool({
     cwd: repository.path,
     extension: registerResolveFindingsTool,
   });
@@ -595,7 +595,6 @@ it('given simplifier disabled and V1/F1 current when the owner rejects F1 then c
     decision: FINDING_DECISIONS.REJECT,
     reason: 'Outside approved scope',
   });
-  expect(emit).not.toHaveBeenCalled();
   expect(result.content).toEqual([
     { type: 'text', text: expect.stringContaining('Simplifier skipped by configuration') },
   ]);

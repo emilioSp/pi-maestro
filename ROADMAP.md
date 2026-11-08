@@ -22,7 +22,7 @@ Completed entries preserve recorded outcomes and evidence, which may describe be
 | MAESTRO-16         | [Route finding-driven spec revisions through drafting-spec](#maestro-16-route-finding-driven-spec-revisions-through-drafting-spec) | Completed |
 | MAESTRO-17         | [Keep acceptance criterion numbering continuous](#maestro-17-keep-acceptance-criterion-numbering-continuous)                       | Completed |
 | MAESTRO-18         | [Record escalation resolutions when the spec changes](#maestro-18-record-escalation-resolutions-when-the-spec-changes)             | Completed |
-| MAESTRO-19         | [Guide initial configuration](#maestro-19-guide-initial-configuration)                                                             | Backlog   |
+| MAESTRO-19         | [Guide initial configuration](#maestro-19-guide-initial-configuration)                                                             | Completed |
 | MAESTRO-20         | [Rename the npm package](#maestro-20-rename-the-npm-package)                                                                       | Backlog   |
 | MAESTRO-21         | [Label acceptance criterion coverage](#maestro-21-label-acceptance-criterion-coverage)                                             | Completed |
 | MAESTRO-22         | [Avoid acceptance criteria already covered by tests](#maestro-22-avoid-acceptance-criteria-already-covered-by-tests)               | Completed |
@@ -55,11 +55,37 @@ The `owner` can read the `spec` documents in a browser with formatting designed 
 
 ### Objective
 
-Help the `owner` create `Maestro` configuration through an interview. `Maestro` asks questions and writes the agreed configuration.
+Help the `owner` create `Maestro` configuration through selectors, without writing the file manually. Implemented for verification under the
+[approved `specification`](.specs/20261108-141712-maestro-19-guide-initial-configuration-with-pi-selectors/spec.md).
+
+### Agreed UX
+
+1. When `.pi/maestro.json` is absent, `/maestro` opens setup instead of attempting activation with an implicit configuration.
+2. The setup screen offers `Select builder`, `Select verifier`, `Select simplifier`, and `Confirm`. Each role opens model selection followed by supported thinking choices
+   in Pi's returned order, starting at the first level. Completed selections appear on the main screen and can be replaced.
+3. `Maestro` has no default models or fallback to Pi's main model. Setup uses `.specs`; selected roles are enabled and unselected roles are disabled, without separate
+   phase controls. Confirmation with no roles enables `spec` preparation only.
+4. `Confirm` saves `.pi/maestro.json`, then activates `Maestro` without another command. Escape on the main screen cancels without saving; nested cancellation discards
+   only the pending role edit.
+5. An existing configuration missing a required model produces an error and prevents activation. Setup does not complete the file automatically.
+
+### Selector approach
+
+Use Pi's standard `ctx.ui.select()` for short setup choices. For model selection, compose Pi's public `Input` and `SelectList` components through `ctx.ui.custom()`, using
+`ctx.modelRegistry.getAvailable()` as the model source. Provide search and a bounded, navigable list without changing the main conversation's model.
+
+Inspection of Pi 1.5.0 confirmed that `ctx.ui.select()` does not provide search or a bounded list. The exported `ModelSelectorComponent` requires the session's
+`ModelRuntime`, which the public extension context does not expose. Do not access private runtime state or create a separate runtime to reuse that component. Reuse Pi's
+public controls instead of rebuilding rendering and navigation. No new library is needed.
+
+### Verification
+
+[Verifier report](.specs/20261108-141712-maestro-19-guide-initial-configuration-with-pi-selectors/handoffs/verifier/V1.json). Later owner-requested changes are outside that
+independent verification. The latest `npm run check` passed all 301 tests.
 
 ### Completed when
 
-The `owner` can create a valid project configuration without writing the file manually.
+The `owner` can create a valid project configuration through selectors, confirm it, and activate `Maestro` without writing the file manually.
 
 ## MAESTRO-20: Rename the npm package
 

@@ -4,7 +4,7 @@
  */
 
 import { execFile } from 'node:child_process';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 
@@ -23,7 +23,8 @@ import {
   FINDING_SEVERITIES,
   VERIFIER_HANDOFF_VERSION,
 } from '#artifacts/verifier-handoff/schema.ts';
-import { DEFAULT_CONFIG } from '#config/defaults.ts';
+import { loadConfiguration } from '#config/loadConfiguration.ts';
+import { saveConfiguration } from '#config/saveConfiguration.ts';
 import { SUPPORTED_CONFIG_VERSION, THINKING_LEVELS } from '#config/schema.ts';
 import maestroExtension from '#extensions/maestro.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
@@ -32,6 +33,7 @@ import type { MaestroPaths } from '#MaestroPaths.ts';
 import type { CreatedSpec } from '#specs/create.ts';
 import { executeTask, type ExecuteTaskInput } from '#src/delegation/executeTask.ts';
 import { prepareSubagentEnvironment } from '#src/delegation/prepareSubagentEnvironment.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { unavailableCompilerEscalation } from '#tests/fixtures/unavailable-compiler-escalation.ts';
 import {
   cleanupBuilderWorkflows,
@@ -140,6 +142,14 @@ describe('main Maestro extension', () => {
       cwd: repository.path,
     });
 
+    await saveConfiguration({
+      cwd: repository.path,
+      agentModelSelections: {
+        builder: TEST_CONFIG.builder,
+        verifier: TEST_CONFIG.verifier,
+        simplifier: TEST_CONFIG.simplifier,
+      },
+    });
     const entriesBeforeActivation = session.sessionManager.getEntries();
     const modelRequests = vi.spyOn(session.agent, 'streamFunction');
 
@@ -157,7 +167,7 @@ describe('main Maestro extension', () => {
     expect(notify).toHaveBeenCalledOnce();
     expect(notify.mock.calls[0][1]).toBe('info');
     expect(stripTerminalSequences(notify.mock.calls[0][0])).toBe(
-      `Maestro active\nMaestro helps the owner define a spec, then coordinates implementation and independent verification.\nAsk how Maestro works for a short explanation.\nBuilder (${DEFAULT_CONFIG.builder.model} ${DEFAULT_CONFIG.builder.thinking})\nVerifier (${DEFAULT_CONFIG.verifier.model} ${DEFAULT_CONFIG.verifier.thinking})\nSimplifier (${DEFAULT_CONFIG.simplifier.model} ${DEFAULT_CONFIG.simplifier.thinking})`,
+      `Maestro active\nMaestro helps the owner define a spec, then coordinates implementation and independent verification.\nAsk how Maestro works for a short explanation.\nBuilder (${TEST_CONFIG.builder.model} ${TEST_CONFIG.builder.thinking})\nVerifier (${TEST_CONFIG.verifier.model} ${TEST_CONFIG.verifier.thinking})\nSimplifier (${TEST_CONFIG.simplifier.model} ${TEST_CONFIG.simplifier.thinking})`,
     );
 
     const event = await session.extensionRunner.emitBeforeAgentStart(
@@ -228,7 +238,7 @@ describe('main Maestro extension', () => {
           model: 'openai-codex/gpt-6.1-sol',
           thinking: THINKING_LEVELS.HIGH,
         },
-        simplifier: { thinking: THINKING_LEVELS.MEDIUM },
+        simplifier: { model: TEST_CONFIG.simplifier.model, thinking: THINKING_LEVELS.MEDIUM },
       }),
     );
 
@@ -259,9 +269,7 @@ describe('main Maestro extension', () => {
       builder: true,
       verifier: false,
       simplifier: false,
-      expectedAgents: [
-        `Builder (${DEFAULT_CONFIG.builder.model} ${DEFAULT_CONFIG.builder.thinking})`,
-      ],
+      expectedAgents: [`Builder (${TEST_CONFIG.builder.model} ${TEST_CONFIG.builder.thinking})`],
     },
     {
       scenario: 'builder and verifier',
@@ -269,8 +277,8 @@ describe('main Maestro extension', () => {
       verifier: true,
       simplifier: false,
       expectedAgents: [
-        `Builder (${DEFAULT_CONFIG.builder.model} ${DEFAULT_CONFIG.builder.thinking})`,
-        `Verifier (${DEFAULT_CONFIG.verifier.model} ${DEFAULT_CONFIG.verifier.thinking})`,
+        `Builder (${TEST_CONFIG.builder.model} ${TEST_CONFIG.builder.thinking})`,
+        `Verifier (${TEST_CONFIG.verifier.model} ${TEST_CONFIG.verifier.thinking})`,
       ],
     },
     {
@@ -279,8 +287,8 @@ describe('main Maestro extension', () => {
       verifier: false,
       simplifier: true,
       expectedAgents: [
-        `Builder (${DEFAULT_CONFIG.builder.model} ${DEFAULT_CONFIG.builder.thinking})`,
-        `Simplifier (${DEFAULT_CONFIG.simplifier.model} ${DEFAULT_CONFIG.simplifier.thinking})`,
+        `Builder (${TEST_CONFIG.builder.model} ${TEST_CONFIG.builder.thinking})`,
+        `Simplifier (${TEST_CONFIG.simplifier.model} ${TEST_CONFIG.simplifier.thinking})`,
       ],
     },
     {
@@ -300,9 +308,9 @@ describe('main Maestro extension', () => {
         join(repository.path, '.pi/maestro.json'),
         JSON.stringify({
           version: SUPPORTED_CONFIG_VERSION,
-          builder: { required: builder },
-          verifier: { required: verifier },
-          simplifier: { required: simplifier },
+          builder: { ...TEST_CONFIG.builder, required: builder },
+          verifier: { ...TEST_CONFIG.verifier, required: verifier },
+          simplifier: { ...TEST_CONFIG.simplifier, required: simplifier },
         }),
       );
 
@@ -328,7 +336,7 @@ describe('main Maestro extension', () => {
     await writeFile(
       join(repository.path, '.pi/maestro.json'),
       JSON.stringify({
-        version: '1.0.0',
+        ...TEST_CONFIG,
         simplifier: { model: 'openai-codex/missing' },
       }),
     );
@@ -346,32 +354,32 @@ describe('main Maestro extension', () => {
     );
   });
 
-  it('given an untrusted project when activation is retried then each attempt reports a trust error until the project is trusted and Maestro can activate', async () => {
+  it('given an untrusted project with valid configuration when activation is requested then Maestro activates without requiring project trust', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
+    await saveConfiguration({
+      cwd: repository.path,
+      agentModelSelections: {
+        builder: TEST_CONFIG.builder,
+        verifier: TEST_CONFIG.verifier,
+        simplifier: TEST_CONFIG.simplifier,
+      },
+    });
 
-    const { session, notify, setStatus, settingsManager } = await piTestSessions.create({
+    const { session, notify } = await piTestSessions.create({
       extensions: [foreignExtension, maestroExtension],
       cwd: repository.path,
       projectTrusted: false,
     });
 
     await session.prompt('/maestro');
-    await session.prompt('/maestro');
 
-    expect(maestroSessionState.isActive()).toBe(false);
-    expect(session.getActiveToolNames()).toEqual(BASE_TOOLS);
-    expect(setStatus).toHaveBeenLastCalledWith(MAESTRO_STATUS_KEY, undefined);
-    expect(notify).toHaveBeenCalledTimes(2);
-    expect(notify).toHaveBeenLastCalledWith(
-      expect.stringContaining('Project is not trusted'),
-      'error',
-    );
-
-    settingsManager.setProjectTrusted(true);
-    await session.prompt('/maestro');
     expect(maestroSessionState.isActive()).toBe(true);
-    expect(notify).toHaveBeenCalledTimes(3);
+    expect(session.getActiveToolNames()).toEqual([...BASE_TOOLS, ...MAIN_TOOL_NAMES]);
+    expect(notify).toHaveBeenCalledExactlyOnceWith(
+      expect.stringContaining('Maestro active'),
+      'info',
+    );
   });
 
   it('given Maestro has an active spec when it is disabled and enabled again then saved files stay unchanged and the previous spec is no longer active', async () => {
@@ -450,6 +458,14 @@ describe('main Maestro extension', () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await execFileAsync('git', ['init', '-q', repository.path]);
+    await saveConfiguration({
+      cwd: repository.path,
+      agentModelSelections: {
+        builder: TEST_CONFIG.builder,
+        verifier: TEST_CONFIG.verifier,
+        simplifier: TEST_CONFIG.simplifier,
+      },
+    });
 
     const { session, setStatus } = await piTestSessions.create({
       extensions: [foreignExtension, maestroExtension],
@@ -538,9 +554,6 @@ describe('main Maestro extension', () => {
         '🚧 ' +
         theme.fg('accent', 'Ready for builder'),
     );
-
-    const productPath = join(repository.path, 'alert.txt');
-    const productContents = 'Weather alerts enabled\n';
 
     const acceptanceCriteria = [
       {
@@ -640,10 +653,6 @@ describe('main Maestro extension', () => {
             `${scriptedRun.statusIcon} ` +
             theme.fg('accent', scriptedRun.statusLabel),
         );
-
-        if (request.roleGuidance.startsWith('# Builder')) {
-          await writeFile(productPath, productContents);
-        }
 
         const tool = child.agent.state.tools.find(
           (tool) => tool.name === scriptedRun.handoffToolName,
@@ -796,7 +805,6 @@ describe('main Maestro extension', () => {
     expect(await readFile(proposalFilePath, 'utf8')).toBe(approvedProposal);
     expect(await readFile(specFilePath, 'utf8')).toBe(approvedSpec);
     expect(await readFile(designFilePath, 'utf8')).toBe(approvedDesign);
-    expect(await readFile(productPath, 'utf8')).toBe(productContents);
 
     const event = await session.extensionRunner.emitBeforeAgentStart(
       { messageType: 'user', prompt: 'Discuss the next change.' },
@@ -851,16 +859,16 @@ describe('main Maestro extension', () => {
     'given $scenario when the final response finishes then Maestro exits only after successful delivery',
     async ({ completionEvent, summary, stopReason }) => {
       const { paths, repository } = await createApprovedWorkflow();
-      await prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
+      await prepareBuilderRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
       await completeBuilderPass({
-        config: DEFAULT_CONFIG,
+        config: TEST_CONFIG,
         paths,
         specId: SPEC_ID,
         handoff: doneHandoff(),
       });
-      await prepareVerifierRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
+      await prepareVerifierRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
       await completeVerifierPass({
-        config: DEFAULT_CONFIG,
+        config: TEST_CONFIG,
         paths,
         specId: SPEC_ID,
         handoff: {
@@ -876,7 +884,7 @@ describe('main Maestro extension', () => {
       await writeWorkflowState({
         path: paths.getWorkflowPath(SPEC_ID),
         state: transitionWorkflow({
-          config: DEFAULT_CONFIG,
+          config: TEST_CONFIG,
           state: await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
           event: completionEvent,
         }),
@@ -1019,11 +1027,11 @@ describe('main Maestro extension', () => {
     paths,
     phase,
   }: PrepareSpecRevisionPhaseInput): Promise<void> => {
-    await prepareBuilderRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
+    await prepareBuilderRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
 
     if (phase === WORKFLOW_PHASES.ESCALATION_DECISIONS) {
       await completeBuilderPass({
-        config: DEFAULT_CONFIG,
+        config: TEST_CONFIG,
         paths,
         specId: SPEC_ID,
         handoff: unavailableCompilerEscalation,
@@ -1034,14 +1042,14 @@ describe('main Maestro extension', () => {
 
     // phase === WORKFLOW_PHASES.FINDING_DECISIONS
     await completeBuilderPass({
-      config: DEFAULT_CONFIG,
+      config: TEST_CONFIG,
       paths,
       specId: SPEC_ID,
       handoff: doneHandoff(),
     });
-    await prepareVerifierRun({ config: DEFAULT_CONFIG, paths, specId: SPEC_ID });
+    await prepareVerifierRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
     await completeVerifierPass({
-      config: DEFAULT_CONFIG,
+      config: TEST_CONFIG,
       paths,
       specId: SPEC_ID,
       handoff: {
@@ -1192,7 +1200,7 @@ describe('main Maestro extension', () => {
       requests.push(request);
 
       await completeBuilderPass({
-        config: DEFAULT_CONFIG,
+        config: TEST_CONFIG,
         paths,
         specId: SPEC_ID,
         handoff: unavailableCompilerEscalation,
@@ -1257,6 +1265,14 @@ describe('main Maestro extension', () => {
       cwd: repository.path,
     });
 
+    await saveConfiguration({
+      cwd: repository.path,
+      agentModelSelections: {
+        builder: TEST_CONFIG.builder,
+        verifier: TEST_CONFIG.verifier,
+        simplifier: TEST_CONFIG.simplifier,
+      },
+    });
     await session.prompt('/maestro');
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -1272,4 +1288,236 @@ describe('main Maestro extension', () => {
     expect(setStatus).toHaveBeenLastCalledWith(MAESTRO_STATUS_KEY, undefined);
     expect(notify).toHaveBeenCalledWith(expect.stringContaining('ENOENT'), 'error');
   });
+});
+
+const MODEL_A = TEST_CONFIG.builder.model;
+
+const MODEL_B = TEST_CONFIG.verifier.model;
+
+it.each([
+  {
+    scenario: 'builder only',
+    actions: ['Select builder', 'high', 'Confirm'],
+    models: [MODEL_A],
+    enabledAgents: { builder: true, verifier: false, simplifier: false },
+  },
+  {
+    scenario: 'builder and verifier',
+    actions: ['Select builder', 'high', 'Select verifier', 'medium', 'Confirm'],
+    models: [MODEL_A, MODEL_B],
+    enabledAgents: { builder: true, verifier: true, simplifier: false },
+  },
+  {
+    scenario: 'verifier without builder',
+    actions: ['Select verifier', 'medium', 'Confirm'],
+    models: [MODEL_B],
+    enabledAgents: { builder: false, verifier: true, simplifier: false },
+  },
+  {
+    scenario: 'no roles',
+    actions: ['Confirm'],
+    models: [],
+    enabledAgents: { builder: false, verifier: false, simplifier: false },
+  },
+  {
+    scenario: 'cancelled replacement thinking',
+    actions: ['Select builder', 'high', `Builder: ${MODEL_A} (high)`, undefined, 'Confirm'],
+    models: [MODEL_A, MODEL_B],
+    enabledAgents: { builder: true, verifier: false, simplifier: false },
+  },
+  {
+    scenario: 'cancelled replacement model',
+    actions: ['Select builder', 'high', `Builder: ${MODEL_A} (high)`, 'Confirm'],
+    models: [MODEL_A, undefined],
+    enabledAgents: { builder: true, verifier: false, simplifier: false },
+  },
+  {
+    scenario: 'cancelled new model',
+    actions: ['Select verifier', 'Confirm'],
+    models: [undefined],
+    enabledAgents: { builder: false, verifier: false, simplifier: false },
+  },
+  {
+    scenario: 'cancelled new thinking',
+    actions: ['Select verifier', undefined, 'Confirm'],
+    models: [MODEL_B],
+    enabledAgents: { builder: false, verifier: false, simplifier: false },
+  },
+])(
+  'given first-use setup with $scenario when the owner finishes the selectors then completed choices alone determine enabled agents and activation',
+  async ({ actions, models, enabledAgents }) => {
+    const repository = await createTemporaryProject();
+    cleanupFunctions.push(repository.cleanup);
+
+    const { session, notify } = await piTestSessions.create({
+      cwd: repository.path,
+      extensions: [maestroExtension],
+    });
+
+    const ui = { ...session.extensionRunner.getUIContext() };
+    const select = vi.spyOn(ui, 'select');
+
+    for (const action of actions) select.mockResolvedValueOnce(action);
+    const custom = vi.spyOn(ui, 'custom');
+
+    for (const model of models) custom.mockResolvedValueOnce(model);
+    session.extensionRunner.setUIContext(ui, 'tui');
+    const mainModel = session.model;
+
+    await session.prompt('/maestro');
+
+    expect(select.mock.calls[0]).toEqual([
+      'Maestro setup',
+      ['Select builder', 'Select verifier', 'Select simplifier', 'Confirm'],
+      undefined,
+    ]);
+    expect(session.model).toBe(mainModel);
+    expect(maestroSessionState.isActive()).toBe(true);
+
+    const saved = JSON.parse(await readFile(join(repository.path, '.pi/maestro.json'), 'utf8'));
+    expect(saved.specDirectory).toBe('.specs');
+    expect({
+      builder: saved.builder.required,
+      verifier: saved.verifier.required,
+      simplifier: saved.simplifier.required,
+    }).toEqual(enabledAgents);
+
+    expect(saved.builder).toEqual(
+      enabledAgents.builder
+        ? { required: true, model: MODEL_A, thinking: 'high' }
+        : { required: false },
+    );
+    expect(saved.verifier).toEqual(
+      enabledAgents.verifier
+        ? { required: true, model: MODEL_B, thinking: 'medium' }
+        : { required: false },
+    );
+    expect(select.mock.calls.filter(([title]) => title === 'Maestro setup').at(-1)?.[1]).toEqual([
+      enabledAgents.builder ? `Builder: ${MODEL_A} (high)` : 'Select builder',
+      enabledAgents.verifier ? `Verifier: ${MODEL_B} (medium)` : 'Select verifier',
+      'Select simplifier',
+      'Confirm',
+    ]);
+    expect(
+      select.mock.calls
+        .filter(([title]) => title === 'Select thinking')
+        .map(([, choices]) => choices[0]),
+    ).toEqual(select.mock.calls.filter(([title]) => title === 'Select thinking').map(() => 'off'));
+
+    await expect(loadConfiguration(repository.path)).resolves.toMatchObject({
+      builder: { required: enabledAgents.builder },
+    });
+    expect(notify).toHaveBeenLastCalledWith(expect.stringContaining('Maestro active'), 'info');
+  },
+);
+
+it('given Pi levels beginning with minimal and a completed high selection when builder is replaced then both thinking dialogs receive Pi order and the new first choice replaces high', async () => {
+  const repository = await createTemporaryProject();
+  cleanupFunctions.push(repository.cleanup);
+
+  const { session } = await piTestSessions.create({
+    cwd: repository.path,
+    extensions: [maestroExtension],
+  });
+
+  const registry = session.extensionRunner.createContext().modelRegistry;
+
+  const available = registry.getAvailable().map((model) => ({
+    ...model,
+    thinkingLevelMap: { off: null },
+  }));
+
+  vi.spyOn(registry, 'getAvailable').mockReturnValue(available);
+  const ui = { ...session.extensionRunner.getUIContext() };
+
+  const select = vi
+    .spyOn(ui, 'select')
+    .mockResolvedValueOnce('Select builder')
+    .mockResolvedValueOnce('high')
+    .mockResolvedValueOnce(`Builder: ${MODEL_A} (high)`)
+    .mockResolvedValueOnce('minimal')
+    .mockResolvedValueOnce('Confirm');
+
+  vi.spyOn(ui, 'custom').mockResolvedValueOnce(MODEL_A).mockResolvedValueOnce(MODEL_B);
+  session.extensionRunner.setUIContext(ui, 'tui');
+
+  await session.prompt('/maestro');
+
+  expect(
+    select.mock.calls
+      .filter(([title]) => title === 'Select thinking')
+      .map(([, choices]) => choices),
+  ).toEqual([
+    ['minimal', 'low', 'medium', 'high'],
+    ['minimal', 'low', 'medium', 'high'],
+  ]);
+  expect(select.mock.calls.at(-1)?.[1][0]).toBe(`Builder: ${MODEL_B} (minimal)`);
+  const saved = JSON.parse(await readFile(join(repository.path, '.pi/maestro.json'), 'utf8'));
+  expect(saved.builder).toEqual({ required: true, model: MODEL_B, thinking: 'minimal' });
+  expect(maestroSessionState.isActive()).toBe(true);
+});
+
+it('given unsaved builder selection when Escape closes the main screen then configuration remains absent and Maestro stays inactive', async () => {
+  const repository = await createTemporaryProject();
+  cleanupFunctions.push(repository.cleanup);
+
+  const { session } = await piTestSessions.create({
+    cwd: repository.path,
+    extensions: [maestroExtension],
+  });
+
+  const ui = { ...session.extensionRunner.getUIContext() };
+  vi.spyOn(ui, 'select')
+    .mockResolvedValueOnce('Select builder')
+    .mockResolvedValueOnce('high')
+    .mockResolvedValueOnce(undefined);
+  vi.spyOn(ui, 'custom').mockResolvedValueOnce(MODEL_A);
+  session.extensionRunner.setUIContext(ui, 'tui');
+  await session.prompt('/maestro');
+  await expect(access(join(repository.path, '.pi/maestro.json'))).rejects.toMatchObject({
+    code: 'ENOENT',
+  });
+  expect(maestroSessionState.isActive()).toBe(false);
+});
+
+it('given an existing configuration missing the enabled verifier model when activation is requested then the file stays unchanged and setup is not opened', async () => {
+  const repository = await createTemporaryProject();
+  cleanupFunctions.push(repository.cleanup);
+  const input = { ...TEST_CONFIG, verifier: { required: true } };
+  await mkdir(join(repository.path, '.pi'), { recursive: true });
+  await writeFile(join(repository.path, '.pi/maestro.json'), JSON.stringify(input));
+  const before = await readFile(join(repository.path, '.pi/maestro.json'), 'utf8');
+
+  const { session, notify } = await piTestSessions.create({
+    cwd: repository.path,
+    extensions: [maestroExtension],
+  });
+
+  const ui = { ...session.extensionRunner.getUIContext() };
+  const select = vi.spyOn(ui, 'select');
+  const custom = vi.spyOn(ui, 'custom');
+  session.extensionRunner.setUIContext(ui, 'tui');
+  await session.prompt('/maestro');
+  expect(maestroSessionState.isActive()).toBe(false);
+  expect(notify).toHaveBeenCalledWith('Configured model is not available: "".', 'error');
+  expect(select).not.toHaveBeenCalled();
+  expect(custom).not.toHaveBeenCalled();
+  expect(await readFile(join(repository.path, '.pi/maestro.json'), 'utf8')).toBe(before);
+});
+
+it('given builder enabled and both later phases disabled without models when activation is requested then Maestro activates using only the builder model', async () => {
+  const repository = await createTemporaryProject();
+  cleanupFunctions.push(repository.cleanup);
+  await saveConfiguration({
+    cwd: repository.path,
+    agentModelSelections: { builder: TEST_CONFIG.builder },
+  });
+
+  const { session } = await piTestSessions.create({
+    cwd: repository.path,
+    extensions: [maestroExtension],
+  });
+
+  await session.prompt('/maestro');
+  expect(maestroSessionState.isActive()).toBe(true);
 });

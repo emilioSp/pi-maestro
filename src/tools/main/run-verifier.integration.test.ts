@@ -15,11 +15,11 @@ import {
   FINDING_SEVERITIES,
   VERIFIER_HANDOFF_VERSION,
 } from '#artifacts/verifier-handoff/schema.ts';
-import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { loadConfiguration } from '#config/loadConfiguration.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { executeTask } from '#src/delegation/executeTask.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -45,10 +45,10 @@ const createReadyForVerifierWorkflow = async (simplifierRequired: boolean = true
     },
   });
 
-  await prepareBuilderRun({ config: DEFAULT_CONFIG, paths: workflow.paths, specId: SPEC_ID });
+  await prepareBuilderRun({ config: TEST_CONFIG, paths: workflow.paths, specId: SPEC_ID });
 
   await completeBuilderPass({
-    config: DEFAULT_CONFIG,
+    config: TEST_CONFIG,
     paths: workflow.paths,
     specId: SPEC_ID,
     handoff: {

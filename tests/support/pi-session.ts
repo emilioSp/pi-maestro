@@ -24,7 +24,7 @@ import {
 } from '@earendil-works/pi-coding-agent';
 import { vi } from 'vitest';
 
-import { DEFAULT_CONFIG } from '#config/defaults.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 
 type CreatePiSessionInput = {
   cwd?: string;
@@ -77,7 +77,7 @@ class PiTestSessions {
       api: 'openai-completions',
       apiKey: 'offline-test-key',
       baseUrl: 'http://127.0.0.1:1',
-      models: [DEFAULT_CONFIG.builder.model, DEFAULT_CONFIG.verifier.model].map((model) => ({
+      models: [TEST_CONFIG.builder.model, TEST_CONFIG.verifier.model].map((model) => ({
         id: model.split('/')[1],
         name: model,
         reasoning: true,
@@ -126,7 +126,7 @@ class PiTestSessions {
       resourceLoader,
       settingsManager,
       modelRuntime,
-      model: modelRuntime.getModel('openai-codex', DEFAULT_CONFIG.builder.model.split('/')[1]),
+      model: modelRuntime.getModel('openai-codex', TEST_CONFIG.builder.model.split('/')[1]),
       sessionManager: SessionManager.inMemory(cwd ?? directory),
       sessionStartEvent,
     });

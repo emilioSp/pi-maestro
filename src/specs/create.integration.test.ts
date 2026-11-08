@@ -4,9 +4,9 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 import { createSpec } from '#specs/create.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES, WORKFLOW_STATE_VERSION } from '#workflow/state/schema.ts';
 
@@ -23,7 +23,7 @@ const createWorkspace = async (specDirectory: string = 'custom-specs') => {
   const paths = new MaestroPaths({
     projectRoot,
     config: {
-      ...DEFAULT_CONFIG,
+      ...TEST_CONFIG,
       specDirectory: join(projectRoot, specDirectory),
     },
   });

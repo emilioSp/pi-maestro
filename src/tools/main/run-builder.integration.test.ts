@@ -13,10 +13,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import { BUILDER_HANDOFF_STATUSES, PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
-import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { executeRoleTask } from '#src/delegation/executeRoleTask.ts';
 import { executeTask } from '#src/delegation/executeTask.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
 import {
   cleanupBuilderWorkflows,
@@ -334,7 +334,7 @@ describe('run builder tool', () => {
 
     vi.mocked(executeTask).mockImplementationOnce(async () => {
       await completeBuilderPass({
-        config: DEFAULT_CONFIG,
+        config: TEST_CONFIG,
         paths,
         specId: SPEC_ID,
         handoff: csvExportEscalation,
@@ -377,7 +377,7 @@ describe('run builder tool', () => {
 
       vi.mocked(executeTask).mockImplementationOnce(async () => {
         const completed = await completeBuilderPass({
-          config: DEFAULT_CONFIG,
+          config: TEST_CONFIG,
           paths,
           specId: SPEC_ID,
           handoff: csvExportEscalation,
@@ -440,7 +440,7 @@ describe('run builder tool', () => {
     const controller = new AbortController();
     vi.mocked(executeTask).mockImplementationOnce(async () => {
       await completeBuilderPass({
-        config: DEFAULT_CONFIG,
+        config: TEST_CONFIG,
         paths,
         specId: SPEC_ID,
         handoff: {
@@ -523,7 +523,7 @@ describe('run builder tool', () => {
 
     vi.mocked(executeTask).mockImplementationOnce(async () => {
       const opened = await completeBuilderPass({
-        config: DEFAULT_CONFIG,
+        config: TEST_CONFIG,
         paths,
         specId: SPEC_ID,
         handoff: csvExportEscalation,

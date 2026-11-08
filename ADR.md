@@ -404,3 +404,33 @@ Existing boundaries are described in [subagent integration](docs/subagent-integr
 [builder execution](src/tools/main/run-builder.ts), and the
 [child extension](https://github.com/emilioSp/pi-maestro/blob/9d020b9177e93333736ade265db5e332fbb2a291/extensions/maestro-subagent.ts). These links describe the current
 implementation, not the planned SDK replacement.
+
+## ADR-011: Separate initial setup UI from configuration rules
+
+### Status
+
+Accepted in the approved MAESTRO-19 design. Implemented for verification.
+
+### Context
+
+Initial configuration needs searchable model selection without access to Pi's private session runtime. The `owner` selected public Pi components and strict separation
+between graphical controls and configuration rules.
+
+### Decision
+
+Use `ctx.ui.select()` for short choices and compose public `Input`, `SelectList`, and Pi filtering through `ctx.ui.custom()` for model selection. Keep graphical modules
+in `src/ui/`, configuration rules and persistence in `src/config/`, and coordination in `src/maestro/setupConfiguration.ts`.
+
+Keep completed role selections in memory for one command. Replace a role only after both nested choices finish. Configuration rules derive explicit phase flags from those
+completed selections; confirmation is the only persistence boundary. Thinking choices preserve Pi's supported-level order and start at its first level for both initial
+selections and replacements, without preferring `off`.
+
+### Consequences
+
+Setup needs no private runtime access, separate model runtime, new dependency, or persistent draft. UI components receive supplied choices rather than deciding model
+requirements or phase rules. Initial setup is limited to interactive terminal mode.
+
+### Evidence
+
+[Approved design](.specs/20261108-141712-maestro-19-guide-initial-configuration-with-pi-selectors/design.md) and
+[configuration guidance](docs/configuration.md#initial-setup).

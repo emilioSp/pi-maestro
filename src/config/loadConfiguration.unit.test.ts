@@ -1,104 +1,63 @@
 /**
- * Objective: Check configuration loading, defaults, and file errors.
- * Used: In tests with temporary project configuration files.
+ * Objective: Check configuration loading, path resolution, and file errors.
+ * Used: In tests with temporary project configurations.
  */
 
-import { lstat, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { loadConfiguration } from '#config/loadConfiguration.ts';
-import { SUPPORTED_CONFIG_VERSION, THINKING_LEVELS } from '#config/schema.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 
 describe('configuration loading', () => {
-  it('given no configuration file when configuration is loaded then defaults use the project spec path without creating its directory', async () => {
+  it('given no configuration file when configuration is loaded then the error requests interactive setup', async () => {
     const workspace = await createTemporaryProject();
 
     try {
-      const config = await loadConfiguration(workspace.path);
-
-      expect(config).toEqual({
-        ...DEFAULT_CONFIG,
-        specDirectory: join(workspace.path, '.specs'),
-      });
-      await expect(lstat(config.specDirectory)).rejects.toMatchObject({
-        code: 'ENOENT',
-      });
+      await expect(loadConfiguration(workspace.path)).rejects.toThrow(
+        'Project configuration is missing',
+      );
     } finally {
       await workspace.cleanup();
     }
   });
 
-  it('given custom configuration for the spec directory, builder, and verifier when loaded then those values are used and the simplifier keeps its defaults', async () => {
-    const workspace = await createTemporaryProject();
-    const piDirectory = join(workspace.path, '.pi');
-    await mkdir(piDirectory, { recursive: true });
-
-    const fixture = await readFile(
-      new URL(import.meta.resolve('#tests/fixtures/config/valid-full.json')),
-      'utf8',
-    );
-
-    await writeFile(join(piDirectory, 'maestro.json'), fixture, 'utf8');
-
-    try {
-      await expect(loadConfiguration(workspace.path)).resolves.toEqual({
-        version: SUPPORTED_CONFIG_VERSION,
-        specDirectory: join(workspace.path, 'custom-specs'),
-        simplifier: DEFAULT_CONFIG.simplifier,
-        builder: {
-          required: true,
-          model: 'anthropic/claude-3-7-sonnet',
-          thinking: THINKING_LEVELS.MAX,
-        },
-        verifier: {
-          required: true,
-          model: 'anthropic/claude-3-5-haiku',
-          thinking: 'low',
-        },
-      });
-    } finally {
-      await workspace.cleanup();
-    }
-  });
-
-  it('given configuration without agent settings when loaded then every agent keeps its default settings', async () => {
+  it('given explicit agent settings when loaded then paths are resolved and settings are retained', async () => {
     const workspace = await createTemporaryProject();
 
     try {
       await mkdir(join(workspace.path, '.pi'));
       await writeFile(
         join(workspace.path, '.pi/maestro.json'),
-        JSON.stringify({ version: '1.0.0' }),
+        JSON.stringify({ ...TEST_CONFIG, specDirectory: 'custom-specs' }),
       );
-      const config = await loadConfiguration(workspace.path);
-      expect(config.simplifier).toEqual(DEFAULT_CONFIG.simplifier);
-      expect(config.builder).toEqual(DEFAULT_CONFIG.builder);
-      expect(config.verifier).toEqual(DEFAULT_CONFIG.verifier);
+      await expect(loadConfiguration(workspace.path)).resolves.toEqual({
+        ...TEST_CONFIG,
+        specDirectory: join(workspace.path, 'custom-specs'),
+      });
     } finally {
       await workspace.cleanup();
     }
   });
 
-  it('given a configuration file with broken JSON when configuration is loaded then loading fails and the error names the file path', async () => {
+  it('given broken JSON when loaded then the error names the configuration file', async () => {
     const workspace = await createTemporaryProject();
-    const piDirectory = join(workspace.path, '.pi');
-    await mkdir(piDirectory, { recursive: true });
-    const configPath = join(piDirectory, 'maestro.json');
-
-    const fixture = await readFile(
-      new URL(import.meta.resolve('#tests/fixtures/config/invalid-json.json')),
-      'utf8',
-    );
-
-    await writeFile(configPath, fixture, 'utf8');
 
     try {
+      await mkdir(join(workspace.path, '.pi'));
+
+      const fixture = await readFile(
+        new URL(import.meta.resolve('#tests/fixtures/config/invalid-json.json')),
+        'utf8',
+      );
+
+      const path = join(workspace.path, '.pi/maestro.json');
+      await writeFile(path, fixture);
       await expect(loadConfiguration(workspace.path)).rejects.toThrow(
-        `Invalid JSON in configuration file "${configPath}":`,
+        `Invalid JSON in configuration file "${path}"`,
       );
     } finally {
       await workspace.cleanup();
@@ -107,76 +66,37 @@ describe('configuration loading', () => {
 
   it.each([
     {
-      scenario: 'a null byte in the spec directory',
-      specDirectory: 'specs\0',
+      scenario: 'null byte',
+      directory: 'specs\0',
       message: 'specDirectory must not contain a null byte.',
     },
     {
-      scenario: 'an absolute spec directory',
-      specDirectory: '/outside',
+      scenario: 'absolute path',
+      directory: '/outside',
       message: 'specDirectory must be relative to the project root.',
     },
     {
-      scenario: 'a spec directory equal to project root',
-      specDirectory: 'nested/..',
+      scenario: 'project root',
+      directory: 'nested/..',
       message: 'specDirectory must not be the project root.',
     },
     {
-      scenario: 'a spec directory outside the project',
-      specDirectory: '../outside',
+      scenario: 'outside path',
+      directory: '../outside',
       message: 'specDirectory must stay inside the project root.',
     },
   ])(
-    'given $scenario when configuration is loaded then loading fails with the specific spec directory error',
-    async ({ specDirectory, message }) => {
+    'given a $scenario directory when loaded then the path is rejected',
+    async ({ directory, message }) => {
       const workspace = await createTemporaryProject();
 
       try {
-        const piDirectory = join(workspace.path, '.pi');
-        await mkdir(piDirectory, { recursive: true });
+        await mkdir(join(workspace.path, '.pi'));
         await writeFile(
-          join(piDirectory, 'maestro.json'),
-          JSON.stringify({ version: SUPPORTED_CONFIG_VERSION, specDirectory }),
-          'utf8',
+          join(workspace.path, '.pi/maestro.json'),
+          JSON.stringify({ ...TEST_CONFIG, specDirectory: directory }),
         );
-
         await expect(loadConfiguration(workspace.path)).rejects.toThrow(message);
-      } finally {
-        await workspace.cleanup();
-      }
-    },
-  );
-
-  it.each([
-    {
-      scenario: 'only a custom spec directory',
-      fixture: 'valid-partial-directories.json',
-      specDirectory: 'specs-dir',
-      builder: DEFAULT_CONFIG.builder,
-    },
-  ])(
-    'given configuration with $scenario when loaded then the supplied value overrides its default and all other settings keep their defaults',
-    async ({ fixture, specDirectory, builder }) => {
-      const workspace = await createTemporaryProject();
-
-      try {
-        const piDirectory = join(workspace.path, '.pi');
-        await mkdir(piDirectory, { recursive: true });
-
-        const content = await readFile(
-          new URL(import.meta.resolve(`#tests/fixtures/config/${fixture}`)),
-          'utf8',
-        );
-
-        await writeFile(join(piDirectory, 'maestro.json'), content, 'utf8');
-
-        await expect(loadConfiguration(workspace.path)).resolves.toEqual({
-          version: SUPPORTED_CONFIG_VERSION,
-          specDirectory: join(workspace.path, specDirectory),
-          builder,
-          verifier: DEFAULT_CONFIG.verifier,
-          simplifier: DEFAULT_CONFIG.simplifier,
-        });
       } finally {
         await workspace.cleanup();
       }

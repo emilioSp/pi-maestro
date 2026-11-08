@@ -12,9 +12,9 @@ import { BUILDER_HANDOFF_VERSION } from '#artifacts/builder-handoff/schema.ts';
 import { writeBuilderHandoff } from '#artifacts/builder-handoff/writeBuilderHandoff.ts';
 import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
 import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
-import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 import { createSpec } from '#specs/create.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { unavailableCompilerEscalation } from '#tests/fixtures/unavailable-compiler-escalation.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
@@ -38,7 +38,7 @@ const createWorkflow = async (phase: WorkflowPhase = WORKFLOW_PHASES.DRAFTING_SP
   const paths = new MaestroPaths({
     projectRoot: repository.path,
     config: {
-      ...DEFAULT_CONFIG,
+      ...TEST_CONFIG,
       specDirectory: join(repository.path, '.specs'),
     },
   });
@@ -76,7 +76,7 @@ describe('markSpecReady', () => {
 
     await expect(
       markSpecReady({
-        config: DEFAULT_CONFIG,
+        config: TEST_CONFIG,
         paths,
         specId: OTHER_SPEC_ID,
         activeWorkflowSpecId: SPEC_ID,
@@ -86,7 +86,7 @@ describe('markSpecReady', () => {
     );
     await expect(
       markSpecReady({
-        config: DEFAULT_CONFIG,
+        config: TEST_CONFIG,
         paths,
         specId: SPEC_ID,
         activeWorkflowSpecId: SPEC_ID,
@@ -114,7 +114,7 @@ describe('markSpecReady', () => {
 
     await expect(
       markSpecReady({
-        config: DEFAULT_CONFIG,
+        config: TEST_CONFIG,
         paths,
         specId: SPEC_ID,
         activeWorkflowSpecId: SPEC_ID,
@@ -185,7 +185,7 @@ describe('markSpecReady', () => {
 
       await expect(
         markSpecReady({
-          config: DEFAULT_CONFIG,
+          config: TEST_CONFIG,
           paths,
           specId: SPEC_ID,
           activeWorkflowSpecId: SPEC_ID,
@@ -215,7 +215,7 @@ describe('markSpecReady', () => {
 
       await expect(
         markSpecReady({
-          config: DEFAULT_CONFIG,
+          config: TEST_CONFIG,
           paths,
           specId: SPEC_ID,
           activeWorkflowSpecId: SPEC_ID,
@@ -238,7 +238,7 @@ describe('markSpecReady', () => {
 
     await expect(
       markSpecReady({
-        config: DEFAULT_CONFIG,
+        config: TEST_CONFIG,
         paths,
         specId: SPEC_ID,
         activeWorkflowSpecId: SPEC_ID,
@@ -254,7 +254,7 @@ describe('markSpecReady', () => {
 
     await expect(
       markSpecReady({
-        config: DEFAULT_CONFIG,
+        config: TEST_CONFIG,
         paths,
         specId: SPEC_ID,
         activeWorkflowSpecId: SPEC_ID,
@@ -269,7 +269,7 @@ describe('markSpecReady', () => {
 
     await expect(
       markSpecReady({
-        config: DEFAULT_CONFIG,
+        config: TEST_CONFIG,
         paths,
         specId: SPEC_ID,
         activeWorkflowSpecId: SPEC_ID,

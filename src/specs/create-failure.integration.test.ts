@@ -4,8 +4,8 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 
 vi.mock('#workflow/state/writeWorkflowState.ts', () => ({
   writeWorkflowState: async () => {
@@ -32,7 +32,7 @@ describe('partial spec creation failure', () => {
     const paths = new MaestroPaths({
       projectRoot,
       config: {
-        ...DEFAULT_CONFIG,
+        ...TEST_CONFIG,
         specDirectory: join(projectRoot, '.specs'),
       },
     });

@@ -1,0 +1,100 @@
+{
+  "version": "1.0.0",
+  "specId": "20261108-141712-maestro-19-guide-initial-configuration-with-pi-selectors",
+  "summary": "Independently verified all 17 criteria against the live candidate, including manual interactive Pi confirmation timing. Repository checks completed with 311 tests passing. No findings.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npm run check: inspected and ran first-use scenarios in extensions/maestro.integration.test.ts asserting the four initial actions. Independently launched Pi 1.5.0 in a trusted temporary project without configuration, invoked /maestro, and observed Select builder, Select verifier, Select simplifier, Confirm.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "npm run check: existing configuration missing enabled verifier model scenario in extensions/maestro.integration.test.ts verified verifier.model error, inactive state, no selector calls, and exact preservation of configuration bytes.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "npm run check: builder enabled and later phases disabled without models scenario in extensions/maestro.integration.test.ts activated successfully with only builder configured.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "npm run check: first-use builder scenario verified the completed action label. Manual interactive Pi selection of openai-codex/gpt-6.1-sol and high displayed Builder: openai-codex/gpt-6.1-sol (high).",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "npm run check: cancelled replacement thinking and cancelled replacement model scenarios in extensions/maestro.integration.test.ts retained the completed builder model and high thinking in the screen actions and saved configuration.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "npm run check: cancelled new model and cancelled new thinking scenarios in extensions/maestro.integration.test.ts kept verifier unselected and saved required: false.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "npm run check: src/ui/selectModel.unit.test.ts exercised real Pi Input with model-b search, verified model-a absent from rendered choices, and selected provider-b/model-b with Enter.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "npm run check: src/ui/selectModel.unit.test.ts navigated 29 Down inputs across 30 models using real SelectList, verified ten visible model rows including model-30, and selected the final entry.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC9",
+      "probe": "npm run check: first-use integration scenarios compared the main session model before and after verifier selection. Manual Pi footer retained openai-codex/gpt-6.1-sol high while the setup screen displayed verifier openai-codex/gpt-6-astra medium.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC10",
+      "probe": "Manual only: launched Pi 1.5.0 with --offline --approve --no-session --no-extensions --no-mcp --no-skills --no-context-files --no-prompt-templates --tui-mode regular -e /Users/emiliosp/Workspace/pi-maestro/extensions/maestro.ts in /tmp/maestro-verifier.CyY1iZ/project through a PTY. Invoked /maestro and entered model searches and keyboard choices. Inspected the rendered main screen showing builder openai-codex/gpt-6.1-sol (high), verifier openai-codex/gpt-6-astra (medium), Select simplifier, and Confirm. Before choosing Confirm, pathlib.Path('/tmp/maestro-verifier.CyY1iZ/project/.pi/maestro.json').exists() returned False. No automated criterion test was added.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC11",
+      "probe": "npm run check: unsaved builder selection followed by main-screen cancellation scenario in extensions/maestro.integration.test.ts verified configuration ENOENT and inactive Maestro.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC12",
+      "probe": "npm run check: builder-only setup integration scenario verified selected model/high thinking persisted and activation within one command. Manual Pi confirmation also created the selected configuration and displayed Maestro active without another /maestro invocation.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC13",
+      "probe": "npm run check: src/config/setupChoices.unit.test.ts verified exact off/low/high choices for its reasoning model, only off for its non-reasoning model, and minimal/low/medium/high when off unsupported. Manual Pi showed minimal, low, medium, high, xhigh, max for selected Codex models.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC14",
+      "probe": "npm run check: src/ui/selectThinking.unit.test.ts exercised real ExtensionSelectorComponent highlighting and Enter for minimal/low/medium/high and low/off/high, twice each. Replacement integration scenario verified both dialogs receive Pi order and replacing completed high with the first minimal choice. Manual Pi initial dialogs highlighted minimal.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC15",
+      "probe": "npm run check: builder-and-verifier first-use scenario verified true/true/false flags. Manual Pi confirmation saved builder and verifier required: true with selected model/thinking and simplifier required: false.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC16",
+      "probe": "npm run check: verifier-without-builder first-use scenario verified false/true/false flags and verifier model/medium thinking, with successful activation and no correction.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC17",
+      "probe": "npm run check: no-roles first-use scenario confirmed immediately, verified all three flags false, loaded the saved configuration, and observed active Maestro without role selections.",
+      "probeStatus": "passed"
+    }
+  ],
+  "findings": [],
+  "notes": [
+    "Confirmed exact spec identity and verifier-running phase; read B1, its B1/E1 resolution, and active B2 against the revised approved contract. No prototype files were present.",
+    "Inspected production configuration, orchestration, UI components, and executable scenario assertions. The candidate follows the approved public Pi component and UI/configuration separation decisions.",
+    "Before npm run check, non-fixing oxfmt --check and oxlint completed successfully. npm run check completed with 45 files and 311 tests passing; coverage statements 94.48%, branches 86.46%, functions 95.79%, lines 94.99%. git diff --check succeeded.",
+    "Retained exact original project file bytes before repository checks. Only existing coverage HTML output changed; restored it exactly. No product, approved contract, workflow, or earlier handoff files were changed during verification.",
+    "Stopped the temporary Pi process and removed the temporary PTY bridge, project, logs, inputs, and backup. No dependencies were installed and no model requests were made. ROADMAP.md already links this spec and records pending owner acceptance; no documentation edits were needed."
+  ]
+}

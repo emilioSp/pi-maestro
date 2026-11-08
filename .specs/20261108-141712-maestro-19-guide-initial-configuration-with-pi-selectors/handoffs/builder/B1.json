@@ -1,0 +1,132 @@
+{
+  "status": "escalation",
+  "summary": "Implemented interactive initial configuration, explicit model requirements, selector components, documentation, and tests. Manual Pi verification exposed a conflict between exact supported thinking choices and always starting at off. Implementation is retained pending the owner's decision.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npm run check: first-use setup integration scenarios assert the initial four actions. Manual interactive Pi 1.5.0 /maestro also displayed Select builder, Select verifier, Select simplifier, and Confirm.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "npm run check: existing configuration missing enabled verifier model integration test reports verifier.model, remains inactive, preserves file bytes, and invokes no selectors.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "npm run check: builder enabled with later phases disabled and no later models integration test activates successfully.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "npm run check: completed builder-only integration scenario verifies Builder: openai-codex/gpt-6.1-sol (high) on the main setup screen.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "npm run check: cancelled replacement thinking and cancelled replacement model scenarios preserve the completed builder model and high thinking.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "npm run check: cancelled new model and cancelled new thinking scenarios leave verifier unselected and save required: false.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "npm run check: src/ui/selectModel.unit.test.ts types model-b into real Pi Input and verifies only provider-b/model-b is rendered and selected by Enter.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "npm run check: real SelectList test navigates through 30 models to model-30, verifies ten visible model rows, and selects the final entry.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC9",
+      "probe": "npm run check: first-use integration scenarios select a verifier model different from the main model and assert the main session model reference remains unchanged.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC10",
+      "probe": "Manual-only attempt: launched Pi 1.5.0 in a trusted temporary project, invoked /maestro, searched for and selected openai-codex/gpt-6.1-sol for builder. Stopped at its thinking selector after discovering no supported off choice. Did not reach completed builder and verifier selections, so the approved scenario remains unrun. No automated AC10 test was added.",
+      "probeStatus": "not-run"
+    },
+    {
+      "id": "AC11",
+      "probe": "npm run check: unsaved builder selection followed by main-screen cancellation integration test verifies ENOENT for configuration and inactive Maestro.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC12",
+      "probe": "npm run check: builder-only first-use integration scenario confirms once, reads the saved selected model and high thinking, validates configuration, and observes active Maestro during the original command.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC13",
+      "probe": "npm run check: src/config/setupChoices.unit.test.ts verifies exact off/low/high levels for a reasoning model and only off for a non-reasoning model. Manual real-Pi selection also displayed the exact supported levels for gpt-6.1-sol, which exclude off.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC14",
+      "probe": "npm run check: cancelled replacement thinking scenario starts with completed builder high, selects a replacement offline reasoning model supporting off, and verifies the thinking choices start with off. This criterion's supported-off case passes; models without off expose the broader REQ7 conflict recorded in E1.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC15",
+      "probe": "npm run check: builder-and-verifier first-use integration scenario saves required flags true, true, false and both completed selections.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC16",
+      "probe": "npm run check: verifier-without-builder integration scenario saves required flags false, true, false and verifier medium thinking without correction or blocking.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC17",
+      "probe": "npm run check: no-roles first-use integration scenario confirms immediately, saves all flags false, validates the file, and activates.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "Final npm run check passed: 44 files, 308 tests; statements 94.48%, branches 86.46%, functions 95.79%, lines 94.99%. git diff --check passed.",
+    "Temporary manual verification project, PTY bridge, logs, and processes were removed. No packages were installed and no model requests were made.",
+    "Existing tests now use explicit selected-agent fixture configuration instead of production model defaults. The pre-existing .pi/maestro.json changes were left untouched.",
+    "README.md, docs/configuration.md, ROADMAP.md, and ADR.md describe the approved setup design. Owner acceptance remains pending. They may need adjustment after the thinking-level decision."
+  ],
+  "escalations": [
+    {
+      "id": "E1",
+      "question": "How should initial thinking selection behave when Pi reports that an available model does not support off?",
+      "context": "REQ7 requires each thinking selector to start at off, including replacements, while REQ7 and AC13 require choices to exactly match Pi's supported thinking levels. In real interactive Pi 1.5.0, selecting the available openai-codex/gpt-6.1-sol opened choices minimal, low, medium, high, xhigh, max, highlighting minimal. There was no off choice. Pi's public getSupportedThinkingLevels filters levels explicitly mapped to null. The implementation correctly preserves those exact supported choices, but therefore cannot always start at off. This was discovered during the manual-only AC10 procedure, which remains incomplete. Automated tests and repository checks pass, including AC14's narrower case where the replacement model supports off.",
+      "options": [
+        {
+          "id": "O1",
+          "description": "Start at off when supported; otherwise start at Pi's first supported thinking level.",
+          "consequences": "Preserves the complete available model catalog and exact supported choices. Changes the unconditional off-start requirement and related human guidance.",
+          "nextStep": "Revise and approve the contract through Maestro, then resume builder verification and complete manual AC10."
+        },
+        {
+          "id": "O2",
+          "description": "Limit setup model choices to available models whose supported thinking levels include off.",
+          "consequences": "Preserves an unconditional off starting choice but excludes otherwise available models, including the observed gpt-6.1-sol. Changes model-catalog selection requirements and requires owner-approved filtering behavior.",
+          "nextStep": "Revise and approve the model eligibility contract through Maestro, then implement the approved filter and repeat all acceptance proofs."
+        }
+      ],
+      "recommendation": {
+        "optionId": "O1",
+        "reason": "The real Pi model catalog contains reasoning models without off. Using Pi's first supported level for those models preserves valid capability choices without excluding available models or inventing unsupported thinking levels."
+      },
+      "notes": [
+        "Reference this question as B1/E1. No unsupported off choice was injected and no model-catalog filtering was added."
+      ],
+      "resolution": {
+        "selectedOptionId": null,
+        "decision": "Revise REQ7 and AC14 so each thinking selector always starts at the first supported thinking level in the order returned by Pi, for both initial selections and replacements. Do not give off any preference, even when it is supported.",
+        "reason": "The owner explicitly chose Pi's supported-level ordering as the sole rule for the initial thinking selection, without a special case for off."
+      }
+    }
+  ],
+  "version": "1.0.0",
+  "specId": "20261108-141712-maestro-19-guide-initial-configuration-with-pi-selectors"
+}

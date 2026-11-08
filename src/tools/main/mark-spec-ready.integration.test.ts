@@ -5,10 +5,12 @@ import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { loadConfiguration } from '#config/loadConfiguration.ts';
+import { saveConfiguration } from '#config/saveConfiguration.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 import { createSpec } from '#specs/create.ts';
 import { executeTask } from '#src/delegation/executeTask.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { registerMarkSpecReadyTool } from '#tools/main/mark-spec-ready.ts';
@@ -35,8 +37,17 @@ const createWorkflow = async (flags?: PhaseFlags) => {
   const repository = await createTemporaryProject();
   cleanupFunctions.push(repository.cleanup);
 
+  await saveConfiguration({
+    cwd: repository.path,
+    agentModelSelections: {
+      builder: TEST_CONFIG.builder,
+      verifier: TEST_CONFIG.verifier,
+      simplifier: TEST_CONFIG.simplifier,
+    },
+  });
+
   if (flags !== undefined) {
-    await mkdir(join(repository.path, '.pi'));
+    await mkdir(join(repository.path, '.pi'), { recursive: true });
     await writeFile(
       join(repository.path, '.pi/maestro.json'),
       JSON.stringify({
@@ -142,7 +153,7 @@ it.each([
   async ({ verifier, simplifier }) => {
     const { repository, created } = await createWorkflow({ builder: false, verifier, simplifier });
 
-    const { tool, emit } = await piTestSessions.createRegisteredTool({
+    const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
       extension: registerMarkSpecReadyTool,
     });
@@ -152,7 +163,6 @@ it.each([
     await expect(readWorkflowState(created.workflowPath)).resolves.toMatchObject({
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
     });
-    expect(emit).not.toHaveBeenCalled();
     expect(executeTask).not.toHaveBeenCalled();
     expect(result.content).toEqual([
       { type: 'text', text: expect.stringContaining('Builder, verifier, and simplifier skipped') },

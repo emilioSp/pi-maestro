@@ -11,12 +11,12 @@ import {
   type BuilderHandoffSubmissionInput,
   PROBE_STATUSES,
 } from '#artifacts/builder-handoff/schema.ts';
-import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { loadConfiguration } from '#config/loadConfiguration.ts';
 import type { PartialMaestroConfig } from '#config/schema.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 import { createSpec } from '#specs/create.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
 
@@ -42,7 +42,17 @@ export const createApprovedWorkflow = async ({
   await mkdir(configDirectory, { recursive: true });
   await writeFile(
     join(configDirectory, 'maestro.json'),
-    JSON.stringify({ version: DEFAULT_CONFIG.version, specDirectory, ...agents }, null, 2),
+    JSON.stringify(
+      {
+        ...TEST_CONFIG,
+        specDirectory,
+        builder: { ...TEST_CONFIG.builder, ...agents.builder },
+        verifier: { ...TEST_CONFIG.verifier, ...agents.verifier },
+        simplifier: { ...TEST_CONFIG.simplifier, ...agents.simplifier },
+      },
+      null,
+      2,
+    ),
     'utf8',
   );
 

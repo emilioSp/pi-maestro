@@ -85,7 +85,9 @@ export const loadConfiguration = async (cwd: string = process.cwd()): Promise<Ma
   const targetPath = join(projectRoot, CONFIG_FILE_PATH);
 
   if (!(await pathExists(targetPath))) {
-    return resolveDirectories({ projectRoot, config: DEFAULT_CONFIG });
+    throw new Error(
+      'Project configuration is missing. Run /maestro in interactive Pi to set it up.',
+    );
   }
 
   const parsed = await readConfigurationFile(targetPath);

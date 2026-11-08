@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_CONFIG } from '#config/defaults.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import {
   WORKFLOW_EVENTS,
   WORKFLOW_PHASES,
@@ -22,7 +22,7 @@ describe('workflow transitions', () => {
     (phase) => {
       expect(
         transitionWorkflow({
-          config: DEFAULT_CONFIG,
+          config: TEST_CONFIG,
           state: state(phase),
           event: WORKFLOW_EVENTS.OWNER_REQUEST_SPEC_REVISION,
         }),
@@ -34,7 +34,7 @@ describe('workflow transitions', () => {
     for (const event of Object.values(WORKFLOW_EVENTS)) {
       expect(() =>
         transitionWorkflow({
-          config: DEFAULT_CONFIG,
+          config: TEST_CONFIG,
           state: state(WORKFLOW_PHASES.CANDIDATE_READY),
           event,
         }),
@@ -46,7 +46,7 @@ describe('workflow transitions', () => {
     const current = state(WORKFLOW_PHASES.READY_FOR_BUILDER);
 
     transitionWorkflow({
-      config: DEFAULT_CONFIG,
+      config: TEST_CONFIG,
       state: current,
       event: WORKFLOW_EVENTS.RUN_BUILDER,
     });
@@ -59,10 +59,10 @@ it('given a frozen draft and configuration with builder disabled when approval i
   const current = Object.freeze(state(WORKFLOW_PHASES.DRAFTING_SPEC));
 
   const config = Object.freeze({
-    ...DEFAULT_CONFIG,
-    builder: Object.freeze({ ...DEFAULT_CONFIG.builder, required: false }),
-    verifier: Object.freeze({ ...DEFAULT_CONFIG.verifier }),
-    simplifier: Object.freeze({ ...DEFAULT_CONFIG.simplifier }),
+    ...TEST_CONFIG,
+    builder: Object.freeze({ ...TEST_CONFIG.builder, required: false }),
+    verifier: Object.freeze({ ...TEST_CONFIG.verifier }),
+    simplifier: Object.freeze({ ...TEST_CONFIG.simplifier }),
   });
 
   expect(
