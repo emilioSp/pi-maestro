@@ -1,0 +1,100 @@
+{
+  "status": "done",
+  "summary": "Completed guided initial configuration and verification under the revised contract. Thinking selectors preserve Pi ordering and start at its first supported level for initial selections and replacements. Updated guidance and regression coverage; completed the manual-only pre-confirmation check in interactive Pi.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npm run check: first-use integration scenarios assert all four initial actions. Manual Pi 1.5.0 in a trusted temporary project without configuration displayed Select builder, Select verifier, Select simplifier, Confirm after /maestro.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "npm run check: existing configuration missing enabled verifier model integration scenario reports verifier.model, stays inactive, preserves file bytes, and opens neither selector.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "npm run check: builder enabled with both later phases disabled and no later models integration scenario activates successfully.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "npm run check: first-use builder scenario asserts completed builder model and high thinking on the main screen. Manual Pi also displayed Builder: openai-codex/gpt-6.1-sol (high).",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "npm run check: cancelled replacement thinking and cancelled replacement model integration scenarios preserve the completed builder model and high thinking on the main screen and in the saved file.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "npm run check: cancelled new model and cancelled new thinking integration scenarios leave verifier unselected on the main screen and save required: false.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "npm run check: src/ui/selectModel.unit.test.ts types model-b into real Pi Input, verifies only provider-b/model-b is rendered, and selects it with Enter.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "npm run check: src/ui/selectModel.unit.test.ts navigates real SelectList through 30 models, renders exactly ten model rows with the final model visible, and selects that final entry.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC9",
+      "probe": "npm run check: first-use integration scenarios select a different verifier model and assert the main session model reference remains unchanged. Manual Pi retained gpt-6.1-sol high in its footer after selecting gpt-6-astra medium for verifier.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC10",
+      "probe": "Manual only: launched Pi 1.5.0 with --offline --approve --no-session --no-extensions --no-mcp --no-skills --no-context-files --no-prompt-templates --tui-mode regular -e /Users/emiliosp/Workspace/pi-maestro/extensions/maestro.ts in /tmp/maestro-19-manual.jPHN3P. Invoked /maestro and used keyboard input to complete builder openai-codex/gpt-6.1-sol high and verifier openai-codex/gpt-6-astra medium. Inspected the rendered four-action screen showing both choices before Confirm. Path.exists() for that project's .pi/maestro.json returned False. No automated test for AC10 was added.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC11",
+      "probe": "npm run check: unsaved builder selection followed by main-screen Escape integration scenario asserts ENOENT for .pi/maestro.json and inactive Maestro.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC12",
+      "probe": "npm run check: builder-only setup integration scenario confirms once, validates the saved chosen model and high thinking, and observes active Maestro during the original command. Manual Pi confirmation also created the selected configuration and displayed Maestro active without another /maestro invocation.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC13",
+      "probe": "npm run check: src/config/setupChoices.unit.test.ts compares exact supported levels for reasoning models with and without off and a non-reasoning model offering only off. Manual Pi displayed minimal, low, medium, high, xhigh, max for the selected Codex models.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC14",
+      "probe": "npm run check: src/ui/selectThinking.unit.test.ts uses real Pi ExtensionSelectorComponent to verify initial highlighting and Enter select the first supplied level for minimal/low/medium/high and low/off/high. Integration scenario supplies Pi models without off, completes initial high, replaces it with minimal, and asserts both dialogs receive unchanged minimal/low/medium/high order. Manual initial selectors highlighted minimal.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC15",
+      "probe": "npm run check: builder-and-verifier setup integration scenario saves required flags true, true, false and both completed choices. Manual confirmed configuration contained the same flags and selected model/thinking values.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC16",
+      "probe": "npm run check: verifier-without-builder setup integration scenario saves flags false, true, false and verifier model with medium thinking without blocking or correction.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC17",
+      "probe": "npm run check: no-roles setup integration scenario confirms immediately, validates all three saved flags false, and activates without role choices.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "Followed the recorded owner decision in B1/E1 and the revised REQ7, AC14, and design. Production code already preserved Pi ordering; this pass added direct ordering/highlight and replacement regression coverage and corrected human guidance.",
+    "Final npm run check passed: 45 files, 311 tests. Coverage: statements 94.48%, branches 86.46%, functions 95.79%, lines 94.99%. git diff --check passed.",
+    "Temporary manual verification project, PTY bridge, logs, and processes were removed. No dependencies were installed and no model requests were made.",
+    "Retained implementation work from the earlier pass and left the pre-existing .pi/maestro.json changes untouched. ROADMAP.md retains pending owner acceptance."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261108-141712-maestro-19-guide-initial-configuration-with-pi-selectors"
+}
