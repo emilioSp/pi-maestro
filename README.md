@@ -23,7 +23,8 @@ The `owner` can use `Maestro` only to write and approve a `spec`, leaving implem
 3. The `simplifier` refactors accepted code without changing behavior.
 
 Disabling the `builder` skips the entire implementation stage. With the `builder` enabled, the `verifier` and `simplifier` can be disabled independently. All three are
-enabled by default. See [Phase selection](docs/configuration.md#phase-selection).
+enabled when their flags are omitted from an existing configuration. Initial setup enables only selected roles. See
+[Phase selection](docs/configuration.md#phase-selection).
 
 The `owner` performs the final review.
 
@@ -85,11 +86,9 @@ An `escalation` asks the `owner` to decide an implementation question. A `findin
 
 ## Prerequisites
 
-1. macOS.
-2. Node.js 26 or later.
-3. Pi 1.5.0 or later.
-4. Access to the models for enabled agents.
-5. A project directory that Pi trusts.
+1. Node.js 26 or later.
+2. Pi 1.5.0 or later.
+3. Access to the models for enabled agents.
 
 ## Installation
 
@@ -114,8 +113,8 @@ Activate `Maestro`:
 /maestro
 ```
 
-During activation, `Maestro` checks project trust, configuration, and model availability for enabled agents. With `builder` disabled, only project trust and configuration
-are checked. Model availability comes from Pi's model registry. If a check fails, `Maestro` stays disabled and reports the problem.
+During activation, `Maestro` checks configuration and model availability for enabled agents. With `builder` disabled, only configuration is checked. Model availability
+comes from Pi's model registry. If a check fails, `Maestro` stays disabled and reports the problem.
 
 The `owner` follows this workflow:
 
@@ -158,8 +157,12 @@ files do not automatically restore or resume an incomplete workflow. The `owner`
 
 ## Configuration
 
-`Maestro` uses default values when `.pi/maestro.json` is absent from the project root. The `owner` can add this file to change the `spec` directory, models, thinking
-levels, or selected phases. Each agent has a `required` boolean that defaults to `true`. Set flags before activation and keep configuration unchanged during the workflow.
+When `.pi/maestro.json` is absent, `/maestro` starts a guided setup in Pi's interactive terminal. The `owner` chooses models and thinking levels for `builder`,
+`verifier`, and `simplifier`. The selected agents are enabled, and the configuration is saved before `Maestro` activates. Selecting no agents enables `spec` preparation
+only.
+
+There are no default agent models. Existing configurations must supply models for enabled execution phases. The `owner` can edit the file before activation to change the
+`spec` directory, models, thinking levels, or phase flags. Omitted `required` flags in existing files default to `true`. Keep configuration unchanged during the workflow.
 With `builder.required: false`, approval finishes with only an approved `spec` for implementation elsewhere. Otherwise `verifier` and `simplifier` can be disabled
 independently. Skipped work is identified in the final summary and is not claimed as completed. See [Configuration](docs/configuration.md#phase-selection).
 
