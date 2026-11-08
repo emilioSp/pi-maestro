@@ -3,7 +3,7 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
-## Unreleased
+## 0.18.6
 
 - Added guided initial configuration through `/maestro`: the `owner` selects models and thinking levels for `builder`, `verifier`, and `simplifier`, then saves the
   configuration and activates `Maestro`. Selected agents are enabled; selecting none enables `spec` preparation only. Agent models no longer have defaults.
