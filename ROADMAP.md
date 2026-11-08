@@ -55,11 +55,32 @@ The `owner` can read the `spec` documents in a browser with formatting designed 
 
 ### Objective
 
-Help the `owner` create `Maestro` configuration through an interview. `Maestro` asks questions and writes the agreed configuration.
+Help the `owner` create `Maestro` configuration through selectors, without writing the file manually. Implemented for verification under the
+[approved `specification`](.specs/20261108-141712-maestro-19-guide-initial-configuration-with-pi-selectors/spec.md). Final `owner` acceptance is pending.
+
+### Agreed UX
+
+1. When `.pi/maestro.json` is absent, `/maestro` opens setup instead of attempting activation with an implicit configuration.
+2. The setup screen offers `Select builder`, `Select verifier`, `Select simplifier`, and `Confirm`. Each role opens model selection followed by supported thinking choices
+   in Pi's returned order, starting at the first level. Completed selections appear on the main screen and can be replaced.
+3. `Maestro` has no default models or fallback to Pi's main model. Setup uses `.specs`; selected roles are enabled and unselected roles are disabled, without separate
+   phase controls. Confirmation with no roles enables `spec` preparation only.
+4. `Confirm` saves `.pi/maestro.json`, then activates `Maestro` without another command. Escape on the main screen cancels without saving; nested cancellation discards
+   only the pending role edit.
+5. An existing configuration missing a required model produces an error and prevents activation. Setup does not complete the file automatically.
+
+### Selector approach
+
+Use Pi's standard `ctx.ui.select()` for short setup choices. For model selection, compose Pi's public `Input` and `SelectList` components through `ctx.ui.custom()`, using
+`ctx.modelRegistry.getAvailable()` as the model source. Provide search and a bounded, navigable list without changing the main conversation's model.
+
+Inspection of Pi 1.5.0 confirmed that `ctx.ui.select()` does not provide search or a bounded list. The exported `ModelSelectorComponent` requires the session's
+`ModelRuntime`, which the public extension context does not expose. Do not access private runtime state or create a separate runtime to reuse that component. Reuse Pi's
+public controls instead of rebuilding rendering and navigation. No new library is needed.
 
 ### Completed when
 
-The `owner` can create a valid project configuration without writing the file manually.
+The `owner` can create a valid project configuration through selectors, confirm it, and activate `Maestro` without writing the file manually.
 
 ## MAESTRO-20: Rename the npm package
 
