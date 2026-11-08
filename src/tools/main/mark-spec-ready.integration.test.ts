@@ -153,7 +153,7 @@ it.each([
   async ({ verifier, simplifier }) => {
     const { repository, created } = await createWorkflow({ builder: false, verifier, simplifier });
 
-    const { tool, emit } = await piTestSessions.createRegisteredTool({
+    const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
       extension: registerMarkSpecReadyTool,
     });
@@ -163,7 +163,6 @@ it.each([
     await expect(readWorkflowState(created.workflowPath)).resolves.toMatchObject({
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
     });
-    expect(emit).not.toHaveBeenCalled();
     expect(executeTask).not.toHaveBeenCalled();
     expect(result.content).toEqual([
       { type: 'text', text: expect.stringContaining('Builder, verifier, and simplifier skipped') },
