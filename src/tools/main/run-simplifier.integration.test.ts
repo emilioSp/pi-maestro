@@ -13,10 +13,10 @@ import type { AgentToolUpdateCallback } from '@earendil-works/pi-coding-agent';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { DEFAULT_CONFIG } from '#config/defaults.ts';
 import { MAESTRO_STATUS_KEY } from '#maestro/status/refreshMaestroStatus.ts';
 import { executeTask } from '#src/delegation/executeTask.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import {
   cleanupBuilderWorkflows,
   createApprovedWorkflow,
@@ -38,16 +38,16 @@ const execFileAsync = promisify(execFile);
 
 const createSimplifierWorkflow = async () => {
   const workflow = await createApprovedWorkflow();
-  await prepareBuilderRun({ config: DEFAULT_CONFIG, paths: workflow.paths, specId: SPEC_ID });
+  await prepareBuilderRun({ config: TEST_CONFIG, paths: workflow.paths, specId: SPEC_ID });
   await completeBuilderPass({
-    config: DEFAULT_CONFIG,
+    config: TEST_CONFIG,
     paths: workflow.paths,
     specId: SPEC_ID,
     handoff: doneHandoff(),
   });
-  await prepareVerifierRun({ config: DEFAULT_CONFIG, paths: workflow.paths, specId: SPEC_ID });
+  await prepareVerifierRun({ config: TEST_CONFIG, paths: workflow.paths, specId: SPEC_ID });
   await completeVerifierPass({
-    config: DEFAULT_CONFIG,
+    config: TEST_CONFIG,
     paths: workflow.paths,
     specId: SPEC_ID,
     handoff: {
@@ -146,7 +146,7 @@ describe('run simplifier', () => {
           theme.fg('accent', 'Simplifier running'),
       );
       await completeSimplifierPass({
-        config: DEFAULT_CONFIG,
+        config: TEST_CONFIG,
         paths,
         specId: SPEC_ID,
         handoff: {
@@ -172,8 +172,8 @@ describe('run simplifier', () => {
     expect(requests).toHaveLength(1);
     expect(requests[0][0]).toMatchObject({
       cwd: repository.path,
-      model: DEFAULT_CONFIG.simplifier.model,
-      thinkingLevel: DEFAULT_CONFIG.simplifier.thinking,
+      model: TEST_CONFIG.simplifier.model,
+      thinkingLevel: TEST_CONFIG.simplifier.thinking,
       prompt: expect.stringContaining(SPEC_ID),
     });
     expect(requests[0][0]).toMatchObject({
