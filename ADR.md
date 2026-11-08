@@ -280,7 +280,8 @@ Approval can finish at `candidate-ready` without agent execution. Agent and mode
 
 ### Status
 
-Design decisions confirmed by the `owner`. Implemented.
+Design decisions confirmed by the `owner`. Implemented. Main-extension pre-load exclusion is superseded by
+[ADR-012](#adr-012-filter-main-maestro-registrations-after-native-discovery).
 
 ### Context
 
@@ -434,3 +435,23 @@ requirements or phase rules. Initial setup is limited to interactive terminal mo
 
 [Approved design](.specs/20261108-141712-maestro-19-guide-initial-configuration-with-pi-selectors/design.md) and
 [configuration guidance](docs/configuration.md#initial-setup).
+
+## ADR-012: Filter main Maestro registrations after native discovery
+
+### Status
+
+Accepted in the approved [design](.specs/20261108-222326-simplify-child-extension-loading-with-the-native-pi-filter/design.md). Implemented for review. Supersedes only
+the pre-load exclusion constraint in [ADR-010](#adr-010-use-the-pi-sdk-for-sequential-agent-delegation).
+
+### Context
+
+Child preparation duplicated Pi's package discovery to exclude the main `Maestro` extension before initialization.
+
+### Decision
+
+Use Pi's native discovery and configured selection. Filter the loaded main `Maestro` extension through `extensionsOverride` before constructing the child session.
+
+### Consequences
+
+Main-extension initialization may register tools, commands, and handlers, but must not mutate parent state or start resources before filtering. SDK sessions share a
+process; filtering removes registrations from the child runtime, not initialization side effects.

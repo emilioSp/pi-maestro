@@ -88,7 +88,7 @@ export const executeTask = async ({
   try {
     try {
       const cwd = await realpath(workingDirectory);
-      const services = await prepareSubagentEnvironment({ cwd, roleGuidance });
+      const services = await prepareSubagentEnvironment({ cwd, roleGuidance, additionalTools });
 
       const model = (await services.modelRuntime.getAvailable()).find(
         (entry) => `${entry.provider}/${entry.id}` === modelId,
@@ -106,7 +106,6 @@ export const executeTask = async ({
         sessionManager,
         model,
         thinkingLevel,
-        customTools: additionalTools,
       }));
 
       if (onEvent) unsubscribe = session.subscribe(onEvent);
