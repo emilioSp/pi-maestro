@@ -12,8 +12,6 @@
     "thinking": "medium"
   },
   "simplifier": {
-    "required": true,
-    "model": "openai-codex/gpt-6-astra",
-    "thinking": "medium"
+    "required": false
   }
 }
