@@ -22,7 +22,7 @@ Completed entries preserve recorded outcomes and evidence, which may describe be
 | MAESTRO-16         | [Route finding-driven spec revisions through drafting-spec](#maestro-16-route-finding-driven-spec-revisions-through-drafting-spec) | Completed |
 | MAESTRO-17         | [Keep acceptance criterion numbering continuous](#maestro-17-keep-acceptance-criterion-numbering-continuous)                       | Completed |
 | MAESTRO-18         | [Record escalation resolutions when the spec changes](#maestro-18-record-escalation-resolutions-when-the-spec-changes)             | Completed |
-| MAESTRO-19         | [Guide initial configuration](#maestro-19-guide-initial-configuration)                                                             | Backlog   |
+| MAESTRO-19         | [Guide initial configuration](#maestro-19-guide-initial-configuration)                                                             | Completed |
 | MAESTRO-20         | [Rename the npm package](#maestro-20-rename-the-npm-package)                                                                       | Backlog   |
 | MAESTRO-21         | [Label acceptance criterion coverage](#maestro-21-label-acceptance-criterion-coverage)                                             | Completed |
 | MAESTRO-22         | [Avoid acceptance criteria already covered by tests](#maestro-22-avoid-acceptance-criteria-already-covered-by-tests)               | Completed |
@@ -56,7 +56,7 @@ The `owner` can read the `spec` documents in a browser with formatting designed 
 ### Objective
 
 Help the `owner` create `Maestro` configuration through selectors, without writing the file manually. Implemented for verification under the
-[approved `specification`](.specs/20261108-141712-maestro-19-guide-initial-configuration-with-pi-selectors/spec.md). Final `owner` acceptance is pending.
+[approved `specification`](.specs/20261108-141712-maestro-19-guide-initial-configuration-with-pi-selectors/spec.md).
 
 ### Agreed UX
 
@@ -77,6 +77,11 @@ Use Pi's standard `ctx.ui.select()` for short setup choices. For model selection
 Inspection of Pi 1.5.0 confirmed that `ctx.ui.select()` does not provide search or a bounded list. The exported `ModelSelectorComponent` requires the session's
 `ModelRuntime`, which the public extension context does not expose. Do not access private runtime state or create a separate runtime to reuse that component. Reuse Pi's
 public controls instead of rebuilding rendering and navigation. No new library is needed.
+
+### Verification
+
+[Verifier report](.specs/20261108-141712-maestro-19-guide-initial-configuration-with-pi-selectors/handoffs/verifier/V1.json). Later owner-requested changes are outside that
+independent verification. The latest `npm run check` passed all 301 tests.
 
 ### Completed when
 

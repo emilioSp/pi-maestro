@@ -3,193 +3,198 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
+## Unreleased
+
+- Added guided initial configuration through `/maestro`: the `owner` selects models and thinking levels for `builder`, `verifier`, and `simplifier`, then saves the
+  configuration and activates `Maestro`. Selected agents are enabled; selecting none enables `spec` preparation only. Agent models no longer have defaults.
+
 ## 0.18.5
 
-1. Added [The Pi Maestro Manifesto](MANIFESTO.md), linked from the README, explaining the project's motivation and approach to spec-driven development.
+- Added [The Pi Maestro Manifesto](MANIFESTO.md), linked from the README, explaining the project's motivation and approach to spec-driven development.
 
 ## 0.18.2
 
-1. The `run` progress for `builder`, `verifier`, and `simplifier` now shows only elapsed time and the latest assistant text. The role name and the active tool no longer
-   appear.
+- The `run` progress for `builder`, `verifier`, and `simplifier` now shows only elapsed time and the latest assistant text. The role name and the active tool no longer
+  appear.
 
 ## 0.18.1
 
-1. Running `builder`, `verifier`, and `simplifier` tools now show elapsed time, active tools, and streaming normal assistant text. Elapsed time keeps updating during
-   silent work. Pi controls preview and expansion, while intermediate activity stays out of the main model's context.
+- Running `builder`, `verifier`, and `simplifier` tools now show elapsed time, active tools, and streaming normal assistant text. Elapsed time keeps updating during
+  silent work. Pi controls preview and expansion, while intermediate activity stays out of the main model's context.
 
 ## 0.18.0
 
-1. `Builder`, `verifier`, and `simplifier` now run in fresh native Pi SDK sessions. Activation no longer requires a separate agent extension. The `owner` can interrupt
-   them through Pi's cancel action.
-2. `Maestro` displays saved child session paths on completion or failure, for direct inspection or HTML export with Pi.
-3. `Maestro` no longer requires the `pi-subagents` package. Installation, activation, and agent `runs` use Pi alone.
+- `Builder`, `verifier`, and `simplifier` now run in fresh native Pi SDK sessions. Activation no longer requires a separate agent extension. The `owner` can interrupt
+  them through Pi's cancel action.
+- `Maestro` displays saved child session paths on completion or failure, for direct inspection or HTML export with Pi.
+- `Maestro` no longer requires the `pi-subagents` package. Installation, activation, and agent `runs` use Pi alone.
 
 ## 0.17.0
 
-1. Added a standalone internal Pi SDK executor. Each invocation starts a fresh conversation with supplied model, thinking level, role guidance, working directory, and
-   additional tools. Native resource discovery loads instructions, skills, enabled extensions, and configured MCP, codemode, and tool search support, excluding the main
-   `Maestro` extension.
-2. Added native child session persistence in `subagents/` beneath Pi's project session directory.
-3. Replaced the `acceptance criterion` `probe` and `expected result` fields with `GIVEN`, `WHEN`, and `THEN`, keeping the concrete example. Requirement bodies now use a
-   named actor followed by `MUST` in the requirement heading. Added an optional bullet-list `## Assumptions` section to `spec.md`.
+- Added a standalone internal Pi SDK executor. Each invocation starts a fresh conversation with supplied model, thinking level, role guidance, working directory, and
+  additional tools. Native resource discovery loads instructions, skills, enabled extensions, and configured MCP, codemode, and tool search support, excluding the main
+  `Maestro` extension.
+- Added native child session persistence in `subagents/` beneath Pi's project session directory.
+- Replaced the `acceptance criterion` `probe` and `expected result` fields with `GIVEN`, `WHEN`, and `THEN`, keeping the concrete example. Requirement bodies now use a
+  named actor followed by `MUST` in the requirement heading. Added an optional bullet-list `## Assumptions` section to `spec.md`.
 
 The `builder`, `verifier`, and `simplifier` still use `pi-subagents`. Workflow migration and dependency removal remain separate work.
 
 ## 0.16.0
 
-1. Required Pi 1.5.0 or later and pinned the development Pi dependencies to that baseline, so type checks and tests run against the declared host. The extension now uses
-   TypeBox `Type.Enum` with an explicit string type instead of the `StringEnum` helper, calls `before_agent_start` with Pi's message object, and expects the `truncated`
-   field on `exec` results. See [PR #46](https://github.com/emilioSp/pi-maestro/pull/46).
-2. Breaking: removed `timeoutMinutes` from the agent configuration. Configuration files that still contain the field fail validation until the `owner` removes it; no
-   migration or legacy handling is provided.
-3. Replaced the configured per-agent timeout with a fixed, non-configurable deadline passed to `pi-subagents` for every `run`. A `run` is no longer bounded by a
-   configured duration.
-4. Updated `ADR.md`, `ROADMAP.md`, `README.md`, and `docs/` for the new baseline and the removed timeout settings. `MAESTRO-FREE-1` is recorded as completed.
+- Required Pi 1.5.0 or later and pinned the development Pi dependencies to that baseline, so type checks and tests run against the declared host. The extension now uses
+  TypeBox `Type.Enum` with an explicit string type instead of the `StringEnum` helper, calls `before_agent_start` with Pi's message object, and expects the `truncated`
+  field on `exec` results. See [PR #46](https://github.com/emilioSp/pi-maestro/pull/46).
+- Breaking: removed `timeoutMinutes` from the agent configuration. Configuration files that still contain the field fail validation until the `owner` removes it; no
+  migration or legacy handling is provided.
+- Replaced the configured per-agent timeout with a fixed, non-configurable deadline passed to `pi-subagents` for every `run`. A `run` is no longer bounded by a
+  configured duration.
+- Updated `ADR.md`, `ROADMAP.md`, `README.md`, and `docs/` for the new baseline and the removed timeout settings. `MAESTRO-FREE-1` is recorded as completed.
 
 ## 0.15.0
 
-1. Added per-agent `required` booleans in `.pi/maestro.json`, all defaulting to `true`. Disabling `builder` completes the workflow at `spec` approval without agents;
-   otherwise `verifier` and `simplifier` can be disabled independently. See [PR #45](https://github.com/emilioSp/pi-maestro/pull/45).
-2. Limited activation checks and displayed agent details to enabled phases. With `builder` disabled, activation requires no agents, models, or `pi-subagents` ping.
-3. Updated workflow transitions, tool messages, agent guidance, and documentation for optional phases. Final-summary guidance identifies skipped work without claiming
-   implementation, independent verification, or simplification occurred.
+- Added per-agent `required` booleans in `.pi/maestro.json`, all defaulting to `true`. Disabling `builder` completes the workflow at `spec` approval without agents;
+  otherwise `verifier` and `simplifier` can be disabled independently. See [PR #45](https://github.com/emilioSp/pi-maestro/pull/45).
+- Limited activation checks and displayed agent details to enabled phases. With `builder` disabled, activation requires no agents, models, or `pi-subagents` ping.
+- Updated workflow transitions, tool messages, agent guidance, and documentation for optional phases. Final-summary guidance identifies skipped work without claiming
+  implementation, independent verification, or simplification occurred.
 
 ## 0.14.0
 
-1. Removed Maestro's model format regex while retaining activation checks against Pi's available model registry. Complete identifiers, including
-   `openrouter/~openai/gpt-mini-latest`, are matched without truncation and passed unchanged to `pi-subagents`. Maestro's other configuration validation remains
-   unchanged.
+- Removed Maestro's model format regex while retaining activation checks against Pi's available model registry. Complete identifiers, including
+  `openrouter/~openai/gpt-mini-latest`, are matched without truncation and passed unchanged to `pi-subagents`. Maestro's other configuration validation remains
+  unchanged.
 
 ## 0.13.1
 
-1. Restored `ROADMAP.md` as the planning source of truth from the current Linear issues, retaining their identifiers and recorded evidence. Updated repository guidance,
-   documentation links, and package contents so roadmap maintenance no longer requires Linear. Linear data remains unchanged.
+- Restored `ROADMAP.md` as the planning source of truth from the current Linear issues, retaining their identifiers and recorded evidence. Updated repository guidance,
+  documentation links, and package contents so roadmap maintenance no longer requires Linear. Linear data remains unchanged.
 
 ## 0.13.0
 
-1. Automatically turn off `Maestro` after successfully delivering the final summary of a completed workflow, including when Git is unavailable and simplification is
-   skipped. Clear live tools, status, instructions, and active `spec` selection while preserving saved workflow files and other extensions. See
-   [MAESTRO-26](https://linear.app/emilio-spatola/issue/MAESTRO-26).
+- Automatically turn off `Maestro` after successfully delivering the final summary of a completed workflow, including when Git is unavailable and simplification is
+  skipped. Clear live tools, status, instructions, and active `spec` selection while preserving saved workflow files and other extensions. See
+  [MAESTRO-26](https://linear.app/emilio-spatola/issue/MAESTRO-26).
 
 ## 0.12.0
 
-1. Added stable `REQ` identifiers and a `Verified by` field to the `spec` template and `Maestro` guidance. Each requirement links to its `acceptance criteria` or exact
-   existing test scenarios. Review checks complete coverage and current links, including during revisions. Approval validation and `handoff` formats remain unchanged.
-2. Added per-requirement `Delta` labels: `added`, `modified`, and `removed`. Modified or removed behavior can include a brief, evidence-based `Before` description when
-   useful. Requirements state the complete required outcome; unchanged behavior remains implicit. Approval validation and `handoff` formats remain unchanged.
-3. Split new `specs` into required `proposal.md` and `spec.md`, with optional `design.md`. One `GREEN FLAG` approves and freezes the present document set; all agent roles
-   read it. Creation returns the new document paths; approval requires the proposal. Historical documents are not migrated.
-4. Placed requirement-associated `acceptance criteria` under their requirements as level-four headings. Relevant standalone regression criteria use level-three headings
-   under optional `Regression checks`, without inventing unchanged requirements. Both forms share global numbering and are required in `handoffs`. Workflow phases and
-   saved report formats remain unchanged.
-5. Removed the `Coverage` classification field from current `acceptance criteria`. Each criterion retains its `probe`, `expected result`, and example. Standalone
-   regression checks remain identified by their section; validation and report formats are unchanged.
+- Added stable `REQ` identifiers and a `Verified by` field to the `spec` template and `Maestro` guidance. Each requirement links to its `acceptance criteria` or exact
+  existing test scenarios. Review checks complete coverage and current links, including during revisions. Approval validation and `handoff` formats remain unchanged.
+- Added per-requirement `Delta` labels: `added`, `modified`, and `removed`. Modified or removed behavior can include a brief, evidence-based `Before` description when
+  useful. Requirements state the complete required outcome; unchanged behavior remains implicit. Approval validation and `handoff` formats remain unchanged.
+- Split new `specs` into required `proposal.md` and `spec.md`, with optional `design.md`. One `GREEN FLAG` approves and freezes the present document set; all agent roles
+  read it. Creation returns the new document paths; approval requires the proposal. Historical documents are not migrated.
+- Placed requirement-associated `acceptance criteria` under their requirements as level-four headings. Relevant standalone regression criteria use level-three headings
+  under optional `Regression checks`, without inventing unchanged requirements. Both forms share global numbering and are required in `handoffs`. Workflow phases and
+  saved report formats remain unchanged.
+- Removed the `Coverage` classification field from current `acceptance criteria`. Each criterion retains its `probe`, `expected result`, and example. Standalone
+  regression checks remain identified by their section; validation and report formats are unchanged.
 
 ## 0.11.0
 
-1. Added the `simplifier` after successful verification or rejection of all current `findings`, without another approval or verification cycle.
-2. Added Git-only readiness and file discovery for simplification. If Git is unavailable, the workflow warns and completes without delegation.
-3. Added independent `simplifier` configuration, activation checks and presentation, running status, and the fixed `handoffs/simplifier/S.json` result.
-4. Removed the extra code-quality review from the verifier's instructions. The `simplifier` preserves accepted behavior without introducing check failures.
+- Added the `simplifier` after successful verification or rejection of all current `findings`, without another approval or verification cycle.
+- Added Git-only readiness and file discovery for simplification. If Git is unavailable, the workflow warns and completes without delegation.
+- Added independent `simplifier` configuration, activation checks and presentation, running status, and the fixed `handoffs/simplifier/S.json` result.
+- Removed the extra code-quality review from the verifier's instructions. The `simplifier` preserves accepted behavior without introducing check failures.
 
 ## 0.10.1
 
-1. Added `success`, `failure`, and `unchanged` coverage labels to the `spec` template and `Maestro` guidance. Approval validation and `handoff` formats remain unchanged.
-2. Required `Maestro` to inspect existing tests before writing `acceptance criteria` and remove criteria whose exact scenarios already have coverage. Requirements remain
-   documented in the `spec`.
+- Added `success`, `failure`, and `unchanged` coverage labels to the `spec` template and `Maestro` guidance. Approval validation and `handoff` formats remain unchanged.
+- Required `Maestro` to inspect existing tests before writing `acceptance criteria` and remove criteria whose exact scenarios already have coverage. Requirements remain
+  documented in the `spec`.
 
 ## 0.10.0
 
-1. Saved complete `owner` decision batches in their original `handoffs` before changing phase, including when the `spec` requires revision. See
-   [PR #38](https://github.com/emilioSp/pi-maestro/pull/38).
-2. Added `revise-spec` decisions for `verifier` `findings`, with the owner's reason and agreed requirement change. Revision takes priority over code fixes and rejections.
-3. Unified both revision paths through `drafting-spec`, with renewed `GREEN FLAG` before separate approval and another `builder` `run`. Approval is allowed only from
-   `drafting-spec`.
-4. Renamed workflow events to identify `builder` and `owner` actions. Both revision paths share `OWNER_REQUEST_SPEC_REVISION`.
-5. Breaking: supply the required boolean `specChangeRequired` when calling `maestro_resolve_escalations`.
-6. Breaking: saved decision phases are now `escalation-decisions` and `finding-decisions`. Existing workflows using older names require manual `owner` handling. No
-   automatic migration is provided.
+- Saved complete `owner` decision batches in their original `handoffs` before changing phase, including when the `spec` requires revision. See
+  [PR #38](https://github.com/emilioSp/pi-maestro/pull/38).
+- Added `revise-spec` decisions for `verifier` `findings`, with the owner's reason and agreed requirement change. Revision takes priority over code fixes and rejections.
+- Unified both revision paths through `drafting-spec`, with renewed `GREEN FLAG` before separate approval and another `builder` `run`. Approval is allowed only from
+  `drafting-spec`.
+- Renamed workflow events to identify `builder` and `owner` actions. Both revision paths share `OWNER_REQUEST_SPEC_REVISION`.
+- Breaking: supply the required boolean `specChangeRequired` when calling `maestro_resolve_escalations`.
+- Breaking: saved decision phases are now `escalation-decisions` and `finding-decisions`. Existing workflows using older names require manual `owner` handling. No
+  automatic migration is provided.
 
 ## 0.9.5
 
-1. Added a shared check that requires every approved `spec` criterion ID in `builder` and `verifier` `handoffs`. See
-   [PR #37](https://github.com/emilioSp/pi-maestro/pull/37).
-2. Missing IDs reject submission before saving a report or changing phase. Extra report IDs remain allowed, and existing report validation is unchanged.
-3. Reused the raw heading rule `^### AC(\d+):`, including leading zeros and matching lines inside code blocks. No matching headings impose no new restriction.
-4. Added unit tests for extraction and one missing-ID integration test per role.
+- Added a shared check that requires every approved `spec` criterion ID in `builder` and `verifier` `handoffs`. See
+  [PR #37](https://github.com/emilioSp/pi-maestro/pull/37).
+- Missing IDs reject submission before saving a report or changing phase. Extra report IDs remain allowed, and existing report validation is unchanged.
+- Reused the raw heading rule `^### AC(\d+):`, including leading zeros and matching lines inside code blocks. No matching headings impose no new restriction.
+- Added unit tests for extraction and one missing-ID integration test per role.
 
 ## 0.9.4
 
-1. Added numbering validation to `spec` approval. Matched `acceptance criterion` headings must start at `AC1` and continue without gaps. See
-   [PR #36](https://github.com/emilioSp/pi-maestro/pull/36).
-2. Invalid numbering rejects approval before saving the workflow and leaves all saved files unchanged. No matching headings still permits approval.
-3. Added `Maestro` guidance to correct only numbering and affected references, then retry with the existing `GREEN FLAG`. No additional `owner` approval is required
-   before starting the `builder`.
+- Added numbering validation to `spec` approval. Matched `acceptance criterion` headings must start at `AC1` and continue without gaps. See
+  [PR #36](https://github.com/emilioSp/pi-maestro/pull/36).
+- Invalid numbering rejects approval before saving the workflow and leaves all saved files unchanged. No matching headings still permits approval.
+- Added `Maestro` guidance to correct only numbering and affected references, then retry with the existing `GREEN FLAG`. No additional `owner` approval is required
+  before starting the `builder`.
 
 ## 0.9.3
 
-1. Added a parent `pi-subagents` availability check during activation. A matching successful version 1 `ping` reply is required within 2000 ms. See
-   [PR #35](https://github.com/emilioSp/pi-maestro/pull/35).
-2. Failed or invalid replies, emission errors, and timeouts prevent activation. The error includes "Maestro flow requires pi-subagents installed in the Pi environment."
-   The check makes no automatic retry.
-3. Preserved existing activation checks, UI-only notices, and unchanged session history. The availability check starts no agent, makes no model request, and does not run
-   when turning `Maestro` off.
+- Added a parent `pi-subagents` availability check during activation. A matching successful version 1 `ping` reply is required within 2000 ms. See
+  [PR #35](https://github.com/emilioSp/pi-maestro/pull/35).
+- Failed or invalid replies, emission errors, and timeouts prevent activation. The error includes "Maestro flow requires pi-subagents installed in the Pi environment."
+  The check makes no automatic retry.
+- Preserved existing activation checks, UI-only notices, and unchanged session history. The availability check starts no agent, makes no model request, and does not run
+  when turning `Maestro` off.
 
 ## 0.9.2
 
-1. Added code-quality review to `verifier` guidance for code affected by the approved change when applicable `AGENTS.md` directives exist. See
-   [PR #34](https://github.com/emilioSp/pi-maestro/pull/34). All existing verification duties remain unchanged.
-2. Required instruction-violation `findings` to identify the instruction file, quote the rule, and explain the violating code through existing evidence fields.
-3. Skip only the added review when files or code-quality directives are absent. Missing directives and personal style preferences do not produce `findings`.
+- Added code-quality review to `verifier` guidance for code affected by the approved change when applicable `AGENTS.md` directives exist. See
+  [PR #34](https://github.com/emilioSp/pi-maestro/pull/34). All existing verification duties remain unchanged.
+- Required instruction-violation `findings` to identify the instruction file, quote the rule, and explain the violating code through existing evidence fields.
+- Skip only the added review when files or code-quality directives are absent. Missing directives and personal style preferences do not produce `findings`.
 
 ## 0.9.1
 
-1. Added a brief introduction and an invitation to ask how `Maestro` works to the successful activation notice. See
-   [PR #33](https://github.com/emilioSp/pi-maestro/pull/33).
-2. Preserved the configured agent details and UI-only activation. Activation does not add session history or start a model request.
-3. Added absolute paths to the installed README and documentation directory in active instructions. `Maestro` reads relevant documentation on demand without automatically
-   loading its contents.
+- Added a brief introduction and an invitation to ask how `Maestro` works to the successful activation notice. See
+  [PR #33](https://github.com/emilioSp/pi-maestro/pull/33).
+- Preserved the configured agent details and UI-only activation. Activation does not add session history or start a model request.
+- Added absolute paths to the installed README and documentation directory in active instructions. `Maestro` reads relevant documentation on demand without automatically
+  loading its contents.
 
 ## 0.9.0
 
-1. Breaking: `builder` reports now support only `done` and `escalation`. Reportable technical problems use the existing `owner` `escalation` process. See
-   [PR #32](https://github.com/emilioSp/pi-maestro/pull/32).
-2. Removed the terminal `builder` failure phase and event. Execution errors and missing or invalid saved results still stop the workflow without automatic recovery.
-3. No migrations, compatibility readers, or deprecated aliases are provided. `Artifact` versions remain `1.0.0`.
+- Breaking: `builder` reports now support only `done` and `escalation`. Reportable technical problems use the existing `owner` `escalation` process. See
+  [PR #32](https://github.com/emilioSp/pi-maestro/pull/32).
+- Removed the terminal `builder` failure phase and event. Execution errors and missing or invalid saved results still stop the workflow without automatic recovery.
+- No migrations, compatibility readers, or deprecated aliases are provided. `Artifact` versions remain `1.0.0`.
 
 ## 0.8.0
 
-1. Updated the bundled `pi-subagents` dependency from `0.76.0` to `0.78.0`.
-2. Renamed `test/` to `tests/`. Updated imports, fixture paths, lint configuration, and project instructions. Source tests remain next to their source files.
+- Updated the bundled `pi-subagents` dependency from `0.76.0` to `0.78.0`.
+- Renamed `test/` to `tests/`. Updated imports, fixture paths, lint configuration, and project instructions. Source tests remain next to their source files.
 
 ## 0.7.3
 
-1. Added Oxlint rules for `given ... when ... then ...` test titles, `const` usage, unnecessary `else` branches, type aliases, and ESM imports. See
-   [PR #31](https://github.com/emilioSp/pi-maestro/pull/31).
-2. Updated `oxlint-anti-slop` from `0.3.3` to `0.3.6`.
-3. Updated 106 test titles to match the naming rule without changing test logic.
+- Added Oxlint rules for `given ... when ... then ...` test titles, `const` usage, unnecessary `else` branches, type aliases, and ESM imports. See
+  [PR #31](https://github.com/emilioSp/pi-maestro/pull/31).
+- Updated `oxlint-anti-slop` from `0.3.3` to `0.3.6`.
+- Updated 106 test titles to match the naming rule without changing test logic.
 
 ## 0.7.2
 
-1. Renamed the constitution files to `MISSION.md`, `TECH_STACK.md`, `ROADMAP.md`, and `CHANGELOG.md`. Updated their links, package file list, and audit references.
-2. Applied consistent inline code formatting to glossary terms across the documentation. Recorded the formatting rule and its exclusions in `AGENTS.md` and the
-   documentation audit skill.
-3. Used `spec` consistently for the approved change document and removed the redundant glossary entry.
+- Renamed the constitution files to `MISSION.md`, `TECH_STACK.md`, `ROADMAP.md`, and `CHANGELOG.md`. Updated their links, package file list, and audit references.
+- Applied consistent inline code formatting to glossary terms across the documentation. Recorded the formatting rule and its exclusions in `AGENTS.md` and the
+  documentation audit skill.
+- Used `spec` consistently for the approved change document and removed the redundant glossary entry.
 
 ## 0.7.1
 
-1. Documented the project mission, current tech stack, `owner` responsibilities, roadmap, and codebase change history. See
-   [PR #30](https://github.com/emilioSp/pi-maestro/pull/30).
-2. Replaced `TODO.md` with the roadmap and included the four project constitution documents in the npm package.
-3. Updated documentation audits to compare all current documentation and the project constitution with the working tree without requesting a comparison baseline.
+- Documented the project mission, current tech stack, `owner` responsibilities, roadmap, and codebase change history. See
+  [PR #30](https://github.com/emilioSp/pi-maestro/pull/30).
+- Replaced `TODO.md` with the roadmap and included the four project constitution documents in the npm package.
+- Updated documentation audits to compare all current documentation and the project constitution with the working tree without requesting a comparison baseline.
 
 ## 0.7.0
 
-1. Stored multiple `escalation` questions and `owner` resolutions inside numbered `builder` `handoffs`. Earlier `handoffs` remain available as history. See
-   [PR #27](https://github.com/emilioSp/pi-maestro/pull/27).
-2. Breaking: replaced `maestro_open_escalation` and `maestro_resolve_escalation` with `maestro_record_builder_handoff` and `maestro_resolve_escalations`. Done `handoffs`
-   require `escalations: []`. Standalone `escalation` storage was removed without migration or compatibility readers. `Artifact` versions remain `1.0.0`.
-3. Added LCOV coverage reports and Codecov uploads from CI. See [PR #28](https://github.com/emilioSp/pi-maestro/pull/28).
+- Stored multiple `escalation` questions and `owner` resolutions inside numbered `builder` `handoffs`. Earlier `handoffs` remain available as history. See
+  [PR #27](https://github.com/emilioSp/pi-maestro/pull/27).
+- Breaking: replaced `maestro_open_escalation` and `maestro_resolve_escalation` with `maestro_record_builder_handoff` and `maestro_resolve_escalations`. Done `handoffs`
+  require `escalations: []`. Standalone `escalation` storage was removed without migration or compatibility readers. `Artifact` versions remain `1.0.0`.
+- Added LCOV coverage reports and Codecov uploads from CI. See [PR #28](https://github.com/emilioSp/pi-maestro/pull/28).
 
 Reload `Maestro` extensions before starting new workflows so sessions use the updated tools.
 
@@ -200,11 +205,11 @@ session history and model context. See [PR #26](https://github.com/emilioSp/pi-m
 
 ## 0.6.0
 
-1. Removed Git requirements, checkpoints, and automatic commits from the workflow. `Maestro` uses Pi's project directory and saved workflow phase. See
-   [PR #25](https://github.com/emilioSp/pi-maestro/pull/25).
-2. Retained numbered `builder` and `verifier` `handoffs` and explicit `owner` `finding` decisions. Removed workflow revision counters and writer locks.
-3. Breaking: changed `artifact` formats, `handoff` paths, and tool results without migration or compatibility readers. Removed revision and commit fields. `Artifact`
-   versions remain `1.0.0`. Interrupted and older workflows require manual `owner` handling.
+- Removed Git requirements, checkpoints, and automatic commits from the workflow. `Maestro` uses Pi's project directory and saved workflow phase. See
+  [PR #25](https://github.com/emilioSp/pi-maestro/pull/25).
+- Retained numbered `builder` and `verifier` `handoffs` and explicit `owner` `finding` decisions. Removed workflow revision counters and writer locks.
+- Breaking: changed `artifact` formats, `handoff` paths, and tool results without migration or compatibility readers. Removed revision and commit fields. `Artifact`
+  versions remain `1.0.0`. Interrupted and older workflows require manual `owner` handling.
 
 ## 0.5.2
 
@@ -247,9 +252,9 @@ Enabled inheritance of global instructions for `builder` and `verifier` agents, 
 
 ## 0.4.0
 
-1. Fixed delegated `handoffs` that depended on unavailable parent session memory. See [PR #22](https://github.com/emilioSp/pi-maestro/pull/22).
-2. Removed hash-based `spec` guards and checkpoint-based `verifier` comparisons. `Spec` preservation and restoration rely on agent instructions.
-3. Refreshed the running status before delegation and required repository investigation before presenting technical decisions during `spec` preparation.
+- Fixed delegated `handoffs` that depended on unavailable parent session memory. See [PR #22](https://github.com/emilioSp/pi-maestro/pull/22).
+- Removed hash-based `spec` guards and checkpoint-based `verifier` comparisons. `Spec` preservation and restoration rely on agent instructions.
+- Refreshed the running status before delegation and required repository investigation before presenting technical decisions during `spec` preparation.
 
 ## 0.3.0
 
