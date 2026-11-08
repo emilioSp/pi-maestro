@@ -617,13 +617,13 @@ describe('main Maestro extension', () => {
       const services = await prepareSubagentEnvironment({
         cwd: request.cwd,
         roleGuidance: request.roleGuidance,
+        additionalTools: request.additionalTools,
       });
 
       const { session: child } = await createAgentSession({
         ...services,
         modelRuntime: session.modelRuntime,
         model: session.model,
-        customTools: request.additionalTools,
         sessionManager: SessionManager.inMemory(request.cwd),
       });
 
@@ -640,6 +640,12 @@ describe('main Maestro extension', () => {
           throw new Error(`Unexpected agent: ${request.roleGuidance.split('\n')[0]}`);
         }
 
+        expect(
+          child.extensionRunner
+            .getAllRegisteredTools()
+            .map(({ definition }) => definition.name)
+            .filter((name) => name.startsWith('maestro_record_')),
+        ).toEqual([scriptedRun.handoffToolName]);
         expect(
           child.getActiveToolNames().filter((name) => name.startsWith('maestro_record_')),
         ).toEqual([scriptedRun.handoffToolName]);

@@ -45,12 +45,17 @@ describe('execute task', () => {
 
   it('given a successful child session when a task is executed then its final text and saved path are returned and the child is closed', async () => {
     const { session, settingsManager } = await piTestSessions.create({ extensions: [] });
-    vi.mocked(prepareSubagentEnvironment).mockImplementationOnce(({ cwd }) =>
+    vi.mocked(prepareSubagentEnvironment).mockImplementationOnce(({ cwd, additionalTools }) =>
       createAgentSessionServices({
         cwd,
         modelRuntime: session.modelRuntime,
         settingsManager,
         resourceLoaderOptions: {
+          extensionFactories: [
+            (pi) => {
+              for (const tool of additionalTools) pi.registerTool(tool);
+            },
+          ],
           noExtensions: true,
           noSkills: true,
           noPromptTemplates: true,
@@ -241,12 +246,17 @@ describe('execute task', () => {
       },
     });
     await session.modelRuntime.refresh({ allowNetwork: false });
-    vi.mocked(prepareSubagentEnvironment).mockImplementationOnce(({ cwd }) =>
+    vi.mocked(prepareSubagentEnvironment).mockImplementationOnce(({ cwd, additionalTools }) =>
       createAgentSessionServices({
         cwd,
         modelRuntime: session.modelRuntime,
         settingsManager,
         resourceLoaderOptions: {
+          extensionFactories: [
+            (pi) => {
+              for (const tool of additionalTools) pi.registerTool(tool);
+            },
+          ],
           noExtensions: true,
           noSkills: true,
           noPromptTemplates: true,
@@ -423,12 +433,17 @@ describe('execute task', () => {
         },
       });
       await session.modelRuntime.refresh({ allowNetwork: false });
-      vi.mocked(prepareSubagentEnvironment).mockImplementationOnce(({ cwd }) =>
+      vi.mocked(prepareSubagentEnvironment).mockImplementationOnce(({ cwd, additionalTools }) =>
         createAgentSessionServices({
           cwd,
           modelRuntime: session.modelRuntime,
           settingsManager,
           resourceLoaderOptions: {
+            extensionFactories: [
+              (pi) => {
+                for (const tool of additionalTools) pi.registerTool(tool);
+              },
+            ],
             noExtensions: true,
             noSkills: true,
             noPromptTemplates: true,

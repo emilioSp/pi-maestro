@@ -1,5 +1,5 @@
 /**
- * Objective: Discover native Pi resources without loading the main Maestro extension.
+ * Objective: Discover native Pi resources and exclude main Maestro registrations from children.
  * Used: During preparation of each standalone child execution.
  */
 
@@ -12,9 +12,10 @@ import {
   createCodemodeExtension,
   createMcpExtension,
   createToolSearchExtension,
-  DefaultPackageManager,
   getAgentDir,
+  type InlineExtension,
   SettingsManager,
+  type ToolDefinition,
 } from '@earendil-works/pi-coding-agent';
 
 const MAIN_EXTENSION = fileURLToPath(new URL('../../extensions/maestro.ts', import.meta.url));
@@ -27,8 +28,8 @@ const isMaestroPackage = (value: unknown): value is MaestroPackage =>
   'name' in value &&
   value.name === '@emiliosp/pi-maestro';
 
-const isMainExtension = (path: string): boolean => {
-  if (path.startsWith('builtin:')) return false;
+const isMainMaestroExtension = (path: string): boolean => {
+  if (path.startsWith('builtin:') || path.startsWith('<inline:')) return false;
 
   const canonicalPath = realpathSync(path);
 
@@ -54,52 +55,39 @@ const isMainExtension = (path: string): boolean => {
 type PrepareSubagentEnvironmentInput = {
   cwd: string;
   roleGuidance: string;
+  additionalTools: ToolDefinition[];
 };
 
 export const prepareSubagentEnvironment = async ({
   cwd,
   roleGuidance,
+  additionalTools,
 }: PrepareSubagentEnvironmentInput) => {
   const agentDir = getAgentDir();
   const settingsManager = SettingsManager.create(cwd, agentDir);
 
-  const extensionFactories = [
+  // SDK sessions need these CLI built-ins supplied explicitly.
+  // The inline factory registers the child's additional tools with pi.registerTool.
+  const extensionFactories: InlineExtension[] = [
     { name: 'codemode', factory: createCodemodeExtension(), builtin: true, replaceable: true },
     { name: 'tool-search', factory: createToolSearchExtension(), builtin: true, replaceable: true },
     { name: 'mcp', factory: createMcpExtension(), builtin: true, replaceable: true },
+    (pi) => {
+      for (const tool of additionalTools) pi.registerTool(tool);
+    },
   ];
-
-  const packages = new DefaultPackageManager({
-    cwd,
-    agentDir,
-    settingsManager,
-    builtinExtensions: extensionFactories.map(({ name }) => name),
-  });
-
-  const resources = await packages.resolve(async () => 'error');
-
-  if (resources.installFailures?.length) {
-    throw new Error(resources.installFailures.map(({ message }) => message).join('\n'));
-  }
-
-  // extensionsOverride filters extensions after Pi has loaded and initialized them.
-  // It would exclude Maestro's event handlers, but its initialization code would still run.
-  // Use additionalExtensionPaths instead to exclude Maestro before loading it,
-  // so none of its code executes in the child session.
-  const additionalExtensionPaths = resources.extensions
-    .filter(({ enabled, path }) => enabled && !isMainExtension(path))
-    .map(({ path }) => path);
 
   const services = await createAgentSessionServices({
     cwd,
     agentDir,
     settingsManager,
     resourceLoaderOptions: {
-      // Disable automatic extension discovery; load only the filtered paths below
-      // and the built-in factories, so discovery cannot add Maestro back.
-      noExtensions: true,
-      additionalExtensionPaths,
       extensionFactories,
+      // Exclude the main Maestro extension from the child session.
+      extensionsOverride: (base) => ({
+        ...base,
+        extensions: base.extensions.filter(({ path }) => !isMainMaestroExtension(path)),
+      }),
       appendSystemPromptOverride: (base) => [...base, roleGuidance],
     },
   });
