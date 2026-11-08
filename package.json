@@ -1,6 +1,6 @@
 {
   "name": "@emiliosp/pi-maestro",
-  "version": "0.18.5",
+  "version": "0.18.6",
   "description": "A spec-driven multiagent development workflow for Pi.",
   "keywords": [
     "orchestration",
