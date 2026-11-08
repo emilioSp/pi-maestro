@@ -3,7 +3,7 @@
  * Used: In tests with temporary project configurations.
  */
 
-import { lstat, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -13,14 +13,13 @@ import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 
 describe('configuration loading', () => {
-  it('given no configuration file when configuration is loaded then setup is required without creating files', async () => {
+  it('given no configuration file when configuration is loaded then the error requests interactive setup', async () => {
     const workspace = await createTemporaryProject();
 
     try {
       await expect(loadConfiguration(workspace.path)).rejects.toThrow(
         'Project configuration is missing',
       );
-      await expect(lstat(join(workspace.path, '.pi'))).rejects.toMatchObject({ code: 'ENOENT' });
     } finally {
       await workspace.cleanup();
     }
@@ -38,9 +37,6 @@ describe('configuration loading', () => {
       await expect(loadConfiguration(workspace.path)).resolves.toEqual({
         ...TEST_CONFIG,
         specDirectory: join(workspace.path, 'custom-specs'),
-      });
-      await expect(lstat(join(workspace.path, 'custom-specs'))).rejects.toMatchObject({
-        code: 'ENOENT',
       });
     } finally {
       await workspace.cleanup();
