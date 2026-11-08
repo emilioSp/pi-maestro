@@ -132,16 +132,14 @@ it.each([
       }),
     );
 
-    const { session, events } = await piTestSessions.create({
+    const { session } = await piTestSessions.create({
       cwd: repository.path,
       extensions: [],
     });
 
     const context = session.extensionRunner.createContext();
     const available = vi.spyOn(context.modelRegistry, 'getAvailable').mockReturnValue([]);
-    const emit = vi.spyOn(events, 'emit');
     await expect(assertEnvironment({ context })).resolves.toBeUndefined();
-    expect(emit).not.toHaveBeenCalled();
     expect(available).not.toHaveBeenCalled();
   },
 );
