@@ -289,6 +289,9 @@ The `pi-subagents` integration then in use still received a fixed deadline of 9,
 
 ### Implementation and evidence
 
+Registration follow-up: caller-supplied tools use an inline `extensionFactories` entry instead of SDK `customTools`. This `owner`-requested change is implemented for
+review, with role-specific registration checked by the [workflow integration test](extensions/maestro.integration.test.ts).
+
 The standalone executor is implemented under `src/delegation/` against the [approved specification](.specs/20261105-212231-implement-internal-pi-sdk-delegation/spec.md).
 Review follow-up consolidated execution orchestration and session lifecycle in `executeTask`; pure reply interpretation remains in `readTaskResult`. Manual verification
 on Pi 1.5.0 exercised fresh context, native and additional tools, MCP through tool search and codemode, sequential waiting, failure, cancellation, cleanup, and native
