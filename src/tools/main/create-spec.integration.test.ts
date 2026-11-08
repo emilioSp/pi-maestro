@@ -4,8 +4,10 @@ import { join } from 'node:path';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { saveConfiguration } from '#config/saveConfiguration.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import type { CreatedSpec } from '#specs/create.ts';
+import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { registerCreateSpecTool } from '#tools/main/create-spec.ts';
@@ -39,6 +41,14 @@ describe('create spec tool', () => {
   it('given no active workflow when the create-spec tool runs then it selects the new spec, saves its draft and workflow, and returns their paths', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
+    await saveConfiguration({
+      cwd: repository.path,
+      agentModelSelections: {
+        builder: TEST_CONFIG.builder,
+        verifier: TEST_CONFIG.verifier,
+        simplifier: TEST_CONFIG.simplifier,
+      },
+    });
     maestroSessionState.activate();
 
     const { tool } = await piTestSessions.createRegisteredTool({
@@ -81,6 +91,14 @@ describe('create spec tool', () => {
     cleanupFunctions.push(repository.cleanup);
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId('20260321-143052-current-workflow');
+    await saveConfiguration({
+      cwd: repository.path,
+      agentModelSelections: {
+        builder: TEST_CONFIG.builder,
+        verifier: TEST_CONFIG.verifier,
+        simplifier: TEST_CONFIG.simplifier,
+      },
+    });
 
     const { tool } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
