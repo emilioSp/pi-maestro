@@ -373,5 +373,5 @@ When existing `specs` are available, `/maestro` activation offers "New spec" and
 The selected `spec` returns to `drafting-spec` from any saved phase. `Maestro` reads and reviews its proposal, `spec`, and optional design with the `owner` before asking
 for renewed `GREEN FLAG`.
 
-Restart preserves the existing files except for the workflow phase. Saved `owner` decisions retain their normal effect for the same approved documents.
-Restart does not recover an interrupted agent or its conversation, reconstruct progress from the previous phase, or reconcile partial saves.
+Restart preserves the existing files except for the workflow phase. Saved `owner` decisions retain their normal effect for the same approved documents. Restart does not
+recover an interrupted agent or its conversation, reconstruct progress from the previous phase, or reconcile partial saves.
