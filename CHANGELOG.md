@@ -3,6 +3,10 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
+## 0.19.2
+
+- chore: `Maestro` role instructions are now maintained in `agents/maestro.md` alongside the other agent roles.
+
 ## 0.19.1
 
 - `/maestro` now lets the `owner` start a new `spec` or restart an existing one, including after an interruption. Restart reopens the same documents for review and

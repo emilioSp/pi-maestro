@@ -175,7 +175,7 @@ export default (pi: ExtensionAPI): void => {
 
     const specId = maestroSessionState.getActiveSpecId();
     event.systemPromptOptions.sections.maestro = [
-      getMaestroInstructions(),
+      await getMaestroInstructions(),
       ...(specId === null
         ? []
         : [`Active spec ID: ${specId}. Resolve its paths in the configured spec directory.`]),

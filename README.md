@@ -157,11 +157,16 @@ files do not automatically restore or resume an incomplete workflow. The `owner`
 
 ## Configuration
 
-If `.pi/maestro.json` does not exist, `/maestro` starts a guided setup in Pi's interactive terminal. You, the `owner`, pick the model and thinking level for the `builder`, the `verifier`, and the `simplifier`. The agents you pick are enabled, and the configuration is saved before `Maestro` starts. If you pick no agents, `Maestro` only prepares the `spec`.
+If `.pi/maestro.json` does not exist, `/maestro` starts a guided setup in Pi's interactive terminal. You, the `owner`, pick the model and thinking level for the
+`builder`, the `verifier`, and the `simplifier`. The agents you pick are enabled, and the configuration is saved before `Maestro` starts. If you pick no agents, `Maestro`
+only prepares the `spec`.
 
-There are no default models. If a configuration file already exists, it must set a model for every enabled phase. Before starting, you can edit the file to change the `spec` directory, the models, the thinking levels, or the phase flags. If a `required` flag is missing in an existing file, it is treated as `true`. Do not change the configuration while the workflow is running.
+There are no default models. If a configuration file already exists, it must set a model for every enabled phase. Before starting, you can edit the file to change the
+`spec` directory, the models, the thinking levels, or the phase flags. If a `required` flag is missing in an existing file, it is treated as `true`. Do not change the
+configuration while the workflow is running.
 
-If `builder.required` is `false`, approval ends with an approved `spec` that you implement somewhere else. Otherwise, you can turn off the `verifier` and the `simplifier` separately. Any skipped work is listed in the final summary and is never reported as done. See [Configuration](docs/configuration.md#phase-selection).
+If `builder.required` is `false`, approval ends with an approved `spec` that you implement somewhere else. Otherwise, you can turn off the `verifier` and the `simplifier`
+separately. Any skipped work is listed in the final summary and is never reported as done. See [Configuration](docs/configuration.md#phase-selection).
 
 ## Documentation
 

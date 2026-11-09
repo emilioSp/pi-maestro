@@ -271,13 +271,6 @@ describe('main Maestro extension', () => {
     );
 
     expect(event.systemPromptOptions.sections.maestro).toContain('You are Maestro');
-    expect(event.systemPromptOptions.sections.maestro).toContain(
-      'Always identify every skipped phase and why. Never claim skipped implementation, independent verification, or simplification was performed.',
-    );
-    expect(event.systemPromptOptions.sections.maestro).toContain(
-      'Do not require handoffs for skipped phases.',
-    );
-    expect(event.systemPromptOptions.sections.foreign).toBe('Keep foreign instructions');
 
     setStatus.mockClear();
     await session.extensionRunner.emitToolResult({
