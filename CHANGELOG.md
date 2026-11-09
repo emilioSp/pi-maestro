@@ -3,9 +3,10 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
-## 0.19.0
+## 0.19.1
 
-- Added existing `spec` selection at `/maestro` activation. Restart returns the selected `spec` to `drafting-spec` for document review and renewed `GREEN FLAG`.
+- `/maestro` now lets the `owner` start a new `spec` or restart an existing one, including after an interruption. Restart reopens the same documents for review and
+  requires a new `GREEN FLAG` before implementation starts again. Existing code, `handoffs`, and saved decisions are preserved.
 
 ## 0.18.7
 
