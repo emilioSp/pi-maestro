@@ -1,17 +1,14 @@
 # Workflow
 
-`Maestro` manages one spec-driven workflow in the current Pi session. The `owner` works directly with `Maestro`.
+`Maestro` guides one spec-driven workflow inside the current Pi session. You, the `owner`, work with `Maestro` directly.
 
-The approved `spec` is one document set: `proposal.md` explains motivation and scope, `spec.md` defines behavior and `acceptance criteria`, and optional `design.md`
-records significant technical decisions. The set forms one contract for the change.
+The approved `spec` is a set of documents that together form one contract for the change. `proposal.md` explains why we are doing it and what is in scope. `spec.md` describes how things should behave and lists the `acceptance criteria`. `design.md` is optional and records the important technical decisions.
 
-An `acceptance criterion` contains one `GIVEN`, one `WHEN`, one `THEN`, and an example. `GIVEN` and `WHEN` describe the scenario, and `THEN` states the measurable
-outcome.
+Each `acceptance criterion` has one `GIVEN`, one `WHEN`, one `THEN`, and an example. `GIVEN` and `WHEN` set up the scenario. `THEN` says what result we expect, in a way we can measure.
 
-A `handoff` is a saved agent report. `Builder` and `verifier` reports contain `probe` outcomes. The simplifier's report records refactored files, a summary, and notes.
+A `handoff` is a report saved by an agent. Reports from the `builder` and the `verifier` include `probe` outcomes. The simplifier's report lists the files it refactored, a short summary, and any notes.
 
-A `builder` `handoff` can contain `escalations`, which are questions that need `owner` decisions. A `verifier` `handoff` can contain `findings`, which are technical
-issues.
+A `builder` `handoff` may include `escalations`, which are questions that only you can decide. A `verifier` `handoff` may include `findings`, which are technical issues it found.
 
 ## Roles
 
