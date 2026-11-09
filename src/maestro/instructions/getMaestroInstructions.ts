@@ -39,14 +39,14 @@ Use generic tools for project inspection. Use only maestro_* tools for workflow 
 Do not edit workflow.json or handoffs directly, including through shell commands.
 The spec, prototype, and experiment permissions below are the only exceptions for file changes.
 
-Use the specId and paths returned by maestro_create_spec. Read workflow.json before selecting the next action. Its validated phase is the source of truth.
+Use the active spec ID supplied at activation, or the specId and paths returned by maestro_create_spec. Read workflow.json before selecting the next action. Its validated phase is the source of truth.
 Use tool schemas for arguments and tool results for outcomes. Do not infer a completed transition from an agent's final message.
 Builder, verifier, and simplifier runs are foreground operations with fresh contexts. Start them only through maestro_run_builder, maestro_run_verifier, and maestro_run_simplifier.
 Wait for each tool result before taking the next workflow action. Do not launch parallel or background runs.
 
 ### Prepare and approve the spec
 
-1. Call maestro_create_spec with the change title. It creates proposal.md and spec.md from the bundled templates. Use the returned document paths. Create design.md from the installed templates/design.md only when significant technical decisions need to be recorded; do not create an empty design.
+1. If activation supplied an active spec ID, restart review of that same spec in drafting-spec instead of creating a spec. Read its existing proposal.md, spec.md, and design.md when present, and review the document set with the owner before requesting renewed GREEN FLAG. Do not present unanswered escalations for owner discussion or resolution during this restart review. Restart does not invalidate saved handoffs or owner decisions: with the same approved documents, saved decisions retain their normal effect after renewed approval. If no spec is active, call maestro_create_spec with the change title. It creates proposal.md and spec.md from the bundled templates. Use the returned document paths. Create design.md from the installed templates/design.md only when significant technical decisions need to be recorded; do not create an empty design.
 2. Read the repository and applicable AGENTS.md files. Investigate the affected behavior before asking the owner for missing information. Inspect existing tests before writing acceptance criteria.
 3. Ask one focused question at a time. Wait for the answer, then update the relevant document before asking the next question.
 4. Record motivation and scope in proposal.md, required behavior and acceptance criteria in spec.md, and significant approved technical decisions and prototype references in design.md when needed. Link between documents instead of repeating content. Do not invent requirements or silently resolve owner decisions.
@@ -219,8 +219,8 @@ Do not repeat an unchanged failing call, edit protocol files, or fabricate evide
 Launch errors, delegation failures, timeouts, interruptions, cancellations, and missing or invalid handoffs stop the workflow. Do not create synthetic escalations or recovery transitions.
 If a run ends without a valid saved result, report the error and stop. Do not repair product files or force a transition.
 If a run saves no completed transition, its saved running phase remains unchanged.
-Disabling Maestro, restarting Pi, or using /resume clears live state. Do not reconstruct or resume an incomplete workflow.
-The owner handles execution errors, protocol errors, and interrupted workflows manually.
+Disabling Maestro, restarting Pi, or using /resume clears live state. Do not reconstruct or resume the interrupted agent or its conversation.
+The owner can explicitly restart an existing spec through /maestro activation. This returns it to drafting-spec for document review and renewed GREEN FLAG, regardless of its saved phase. Do not infer progress from its old phase or reconcile partial saves. The owner handles execution errors and partial protocol writes.
 
 At candidate-ready, the workflow is complete. No final tool call is required.
 Maestro stays active while you deliver the final summary and automatically turns off after the response finishes successfully, including when simplification was skipped.

@@ -23,6 +23,7 @@ export const WORKFLOW_PHASES = {
 } as const;
 
 export const WORKFLOW_EVENTS = {
+  RESTART_SPEC: 'restart-spec',
   MARK_SPEC_READY: 'mark-spec-ready',
   RUN_BUILDER: 'run-builder',
   BUILDER_OPEN_ESCALATIONS: 'builder-open-escalations',

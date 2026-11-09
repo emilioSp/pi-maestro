@@ -3,6 +3,7 @@
  * Used: When Pi starts a Maestro main session.
  */
 
+import { realpath } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
@@ -14,6 +15,9 @@ import { getMaestroInstructions } from '#maestro/instructions/getMaestroInstruct
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { setupConfiguration } from '#maestro/setupConfiguration.ts';
 import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
+import { MaestroPaths } from '#MaestroPaths.ts';
+import { hasSpecs } from '#specs/hasSpecs.ts';
+import { showSpecMenu, SPEC_ACTIONS } from '#src/ui/showSpecMenu.ts';
 import { CREATE_SPEC_TOOL, registerCreateSpecTool } from '#tools/main/create-spec.ts';
 import { MARK_SPEC_READY_TOOL, registerMarkSpecReadyTool } from '#tools/main/mark-spec-ready.ts';
 import {
@@ -28,7 +32,10 @@ import { RUN_BUILDER_TOOL, registerRunBuilderTool } from '#tools/main/run-builde
 import { RUN_SIMPLIFIER_TOOL, registerRunSimplifierTool } from '#tools/main/run-simplifier.ts';
 import { RUN_VERIFIER_TOOL, registerRunVerifierTool } from '#tools/main/run-verifier.ts';
 import { pathExists } from '#utils/path-exists.ts';
-import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
+import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
+import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
+import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
+import { transitionWorkflow } from '#workflow/transitions.ts';
 
 const MAIN_TOOL_NAMES: readonly string[] = [
   CREATE_SPEC_TOOL.NAME,
@@ -101,6 +108,30 @@ export default (pi: ExtensionAPI): void => {
         const config = await loadConfiguration(context.cwd);
         const isImplementationEnabled = config.builder.required;
 
+        const paths = new MaestroPaths({ projectRoot: await realpath(context.cwd), config });
+
+        if (await hasSpecs(paths.getSpecDirectory())) {
+          const specId = await showSpecMenu({
+            ui: context.ui,
+            specDirectory: paths.getSpecDirectory(),
+          });
+
+          if (specId === undefined) return;
+
+          if (specId !== SPEC_ACTIONS.NEW) {
+            const state = await readWorkflowState(paths.getWorkflowPath(specId));
+
+            if (state.specId !== specId)
+              throw new Error('Workflow spec ID does not match the selected spec.');
+
+            await writeWorkflowState({
+              path: paths.getWorkflowPath(specId),
+              state: transitionWorkflow({ state, event: WORKFLOW_EVENTS.RESTART_SPEC, config }),
+            });
+            maestroSessionState.setActiveSpecId(specId);
+          }
+        }
+
         maestroSessionState.activate();
         syncMainTools();
         await refreshMaestroStatus(context);
@@ -142,7 +173,13 @@ export default (pi: ExtensionAPI): void => {
       return;
     }
 
-    event.systemPromptOptions.sections.maestro = getMaestroInstructions();
+    const specId = maestroSessionState.getActiveSpecId();
+    event.systemPromptOptions.sections.maestro = [
+      getMaestroInstructions(),
+      ...(specId === null
+        ? []
+        : [`Active spec ID: ${specId}. Resolve its paths in the configured spec directory.`]),
+    ].join('\n\n');
     await refreshMaestroStatus(context);
   });
 

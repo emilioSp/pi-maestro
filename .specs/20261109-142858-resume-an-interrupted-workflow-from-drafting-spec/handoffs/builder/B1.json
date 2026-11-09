@@ -1,0 +1,41 @@
+{
+  "status": "done",
+  "summary": "Added activation-time new or restart selection. Restart preserves the selected spec identity and files, saves drafting-spec through the transition table, and supplies document-review and renewed-approval instructions.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npm run check: extensions/maestro.integration.test.ts scenario 'given two existing specs when the owner chooses restart then both IDs are offered for selection' passed with both concrete example IDs in the selector.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "npm run check: parameterized restart integration scenario executed independently for all nine WORKFLOW_PHASES, including all running phases and candidate-ready. Each saved drafting-spec for the selected active ID without another spec directory.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "npm run check: restarted-document-set integration scenario created proposal.md, spec.md, and design.md, restarted the workflow, and emitted Pi before_agent_start. Verified the selected ID and instructions requiring reading those documents and owner review before renewed GREEN FLAG, with approval still pending in drafting-spec.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "npm run check: empty configured spec directory activation scenario passed. No selector was called, Maestro activated with no active spec, and the directory remained empty.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "npm run check: absent configured spec directory activation scenario passed. No selector was called, Maestro activated with no active spec, and the directory remained absent.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "npm run check passed formatting, lint, type checking, and all 314 tests across 43 files. git diff --check passed.",
+    "AC3 verifies agent guidance through the real Pi instruction hook, not a live model conversation.",
+    "REQ2 inspection: restart writes only workflow.json through writeWorkflowState and updates live session selection. REQ5 inspection: existing handoffs remain untouched; guidance preserves saved decisions for unchanged approved documents and excludes unanswered escalation discussion during restart review.",
+    "Updated the existing MAESTRO-25 roadmap description and linked the approved spec. Its Completed table status was already present before this pass; no owner acceptance is claimed.",
+    "Preserved the pre-existing reconciliation.md and spec artifacts. Removed the temporary check log; no temporary verification edits remain."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261109-142858-resume-an-interrupted-workflow-from-drafting-spec"
+}

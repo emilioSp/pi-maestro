@@ -4,7 +4,7 @@
  */
 
 import { execFile } from 'node:child_process';
-import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { access, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 
@@ -104,6 +104,98 @@ afterEach(async () => {
   await piTestSessions.cleanup();
   await cleanupBuilderWorkflows();
   await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
+});
+
+describe('spec restart activation', () => {
+  it('given two existing specs when the owner chooses restart then both IDs are offered for selection', async () => {
+    const repository = await createTemporaryProject();
+    cleanupFunctions.push(repository.cleanup);
+    await saveConfiguration({ cwd: repository.path, agentModelSelections: {} });
+    const ids = ['20261101-100000-add-search', '20261102-100000-add-filter'];
+
+    for (const id of ids) await mkdir(join(repository.path, '.specs', id), { recursive: true });
+
+    const { session } = await piTestSessions.create({
+      cwd: repository.path,
+      extensions: [maestroExtension],
+    });
+
+    const ui = { ...session.extensionRunner.getUIContext() };
+
+    const select = vi
+      .spyOn(ui, 'select')
+      .mockResolvedValueOnce('Restart spec')
+      .mockResolvedValueOnce(undefined);
+
+    session.extensionRunner.setUIContext(ui, 'tui');
+    await session.prompt('/maestro');
+    expect(select.mock.calls.map(([title, choices]) => [title, choices])).toEqual([
+      ['Start Maestro workflow', ['New spec', 'Restart spec']],
+      ['Restart spec', ids],
+    ]);
+    expect(maestroSessionState.isActive()).toBe(false);
+  });
+
+  it.each(Object.values(WORKFLOW_PHASES))(
+    'given a saved %s spec when the owner restarts it then the same spec is active in saved drafting-spec',
+    async (phase) => {
+      const { paths, repository } = await createApprovedWorkflow();
+      const workflowPath = paths.getWorkflowPath(SPEC_ID);
+      await writeWorkflowState({
+        path: workflowPath,
+        state: { version: '1.0.0', specId: SPEC_ID, phase },
+      });
+      const directories = await readdir(paths.getSpecDirectory());
+
+      const { session } = await piTestSessions.create({
+        cwd: repository.path,
+        extensions: [maestroExtension],
+      });
+
+      const ui = { ...session.extensionRunner.getUIContext() };
+      vi.spyOn(ui, 'select').mockResolvedValueOnce('Restart spec').mockResolvedValueOnce(SPEC_ID);
+      session.extensionRunner.setUIContext(ui, 'tui');
+      await session.prompt('/maestro');
+      expect(maestroSessionState.isActive()).toBe(true);
+      expect(maestroSessionState.getActiveSpecId()).toBe(SPEC_ID);
+      expect(await readWorkflowState(workflowPath)).toEqual({
+        version: '1.0.0',
+        specId: SPEC_ID,
+        phase: WORKFLOW_PHASES.DRAFTING_SPEC,
+      });
+      expect(await readdir(paths.getSpecDirectory())).toEqual(directories);
+    },
+  );
+
+  it.each(['empty', 'absent'])(
+    'given an %s configured spec directory when activation is requested then Maestro activates without a choice or spec creation',
+    async (directory) => {
+      const repository = await createTemporaryProject();
+      cleanupFunctions.push(repository.cleanup);
+      await saveConfiguration({ cwd: repository.path, agentModelSelections: {} });
+
+      if (directory === 'empty') await mkdir(join(repository.path, '.specs'));
+
+      const { session } = await piTestSessions.create({
+        cwd: repository.path,
+        extensions: [maestroExtension],
+      });
+
+      const ui = { ...session.extensionRunner.getUIContext() };
+      const select = vi.spyOn(ui, 'select');
+      session.extensionRunner.setUIContext(ui, 'tui');
+      await session.prompt('/maestro');
+      expect(select).not.toHaveBeenCalled();
+      expect(maestroSessionState.isActive()).toBe(true);
+      expect(maestroSessionState.getActiveSpecId()).toBeNull();
+
+      const entries = await readdir(join(repository.path, '.specs')).catch(
+        (error: NodeJS.ErrnoException) => error.code,
+      );
+
+      expect(entries).toEqual(directory === 'empty' ? [] : 'ENOENT');
+    },
+  );
 });
 
 describe('main Maestro extension', () => {
@@ -390,6 +482,9 @@ describe('main Maestro extension', () => {
       cwd: repository.path,
     });
 
+    const ui = { ...session.extensionRunner.getUIContext() };
+    vi.spyOn(ui, 'select').mockResolvedValue('New spec');
+    session.extensionRunner.setUIContext(ui, 'tui');
     await session.prompt('/maestro');
     const theme = session.extensionRunner.createContext().ui.theme;
     maestroSessionState.setActiveSpecId(SPEC_ID);
@@ -908,6 +1003,9 @@ describe('main Maestro extension', () => {
         extensions: [foreignExtension, extension],
       });
 
+      const ui = { ...session.extensionRunner.getUIContext() };
+      vi.spyOn(ui, 'select').mockResolvedValue('New spec');
+      session.extensionRunner.setUIContext(ui, 'tui');
       await session.prompt('/maestro');
       maestroSessionState.setActiveSpecId(SPEC_ID);
       session.setActiveToolsByName(['read', FOREIGN_TOOL, ...MAIN_TOOL_NAMES]);
@@ -1098,6 +1196,9 @@ describe('main Maestro extension', () => {
         cwd: repository.path,
       });
 
+      const ui = { ...session.extensionRunner.getUIContext() };
+      vi.spyOn(ui, 'select').mockResolvedValue('New spec');
+      session.extensionRunner.setUIContext(ui, 'tui');
       await session.prompt('/maestro');
       const theme = session.extensionRunner.createContext().ui.theme;
       maestroSessionState.setActiveSpecId(SPEC_ID);
@@ -1198,6 +1299,9 @@ describe('main Maestro extension', () => {
       cwd: repository.path,
     });
 
+    const ui = { ...session.extensionRunner.getUIContext() };
+    vi.spyOn(ui, 'select').mockResolvedValue('New spec');
+    session.extensionRunner.setUIContext(ui, 'tui');
     await session.prompt('/maestro');
     const theme = session.extensionRunner.createContext().ui.theme;
     maestroSessionState.setActiveSpecId(SPEC_ID);

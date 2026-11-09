@@ -367,7 +367,11 @@ Launch errors, execution failures, interruptions, cancellations, and missing or 
 completed transition, its saved running phase remains unchanged. Partial protocol writes require manual `owner` follow-up. `Maestro` provides no automatic rollback,
 repair, or recovery for these errors. The files that remain are available for `owner` inspection.
 
-### No reconciliation
+### Restart an existing spec
 
-Disabling `Maestro`, restarting Pi, or using `/resume` clears live `Maestro` session state and leaves project files unchanged. `Maestro` starts disabled in a new or
-resumed session. Reactivating it does not reconstruct or resume a saved workflow.
+When existing `specs` are available, `/maestro` activation offers "New spec" and "Restart spec". Restart opens a selector of existing `specs` in the configured directory.
+The selected `spec` returns to `drafting-spec` from any saved phase. `Maestro` reads and reviews its proposal, `spec`, and optional design with the `owner` before asking
+for renewed `GREEN FLAG`.
+
+Restart preserves the existing files except for the workflow phase. Saved `owner` decisions retain their normal effect for the same approved documents.
+Restart does not recover an interrupted agent or its conversation, reconstruct progress from the previous phase, or reconcile partial saves.

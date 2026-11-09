@@ -3,6 +3,10 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
+## Unreleased
+
+- Added existing `spec` selection at `/maestro` activation. Restart returns the selected `spec` to `drafting-spec` for document review and renewed `GREEN FLAG`.
+
 ## 0.18.7
 
 - fix: Simplified child agent setup by using Pi's native extension discovery and tool registration.
