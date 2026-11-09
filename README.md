@@ -113,7 +113,7 @@ Activate `Maestro`:
 /maestro
 ```
 
-During activation, `Maestro` checks configuration and model availability for enabled agents. With `builder` disabled, only configuration is checked. Model availability
+During activation, `Maestro` checks configuration and model availability for enabled agents. Model availability
 comes from Pi's model registry. If a check fails, `Maestro` stays disabled and reports the problem.
 
 The `owner` follows this workflow:
