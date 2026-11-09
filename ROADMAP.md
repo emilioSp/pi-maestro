@@ -28,7 +28,7 @@ Completed entries preserve recorded outcomes and evidence, which may describe be
 | MAESTRO-22         | [Avoid acceptance criteria already covered by tests](#maestro-22-avoid-acceptance-criteria-already-covered-by-tests)               | Completed |
 | MAESTRO-23         | [Change agent models before a builder run](#maestro-23-change-agent-models-before-a-builder-run)                                   | Backlog   |
 | MAESTRO-24         | [Add a simplifier with one clear purpose per agent](#maestro-24-add-a-simplifier-with-one-clear-purpose-per-agent)                 | Completed |
-| MAESTRO-25         | [Define workflow reconciliation](#maestro-25-define-workflow-reconciliation)                                                       | Backlog   |
+| MAESTRO-25         | [Define workflow reconciliation](#maestro-25-define-workflow-reconciliation)                                                       | Completed |
 | MAESTRO-26         | [Exit Maestro mode automatically at workflow completion](#maestro-26-exit-maestro-mode-automatically-at-workflow-completion)       | Completed |
 | MAESTRO-27         | [Make all implementation phases optional](#maestro-27-make-all-implementation-phases-optional)                                     | Completed |
 | MAESTRO-28         | [Add Maestro role instructions alongside the other agents](#maestro-28-add-maestro-role-instructions-alongside-the-other-agents)   | Backlog   |
@@ -112,13 +112,9 @@ The `owner` can select available models in those phases. `Maestro` uses the sele
 
 ## MAESTRO-25: Define workflow reconciliation
 
-### Objective
-
-Explore how `Maestro` can reconcile saved `artifacts` and workflow state. The recovery scope is not yet defined.
-
-### Completed when
-
-Not yet defined. The `owner` must define the intended outcome, recovery boundaries, and completion condition before this item can move forward.
+Implemented for verification under the [approved spec](.specs/20261109-142858-resume-an-interrupted-workflow-from-drafting-spec/spec.md). When existing `specs` are
+available, `/maestro` offers a new `spec` or selection of an existing `spec` to restart. Every restart returns to `drafting-spec` for document review and renewed
+`GREEN FLAG`, regardless of the saved phase. Restart preserves saved `owner` decisions and does not recover an interrupted agent or reconcile partial saves.
 
 ## MAESTRO-28: Add Maestro role instructions alongside the other agents
 

@@ -1,0 +1,66 @@
+{
+  "version": "1.0.0",
+  "specId": "20261109-142858-resume-an-interrupted-workflow-from-drafting-spec",
+  "summary": "Four criteria verified through live-checkout integration tests. AC3 has an execution coverage gap: its test verifies instructions rather than the required document-review conversation. All 314 repository tests and non-fixing quality checks succeeded.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Ran node_modules/.bin/vitest run extensions/maestro.integration.test.ts -t 'spec restart activation' --reporter=verbose. The two-existing-specs scenario offered both 20261101-100000-add-search and 20261102-100000-add-filter after Restart spec.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Ran node_modules/.bin/vitest run extensions/maestro.integration.test.ts -t 'spec restart activation' --reporter=verbose. All nine independently parameterized saved phases restarted the same active spec in persisted drafting-spec with unchanged directory listing.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "Ran the restarted-document-set integration scenario and inspected its assertions in extensions/maestro.integration.test.ts:172-207. The instruction hook contains the required reading/review guidance and leaves approval pending, but no model reads or owner discussion followed by an approval request execute. The actual conversation scenario was not run; this verifier cannot delegate or contact the owner.",
+      "probeStatus": "not-run"
+    },
+    {
+      "id": "AC4",
+      "probe": "Ran node_modules/.bin/vitest run extensions/maestro.integration.test.ts -t 'spec restart activation' --reporter=verbose. Empty-directory scenario activated Maestro without a selector or active spec and left the directory empty.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Ran node_modules/.bin/vitest run extensions/maestro.integration.test.ts -t 'spec restart activation' --reporter=verbose. Absent-directory scenario activated Maestro without a selector or active spec and left the directory absent.",
+      "probeStatus": "passed"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "acceptanceCriterion": "AC3",
+      "severity": "medium",
+      "confidence": 1,
+      "summary": "AC3's check does not execute the required document reading, owner review, and subsequent renewed approval request; that behavior remains unverified.",
+      "evidence": [
+        {
+          "source": "extensions/maestro.integration.test.ts:172-207",
+          "observation": "The scenario emits before_agent_start and checks instruction strings, fixture content, and drafting-spec. It does not run a review conversation or observe an approval request after document reads."
+        },
+        {
+          "source": "tests/support/pi-session.ts:64-91",
+          "observation": "The integration session is offline and its model stream throws on live calls. The independently executed scenario passed only the instruction assertions."
+        },
+        {
+          "source": ".specs/20261109-142858-resume-an-interrupted-workflow-from-drafting-spec/spec.md AC3",
+          "observation": "THEN requires an approval request following reading and reviewing the existing documents with the owner. Unlike REQ2 and REQ5, this requirement does not specify inspection-only verification."
+        }
+      ],
+      "decision": {
+        "decision": "reject",
+        "reason": "Il comportamento è affidato alle istruzioni; la verifica delle istruzioni è sufficiente, senza eseguire una conversazione reale."
+      }
+    }
+  ],
+  "notes": [
+    "Confirmed the exact requested spec and verifier-running phase before verification. B1 was the only earlier handoff; no design document or prototype files were present.",
+    "REQ2 inspected selectWorkflow, transitionWorkflow, and writeWorkflowState: restart persists only the workflow state and updates live selection; no document, handoff, or product-file writes occur in the restart path.",
+    "REQ5 inspected restart and approval paths plus Maestro and builder instructions: saved handoffs and decisions are retained, normal approval transitions remain in use, and restart review explicitly excludes unanswered escalations.",
+    "Executed non-mutating equivalents of npm run check because its fmt and lint scripts use automatic fixes: node_modules/.bin/oxfmt --check, node_modules/.bin/oxlint, npm run typecheck, and node_modules/.bin/vitest run --coverage --coverage.reportsDirectory=/tmp/maestro-verifier-20261109-142858-coverage. All succeeded: 314 tests across 43 files; all coverage thresholds met. Focused restart rerun passed 13 tests. git diff --check succeeded.",
+    "Removed this pass's temporary coverage output and tool output files. No candidate files were edited. Pre-existing changes, reconciliation.md, approved documents, and earlier handoff were preserved."
+  ]
+}

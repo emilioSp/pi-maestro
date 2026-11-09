@@ -32,6 +32,10 @@ const getBuilderDoneDestination = (config: MaestroConfig): WorkflowPhase =>
   config.verifier.required ? WORKFLOW_PHASES.READY_FOR_VERIFIER : getSimplifierDestination(config);
 
 export const WORKFLOW_TRANSITIONS: Record<WorkflowEvent, WorkflowTransition> = {
+  [WORKFLOW_EVENTS.RESTART_SPEC]: {
+    from: Object.values(WORKFLOW_PHASES),
+    to: WORKFLOW_PHASES.DRAFTING_SPEC,
+  },
   [WORKFLOW_EVENTS.MARK_SPEC_READY]: {
     from: [WORKFLOW_PHASES.DRAFTING_SPEC],
     to: getSpecReadyDestination,

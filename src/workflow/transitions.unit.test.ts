@@ -30,8 +30,10 @@ describe('workflow transitions', () => {
     },
   );
 
-  it('given a workflow in candidate-ready when any transition is requested then every request throws an error because the workflow is complete', () => {
-    for (const event of Object.values(WORKFLOW_EVENTS)) {
+  it('given a workflow in candidate-ready when a non-restart transition is requested then every request throws an error because the workflow is complete', () => {
+    for (const event of Object.values(WORKFLOW_EVENTS).filter(
+      (event) => event !== WORKFLOW_EVENTS.RESTART_SPEC,
+    )) {
       expect(() =>
         transitionWorkflow({
           config: TEST_CONFIG,
