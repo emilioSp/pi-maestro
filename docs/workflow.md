@@ -5,8 +5,8 @@
 The approved `spec` is a set of documents that together form one contract for the change. `proposal.md` explains why we are doing it and what is in scope. `spec.md`
 describes how things should behave and lists the `acceptance criteria`. `design.md` is optional and records the important technical decisions.
 
-Each `acceptance criterion` has one `GIVEN`, one `WHEN`, one `THEN`, and an example. `GIVEN` and `WHEN` set up the scenario. `THEN` says what result we expect, in a way
-we can measure.
+Each `acceptance criterion` has one `GIVEN`, one `WHEN`, one `THEN`, and a behavioral example table or a written example. `GIVEN` and `WHEN` set up the scenario. `THEN`
+says what result we expect, in a way we can measure.
 
 A `handoff` is a report saved by an agent. Reports from the `builder` and the `verifier` include `probe` outcomes. The simplifier's report lists the files it refactored,
 a short summary, and any notes.
@@ -16,13 +16,13 @@ it found.
 
 ## Roles
 
-| Role         | Responsibility                                                                                                                                                                   |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Owner`      | Decides requirements, scope, technical decisions, `spec` approval, `escalation` answers, and `finding` decisions. Performs the final review.                                     |
-| `Maestro`    | Prepares the `spec` with the `owner`, records workflow progress, runs agents, presents issues, and saves `owner` decisions.                                                      |
-| `Builder`    | Implements the approved `spec` and runs every `GIVEN`, `WHEN`, and `THEN` scenario. Reports completion or an `escalation`, including technical problems that prevent completion. |
-| `Verifier`   | Independently runs every `GIVEN`, `WHEN`, and `THEN` scenario against the live project files. Reports `findings` without repairing product code.                                 |
-| `Simplifier` | Refactors accepted code for clarity without changing behavior or introducing check failures.                                                                                     |
+| Role         | Responsibility                                                                                                                                                                     |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Owner`      | Decides requirements, scope, technical decisions, `spec` approval, `escalation` answers, and `finding` decisions. Performs the final review.                                       |
+| `Maestro`    | Prepares the `spec` with the `owner`, records workflow progress, runs agents, presents issues, and saves `owner` decisions.                                                        |
+| `Builder`    | Implements the approved `spec` and checks every `GIVEN`, `WHEN`, and `THEN` scenario. Reports completion or an `escalation`, including technical problems that prevent completion. |
+| `Verifier`   | Independently checks every `GIVEN`, `WHEN`, and `THEN` scenario against the live project files. Reports `findings` without repairing product code.                                 |
+| `Simplifier` | Refactors accepted code for clarity without changing behavior or introducing check failures.                                                                                       |
 
 `Builder`, `verifier`, and `simplifier` `runs` are sequential foreground operations. Each starts with a fresh conversation and reads the `spec` and saved `artifacts`.
 
@@ -166,7 +166,10 @@ Verified by: [AC1](#ac1-saved-title-is-persisted)
 - GIVEN a saved item.
 - WHEN its title is changed and saved, then the item is reopened.
 - THEN the saved title is present.
-- Example: Change the title from "Draft" to "Ready", save, and reopen the item. The title is "Ready".
+
+| Saved title | Action                                             | Title after reopening |
+| ----------- | -------------------------------------------------- | --------------------- |
+| Draft       | Change title to "Ready", save, and reopen the item | Ready                 |
 ```
 
 A requirement can link to several `acceptance criteria`, and one criterion can verify several requirements (1:N). When an existing test covers the exact starting
@@ -195,18 +198,27 @@ For example, if saving item descriptions already works, adding title persistence
 - GIVEN an item with a saved description.
 - WHEN its title is changed and saved, then the item is reopened.
 - THEN the description is unchanged.
-- Example: An item's saved description is "Buy milk". Change its title from "Draft" to "Shopping", save, and reopen it. Its description is still "Buy milk".
+
+| Saved title | Saved description | Action                                                | Description after reopening |
+| ----------- | ----------------- | ----------------------------------------------------- | --------------------------- |
+| Draft       | Buy milk          | Change title to "Shopping", save, and reopen the item | Buy milk                    |
 ```
 
 Both nested and standalone criteria share one continuous AC sequence and are checked by the `builder` and `verifier`. Standalone criteria have the same fields as
 requirement-associated criteria:
 
-| Part      | Content                                                                  |
-| --------- | ------------------------------------------------------------------------ |
-| `GIVEN`   | Starting conditions.                                                     |
-| `WHEN`    | The action or observation that checks the behavior.                      |
-| `THEN`    | The measurable outcome the `WHEN` must produce.                          |
-| `Example` | Concrete starting conditions, an input or action, and the exact outcome. |
+| Part     | Content                                                                          |
+| -------- | -------------------------------------------------------------------------------- |
+| `GIVEN`  | Starting conditions.                                                             |
+| `WHEN`   | The action or observation that checks the behavior.                              |
+| `THEN`   | The measurable outcome the `WHEN` must produce.                                  |
+| Examples | A behavioral table by default, or a written `Example` when a table does not fit. |
+
+Concrete examples normally appear as tables. Each row describes a complete case with its starting conditions, action, and expected outcome. When a table would be
+difficult to read, the criterion uses a written example instead.
+
+During approval, the `owner` reviews these examples as part of the required behavior. Every case must be satisfied and independently checked, but an automated test is not
+always necessary; code inspection may provide sufficient evidence.
 
 ## Assumptions
 
