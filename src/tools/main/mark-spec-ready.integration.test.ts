@@ -73,9 +73,6 @@ const createWorkflow = async (flags?: PhaseFlags) => {
     instant: INSTANT,
   });
 
-  maestroSessionState.activate();
-  maestroSessionState.setActiveSpecId(SPEC_ID);
-
   return { created, paths, repository };
 };
 
@@ -103,6 +100,9 @@ describe('mark spec ready tool', () => {
   });
 
   it('given the active draft was edited after creation when the approval tool runs then it saves ready-for-builder without changing the edited spec', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { created, repository } = await createWorkflow();
     const approvedContent = '# Changed after the original draft\n';
     await writeFile(created.specFilePath, approvedContent, 'utf8');
@@ -130,6 +130,9 @@ describe('mark spec ready tool', () => {
   });
 
   it('given one spec is active when approval is requested for another spec then approval fails with an active spec ID mismatch error', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { repository } = await createWorkflow();
 
     const { tool } = await piTestSessions.createRegisteredTool({
@@ -151,6 +154,9 @@ it.each([
 ])(
   'given builder disabled with verifier=$verifier and simplifier=$simplifier when the draft is approved then candidate-ready is saved without delegation',
   async ({ verifier, simplifier }) => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { repository, created } = await createWorkflow({ builder: false, verifier, simplifier });
 
     const { tool } = await piTestSessions.createRegisteredTool({

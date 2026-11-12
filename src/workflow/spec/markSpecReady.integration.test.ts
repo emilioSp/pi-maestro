@@ -65,7 +65,7 @@ afterEach(async () => {
 });
 
 describe('markSpecReady', () => {
-  it('given an approved proposal, spec, and design when approval is requested then the wrong spec ID is rejected and the active spec becomes ready-for-builder without changing any document', async () => {
+  it('given an active draft when approval names another spec then the ID mismatch is reported and all documents and the workflow stay unchanged', async () => {
     const { paths, created } = await createWorkflow();
     const markdown = '# Owner-approved content\n';
     await writeFile(created.specFilePath, markdown, 'utf8');
@@ -73,6 +73,8 @@ describe('markSpecReady', () => {
     await writeFile(created.designFilePath, '# Approved design\n', 'utf8');
     const documentPaths = [created.proposalFilePath, created.specFilePath, created.designFilePath];
     const documentsBefore = await Promise.all(documentPaths.map((path) => readFile(path, 'utf8')));
+
+    const workflowBefore = await readFile(created.workflowPath, 'utf8');
 
     await expect(
       markSpecReady({
@@ -84,6 +86,21 @@ describe('markSpecReady', () => {
     ).rejects.toThrow(
       `Active workflow spec ID mismatch: expected "${OTHER_SPEC_ID}", found "${SPEC_ID}".`,
     );
+    expect(await Promise.all(documentPaths.map((path) => readFile(path, 'utf8')))).toEqual(
+      documentsBefore,
+    );
+    expect(await readFile(created.workflowPath, 'utf8')).toBe(workflowBefore);
+  });
+
+  it('given an approved proposal, spec, and design when approval names the active spec then the workflow becomes ready-for-builder without changing the documents', async () => {
+    const { paths, created } = await createWorkflow();
+    const markdown = '# Owner-approved content\n';
+    await writeFile(created.specFilePath, markdown, 'utf8');
+    await writeFile(created.proposalFilePath, '# Approved proposal\n', 'utf8');
+    await writeFile(created.designFilePath, '# Approved design\n', 'utf8');
+    const documentPaths = [created.proposalFilePath, created.specFilePath, created.designFilePath];
+    const documentsBefore = await Promise.all(documentPaths.map((path) => readFile(path, 'utf8')));
+
     await expect(
       markSpecReady({
         config: TEST_CONFIG,
@@ -98,6 +115,9 @@ describe('markSpecReady', () => {
     expect(await Promise.all(documentPaths.map((path) => readFile(path, 'utf8')))).toEqual(
       documentsBefore,
     );
+    await expect(readWorkflowState(created.workflowPath)).resolves.toMatchObject({
+      phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
+    });
   });
 
   it('given nested AC1 and standalone regression AC3 when approval is requested then global numbering rejects the gap without changing the draft or workflow', async () => {

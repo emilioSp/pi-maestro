@@ -16,6 +16,7 @@ import {
 import { ProcessTerminal, TuiMainScreen } from '@earendil-works/pi-tui';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { executeRoleTask } from '#src/delegation/executeRoleTask.ts';
 import { executeTask, type ExecuteTaskInput } from '#src/delegation/executeTask.ts';
 import { prepareSubagentEnvironment } from '#src/delegation/prepareSubagentEnvironment.ts';
@@ -33,6 +34,92 @@ import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 vi.mock('#src/delegation/prepareSubagentEnvironment.ts', () => ({
   prepareSubagentEnvironment: vi.fn<typeof prepareSubagentEnvironment>(),
 }));
+
+type OfflineProgressMessageInput = Pick<
+  AssistantMessage,
+  'stopReason' | 'content' | 'errorMessage'
+>;
+
+const createOfflineProgressMessage = (input: OfflineProgressMessageInput): AssistantMessage => ({
+  role: 'assistant',
+  api: 'openai-completions',
+  provider: 'activity-test',
+  model: 'child',
+  timestamp: 0,
+  usage: {
+    input: 0,
+    output: 0,
+    cacheRead: 0,
+    cacheWrite: 0,
+    totalTokens: 0,
+    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+  },
+  ...input,
+});
+
+type CreateObservedProgressSessionInput = {
+  streamSimple: NonNullable<
+    Parameters<AgentSession['modelRuntime']['registerProvider']>[1]['streamSimple']
+  >;
+};
+
+const createObservedProgressSession = async ({
+  streamSimple,
+}: CreateObservedProgressSessionInput) => {
+  const { session, settingsManager } = await piTestSessions.create({ extensions: [] });
+  session.modelRuntime.registerProvider('activity-test', {
+    api: 'openai-completions',
+    apiKey: 'offline-key',
+    baseUrl: 'http://127.0.0.1:1',
+    models: [
+      {
+        id: 'child',
+        name: 'Offline child',
+        reasoning: true,
+        input: ['text'],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 32000,
+        maxTokens: 1024,
+      },
+    ],
+    streamSimple,
+  });
+  await session.modelRuntime.refresh({ allowNetwork: false });
+  vi.mocked(prepareSubagentEnvironment).mockImplementationOnce(({ cwd, additionalTools }) =>
+    createAgentSessionServices({
+      cwd,
+      modelRuntime: session.modelRuntime,
+      settingsManager,
+      resourceLoaderOptions: {
+        extensionFactories: [
+          (pi) => {
+            for (const tool of additionalTools) pi.registerTool(tool);
+          },
+        ],
+        noExtensions: true,
+        noSkills: true,
+        noPromptTemplates: true,
+        noThemes: true,
+        noContextFiles: true,
+      },
+    }),
+  );
+  const unsubscribes: Array<ReturnType<typeof vi.fn<() => void>>> = [];
+  const listeners: Array<Parameters<AgentSession['subscribe']>[0]> = [];
+  const subscribe = AgentSession.prototype.subscribe;
+  vi.spyOn(AgentSession.prototype, 'subscribe').mockImplementation(function (
+    this: AgentSession,
+    listener,
+  ) {
+    const unsubscribe = vi.fn<() => void>(subscribe.call(this, listener));
+    unsubscribes.push(unsubscribe);
+    listeners.push(listener);
+
+    return unsubscribe;
+  });
+
+  return { session, unsubscribes, listeners };
+};
 
 describe('execute task', () => {
   afterEach(async () => {
@@ -129,6 +216,9 @@ describe('execute task', () => {
   });
 
   it('given a native child with long progress when the parent runs the builder then one native row expands the full text, the saved child retains it, and subsequent parent context contains only the handoff', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { repository } = await createApprovedWorkflow({
       agents: { builder: { model: 'activity-test/child' } },
     });
@@ -347,166 +437,225 @@ describe('execute task', () => {
     expect(await readFile(sessionFile, 'utf8')).toContain('Line 30');
   });
 
-  it.each(['completion', 'startup failure', 'provider failure', 'interruption'])(
-    'given a native child with allocated progress when execution ends by %s then the subscription and timer are released and late events are ignored',
-    async (outcome) => {
-      const { session, settingsManager } = await piTestSessions.create({ extensions: [] });
-      const controller = new AbortController();
-      const updates = vi.fn<AgentToolUpdateCallback>();
+  it('given a native child streaming progress when execution completes then its subscription and timer are released and late events are ignored', async () => {
+    const message = createOfflineProgressMessage({
+      stopReason: 'stop',
+      content: [{ type: 'text', text: 'Waiting at 40 seconds.' }],
+    });
 
-      const onUpdate: NonNullable<Parameters<typeof executeRoleTask>[0]['onUpdate']> = (result) => {
-        updates(result);
+    const updates = vi.fn<AgentToolUpdateCallback>();
 
-        if (
-          outcome === 'interruption' &&
-          result.content.some(
-            (block) => block.type === 'text' && block.text.includes('Waiting at 40 seconds.'),
-          )
-        )
-          controller.abort();
-      };
-
-      const message: AssistantMessage = {
-        role: 'assistant',
-        api: 'openai-completions',
-        provider: 'activity-test',
-        model: 'child',
-        timestamp: 0,
-        stopReason: outcome === 'provider failure' ? 'error' : 'stop',
-        content: [{ type: 'text', text: 'Waiting at 40 seconds.' }],
-        ...(outcome === 'provider failure' ? { errorMessage: 'Provider unavailable.' } : {}),
-        usage: {
-          input: 0,
-          output: 0,
-          cacheRead: 0,
-          cacheWrite: 0,
-          totalTokens: 0,
-          cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
-        },
-      };
-
-      let requests = 0;
-      session.modelRuntime.registerProvider('activity-test', {
-        api: 'openai-completions',
-        apiKey: 'offline-key',
-        baseUrl: 'http://127.0.0.1:1',
-        models: [
-          {
-            id: 'child',
-            name: 'Offline child',
-            reasoning: true,
-            input: ['text'],
-            cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-            contextWindow: 32000,
-            maxTokens: 1024,
-          },
-        ],
-        streamSimple: (_model, _context, options) => {
-          requests += 1;
-          vi.advanceTimersByTime(40_000);
-          const stream = createAssistantMessageEventStream();
-          stream.push({ type: 'start', partial: { ...message, content: [] } });
-          stream.push({
-            type: 'text_delta',
-            contentIndex: 0,
-            delta: 'Waiting at 40 seconds.',
-            partial: message,
-          });
-
-          if (outcome === 'interruption') {
-            options?.signal?.addEventListener(
-              'abort',
-              () => {
-                stream.push({
-                  type: 'error',
-                  reason: 'aborted',
-                  error: { ...message, stopReason: 'aborted', errorMessage: 'Task interrupted.' },
-                });
-              },
-              { once: true },
-            );
-          } else if (outcome === 'provider failure')
-            stream.push({ type: 'error', reason: 'error', error: message });
-          else stream.push({ type: 'done', reason: 'stop', message });
-
-          return stream;
-        },
+    const streamSimple = vi.fn<CreateObservedProgressSessionInput['streamSimple']>(() => {
+      vi.advanceTimersByTime(40_000);
+      const stream = createAssistantMessageEventStream();
+      stream.push({ type: 'start', partial: { ...message, content: [] } });
+      stream.push({
+        type: 'text_delta',
+        contentIndex: 0,
+        delta: 'Waiting at 40 seconds.',
+        partial: message,
       });
-      await session.modelRuntime.refresh({ allowNetwork: false });
-      vi.mocked(prepareSubagentEnvironment).mockImplementationOnce(({ cwd, additionalTools }) =>
-        createAgentSessionServices({
-          cwd,
-          modelRuntime: session.modelRuntime,
-          settingsManager,
-          resourceLoaderOptions: {
-            extensionFactories: [
-              (pi) => {
-                for (const tool of additionalTools) pi.registerTool(tool);
-              },
-            ],
-            noExtensions: true,
-            noSkills: true,
-            noPromptTemplates: true,
-            noThemes: true,
-            noContextFiles: true,
-          },
-        }),
-      );
-      const unsubscribes: Array<ReturnType<typeof vi.fn<() => void>>> = [];
-      const listeners: Array<Parameters<AgentSession['subscribe']>[0]> = [];
-      const subscribe = AgentSession.prototype.subscribe;
-      vi.spyOn(AgentSession.prototype, 'subscribe').mockImplementation(function (
-        this: AgentSession,
-        listener,
-      ) {
-        const unsubscribe = vi.fn<() => void>(subscribe.call(this, listener));
-        unsubscribes.push(unsubscribe);
-        listeners.push(listener);
+      stream.push({ type: 'done', reason: 'stop', message });
 
-        return unsubscribe;
-      });
+      return stream;
+    });
 
-      if (outcome === 'startup failure')
-        vi.spyOn(AgentSession.prototype, 'bindExtensions').mockRejectedValueOnce(
-          new Error('Startup failed after subscription.'),
-        );
-      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
+    const { session, unsubscribes, listeners } = await createObservedProgressSession({
+      streamSimple,
+    });
 
-      const execution = executeRoleTask({
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
+
+    await expect(
+      executeRoleTask({
         role: WORKFLOW_ROLES.BUILDER,
         cwd: session.sessionManager.getCwd(),
         model: 'activity-test/child',
         thinkingLevel: 'off',
         prompt: 'Run the offline task.',
-        signal: controller.signal,
         ui: session.extensionRunner.createContext().ui,
-        onUpdate,
+        onUpdate: updates,
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(streamSimple).toHaveBeenCalledOnce();
+    expect(unsubscribes).toHaveLength(1);
+    expect(unsubscribes[0]).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
+    const updateCount = updates.mock.calls.length;
+    vi.advanceTimersByTime(25_000);
+    listeners.forEach((listener) => listener({ type: 'message_end', message }));
+    expect(updates).toHaveBeenCalledTimes(updateCount);
+  });
+
+  it('given a native child with allocated progress when extension startup fails then the error is reported, its subscription and timer are released, and late events are ignored', async () => {
+    const message = createOfflineProgressMessage({ stopReason: 'stop', content: [] });
+    const updates = vi.fn<AgentToolUpdateCallback>();
+
+    const streamSimple = vi.fn<CreateObservedProgressSessionInput['streamSimple']>(() => {
+      throw new Error('The provider must not be called after startup fails.');
+    });
+
+    const { session, unsubscribes, listeners } = await createObservedProgressSession({
+      streamSimple,
+    });
+
+    vi.spyOn(AgentSession.prototype, 'bindExtensions').mockRejectedValueOnce(
+      new Error('Startup failed after subscription.'),
+    );
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
+
+    const execution = executeRoleTask({
+      role: WORKFLOW_ROLES.BUILDER,
+      cwd: session.sessionManager.getCwd(),
+      model: 'activity-test/child',
+      thinkingLevel: 'off',
+      prompt: 'Run the offline task.',
+      ui: session.extensionRunner.createContext().ui,
+      onUpdate: updates,
+    });
+
+    await expect(execution).rejects.toBeInstanceOf(TaskExecutionError);
+    await expect(execution).rejects.toThrow('Startup failed after subscription.');
+
+    expect(streamSimple).not.toHaveBeenCalled();
+    expect(unsubscribes).toHaveLength(1);
+    expect(unsubscribes[0]).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
+    const updateCount = updates.mock.calls.length;
+    vi.advanceTimersByTime(25_000);
+    listeners.forEach((listener) => listener({ type: 'message_end', message }));
+    expect(updates).toHaveBeenCalledTimes(updateCount);
+  });
+
+  it('given a native child streaming progress when its provider fails then the error is reported, its subscription and timer are released, and late events are ignored', async () => {
+    const message = createOfflineProgressMessage({
+      stopReason: 'error',
+      content: [{ type: 'text', text: 'Waiting at 40 seconds.' }],
+      errorMessage: 'Provider unavailable.',
+    });
+
+    const updates = vi.fn<AgentToolUpdateCallback>();
+
+    const streamSimple = vi.fn<CreateObservedProgressSessionInput['streamSimple']>(() => {
+      vi.advanceTimersByTime(40_000);
+      const stream = createAssistantMessageEventStream();
+      stream.push({ type: 'start', partial: { ...message, content: [] } });
+      stream.push({
+        type: 'text_delta',
+        contentIndex: 0,
+        delta: 'Waiting at 40 seconds.',
+        partial: message,
       });
+      stream.push({ type: 'error', reason: 'error', error: message });
 
-      const result = await execution.catch((error: unknown) => error);
+      return stream;
+    });
 
-      const expectedMessage =
-        outcome === 'startup failure'
-          ? /Startup failed/
-          : outcome === 'provider failure'
-            ? /Provider unavailable/
-            : /abort|interrupt/i;
+    const { session, unsubscribes, listeners } = await createObservedProgressSession({
+      streamSimple,
+    });
 
-      expect(result instanceof TaskExecutionError).toBe(outcome !== 'completion');
-      expect(result instanceof Error ? result.message : '').toMatch(
-        outcome === 'completion' ? /^$/ : expectedMessage,
-      );
-      expect(requests).toBe(outcome === 'startup failure' ? 0 : 1);
-      expect(unsubscribes).toHaveLength(1);
-      expect(unsubscribes[0]).toHaveBeenCalledOnce();
-      expect(vi.getTimerCount()).toBe(0);
-      const count = updates.mock.calls.length;
-      vi.advanceTimersByTime(25_000);
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
 
-      for (const listener of listeners) listener({ type: 'message_end', message });
-      expect(updates).toHaveBeenCalledTimes(count);
-    },
-  );
+    const execution = executeRoleTask({
+      role: WORKFLOW_ROLES.BUILDER,
+      cwd: session.sessionManager.getCwd(),
+      model: 'activity-test/child',
+      thinkingLevel: 'off',
+      prompt: 'Run the offline task.',
+      ui: session.extensionRunner.createContext().ui,
+      onUpdate: updates,
+    });
+
+    await expect(execution).rejects.toBeInstanceOf(TaskExecutionError);
+    await expect(execution).rejects.toThrow('Provider unavailable.');
+
+    expect(streamSimple).toHaveBeenCalledOnce();
+    expect(unsubscribes).toHaveLength(1);
+    expect(unsubscribes[0]).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
+    const updateCount = updates.mock.calls.length;
+    vi.advanceTimersByTime(25_000);
+    listeners.forEach((listener) => listener({ type: 'message_end', message }));
+    expect(updates).toHaveBeenCalledTimes(updateCount);
+  });
+
+  it('given a native child streaming progress when its controller aborts then interruption is reported, its subscription and timer are released, and late events are ignored', async () => {
+    const message = createOfflineProgressMessage({
+      stopReason: 'stop',
+      content: [{ type: 'text', text: 'Waiting at 40 seconds.' }],
+    });
+
+    const controller = new AbortController();
+    const updates = vi.fn<AgentToolUpdateCallback>();
+
+    const streamSimple = vi.fn<CreateObservedProgressSessionInput['streamSimple']>(
+      (_model, _context, options) => {
+        vi.advanceTimersByTime(40_000);
+        const stream = createAssistantMessageEventStream();
+        options?.signal?.addEventListener(
+          'abort',
+          () => {
+            stream.push({
+              type: 'error',
+              reason: 'aborted',
+              error: { ...message, stopReason: 'aborted', errorMessage: 'Task interrupted.' },
+            });
+          },
+          { once: true },
+        );
+        stream.push({ type: 'start', partial: { ...message, content: [] } });
+        stream.push({
+          type: 'text_delta',
+          contentIndex: 0,
+          delta: 'Waiting at 40 seconds.',
+          partial: message,
+        });
+
+        return stream;
+      },
+    );
+
+    const { session, unsubscribes, listeners } = await createObservedProgressSession({
+      streamSimple,
+    });
+
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
+
+    const execution = executeRoleTask({
+      role: WORKFLOW_ROLES.BUILDER,
+      cwd: session.sessionManager.getCwd(),
+      model: 'activity-test/child',
+      thinkingLevel: 'off',
+      prompt: 'Run the offline task.',
+      signal: controller.signal,
+      ui: session.extensionRunner.createContext().ui,
+      onUpdate: (result) => {
+        updates(result);
+
+        if (
+          result.content.some(
+            (block) => block.type === 'text' && block.text.includes('Waiting at 40 seconds.'),
+          )
+        ) {
+          controller.abort();
+        }
+      },
+    });
+
+    await expect(execution).rejects.toBeInstanceOf(TaskExecutionError);
+    await expect(execution).rejects.toThrow(/abort|interrupt/i);
+
+    expect(streamSimple).toHaveBeenCalledOnce();
+    expect(unsubscribes).toHaveLength(1);
+    expect(unsubscribes[0]).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
+    const updateCount = updates.mock.calls.length;
+    vi.advanceTimersByTime(25_000);
+    listeners.forEach((listener) => listener({ type: 'message_end', message }));
+    expect(updates).toHaveBeenCalledTimes(updateCount);
+  });
 
   it('given resource discovery fails when a task is prepared then its diagnostic cause reaches the caller without a saved path', async () => {
     const cause = new Error('Resource discovery failed.');

@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BUILDER_HANDOFF_STATUSES, PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts';
 import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import {
   cleanupBuilderWorkflows,
@@ -86,6 +87,9 @@ const prepareRunningVerifier = async () => {
 
 describe('verifier completion', () => {
   it('given verifier report V1 already exists when saving the next report succeeds but saving its workflow phase fails then the error is reported and V2 remains readable', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths } = await prepareRunningVerifier();
     await mkdir(paths.getVerifierHandoffsPath(SPEC_ID), { recursive: true });
     await writeVerifierHandoff({
@@ -128,6 +132,9 @@ describe('verifier completion', () => {
   });
 
   it('given the verifier is running when it submits a valid report with no findings then the current project workflow moves to simplifier-running', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await prepareRunningVerifier();
 
     const completed = await completeVerifierPass({
@@ -146,6 +153,9 @@ describe('verifier completion', () => {
   });
 
   it('given a verifier report names a different spec when it is submitted then submission fails without saving a report or changing the workflow', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths } = await prepareRunningVerifier();
     const workflowPath = paths.getWorkflowPath(SPEC_ID);
     const workflowBefore = await readFile(workflowPath, 'utf8');
@@ -171,6 +181,9 @@ describe('verifier completion', () => {
 
 describe('verifier spec criterion presence', () => {
   it('given the spec requires AC1 and AC2 when a verifier report covers only AC1 then submission fails naming AC2 without saving a report or changing the workflow', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await prepareRunningVerifier();
     await writeFile(
       paths.getSpecFilePath(SPEC_ID),

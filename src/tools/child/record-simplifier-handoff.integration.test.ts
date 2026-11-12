@@ -7,6 +7,7 @@ import { readFile } from 'node:fs/promises';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import {
   cleanupBuilderWorkflows,
@@ -53,6 +54,9 @@ afterEach(async () => {
 
 describe('record simplifier handoff', () => {
   it('given verification has passed when the simplifier submits changed files, a summary, and notes then S.json preserves those fields and the workflow becomes candidate-ready', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createRunningVerifier();
     await completeVerifierPass({
       config: TEST_CONFIG,

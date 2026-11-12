@@ -16,6 +16,7 @@ import {
   VERIFIER_HANDOFF_VERSION,
 } from '#artifacts/verifier-handoff/schema.ts';
 import { loadConfiguration } from '#config/loadConfiguration.ts';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { executeTask } from '#src/delegation/executeTask.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
@@ -126,6 +127,9 @@ describe('run verifier tool', () => {
   });
 
   it('given a ready-for-verifier workflow when verification finishes without findings then the verifier uses the configured SDK inputs and project, saves its report, and requests simplification', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const workflow = await createReadyForVerifierWorkflow();
 
     const { tool, notify } = await piTestSessions.createRegisteredTool({
@@ -203,6 +207,9 @@ describe('run verifier tool', () => {
   });
 
   it('given the verifier saves a report with findings when its run finishes then the tool returns those findings in finding-decisions', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const workflow = await createReadyForVerifierWorkflow();
 
     const { tool } = await piTestSessions.createRegisteredTool({
@@ -253,6 +260,9 @@ describe('run verifier tool', () => {
   });
 
   it('given the verifier reports completion without saving its report when the run tool receives the response then a protocol error is raised', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const workflow = await createReadyForVerifierWorkflow();
 
     const { tool } = await piTestSessions.createRegisteredTool({
@@ -280,6 +290,9 @@ describe('run verifier tool', () => {
 });
 
 it('given simplifier disabled when verification completes without findings then candidate-ready is saved without simplifier delegation', async () => {
+  maestroSessionState.activate();
+  maestroSessionState.setActiveSpecId(SPEC_ID);
+
   const workflow = await createReadyForVerifierWorkflow(false);
 
   const { tool } = await piTestSessions.createRegisteredTool({
@@ -325,6 +338,9 @@ it.each([
 ])(
   'given a verifier $failure with a saved session when execution stops then the path is displayed and the workflow stays verifier-running without a handoff',
   async ({ failure, message, interrupted }) => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createReadyForVerifierWorkflow();
 
     const { tool, notify } = await piTestSessions.createRegisteredTool({
@@ -354,6 +370,9 @@ it.each([
 );
 
 it('given a verifier execution error without a saved session when execution stops then no session path is displayed', async () => {
+  maestroSessionState.activate();
+  maestroSessionState.setActiveSpecId(SPEC_ID);
+
   const { repository } = await createReadyForVerifierWorkflow();
 
   const { tool, notify } = await piTestSessions.createRegisteredTool({

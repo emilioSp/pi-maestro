@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import { BUILDER_HANDOFF_STATUSES, PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
 import { unavailableCompilerEscalation } from '#tests/fixtures/unavailable-compiler-escalation.ts';
@@ -27,6 +28,9 @@ afterEach(async () => {
 
 describe('builder completion', () => {
   it('given the builder is running when it submits a done report with passed probes then the current project workflow moves to ready-for-verifier', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createApprovedWorkflow();
     await prepareBuilderRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
 
@@ -61,6 +65,9 @@ describe('builder completion', () => {
   it.each([PROBE_STATUSES.NOT_RUN, PROBE_STATUSES.PASSED])(
     'given a compiler escalation with a probe marked %s when the owner answers it and the next builder run succeeds then B1 keeps the answer, B2 records success, and the workflow becomes ready-for-verifier',
     async (probeStatus) => {
+      maestroSessionState.activate();
+      maestroSessionState.setActiveSpecId(SPEC_ID);
+
       const { paths, repository } = await createApprovedWorkflow();
       await prepareBuilderRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
 
@@ -177,6 +184,9 @@ describe('builder completion', () => {
   );
 
   it('given a compiler escalation with passed, failed, and unrun probes when the builder submits its report then every probe result is preserved and the workflow enters escalation-decisions', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createApprovedWorkflow();
     await prepareBuilderRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
 
@@ -360,6 +370,9 @@ describe('builder completion', () => {
   ])(
     'given %s when a builder report is submitted then submission fails without saving a report or changing the workflow',
     async (_name, handoff, message) => {
+      maestroSessionState.activate();
+      maestroSessionState.setActiveSpecId(SPEC_ID);
+
       const { paths, repository } = await createApprovedWorkflow();
       await prepareBuilderRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
       const before = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
@@ -385,6 +398,9 @@ describe('builder completion', () => {
 
 describe('builder spec criterion presence', () => {
   it('given the spec requires AC1 and AC2 when a done builder report covers only AC1 then submission fails naming AC2 without saving a report or changing the workflow', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createApprovedWorkflow();
     await writeFile(
       paths.getSpecFilePath(SPEC_ID),

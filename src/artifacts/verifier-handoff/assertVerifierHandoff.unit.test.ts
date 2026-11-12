@@ -42,7 +42,7 @@ const finding = (): VerifierHandoff['findings'][number] => ({
 
 describe('verifier handoff validation', () => {
   it.each([PROBE_STATUSES.FAILED, PROBE_STATUSES.NOT_RUN])(
-    'given a verifier report with a probe marked %s when validated then a finding linked to that probe is required for the report to pass validation',
+    'given a verifier report with a probe marked %s and no linked finding when validated then it is rejected because the probe requires a finding',
     (probeStatus) => {
       const input = handoff();
       input.acceptanceCriteria.push({
@@ -52,8 +52,21 @@ describe('verifier handoff validation', () => {
       });
 
       expect(() => assertVerifierHandoff({ handoff: input, specId })).toThrow('requires a finding');
+    },
+  );
+
+  it.each([PROBE_STATUSES.FAILED, PROBE_STATUSES.NOT_RUN])(
+    'given a verifier report with a probe marked %s and a linked finding when validated then it is accepted',
+    (probeStatus) => {
+      const input = handoff();
+      input.acceptanceCriteria.push({
+        id: 'AC2',
+        probe: 'npm test -- alert-restart',
+        probeStatus,
+      });
 
       input.findings = [{ ...finding(), acceptanceCriterion: 'AC2' }];
+
       expect(() => assertVerifierHandoff({ handoff: input, specId })).not.toThrow();
     },
   );

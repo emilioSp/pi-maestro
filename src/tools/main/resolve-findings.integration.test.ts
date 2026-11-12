@@ -16,6 +16,7 @@ import {
   VERIFIER_HANDOFF_VERSION,
   type VerifierFinding,
 } from '#artifacts/verifier-handoff/schema.ts';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import {
@@ -183,6 +184,9 @@ describe('resolve findings tool', () => {
   });
 
   it('given two findings when the owner rejects one and requests a code fix for the other then both decisions are saved and the workflow returns to ready-for-builder', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createFindingsDecisionWorkflow({
       findings: [createFinding('F1'), createFinding('F2')],
     });
@@ -235,6 +239,9 @@ describe('resolve findings tool', () => {
   });
 
   it('given a single finding when the owner rejects it with a reason then the rejection is saved and Maestro requests simplification without another approval or verification', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createFindingsDecisionWorkflow({
       findings: [createFinding('F1')],
     });
@@ -274,6 +281,9 @@ describe('resolve findings tool', () => {
   });
 
   it('given two findings when the owner rejects both with reasons then both rejections are saved and the workflow moves to simplifier-running', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createFindingsDecisionWorkflow({
       findings: [createFinding('F1'), createFinding('F2')],
     });
@@ -331,7 +341,10 @@ describe('resolve findings tool', () => {
     ]);
   });
 
-  it('given two findings when a decision batch omits a finding or repeats its ID then resolution fails and the workflow and verifier report stay unchanged', async () => {
+  it('given two findings when a decision batch omits F2 then resolution reports the missing decision and leaves the workflow and report unchanged', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createFindingsDecisionWorkflow({
       findings: [createFinding('F1'), createFinding('F2')],
     });
@@ -357,6 +370,27 @@ describe('resolve findings tool', () => {
         ],
       }),
     ).rejects.toThrow('Missing decision for finding "F2"');
+
+    await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toEqual(stateBefore);
+    await expect(readCurrentHandoff(paths)).resolves.toEqual(handoffBefore);
+  });
+
+  it('given two findings when a decision batch repeats F1 then resolution reports the duplicate decision and leaves the workflow and report unchanged', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
+    const { paths, repository } = await createFindingsDecisionWorkflow({
+      findings: [createFinding('F1'), createFinding('F2')],
+    });
+
+    const stateBefore = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
+
+    const handoffBefore = await readCurrentHandoff(paths);
+
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveFindingsTool,
+    });
 
     await expect(
       tool.execute('test-call', {
@@ -384,6 +418,9 @@ describe('resolve findings tool', () => {
   });
 
   it('given the saved verifier report names a different spec when the owner rejects its finding then resolution fails without changing the report or workflow', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createFindingsDecisionWorkflow({
       findings: [createFinding('F1')],
     });
@@ -428,6 +465,9 @@ describe('resolve findings tool', () => {
   });
 
   it('given a rejection reason containing only whitespace when finding decisions are submitted then resolution fails without changing the verifier report or workflow', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createFindingsDecisionWorkflow({
       findings: [createFinding('F1')],
     });
@@ -465,6 +505,9 @@ describe('resolve findings tool', () => {
   });
 
   it('given a finding about archived exports when the owner chooses spec revision then the decision is saved in drafting-spec and separate approval returns the same spec to ready-for-builder', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createFindingsDecisionWorkflow({
       findings: [{ ...createFinding('F1'), summary: 'Exports omit archived rows.' }],
     });
@@ -539,6 +582,9 @@ describe('resolve findings tool', () => {
   });
 
   it('given a decision names a finding absent from the verifier report when it is submitted then resolution fails without changing the report or workflow', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createFindingsDecisionWorkflow({
       findings: [createFinding('F1')],
     });
@@ -570,6 +616,9 @@ describe('resolve findings tool', () => {
 });
 
 it('given simplifier disabled and V1/F1 current when the owner rejects F1 then candidate-ready and the rejection reason are saved', async () => {
+  maestroSessionState.activate();
+  maestroSessionState.setActiveSpecId(SPEC_ID);
+
   const { paths, repository } = await createFindingsDecisionWorkflow({
     findings: [createFinding('F1')],
     simplifierRequired: false,

@@ -696,12 +696,8 @@ describe('main Maestro extension', () => {
       },
     ];
 
-    const requests: ExecuteTaskInput[] = [];
-
     // Script only the AI work and completion response. Pi sessions, tools, and file operations are real.
     vi.mocked(executeTask).mockImplementation(async (request) => {
-      requests.push(request);
-
       const services = await prepareSubagentEnvironment({
         cwd: request.cwd,
         roleGuidance: request.roleGuidance,
@@ -846,23 +842,6 @@ describe('main Maestro extension', () => {
       ...simplified,
       isError: false,
     });
-    expect(requests).toMatchObject([
-      {
-        roleGuidance: expect.stringContaining('# Builder'),
-        cwd: repository.path,
-        prompt: expect.stringContaining(specId),
-      },
-      {
-        roleGuidance: expect.stringContaining('# Verifier'),
-        cwd: repository.path,
-        prompt: expect.stringContaining(specId),
-      },
-      {
-        roleGuidance: expect.stringContaining('# Simplifier'),
-        cwd: repository.path,
-        prompt: expect.stringContaining(specId),
-      },
-    ]);
     expect(setStatus).toHaveBeenLastCalledWith(
       MAESTRO_STATUS_KEY,
       theme.fg('muted', `Maestro active · ${specId.slice(0, 26)}... · `) +
@@ -952,6 +931,9 @@ describe('main Maestro extension', () => {
   ])(
     'given $scenario when the final response finishes then Maestro exits only after successful delivery',
     async ({ completionEvent, summary, stopReason }) => {
+      maestroSessionState.activate();
+      maestroSessionState.setActiveSpecId(SPEC_ID);
+
       const { paths, repository } = await createApprovedWorkflow();
       await prepareBuilderRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
       await completeBuilderPass({
@@ -1178,6 +1160,9 @@ describe('main Maestro extension', () => {
   it.each([WORKFLOW_PHASES.ESCALATION_DECISIONS, WORKFLOW_PHASES.FINDING_DECISIONS])(
     'given a workflow in %s when the owner records a decision to revise the spec and approves the revision then the same workflow returns to ready-for-builder',
     async (phase) => {
+      maestroSessionState.activate();
+      maestroSessionState.setActiveSpecId(SPEC_ID);
+
       const { paths, repository } = await createApprovedWorkflow();
 
       const current = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));

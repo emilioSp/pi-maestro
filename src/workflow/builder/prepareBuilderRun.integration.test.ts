@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import {
   cleanupBuilderWorkflows,
@@ -14,6 +15,9 @@ afterEach(cleanupBuilderWorkflows);
 
 describe('builder run preparation', () => {
   it('given a workflow ready for the builder when a run is prepared then builder-running is saved and the run uses the current project', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createApprovedWorkflow();
 
     const run = await prepareBuilderRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
@@ -28,6 +32,9 @@ describe('builder run preparation', () => {
   });
 
   it('given the builder is already running when another builder run is requested then preparation fails with a builder-running phase error', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths } = await createApprovedWorkflow();
     await prepareBuilderRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
 

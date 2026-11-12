@@ -65,8 +65,6 @@ export const createApprovedWorkflow = async ({
     instant: INSTANT,
   });
   await markSpecReady({ config, paths, specId: SPEC_ID, activeWorkflowSpecId: SPEC_ID });
-  maestroSessionState.activate();
-  maestroSessionState.setActiveSpecId(SPEC_ID);
 
   return { paths, repository };
 };

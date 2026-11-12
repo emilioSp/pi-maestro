@@ -13,6 +13,7 @@ import type { AgentToolUpdateCallback } from '@earendil-works/pi-coding-agent';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { MAESTRO_STATUS_KEY } from '#maestro/status/refreshMaestroStatus.ts';
 import { executeTask } from '#src/delegation/executeTask.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
@@ -73,6 +74,9 @@ afterEach(async () => {
 
 describe('run simplifier', () => {
   it('given Git reports no repository when simplification is requested then Maestro warns, skips the agent, saves candidate-ready, and creates no simplifier report', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createSimplifierWorkflow();
     // The entry route succeeds in a project with no Git repository.
     expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
@@ -123,6 +127,9 @@ describe('run simplifier', () => {
   });
 
   it('given a Git project ready for simplification when the simplifier saves its report then one run uses its configured model and project and returns candidate-ready with that report', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createSimplifierWorkflow();
     await execFileAsync('git', ['init', '-q', repository.path]);
 
@@ -221,6 +228,9 @@ it.each([
 ])(
   'given a simplifier $failure with a saved session when execution stops then the path is displayed and the workflow stays simplifier-running without a handoff',
   async ({ failure, message, interrupted }) => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createSimplifierWorkflow();
     await execFileAsync('git', ['init', '-q', repository.path]);
 
@@ -251,6 +261,9 @@ it.each([
 );
 
 it('given a simplifier execution error without a saved session when execution stops then no session path is displayed', async () => {
+  maestroSessionState.activate();
+  maestroSessionState.setActiveSpecId(SPEC_ID);
+
   const { repository } = await createSimplifierWorkflow();
   await execFileAsync('git', ['init', '-q', repository.path]);
 

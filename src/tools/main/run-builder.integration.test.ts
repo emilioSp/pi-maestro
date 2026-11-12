@@ -13,6 +13,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import { BUILDER_HANDOFF_STATUSES, PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { executeRoleTask } from '#src/delegation/executeRoleTask.ts';
 import { executeTask } from '#src/delegation/executeTask.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
@@ -325,6 +326,9 @@ describe('native run activity', () => {
 
 describe('run builder tool', () => {
   it('given a ready-for-verifier workflow whose builder report still contains escalations when the builder reports completion then the run fails because the report status and phase disagree', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createApprovedWorkflow();
 
     const { tool } = await piTestSessions.createRegisteredTool({
@@ -352,63 +356,99 @@ describe('run builder tool', () => {
     );
   });
 
-  it.each([
-    {
-      scenario: 'missing',
-      description: 'no saved escalation report',
-    },
-    {
-      scenario: 'wrong-status',
-      description: 'a done report in escalation-decisions',
-    },
-    {
-      scenario: 'resolved-question',
-      description: 'an answered escalation question',
-    },
-  ])(
-    'given $description when the builder reports completion then the run fails with a protocol error',
-    async ({ scenario }) => {
-      const { paths, repository } = await createApprovedWorkflow();
+  it('given no saved escalation report when the builder reports completion then the run fails with a protocol error', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
 
-      const { tool } = await piTestSessions.createRegisteredTool({
-        cwd: repository.path,
-        extension: registerRunBuilderTool,
+    const { paths, repository } = await createApprovedWorkflow();
+
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerRunBuilderTool,
+    });
+
+    vi.mocked(executeTask).mockImplementationOnce(async () => {
+      const completed = await completeBuilderPass({
+        config: TEST_CONFIG,
+        paths,
+        specId: SPEC_ID,
+        handoff: csvExportEscalation,
       });
 
-      vi.mocked(executeTask).mockImplementationOnce(async () => {
-        const completed = await completeBuilderPass({
-          config: TEST_CONFIG,
-          paths,
-          specId: SPEC_ID,
-          handoff: csvExportEscalation,
-        });
+      await rm(completed.handoffPath);
 
-        const handoff = JSON.parse(await readFile(completed.handoffPath, 'utf8'));
+      return { text: 'Completed successfully' };
+    });
+    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
+      'Builder protocol error:',
+    );
+  });
 
-        if (scenario === 'missing') await rm(completed.handoffPath);
+  it('given a done report in escalation-decisions when the builder reports completion then the run fails with a protocol error', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
 
-        if (scenario === 'wrong-status') {
-          handoff.status = BUILDER_HANDOFF_STATUSES.DONE;
-          handoff.escalations = [];
-          handoff.acceptanceCriteria = [];
-        }
+    const { paths, repository } = await createApprovedWorkflow();
 
-        if (scenario === 'resolved-question')
-          handoff.escalations[0].resolution = {
-            selectedOptionId: 'exclude',
-            decision: 'Exclude archived rows',
-            reason: 'Keep exports current',
-          };
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerRunBuilderTool,
+    });
 
-        if (scenario !== 'missing') await writeFile(completed.handoffPath, JSON.stringify(handoff));
-
-        return { text: 'Completed successfully' };
+    vi.mocked(executeTask).mockImplementationOnce(async () => {
+      const completed = await completeBuilderPass({
+        config: TEST_CONFIG,
+        paths,
+        specId: SPEC_ID,
+        handoff: csvExportEscalation,
       });
-      await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
-        'Builder protocol error:',
-      );
-    },
-  );
+
+      const handoff = JSON.parse(await readFile(completed.handoffPath, 'utf8'));
+      handoff.status = BUILDER_HANDOFF_STATUSES.DONE;
+      handoff.escalations = [];
+      handoff.acceptanceCriteria = [];
+      await writeFile(completed.handoffPath, JSON.stringify(handoff));
+
+      return { text: 'Completed successfully' };
+    });
+    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
+      'Builder protocol error:',
+    );
+  });
+
+  it('given an answered escalation question when the builder reports completion then the run fails with a protocol error', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
+    const { paths, repository } = await createApprovedWorkflow();
+
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerRunBuilderTool,
+    });
+
+    vi.mocked(executeTask).mockImplementationOnce(async () => {
+      const completed = await completeBuilderPass({
+        config: TEST_CONFIG,
+        paths,
+        specId: SPEC_ID,
+        handoff: csvExportEscalation,
+      });
+
+      const handoff = JSON.parse(await readFile(completed.handoffPath, 'utf8'));
+      handoff.escalations[0].resolution = {
+        selectedOptionId: 'exclude',
+        decision: 'Exclude archived rows',
+        reason: 'Keep exports current',
+      };
+      await writeFile(completed.handoffPath, JSON.stringify(handoff));
+
+      return { text: 'Completed successfully' };
+    });
+    await expect(tool.execute('test-call', { specId: SPEC_ID })).rejects.toThrow(
+      'Builder protocol error:',
+    );
+  });
 
   it('given builder run inputs when the tool schema is checked then a spec ID is required and extra fields are rejected', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
@@ -426,6 +466,9 @@ describe('run builder tool', () => {
   });
 
   it('given an approved workflow when the builder saves a done report then the run uses the configured SDK inputs and current project and returns that report in ready-for-verifier', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createApprovedWorkflow({
       agents: { builder: { model: 'openai-codex/gpt-6.1-sol', thinking: 'high' } },
     });
@@ -514,6 +557,9 @@ describe('run builder tool', () => {
   });
 
   it('given an approved workflow when the builder saves an escalation report then the run returns that report and the workflow waits in escalation-decisions', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createApprovedWorkflow();
 
     const { tool } = await piTestSessions.createRegisteredTool({
@@ -556,6 +602,9 @@ describe('run builder tool', () => {
   });
 
   it('given the builder saved no report and left builder-running unchanged when it reports completion then the run fails with an unexpected workflow phase error', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createApprovedWorkflow();
 
     const { tool } = await piTestSessions.createRegisteredTool({
@@ -579,12 +628,17 @@ describe('run builder tool', () => {
 });
 
 it.each([
-  { failure: 'model error', message: 'Provider unavailable', interrupted: false },
-  { failure: 'interruption', message: 'Child interrupted', interrupted: true },
-  { failure: 'missing handoff', message: 'Builder protocol error', interrupted: false },
+  { failure: 'model error', cause: new Error('Provider unavailable') },
+  {
+    failure: 'interruption',
+    cause: Object.assign(new Error('Child interrupted'), { name: 'AbortError' }),
+  },
 ])(
   'given a builder $failure with a saved session when execution stops then the path is displayed and the workflow stays builder-running without a handoff',
-  async ({ failure, message, interrupted }) => {
+  async ({ cause }) => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createApprovedWorkflow();
 
     const { tool, notify } = await piTestSessions.createRegisteredTool({
@@ -594,14 +648,9 @@ it.each([
 
     const sessionFile = join(repository.path, 'child.jsonl');
     await writeFile(sessionFile, '{}\n');
-    const cause = new Error(message);
 
-    if (interrupted) cause.name = 'AbortError';
-    vi.mocked(executeTask).mockImplementationOnce(async () => {
-      if (failure === 'missing handoff') return { text: 'Completed successfully', sessionFile };
-      throw new TaskExecutionError({ cause, sessionFile });
-    });
-    await expect(tool.execute('failed-run', { specId: SPEC_ID })).rejects.toThrow(message);
+    vi.mocked(executeTask).mockRejectedValueOnce(new TaskExecutionError({ cause, sessionFile }));
+    await expect(tool.execute('failed-run', { specId: SPEC_ID })).rejects.toThrow(cause.message);
     expect(notify).toHaveBeenCalledExactlyOnceWith(`Saved child session: ${sessionFile}`, 'info');
     expect(executeTask).toHaveBeenCalledOnce();
     expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
@@ -613,7 +662,38 @@ it.each([
   },
 );
 
+it('given a builder that saved a session but no handoff when execution finishes then the protocol error displays the path and leaves the workflow builder-running without a handoff', async () => {
+  maestroSessionState.activate();
+  maestroSessionState.setActiveSpecId(SPEC_ID);
+
+  const { paths, repository } = await createApprovedWorkflow();
+
+  const { tool, notify } = await piTestSessions.createRegisteredTool({
+    cwd: repository.path,
+    extension: registerRunBuilderTool,
+  });
+
+  const sessionFile = join(repository.path, 'child.jsonl');
+  await writeFile(sessionFile, '{}\n');
+
+  vi.mocked(executeTask).mockResolvedValueOnce({ text: 'Completed successfully', sessionFile });
+  await expect(tool.execute('failed-run', { specId: SPEC_ID })).rejects.toThrow(
+    'Builder protocol error',
+  );
+  expect(notify).toHaveBeenCalledExactlyOnceWith(`Saved child session: ${sessionFile}`, 'info');
+  expect(executeTask).toHaveBeenCalledOnce();
+  expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
+    phase: WORKFLOW_PHASES.BUILDER_RUNNING,
+  });
+  await expect(
+    access(paths.getBuilderHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 })),
+  ).rejects.toMatchObject({ code: 'ENOENT' });
+});
+
 it('given a builder execution error without a saved session when execution stops then no session path is displayed', async () => {
+  maestroSessionState.activate();
+  maestroSessionState.setActiveSpecId(SPEC_ID);
+
   const { repository } = await createApprovedWorkflow();
 
   const { tool, notify } = await piTestSessions.createRegisteredTool({
@@ -636,6 +716,9 @@ it.each([
 ])(
   'given verifier disabled and simplifier=$simplifier when builder completes then $phase is saved without verifier delegation',
   async ({ simplifier, phase }) => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository } = await createApprovedWorkflow({
       agents: { verifier: { required: false }, simplifier: { required: simplifier } },
     });

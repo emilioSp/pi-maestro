@@ -10,6 +10,7 @@ import {
   FINDING_SEVERITIES,
   VERIFIER_HANDOFF_VERSION,
 } from '#artifacts/verifier-handoff/schema.ts';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import {
   cleanupBuilderWorkflows,
@@ -28,6 +29,9 @@ afterEach(cleanupBuilderWorkflows);
 
 describe('finding resolution', () => {
   it('given one finding is rejected and another requires a code fix when the builder and verifier run again then new numbered reports are saved and earlier reports retain both decisions', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths } = await createApprovedWorkflow();
     await prepareBuilderRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
 

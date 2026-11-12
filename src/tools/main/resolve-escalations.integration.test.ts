@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
 import {
@@ -22,8 +23,9 @@ import {
   resolveEscalations,
 } from '#workflow/builder/resolveEscalations.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
+import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
+import { transitionWorkflow } from '#workflow/transitions.ts';
 
 const decisions: EscalationDecision[] = [
   {
@@ -98,6 +100,9 @@ describe('resolve escalations tool', () => {
   });
 
   it('given unanswered builder questions when the owner answers all without a spec change then answers are saved in B1, the builder can run again, and new questions restart at E1 in B2', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository, handoffPath } = await openEscalations();
 
     const before = await readBuilderHandoff({
@@ -199,6 +204,9 @@ describe('resolve escalations tool', () => {
   });
 
   it('given earlier builder report B1 and new questions in B2 when the owner answers them with a spec revision then only B2 changes and separate approval returns the workflow to ready-for-builder', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository, handoffPath } = await openEscalations();
     await resolveEscalations({
       config: TEST_CONFIG,
@@ -341,6 +349,9 @@ describe('resolve escalations tool', () => {
   );
 
   it('given unanswered builder questions when direct spec approval is requested then approval fails and the spec, workflow, and builder report stay unchanged', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
     const { paths, repository, handoffPath } = await openEscalations();
 
     const savedPaths = [
@@ -393,6 +404,9 @@ describe('resolve escalations tool', () => {
   ])(
     'given an escalation decision batch %s when submitted then resolution fails without changing the builder report or workflow',
     async (_name, invalidDecisions, message) => {
+      maestroSessionState.activate();
+      maestroSessionState.setActiveSpecId(SPEC_ID);
+
       const { paths, repository, handoffPath } = await openEscalations();
       const handoffBefore = await readFile(handoffPath, 'utf8');
 
@@ -427,90 +441,163 @@ describe('resolve escalations tool', () => {
     },
   );
 
-  it.each([
-    {
-      scenario: 'wrong-phase',
-      description: 'a workflow in builder-running',
-      message:
-        'Escalation resolution requires escalation-decisions state, found "builder-running".',
-    },
-    {
-      scenario: 'incompatible-handoff',
-      description: 'a done report instead of an escalation',
-      message: 'Escalation resolution requires an escalation handoff.',
-    },
-    {
-      scenario: 'resolved',
-      description: 'answered questions in ready-for-builder',
-      message:
-        'Escalation resolution requires escalation-decisions state, found "ready-for-builder".',
-    },
-    {
-      scenario: 'resolved-in-decision-phase',
-      description: 'answered questions in decision phase',
-      message: 'Current questions already contain an owner resolution.',
-    },
-  ])(
-    'given $description when escalation decisions are submitted then resolution fails without changing the builder report or workflow',
-    async ({ scenario, message }) => {
-      const { paths, repository, handoffPath } = await openEscalations();
+  it('given a workflow in builder-running when escalation decisions are submitted then resolution fails without changing the builder report or workflow', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
 
-      if (scenario.startsWith('resolved'))
-        await resolveEscalations({
-          config: TEST_CONFIG,
-          paths,
-          specId: SPEC_ID,
-          specChangeRequired: false,
-          decisions,
-        });
+    const { paths, repository, handoffPath } = await openEscalations();
+    await writeWorkflowState({
+      path: paths.getWorkflowPath(SPEC_ID),
+      state: transitionWorkflow({
+        config: TEST_CONFIG,
+        state: await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
+        event: WORKFLOW_EVENTS.RESOLVE_ESCALATIONS,
+      }),
+    });
+    await prepareBuilderRun({ config: TEST_CONFIG, paths, specId: SPEC_ID });
+    const handoffBefore = await readFile(handoffPath, 'utf8');
 
-      if (scenario === 'wrong-phase' || scenario === 'resolved-in-decision-phase') {
-        const state = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
-        await writeWorkflowState({
-          path: paths.getWorkflowPath(SPEC_ID),
-          state: {
-            ...state,
-            phase:
-              scenario === 'wrong-phase'
-                ? WORKFLOW_PHASES.BUILDER_RUNNING
-                : WORKFLOW_PHASES.ESCALATION_DECISIONS,
-          },
-        });
-      }
+    const workflowBefore = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
 
-      if (scenario === 'incompatible-handoff')
-        await writeFile(
-          handoffPath,
-          JSON.stringify({
-            version: '1.0.0',
-            specId: SPEC_ID,
-            status: BUILDER_HANDOFF_STATUSES.DONE,
-            summary: 'Done',
-            acceptanceCriteria: [],
-            notes: [],
-            escalations: [],
-          }),
-        );
-      const handoffBefore = await readFile(handoffPath, 'utf8');
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveEscalationsTool,
+    });
 
-      const workflowBefore = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
+    await expect(
+      tool.execute('invalid-owner-batch', {
+        specId: SPEC_ID,
+        specChangeRequired: false,
+        decisions,
+      }),
+    ).rejects.toThrow(
+      'Escalation resolution requires escalation-decisions state, found "builder-running".',
+    );
 
-      const { tool } = await piTestSessions.createRegisteredTool({
-        cwd: repository.path,
-        extension: registerResolveEscalationsTool,
-      });
+    expect(await readFile(handoffPath, 'utf8')).toBe(handoffBefore);
 
-      await expect(
-        tool.execute('invalid-owner-batch', {
-          specId: SPEC_ID,
-          specChangeRequired: false,
-          decisions,
-        }),
-      ).rejects.toThrow(message);
+    expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(workflowBefore);
+  });
 
-      expect(await readFile(handoffPath, 'utf8')).toBe(handoffBefore);
+  it('given a done report instead of an escalation when escalation decisions are submitted then resolution fails without changing the builder report or workflow', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
 
-      expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(workflowBefore);
-    },
-  );
+    const { paths, repository, handoffPath } = await openEscalations();
+    await writeFile(
+      handoffPath,
+      JSON.stringify({
+        version: '1.0.0',
+        specId: SPEC_ID,
+        status: BUILDER_HANDOFF_STATUSES.DONE,
+        summary: 'Done',
+        acceptanceCriteria: [],
+        notes: [],
+        escalations: [],
+      }),
+    );
+    const handoffBefore = await readFile(handoffPath, 'utf8');
+
+    const workflowBefore = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
+
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveEscalationsTool,
+    });
+
+    await expect(
+      tool.execute('invalid-owner-batch', {
+        specId: SPEC_ID,
+        specChangeRequired: false,
+        decisions,
+      }),
+    ).rejects.toThrow('Escalation resolution requires an escalation handoff.');
+
+    expect(await readFile(handoffPath, 'utf8')).toBe(handoffBefore);
+
+    expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(workflowBefore);
+  });
+
+  it('given answered questions in ready-for-builder when escalation decisions are submitted then resolution fails without changing the builder report or workflow', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
+    const { paths, repository, handoffPath } = await openEscalations();
+    await resolveEscalations({
+      config: TEST_CONFIG,
+      paths,
+      specId: SPEC_ID,
+      specChangeRequired: false,
+      decisions,
+    });
+    const handoffBefore = await readFile(handoffPath, 'utf8');
+
+    const workflowBefore = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
+
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveEscalationsTool,
+    });
+
+    await expect(
+      tool.execute('invalid-owner-batch', {
+        specId: SPEC_ID,
+        specChangeRequired: false,
+        decisions,
+      }),
+    ).rejects.toThrow(
+      'Escalation resolution requires escalation-decisions state, found "ready-for-builder".',
+    );
+
+    expect(await readFile(handoffPath, 'utf8')).toBe(handoffBefore);
+
+    expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(workflowBefore);
+  });
+
+  it('given answered questions in decision phase when escalation decisions are submitted then resolution fails without changing the builder report or workflow', async () => {
+    maestroSessionState.activate();
+    maestroSessionState.setActiveSpecId(SPEC_ID);
+
+    const { paths, repository, handoffPath } = await openEscalations();
+    await resolveEscalations({
+      config: TEST_CONFIG,
+      paths,
+      specId: SPEC_ID,
+      specChangeRequired: false,
+      decisions,
+    });
+    const state = await readWorkflowState(paths.getWorkflowPath(SPEC_ID));
+    await writeWorkflowState({
+      path: paths.getWorkflowPath(SPEC_ID),
+      state: transitionWorkflow({ config: TEST_CONFIG, state, event: WORKFLOW_EVENTS.RUN_BUILDER }),
+    });
+    await writeWorkflowState({
+      path: paths.getWorkflowPath(SPEC_ID),
+      state: transitionWorkflow({
+        config: TEST_CONFIG,
+        state: await readWorkflowState(paths.getWorkflowPath(SPEC_ID)),
+        event: WORKFLOW_EVENTS.BUILDER_OPEN_ESCALATIONS,
+      }),
+    });
+    const handoffBefore = await readFile(handoffPath, 'utf8');
+
+    const workflowBefore = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
+
+    const { tool } = await piTestSessions.createRegisteredTool({
+      cwd: repository.path,
+      extension: registerResolveEscalationsTool,
+    });
+
+    await expect(
+      tool.execute('invalid-owner-batch', {
+        specId: SPEC_ID,
+        specChangeRequired: false,
+        decisions,
+      }),
+    ).rejects.toThrow('Current questions already contain an owner resolution.');
+
+    expect(await readFile(handoffPath, 'utf8')).toBe(handoffBefore);
+
+    expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(workflowBefore);
+  });
 });
