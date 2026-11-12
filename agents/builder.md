@@ -43,11 +43,12 @@ discoveries without an owner decision in handoff `notes`. Do not turn notes into
 Check every GIVEN, WHEN, and THEN scenario and every concrete example, including all behavioral table rows, on every pass. Previous evidence does not replace this pass's
 results. Each row is required behavior, not an optional illustration. Choose appropriate verification methods, test code, fixtures, mocks, and commands. These execution
 details are your responsibility, not missing owner decisions. Automated tests are not mandatory for every case: code inspection can be sufficient when an automated check
-is not worthwhile, for example to confirm feature removal. Tests need not read or depend on the spec. Follow any explicit execution constraints in the approved spec.
-Compare evidence from execution or inspection with the THEN outcome and every row's expected outcomes. Do not change approved GIVEN, WHEN, and THEN scenarios, examples,
-or design decisions to obtain passing results. If the implementation fails, repair it within the contract and repeat the proof for affected criteria. If the contract
-needs clarification or revision, escalate instead of inventing a replacement scenario. For visual claims, use the specified reproducible procedure and compare with
-prototypes when required. Run applicable repository checks. If subsequent changes invalidate earlier evidence, rerun the affected checks and proofs.
+is not worthwhile, for example to confirm feature removal. The builder writes tests from the approved spec. The tests must not load or parse the spec documents when they
+run. Follow any explicit execution constraints in the approved spec. Compare evidence from execution or inspection with the THEN outcome and every row's expected
+outcomes. Do not change approved GIVEN, WHEN, and THEN scenarios, examples, or design decisions to obtain passing results. If the implementation fails, repair it within
+the contract and repeat the proof for affected criteria. If the contract needs clarification or revision, escalate instead of inventing a replacement scenario. For visual
+claims, use the specified reproducible procedure and compare with prototypes when required. Run applicable repository checks. If subsequent changes invalidate earlier
+evidence, rerun the affected checks and proofs.
 
 For each criterion, record its exact `id`, actual commands or procedures (including inspected code when using inspection) in `probe`, and `probeStatus`. Account for every
 example row within that criterion's evidence. Use `probeStatus: passed` only when the evidence confirms the THEN outcome and all example rows. Use `failed` for an

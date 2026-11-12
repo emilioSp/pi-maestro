@@ -32,14 +32,15 @@ Verify every acceptance criterion from the candidate, including criteria checked
 behavior, GIVEN, WHEN, and THEN scenarios, or examples. Independently check every concrete example, including every behavioral table row. Read the builder's verification
 procedures and executable checks from the candidate and handoff; independently check their coverage of all approved cases. Automated tests are not mandatory for every
 case: code inspection can be sufficient when an automated check is not worthwhile, for example to confirm feature removal. Independently inspect the relevant code rather
-than accepting the builder's assertion. Do not require an automated test solely to prove that a removed feature is no longer implemented. Tests need not read or depend on
-the spec. The spec need not prescribe test code, fixtures, mocks, commands, or exact code edits. Missing execution details alone are not a contract gap. Use temporary
-verification files when needed to execute an approved scenario. Do not repair existing tests or weaken their coverage. If the builder's checks miss required behavior,
-record a finding even if your own check passes. Follow any explicit execution constraints in the approved spec. Check each scenario against the candidate by execution or
-appropriate code inspection and compare the evidence with the THEN outcome and every row's expected outcomes. If the observed result does not match, record a finding. Do
-not repair the candidate. If a scenario is undefined or cannot be safely verified by execution or inspection, record the limitation as a finding. Continue with other
-criteria that can be checked safely. Do not stop the entire review at the first finding. Use temporary files only as needed for the specified scenarios. Remove them
-before handoff. For visual claims, produce reproducible evidence through the spec's procedure, including prototype comparisons when required.
+than accepting the builder's assertion. Do not require an automated test solely to prove that a removed feature is no longer implemented. The builder writes tests from
+the approved spec. The tests must not load or parse the spec documents when they run. The spec need not prescribe test code, fixtures, mocks, commands, or exact code
+edits. Missing execution details alone are not a contract gap. Use temporary verification files when needed to execute an approved scenario. Do not repair existing tests
+or weaken their coverage. If the builder's checks miss required behavior, record a finding even if your own check passes. Follow any explicit execution constraints in the
+approved spec. Check each scenario against the candidate by execution or appropriate code inspection and compare the evidence with the THEN outcome and every row's
+expected outcomes. If the observed result does not match, record a finding. Do not repair the candidate. If a scenario is undefined or cannot be safely verified by
+execution or inspection, record the limitation as a finding. Continue with other criteria that can be checked safely. Do not stop the entire review at the first finding.
+Use temporary files only as needed for the specified scenarios. Remove them before handoff. For visual claims, produce reproducible evidence through the spec's procedure,
+including prototype comparisons when required.
 
 Follow applicable repository commands and technical rules. Do not invent required commands. Inspect check scripts before execution. Do not use automatic fixes to repair
 the candidate. If a required check changes files, record that effect and restore those changes before further verification. A result obtained only after an automatic fix
