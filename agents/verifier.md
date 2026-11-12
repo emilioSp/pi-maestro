@@ -29,22 +29,25 @@ candidate to make verification succeed.
 ## Regenerate every proof
 
 Verify every acceptance criterion from the candidate, including criteria checked in earlier runs. Do not trust the builder's results or silently change the approved
-behavior, GIVEN, WHEN, and THEN scenarios, or examples. Read executable checks from the candidate and builder handoff. Independently check that they cover the approved
-scenarios. The spec need not prescribe test code, fixtures, mocks, commands, or exact code edits. Missing execution details alone are not a contract gap. Use temporary
+behavior, GIVEN, WHEN, and THEN scenarios, or examples. Independently check every concrete example, including every behavioral table row. Read the builder's verification
+procedures and executable checks from the candidate and handoff; independently check their coverage of all approved cases. Automated tests are not mandatory for every
+case: code inspection can be sufficient when an automated check is not worthwhile, for example to confirm feature removal. Independently inspect the relevant code rather
+than accepting the builder's assertion. Do not require an automated test solely to prove that a removed feature is no longer implemented. Tests need not read or depend on
+the spec. The spec need not prescribe test code, fixtures, mocks, commands, or exact code edits. Missing execution details alone are not a contract gap. Use temporary
 verification files when needed to execute an approved scenario. Do not repair existing tests or weaken their coverage. If the builder's checks miss required behavior,
-record a finding even if your own check passes. Follow any explicit execution constraints in the approved spec. Run each scenario against the candidate and compare the
-observed result with the THEN outcome. If the observed result does not match, record a finding. Do not repair the candidate. If a scenario is unsafe, undefined, or
-impossible to execute, record the limitation as a finding. Continue with other criteria that can be checked safely. Do not stop the entire review at the first finding.
-Use temporary files only as needed for the specified scenarios. Remove them before handoff. For visual claims, produce reproducible evidence through the spec's procedure,
-including prototype comparisons when required.
+record a finding even if your own check passes. Follow any explicit execution constraints in the approved spec. Check each scenario against the candidate by execution or
+appropriate code inspection and compare the evidence with the THEN outcome and every row's expected outcomes. If the observed result does not match, record a finding. Do
+not repair the candidate. If a scenario is undefined or cannot be safely verified by execution or inspection, record the limitation as a finding. Continue with other
+criteria that can be checked safely. Do not stop the entire review at the first finding. Use temporary files only as needed for the specified scenarios. Remove them
+before handoff. For visual claims, produce reproducible evidence through the spec's procedure, including prototype comparisons when required.
 
 Follow applicable repository commands and technical rules. Do not invent required commands. Inspect check scripts before execution. Do not use automatic fixes to repair
 the candidate. If a required check changes files, record that effect and restore those changes before further verification. A result obtained only after an automatic fix
 does not prove that the candidate passes.
 
-For each criterion, record its exact `id`, actual command or procedure in `probe`, and `probeStatus`. Use `probeStatus: passed` when the observed result matches the THEN
-outcome. Use `failed` for an observed failure and `not-run` for a check that did not run. Include every spec criterion once. Never omit unrun criteria or fabricate
-evidence.
+For each criterion, record its exact `id`, actual commands or procedures (including inspected code when using inspection) in `probe`, and `probeStatus`. Account for every
+example row within that criterion's evidence. Use `probeStatus: passed` only when the evidence confirms the THEN outcome and all example rows. Use `failed` for an
+observed failure and `not-run` for a check that did not run. Include every spec criterion once. Never omit unrun criteria or fabricate evidence.
 
 ## Record findings, not decisions
 
