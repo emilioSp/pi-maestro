@@ -15,7 +15,7 @@
   "bugs": {
     "url": "https://github.com/emiliosp/pi-maestro/issues"
   },
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/emiliosp/pi-maestro.git"
