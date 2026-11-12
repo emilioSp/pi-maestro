@@ -3,7 +3,7 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
-## Unreleased
+## 0.20.0
 
 - `Acceptance criteria` now use self-contained behavioral example tables by default, with written examples for cases that do not fit readable columns. Every row must be
   satisfied and independently checked; suitable code inspection can provide evidence without an automated test for every case.
