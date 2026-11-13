@@ -66,7 +66,7 @@ const normalAssistantMessage: AssistantMessage = {
 
 describe('native run activity', () => {
   it.each(Object.values(WORKFLOW_ROLES))(
-    'given an executing %s when text and bash arrive at 134 seconds then progress shows duration and recent text',
+    'GIVEN an executing %s WHEN text and bash arrive at 134 seconds THEN progress shows duration and recent text',
     async (role) => {
       const { session } = await piTestSessions.create({ extensions: [] });
       vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
@@ -99,7 +99,7 @@ describe('native run activity', () => {
     },
   );
 
-  it('given an open assistant message when another fragment arrives then accumulated text replaces the previous progress before completion', async () => {
+  it('GIVEN an open assistant message WHEN another fragment arrives THEN accumulated text replaces the previous progress before completion', async () => {
     const { session } = await piTestSessions.create({ extensions: [] });
     const onUpdate = vi.fn<AgentToolUpdateCallback>();
     vi.mocked(executeTask).mockImplementationOnce(async ({ onEvent }) => {
@@ -149,7 +149,7 @@ describe('native run activity', () => {
     });
   });
 
-  it('given silent bash at 134 seconds when 25 seconds pass without child events then elapsed advances to 159 seconds and recent text stays visible', async () => {
+  it('GIVEN silent bash at 134 seconds WHEN 25 seconds pass without child events THEN elapsed advances to 159 seconds and recent text stays visible', async () => {
     const { session } = await piTestSessions.create({ extensions: [] });
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
     const onUpdate = vi.fn<AgentToolUpdateCallback>();
@@ -178,7 +178,7 @@ describe('native run activity', () => {
     });
   });
 
-  it('given bash starts and finishes without new assistant text when no periodic refresh is due then neither tool event publishes progress', async () => {
+  it('GIVEN bash starts and finishes without new assistant text WHEN no periodic refresh is due THEN neither tool event publishes progress', async () => {
     const { session } = await piTestSessions.create({ extensions: [] });
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
     const onUpdate = vi.fn<AgentToolUpdateCallback>();
@@ -222,7 +222,7 @@ describe('native run activity', () => {
     });
   });
 
-  it('given a completed 180-second builder when a verifier starts then its initial progress has zero elapsed time and no inherited text', async () => {
+  it('GIVEN a completed 180-second builder WHEN a verifier starts THEN its initial progress has zero elapsed time and no inherited text', async () => {
     const { session } = await piTestSessions.create({ extensions: [] });
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
     const onUpdate = vi.fn<AgentToolUpdateCallback>();
@@ -265,7 +265,7 @@ describe('native run activity', () => {
     });
   });
 
-  it('given normal text, thinking, and tool output when child events arrive then progress excludes private reasoning and raw results', async () => {
+  it('GIVEN normal text, thinking, and tool output WHEN child events arrive THEN progress excludes private reasoning and raw results', async () => {
     const { session } = await piTestSessions.create({ extensions: [] });
     const onUpdate = vi.fn<AgentToolUpdateCallback>();
     vi.mocked(executeTask).mockImplementationOnce(async ({ onEvent }) => {
@@ -325,7 +325,7 @@ describe('native run activity', () => {
 });
 
 describe('run builder tool', () => {
-  it('given a ready-for-verifier workflow whose builder report still contains escalations when the builder reports completion then the run fails because the report status and phase disagree', async () => {
+  it('GIVEN a ready-for-verifier workflow whose builder report still contains escalations WHEN the builder reports completion THEN the run fails because the report status and phase disagree', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -356,7 +356,7 @@ describe('run builder tool', () => {
     );
   });
 
-  it('given no saved escalation report when the builder reports completion then the run fails with a protocol error', async () => {
+  it('GIVEN no saved escalation report WHEN the builder reports completion THEN the run fails with a protocol error', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -384,7 +384,7 @@ describe('run builder tool', () => {
     );
   });
 
-  it('given a done report in escalation-decisions when the builder reports completion then the run fails with a protocol error', async () => {
+  it('GIVEN a done report in escalation-decisions WHEN the builder reports completion THEN the run fails with a protocol error', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -416,7 +416,7 @@ describe('run builder tool', () => {
     );
   });
 
-  it('given an answered escalation question when the builder reports completion then the run fails with a protocol error', async () => {
+  it('GIVEN an answered escalation question WHEN the builder reports completion THEN the run fails with a protocol error', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -450,7 +450,7 @@ describe('run builder tool', () => {
     );
   });
 
-  it('given builder run inputs when the tool schema is checked then a spec ID is required and extra fields are rejected', async () => {
+  it('GIVEN builder run inputs WHEN the tool schema is checked THEN a spec ID is required and extra fields are rejected', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerRunBuilderTool,
     });
@@ -465,7 +465,7 @@ describe('run builder tool', () => {
     ).toBe(false);
   });
 
-  it('given an approved workflow when the builder saves a done report then the run uses the configured SDK inputs and current project and returns that report in ready-for-verifier', async () => {
+  it('GIVEN an approved workflow WHEN the builder saves a done report THEN the run uses the configured SDK inputs and current project and returns that report in ready-for-verifier', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -556,7 +556,7 @@ describe('run builder tool', () => {
     expect(notify).toHaveBeenCalledWith(`Saved child session: ${sessionFile}`, 'info');
   });
 
-  it('given an approved workflow when the builder saves an escalation report then the run returns that report and the workflow waits in escalation-decisions', async () => {
+  it('GIVEN an approved workflow WHEN the builder saves an escalation report THEN the run returns that report and the workflow waits in escalation-decisions', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -601,7 +601,7 @@ describe('run builder tool', () => {
     });
   });
 
-  it('given the builder saved no report and left builder-running unchanged when it reports completion then the run fails with an unexpected workflow phase error', async () => {
+  it('GIVEN the builder saved no report and left builder-running unchanged WHEN it reports completion THEN the run fails with an unexpected workflow phase error', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -634,7 +634,7 @@ it.each([
     cause: Object.assign(new Error('Child interrupted'), { name: 'AbortError' }),
   },
 ])(
-  'given a builder $failure with a saved session when execution stops then the path is displayed and the workflow stays builder-running without a handoff',
+  'GIVEN a builder $failure with a saved session WHEN execution stops THEN the path is displayed and the workflow stays builder-running without a handoff',
   async ({ cause }) => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
@@ -662,7 +662,7 @@ it.each([
   },
 );
 
-it('given a builder that saved a session but no handoff when execution finishes then the protocol error displays the path and leaves the workflow builder-running without a handoff', async () => {
+it('GIVEN a builder that saved a session but no handoff WHEN execution finishes THEN the protocol error displays the path and leaves the workflow builder-running without a handoff', async () => {
   maestroSessionState.activate();
   maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -690,7 +690,7 @@ it('given a builder that saved a session but no handoff when execution finishes 
   ).rejects.toMatchObject({ code: 'ENOENT' });
 });
 
-it('given a builder execution error without a saved session when execution stops then no session path is displayed', async () => {
+it('GIVEN a builder execution error without a saved session WHEN execution stops THEN no session path is displayed', async () => {
   maestroSessionState.activate();
   maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -714,7 +714,7 @@ it.each([
   { simplifier: true, phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING },
   { simplifier: false, phase: WORKFLOW_PHASES.CANDIDATE_READY },
 ])(
-  'given verifier disabled and simplifier=$simplifier when builder completes then $phase is saved without verifier delegation',
+  'GIVEN verifier disabled and simplifier=$simplifier WHEN builder completes THEN $phase is saved without verifier delegation',
   async ({ simplifier, phase }) => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);

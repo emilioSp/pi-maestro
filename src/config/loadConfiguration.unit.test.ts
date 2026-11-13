@@ -13,7 +13,7 @@ import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 
 describe('configuration loading', () => {
-  it('given no configuration file when configuration is loaded then the error requests interactive setup', async () => {
+  it('GIVEN no configuration file WHEN configuration is loaded THEN the error requests interactive setup', async () => {
     const workspace = await createTemporaryProject();
 
     try {
@@ -25,7 +25,7 @@ describe('configuration loading', () => {
     }
   });
 
-  it('given explicit agent settings when loaded then paths are resolved and settings are retained', async () => {
+  it('GIVEN explicit agent settings WHEN loaded THEN paths are resolved and settings are retained', async () => {
     const workspace = await createTemporaryProject();
 
     try {
@@ -43,7 +43,7 @@ describe('configuration loading', () => {
     }
   });
 
-  it('given broken JSON when loaded then the error names the configuration file', async () => {
+  it('GIVEN broken JSON WHEN loaded THEN the error names the configuration file', async () => {
     const workspace = await createTemporaryProject();
 
     try {
@@ -86,7 +86,7 @@ describe('configuration loading', () => {
       message: 'specDirectory must stay inside the project root.',
     },
   ])(
-    'given a $scenario directory when loaded then the path is rejected',
+    'GIVEN a $scenario directory WHEN loaded THEN the path is rejected',
     async ({ directory, message }) => {
       const workspace = await createTemporaryProject();
 

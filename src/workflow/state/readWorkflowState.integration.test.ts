@@ -23,7 +23,7 @@ afterEach(async () => {
 });
 
 describe('readWorkflowState', () => {
-  it('given workflow files with broken JSON or an unknown field when read then reading fails with a JSON or validation error', async () => {
+  it('GIVEN workflow files with broken JSON or an unknown field WHEN read THEN reading fails with a JSON or validation error', async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, 'workflow.json');
     await writeFile(path, '{broken', 'utf8');

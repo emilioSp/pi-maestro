@@ -84,7 +84,7 @@ afterEach(async () => {
 });
 
 describe('mark spec ready tool', () => {
-  it('given spec approval inputs when the tool schema is checked then a valid spec ID is accepted but invalid IDs and extra fields are rejected', async () => {
+  it('GIVEN spec approval inputs WHEN the tool schema is checked THEN a valid spec ID is accepted but invalid IDs and extra fields are rejected', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerMarkSpecReadyTool,
     });
@@ -99,7 +99,7 @@ describe('mark spec ready tool', () => {
     ).toBe(false);
   });
 
-  it('given the active draft was edited after creation when the approval tool runs then it saves ready-for-builder without changing the edited spec', async () => {
+  it('GIVEN the active draft was edited after creation WHEN the approval tool runs THEN it saves ready-for-builder without changing the edited spec', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -129,7 +129,7 @@ describe('mark spec ready tool', () => {
     await expect(readWorkflowState(created.workflowPath)).resolves.toEqual(result.details);
   });
 
-  it('given one spec is active when approval is requested for another spec then approval fails with an active spec ID mismatch error', async () => {
+  it('GIVEN one spec is active WHEN approval is requested for another spec THEN approval fails with an active spec ID mismatch error', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -152,7 +152,7 @@ it.each([
   { verifier: true, simplifier: false },
   { verifier: true, simplifier: true },
 ])(
-  'given builder disabled with verifier=$verifier and simplifier=$simplifier when the draft is approved then candidate-ready is saved without delegation',
+  'GIVEN builder disabled with verifier=$verifier and simplifier=$simplifier WHEN the draft is approved THEN candidate-ready is saved without delegation',
   async ({ verifier, simplifier }) => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);

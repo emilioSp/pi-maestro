@@ -73,7 +73,7 @@ afterEach(async () => {
 });
 
 describe('run simplifier', () => {
-  it('given Git reports no repository when simplification is requested then Maestro warns, skips the agent, saves candidate-ready, and creates no simplifier report', async () => {
+  it('GIVEN Git reports no repository WHEN simplification is requested THEN Maestro warns, skips the agent, saves candidate-ready, and creates no simplifier report', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -126,7 +126,7 @@ describe('run simplifier', () => {
     });
   });
 
-  it('given a Git project ready for simplification when the simplifier saves its report then one run uses its configured model and project and returns candidate-ready with that report', async () => {
+  it('GIVEN a Git project ready for simplification WHEN the simplifier saves its report THEN one run uses its configured model and project and returns candidate-ready with that report', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -199,7 +199,7 @@ describe('run simplifier', () => {
     expect(notify).toHaveBeenCalledWith(`Saved child session: ${sessionFile}`, 'info');
   });
 
-  it('given a workflow in ready-for-builder when simplification is requested then a phase error stops the call before any Git check or agent request', async () => {
+  it('GIVEN a workflow in ready-for-builder WHEN simplification is requested THEN a phase error stops the call before any Git check or agent request', async () => {
     const { repository } = await createApprovedWorkflow();
 
     const extension = (pi: ExtensionAPI): void => {
@@ -226,7 +226,7 @@ it.each([
   { failure: 'interruption', message: 'Child interrupted', interrupted: true },
   { failure: 'missing handoff', message: 'Simplifier protocol error', interrupted: false },
 ])(
-  'given a simplifier $failure with a saved session when execution stops then the path is displayed and the workflow stays simplifier-running without a handoff',
+  'GIVEN a simplifier $failure with a saved session WHEN execution stops THEN the path is displayed and the workflow stays simplifier-running without a handoff',
   async ({ failure, message, interrupted }) => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
@@ -260,7 +260,7 @@ it.each([
   },
 );
 
-it('given a simplifier execution error without a saved session when execution stops then no session path is displayed', async () => {
+it('GIVEN a simplifier execution error without a saved session WHEN execution stops THEN no session path is displayed', async () => {
   maestroSessionState.activate();
   maestroSessionState.setActiveSpecId(SPEC_ID);
 

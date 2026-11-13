@@ -61,7 +61,7 @@ afterEach(async () => {
 });
 
 describe('verifier handoff writes', () => {
-  it('given a valid verifier report when it is saved and read back then all report contents are preserved', async () => {
+  it('GIVEN a valid verifier report WHEN it is saved and read back THEN all report contents are preserved', async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, 'V1.json');
 
@@ -74,7 +74,7 @@ describe('verifier handoff writes', () => {
     await expect(readVerifierHandoff({ path, specId })).resolves.toEqual(handoff());
   });
 
-  it('given an existing verifier report when a replacement includes a finding already marked rejected then writing fails and the original file stays unchanged', async () => {
+  it('GIVEN an existing verifier report WHEN a replacement includes a finding already marked rejected THEN writing fails and the original file stays unchanged', async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, 'V1.json');
     await writeVerifierHandoff({

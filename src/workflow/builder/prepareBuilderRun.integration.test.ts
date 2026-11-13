@@ -14,7 +14,7 @@ import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 afterEach(cleanupBuilderWorkflows);
 
 describe('builder run preparation', () => {
-  it('given a workflow ready for the builder when a run is prepared then builder-running is saved and the run uses the current project', async () => {
+  it('GIVEN a workflow ready for the builder WHEN a run is prepared THEN builder-running is saved and the run uses the current project', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -31,7 +31,7 @@ describe('builder run preparation', () => {
     });
   });
 
-  it('given the builder is already running when another builder run is requested then preparation fails with a builder-running phase error', async () => {
+  it('GIVEN the builder is already running WHEN another builder run is requested THEN preparation fails with a builder-running phase error', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 

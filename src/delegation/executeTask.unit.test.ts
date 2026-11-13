@@ -130,7 +130,7 @@ describe('execute task', () => {
     vi.restoreAllMocks();
   });
 
-  it('given a successful child session when a task is executed then its final text and saved path are returned and the child is closed', async () => {
+  it('GIVEN a successful child session WHEN a task is executed THEN its final text and saved path are returned and the child is closed', async () => {
     const { session, settingsManager } = await piTestSessions.create({ extensions: [] });
     vi.mocked(prepareSubagentEnvironment).mockImplementationOnce(({ cwd, additionalTools }) =>
       createAgentSessionServices({
@@ -215,7 +215,7 @@ describe('execute task', () => {
     expect(prompt.mock.invocationCallOrder[0]).toBeLessThan(dispose.mock.invocationCallOrder[0]);
   });
 
-  it('given a native child with long progress when the parent runs the builder then one native row expands the full text, the saved child retains it, and subsequent parent context contains only the handoff', async () => {
+  it('GIVEN a native child with long progress WHEN the parent runs the builder THEN one native row expands the full text, the saved child retains it, and subsequent parent context contains only the handoff', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -437,7 +437,7 @@ describe('execute task', () => {
     expect(await readFile(sessionFile, 'utf8')).toContain('Line 30');
   });
 
-  it('given a native child streaming progress when execution completes then its subscription and timer are released and late events are ignored', async () => {
+  it('GIVEN a native child streaming progress WHEN execution completes THEN its subscription and timer are released and late events are ignored', async () => {
     const message = createOfflineProgressMessage({
       stopReason: 'stop',
       content: [{ type: 'text', text: 'Waiting at 40 seconds.' }],
@@ -488,7 +488,7 @@ describe('execute task', () => {
     expect(updates).toHaveBeenCalledTimes(updateCount);
   });
 
-  it('given a native child with allocated progress when extension startup fails then the error is reported, its subscription and timer are released, and late events are ignored', async () => {
+  it('GIVEN a native child with allocated progress WHEN extension startup fails THEN the error is reported, its subscription and timer are released, and late events are ignored', async () => {
     const message = createOfflineProgressMessage({ stopReason: 'stop', content: [] });
     const updates = vi.fn<AgentToolUpdateCallback>();
 
@@ -528,7 +528,7 @@ describe('execute task', () => {
     expect(updates).toHaveBeenCalledTimes(updateCount);
   });
 
-  it('given a native child streaming progress when its provider fails then the error is reported, its subscription and timer are released, and late events are ignored', async () => {
+  it('GIVEN a native child streaming progress WHEN its provider fails THEN the error is reported, its subscription and timer are released, and late events are ignored', async () => {
     const message = createOfflineProgressMessage({
       stopReason: 'error',
       content: [{ type: 'text', text: 'Waiting at 40 seconds.' }],
@@ -581,7 +581,7 @@ describe('execute task', () => {
     expect(updates).toHaveBeenCalledTimes(updateCount);
   });
 
-  it('given a native child streaming progress when its controller aborts then interruption is reported, its subscription and timer are released, and late events are ignored', async () => {
+  it('GIVEN a native child streaming progress WHEN its controller aborts THEN interruption is reported, its subscription and timer are released, and late events are ignored', async () => {
     const message = createOfflineProgressMessage({
       stopReason: 'stop',
       content: [{ type: 'text', text: 'Waiting at 40 seconds.' }],
@@ -657,7 +657,7 @@ describe('execute task', () => {
     expect(updates).toHaveBeenCalledTimes(updateCount);
   });
 
-  it('given resource discovery fails when a task is prepared then its diagnostic cause reaches the caller without a saved path', async () => {
+  it('GIVEN resource discovery fails WHEN a task is prepared THEN its diagnostic cause reaches the caller without a saved path', async () => {
     const cause = new Error('Resource discovery failed.');
     vi.mocked(prepareSubagentEnvironment).mockRejectedValueOnce(cause);
 

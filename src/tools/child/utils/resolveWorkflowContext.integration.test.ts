@@ -17,7 +17,7 @@ afterEach(async () => {
 });
 
 describe('workflow context', () => {
-  it('given a working directory symlink to a nested directory when workflow context is loaded then the real nested directory is the project root and parent configuration is not inherited', async () => {
+  it('GIVEN a working directory symlink to a nested directory WHEN workflow context is loaded THEN the real nested directory is the project root and parent configuration is not inherited', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     const childDirectory = join(repository.path, 'nested', 'child');
@@ -50,7 +50,7 @@ describe('workflow context', () => {
     expect(context.paths.getSpecDirectory()).toBe(join(childDirectory, '.specs'));
   });
 
-  it('given an invalid spec ID when workflow context is requested then loading fails with an invalid spec ID error', async () => {
+  it('GIVEN an invalid spec ID WHEN workflow context is requested THEN loading fails with an invalid spec ID error', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 

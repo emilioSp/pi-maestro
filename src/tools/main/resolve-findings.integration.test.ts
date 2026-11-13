@@ -120,7 +120,7 @@ afterEach(async () => {
 });
 
 describe('resolve findings tool', () => {
-  it('given finding decision inputs when the tool schema is checked then rejection requires a reason, code fixes forbid a reason, and empty or unknown decisions are rejected', async () => {
+  it('GIVEN finding decision inputs WHEN the tool schema is checked THEN rejection requires a reason, code fixes forbid a reason, and empty or unknown decisions are rejected', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerResolveFindingsTool,
     });
@@ -183,7 +183,7 @@ describe('resolve findings tool', () => {
     ).toBe(false);
   });
 
-  it('given two findings when the owner rejects one and requests a code fix for the other then both decisions are saved and the workflow returns to ready-for-builder', async () => {
+  it('GIVEN two findings WHEN the owner rejects one and requests a code fix for the other THEN both decisions are saved and the workflow returns to ready-for-builder', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -238,7 +238,7 @@ describe('resolve findings tool', () => {
     ]);
   });
 
-  it('given a single finding when the owner rejects it with a reason then the rejection is saved and Maestro requests simplification without another approval or verification', async () => {
+  it('GIVEN a single finding WHEN the owner rejects it with a reason THEN the rejection is saved and Maestro requests simplification without another approval or verification', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -280,7 +280,7 @@ describe('resolve findings tool', () => {
     });
   });
 
-  it('given two findings when the owner rejects both with reasons then both rejections are saved and the workflow moves to simplifier-running', async () => {
+  it('GIVEN two findings WHEN the owner rejects both with reasons THEN both rejections are saved and the workflow moves to simplifier-running', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -341,7 +341,7 @@ describe('resolve findings tool', () => {
     ]);
   });
 
-  it('given two findings when a decision batch omits F2 then resolution reports the missing decision and leaves the workflow and report unchanged', async () => {
+  it('GIVEN two findings WHEN a decision batch omits F2 THEN resolution reports the missing decision and leaves the workflow and report unchanged', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -375,7 +375,7 @@ describe('resolve findings tool', () => {
     await expect(readCurrentHandoff(paths)).resolves.toEqual(handoffBefore);
   });
 
-  it('given two findings when a decision batch repeats F1 then resolution reports the duplicate decision and leaves the workflow and report unchanged', async () => {
+  it('GIVEN two findings WHEN a decision batch repeats F1 THEN resolution reports the duplicate decision and leaves the workflow and report unchanged', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -417,7 +417,7 @@ describe('resolve findings tool', () => {
     await expect(readCurrentHandoff(paths)).resolves.toEqual(handoffBefore);
   });
 
-  it('given the saved verifier report names a different spec when the owner rejects its finding then resolution fails without changing the report or workflow', async () => {
+  it('GIVEN the saved verifier report names a different spec WHEN the owner rejects its finding THEN resolution fails without changing the report or workflow', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -464,7 +464,7 @@ describe('resolve findings tool', () => {
     await expect(readFile(handoffPath, 'utf8')).resolves.toBe(handoffBefore);
   });
 
-  it('given a rejection reason containing only whitespace when finding decisions are submitted then resolution fails without changing the verifier report or workflow', async () => {
+  it('GIVEN a rejection reason containing only whitespace WHEN finding decisions are submitted THEN resolution fails without changing the verifier report or workflow', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -504,7 +504,7 @@ describe('resolve findings tool', () => {
     await expect(readFile(handoffPath, 'utf8')).resolves.toBe(handoffBefore);
   });
 
-  it('given a finding about archived exports when the owner chooses spec revision then the decision is saved in drafting-spec and separate approval returns the same spec to ready-for-builder', async () => {
+  it('GIVEN a finding about archived exports WHEN the owner chooses spec revision THEN the decision is saved in drafting-spec and separate approval returns the same spec to ready-for-builder', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -581,7 +581,7 @@ describe('resolve findings tool', () => {
     expect(await readFile(handoffPath, 'utf8')).toBe(resolvedHandoff);
   });
 
-  it('given a decision names a finding absent from the verifier report when it is submitted then resolution fails without changing the report or workflow', async () => {
+  it('GIVEN a decision names a finding absent from the verifier report WHEN it is submitted THEN resolution fails without changing the report or workflow', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -615,7 +615,7 @@ describe('resolve findings tool', () => {
   });
 });
 
-it('given simplifier disabled and V1/F1 current when the owner rejects F1 then candidate-ready and the rejection reason are saved', async () => {
+it('GIVEN simplifier disabled and V1/F1 current WHEN the owner rejects F1 THEN candidate-ready and the rejection reason are saved', async () => {
   maestroSessionState.activate();
   maestroSessionState.setActiveSpecId(SPEC_ID);
 

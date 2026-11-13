@@ -18,7 +18,7 @@ afterEach(async () => {
 });
 
 describe('Maestro paths', () => {
-  it('given builder and verifier reports numbered 1 through 10 when report paths are requested then report 10 is active and report 11 is next for each agent', async () => {
+  it('GIVEN builder and verifier reports numbered 1 through 10 WHEN report paths are requested THEN report 10 is active and report 11 is next for each agent', async () => {
     const project = await createTemporaryProject();
     temporaryPaths.push(project.path);
 
@@ -53,7 +53,7 @@ describe('Maestro paths', () => {
     );
   });
 
-  it('given a custom spec directory when spec, workflow, and report paths are requested then all paths use that directory inside the project', () => {
+  it('GIVEN a custom spec directory WHEN spec, workflow, and report paths are requested THEN all paths use that directory inside the project', () => {
     const projectRoot = '/repo';
 
     const paths = new MaestroPaths({
@@ -84,7 +84,7 @@ describe('Maestro paths', () => {
     );
   });
 
-  it('given spec and prototype paths when Maestro builds their full paths then valid paths stay inside the project and attempts to leave their allowed directories throw errors', () => {
+  it('GIVEN spec and prototype paths WHEN Maestro builds their full paths THEN valid paths stay inside the project and attempts to leave their allowed directories throw errors', () => {
     const projectRoot = '/repo';
 
     const paths = new MaestroPaths({
@@ -125,7 +125,7 @@ describe('Maestro paths', () => {
     ).toThrow('Prototype path must stay inside the prototypes directory.');
   });
 
-  it('given a spec directory outside the project when MaestroPaths is created then it throws an error that the path leaves the project root', () => {
+  it('GIVEN a spec directory outside the project WHEN MaestroPaths is created THEN it throws an error that the path leaves the project root', () => {
     expect(
       () =>
         new MaestroPaths({

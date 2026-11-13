@@ -109,7 +109,7 @@ afterEach(async () => {
 });
 
 describe('run verifier tool', () => {
-  it('given verifier run inputs when the tool schema is checked then a spec ID is required and extra fields are rejected', async () => {
+  it('GIVEN verifier run inputs WHEN the tool schema is checked THEN a spec ID is required and extra fields are rejected', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerRunVerifierTool,
     });
@@ -126,7 +126,7 @@ describe('run verifier tool', () => {
     ).toBe(false);
   });
 
-  it('given a ready-for-verifier workflow when verification finishes without findings then the verifier uses the configured SDK inputs and project, saves its report, and requests simplification', async () => {
+  it('GIVEN a ready-for-verifier workflow WHEN verification finishes without findings THEN the verifier uses the configured SDK inputs and project, saves its report, and requests simplification', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -206,7 +206,7 @@ describe('run verifier tool', () => {
     expect(notify).toHaveBeenCalledWith(`Saved child session: ${sessionFile}`, 'info');
   });
 
-  it('given the verifier saves a report with findings when its run finishes then the tool returns those findings in finding-decisions', async () => {
+  it('GIVEN the verifier saves a report with findings WHEN its run finishes THEN the tool returns those findings in finding-decisions', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -245,7 +245,7 @@ describe('run verifier tool', () => {
     });
   });
 
-  it('given a workflow in ready-for-builder when a verifier run is requested then it fails before SDK execution', async () => {
+  it('GIVEN a workflow in ready-for-builder WHEN a verifier run is requested THEN it fails before SDK execution', async () => {
     const workflow = await createApprovedWorkflow();
 
     const { tool } = await piTestSessions.createRegisteredTool({
@@ -259,7 +259,7 @@ describe('run verifier tool', () => {
     expect(executeTask).not.toHaveBeenCalled();
   });
 
-  it('given the verifier reports completion without saving its report when the run tool receives the response then a protocol error is raised', async () => {
+  it('GIVEN the verifier reports completion without saving its report WHEN the run tool receives the response THEN a protocol error is raised', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -289,7 +289,7 @@ describe('run verifier tool', () => {
   });
 });
 
-it('given simplifier disabled when verification completes without findings then candidate-ready is saved without simplifier delegation', async () => {
+it('GIVEN simplifier disabled WHEN verification completes without findings THEN candidate-ready is saved without simplifier delegation', async () => {
   maestroSessionState.activate();
   maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -336,7 +336,7 @@ it.each([
   { failure: 'interruption', message: 'Child interrupted', interrupted: true },
   { failure: 'missing handoff', message: 'Verifier protocol error', interrupted: false },
 ])(
-  'given a verifier $failure with a saved session when execution stops then the path is displayed and the workflow stays verifier-running without a handoff',
+  'GIVEN a verifier $failure with a saved session WHEN execution stops THEN the path is displayed and the workflow stays verifier-running without a handoff',
   async ({ failure, message, interrupted }) => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
@@ -369,7 +369,7 @@ it.each([
   },
 );
 
-it('given a verifier execution error without a saved session when execution stops then no session path is displayed', async () => {
+it('GIVEN a verifier execution error without a saved session WHEN execution stops THEN no session path is displayed', async () => {
   maestroSessionState.activate();
   maestroSessionState.setActiveSpecId(SPEC_ID);
 

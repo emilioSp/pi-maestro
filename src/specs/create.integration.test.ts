@@ -38,7 +38,7 @@ afterEach(async () => {
 });
 
 describe('spec template and creation', () => {
-  it('given a custom spec directory when a spec is created then proposal and spec drafts are saved with a drafting workflow and prototypes but no design file', async () => {
+  it('GIVEN a custom spec directory WHEN a spec is created THEN proposal and spec drafts are saved with a drafting workflow and prototypes but no design file', async () => {
     const { paths } = await createWorkspace();
 
     const created = await createSpec({
@@ -68,7 +68,7 @@ describe('spec template and creation', () => {
     expect((await stat(paths.getPrototypesPath(SPEC_ID))).isDirectory()).toBe(true);
   });
 
-  it('given an existing spec with the same title and timestamp when creation is retried then creation fails because the directory exists and the original spec stays unchanged', async () => {
+  it('GIVEN an existing spec with the same title and timestamp WHEN creation is retried THEN creation fails because the directory exists and the original spec stays unchanged', async () => {
     const { paths } = await createWorkspace();
 
     const first = await createSpec({
@@ -93,7 +93,7 @@ describe('spec template and creation', () => {
     await expect(readFile(first.proposalFilePath, 'utf8')).resolves.toBe(proposalBefore);
   });
 
-  it('given another workflow is active when spec creation is requested then creation fails without creating the spec directory', async () => {
+  it('GIVEN another workflow is active WHEN spec creation is requested THEN creation fails without creating the spec directory', async () => {
     const { paths } = await createWorkspace();
 
     await expect(

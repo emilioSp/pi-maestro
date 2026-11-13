@@ -29,7 +29,7 @@ afterEach(async () => {
 });
 
 describe('writeWorkflowState', () => {
-  it('given a saved drafting-spec workflow when ready-for-builder state replaces it then the file contains the new state as formatted JSON', async () => {
+  it('GIVEN a saved drafting-spec workflow WHEN ready-for-builder state replaces it THEN the file contains the new state as formatted JSON', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'pi-maestro-workflow-state-'));
 
     temporaryDirectories.push(directory);
@@ -55,7 +55,7 @@ describe('writeWorkflowState', () => {
     );
   });
 
-  it('given an existing workflow file when a replacement uses an unsupported version then writing fails and the original file stays unchanged', async () => {
+  it('GIVEN an existing workflow file WHEN a replacement uses an unsupported version THEN writing fails and the original file stays unchanged', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'pi-maestro-workflow-state-'));
 
     temporaryDirectories.push(directory);

@@ -46,7 +46,7 @@ afterEach(async () => {
 });
 
 describe('builder handoff reads', () => {
-  it('given builder reports with broken JSON, an unknown field, or a different spec ID when read then each report fails with the corresponding error', async () => {
+  it('GIVEN builder reports with broken JSON, an unknown field, or a different spec ID WHEN read THEN each report fails with the corresponding error', async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, 'B1.json');
 

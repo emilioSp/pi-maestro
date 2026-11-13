@@ -26,7 +26,7 @@ afterEach(async () => {
 });
 
 describe('assertEnvironment', () => {
-  it('given configuration has a numeric version when activation requirements are checked then the check fails with a configuration error', async () => {
+  it('GIVEN configuration has a numeric version WHEN activation requirements are checked THEN the check fails with a configuration error', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await mkdir(join(repository.path, CONFIG_DIRECTORY_NAME));
@@ -45,7 +45,7 @@ describe('assertEnvironment', () => {
   });
 
   it.each(['builder', 'verifier', 'simplifier'])(
-    'given the %s model is absent from Pi’s registry when activation is checked then it reports the full unavailable ID',
+    'GIVEN the %s model is absent from Pi’s registry WHEN activation is checked THEN it reports the full unavailable ID',
     async (agent) => {
       const repository = await createTemporaryProject();
       cleanupFunctions.push(repository.cleanup);
@@ -78,7 +78,7 @@ it.each([
   { verifier: true, simplifier: false },
   { verifier: false, simplifier: false },
 ])(
-  'given verifier=$verifier and simplifier=$simplifier with only enabled models configured when activation is checked then it succeeds without extension availability checks',
+  'GIVEN verifier=$verifier and simplifier=$simplifier with only enabled models configured WHEN activation is checked THEN it succeeds without extension availability checks',
   async ({ verifier, simplifier }) => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
@@ -117,7 +117,7 @@ it.each([
   { verifier: true, simplifier: false },
   { verifier: true, simplifier: true },
 ])(
-  'given builder disabled with verifier=$verifier and simplifier=$simplifier and no models when activation is checked then it succeeds without model lookup',
+  'GIVEN builder disabled with verifier=$verifier and simplifier=$simplifier and no models WHEN activation is checked THEN it succeeds without model lookup',
   async ({ verifier, simplifier }) => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);

@@ -6,7 +6,7 @@ import { assertConfiguration } from '#config/assertConfiguration.ts';
 import { SUPPORTED_CONFIG_VERSION, THINKING_LEVELS } from '#config/schema.ts';
 
 describe('configuration input validation', () => {
-  it('given configuration with a spec directory and builder and verifier settings when validated then it is accepted without requiring simplifier settings', () => {
+  it('GIVEN configuration with a spec directory and builder and verifier settings WHEN validated THEN it is accepted without requiring simplifier settings', () => {
     expect(() =>
       assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
@@ -24,7 +24,7 @@ describe('configuration input validation', () => {
   });
 
   it.each(['builder', 'verifier', 'simplifier'])(
-    'given %s has a providerless model when configuration is validated then it is accepted',
+    'GIVEN %s has a providerless model WHEN configuration is validated THEN it is accepted',
     (agent) => {
       expect(() =>
         assertConfiguration({
@@ -40,7 +40,7 @@ describe('configuration input validation', () => {
     { scenario: 'an empty model string', model: '' },
     { scenario: 'a display label', model: '(openrouter) ~openai/gpt-mini-latest' },
   ])(
-    'given $scenario when configuration is validated then the model string is left for Pi to interpret',
+    'GIVEN $scenario WHEN configuration is validated THEN the model string is left for Pi to interpret',
     ({ model }) => {
       expect(() =>
         assertConfiguration({
@@ -52,7 +52,7 @@ describe('configuration input validation', () => {
   );
 
   it.each(['builder', 'verifier', 'simplifier'])(
-    'given %s has a numeric model when configuration is validated then it is rejected as a non-string',
+    'GIVEN %s has a numeric model WHEN configuration is validated THEN it is rejected as a non-string',
     (agent) => {
       expect(() =>
         assertConfiguration({
@@ -63,11 +63,11 @@ describe('configuration input validation', () => {
     },
   );
 
-  it('given configuration containing only the supported version when validated then it is accepted', () => {
+  it('GIVEN configuration containing only the supported version WHEN validated THEN it is accepted', () => {
     expect(() => assertConfiguration({ version: SUPPORTED_CONFIG_VERSION })).not.toThrow();
   });
 
-  it('given each supported builder thinking level when configuration is validated then every supported level is accepted', () => {
+  it('GIVEN each supported builder thinking level WHEN configuration is validated THEN every supported level is accepted', () => {
     for (const level of Object.values(THINKING_LEVELS)) {
       expect(() =>
         assertConfiguration({
@@ -78,7 +78,7 @@ describe('configuration input validation', () => {
     }
   });
 
-  it('given configuration includes worktreeDirectory when validated then it is rejected as an unknown field', () => {
+  it('GIVEN configuration includes worktreeDirectory WHEN validated THEN it is rejected as an unknown field', () => {
     expect(() =>
       assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
@@ -87,7 +87,7 @@ describe('configuration input validation', () => {
     ).toThrow('Unknown configuration field: "worktreeDirectory".');
   });
 
-  it('given specDirectory is an empty string when configuration is validated then validation fails because the path must be nonempty', () => {
+  it('GIVEN specDirectory is an empty string WHEN configuration is validated THEN validation fails because the path must be nonempty', () => {
     expect(() =>
       assertConfiguration({
         version: SUPPORTED_CONFIG_VERSION,
@@ -138,7 +138,7 @@ describe('configuration input validation', () => {
       message: 'Unknown configuration field: "verifier.unknownOption".',
     },
   ])(
-    'given configuration with $scenario when validated then validation fails with the specific configuration error',
+    'GIVEN configuration with $scenario WHEN validated THEN validation fails with the specific configuration error',
     async ({ fixture, message }) => {
       const input = JSON.parse(
         await readFile(new URL(import.meta.resolve(`#tests/fixtures/config/${fixture}`)), 'utf8'),

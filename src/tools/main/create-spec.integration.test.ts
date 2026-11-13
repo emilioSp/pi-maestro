@@ -23,7 +23,7 @@ afterEach(async () => {
 });
 
 describe('create spec tool', () => {
-  it('given spec creation inputs when the tool schema is checked then a title is required and extra fields are rejected', async () => {
+  it('GIVEN spec creation inputs WHEN the tool schema is checked THEN a title is required and extra fields are rejected', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerCreateSpecTool,
     });
@@ -38,7 +38,7 @@ describe('create spec tool', () => {
     ).toBe(false);
   });
 
-  it('given no active workflow when the create-spec tool runs then it selects the new spec, saves its draft and workflow, and returns their paths', async () => {
+  it('GIVEN no active workflow WHEN the create-spec tool runs THEN it selects the new spec, saves its draft and workflow, and returns their paths', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await saveConfiguration({
@@ -86,7 +86,7 @@ describe('create spec tool', () => {
     });
   });
 
-  it('given a workflow is already active when the create-spec tool runs then creation fails and the error names the active workflow', async () => {
+  it('GIVEN a workflow is already active WHEN the create-spec tool runs THEN creation fails and the error names the active workflow', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     maestroSessionState.activate();

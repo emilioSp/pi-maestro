@@ -18,7 +18,7 @@ const state = (phase: WorkflowPhase): WorkflowState => ({
 
 describe('workflow transitions', () => {
   it.each([WORKFLOW_PHASES.ESCALATION_DECISIONS, WORKFLOW_PHASES.FINDING_DECISIONS])(
-    'given a workflow in %s when the owner requests a spec revision then the workflow returns to drafting-spec',
+    'GIVEN a workflow in %s WHEN the owner requests a spec revision THEN the workflow returns to drafting-spec',
     (phase) => {
       expect(
         transitionWorkflow({
@@ -30,7 +30,7 @@ describe('workflow transitions', () => {
     },
   );
 
-  it('given a workflow in candidate-ready when a non-restart transition is requested then every request throws an error because the workflow is complete', () => {
+  it('GIVEN a workflow in candidate-ready WHEN a non-restart transition is requested THEN every request throws an error because the workflow is complete', () => {
     for (const event of Object.values(WORKFLOW_EVENTS).filter(
       (event) => event !== WORKFLOW_EVENTS.RESTART_SPEC,
     )) {
@@ -44,7 +44,7 @@ describe('workflow transitions', () => {
     }
   });
 
-  it('given a workflow in ready-for-builder when the builder run transition is calculated then the original state object remains unchanged', () => {
+  it('GIVEN a workflow in ready-for-builder WHEN the builder run transition is calculated THEN the original state object remains unchanged', () => {
     const current = state(WORKFLOW_PHASES.READY_FOR_BUILDER);
 
     transitionWorkflow({
@@ -57,7 +57,7 @@ describe('workflow transitions', () => {
   });
 });
 
-it('given a frozen draft and configuration with builder disabled when approval is calculated then only the returned state reaches candidate-ready', () => {
+it('GIVEN a frozen draft and configuration with builder disabled WHEN approval is calculated THEN only the returned state reaches candidate-ready', () => {
   const current = Object.freeze(state(WORKFLOW_PHASES.DRAFTING_SPEC));
 
   const config = Object.freeze({

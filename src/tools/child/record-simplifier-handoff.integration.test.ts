@@ -53,7 +53,7 @@ afterEach(async () => {
 });
 
 describe('record simplifier handoff', () => {
-  it('given verification has passed when the simplifier submits changed files, a summary, and notes then S.json preserves those fields and the workflow becomes candidate-ready', async () => {
+  it('GIVEN verification has passed WHEN the simplifier submits changed files, a summary, and notes THEN S.json preserves those fields and the workflow becomes candidate-ready', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 

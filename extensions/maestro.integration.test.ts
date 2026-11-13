@@ -107,7 +107,7 @@ afterEach(async () => {
 });
 
 describe('spec restart activation', () => {
-  it('given two existing specs when the owner chooses restart then both IDs are offered for selection', async () => {
+  it('GIVEN two existing specs WHEN the owner chooses restart THEN both IDs are offered for selection', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await saveConfiguration({ cwd: repository.path, agentModelSelections: {} });
@@ -137,7 +137,7 @@ describe('spec restart activation', () => {
   });
 
   it.each(Object.values(WORKFLOW_PHASES))(
-    'given a saved %s spec when the owner restarts it then the same spec is active in saved drafting-spec',
+    'GIVEN a saved %s spec WHEN the owner restarts it THEN the same spec is active in saved drafting-spec',
     async (phase) => {
       const { paths, repository } = await createApprovedWorkflow();
       const workflowPath = paths.getWorkflowPath(SPEC_ID);
@@ -168,7 +168,7 @@ describe('spec restart activation', () => {
   );
 
   it.each(['empty', 'absent'])(
-    'given an %s configured spec directory when activation is requested then Maestro activates without a choice or spec creation',
+    'GIVEN an %s configured spec directory WHEN activation is requested THEN Maestro activates without a choice or spec creation',
     async (directory) => {
       const repository = await createTemporaryProject();
       cleanupFunctions.push(repository.cleanup);
@@ -199,7 +199,7 @@ describe('spec restart activation', () => {
 });
 
 describe('main Maestro extension', () => {
-  it('given a new Pi session when Maestro loads then its tools register once but stay inactive, with no notice, status, or added instructions', async () => {
+  it('GIVEN a new Pi session WHEN Maestro loads THEN its tools register once but stay inactive, with no notice, status, or added instructions', async () => {
     const { session, notify, setStatus } = await piTestSessions.create({
       extensions: [foreignExtension, maestroExtension],
     });
@@ -225,7 +225,7 @@ describe('main Maestro extension', () => {
     });
   });
 
-  it('given valid activation checks when Maestro is enabled and later re-enabled then its tools, instructions, and status are available without duplicate registration, automatic model calls, or new session history', async () => {
+  it('GIVEN valid activation checks WHEN Maestro is enabled and later re-enabled THEN its tools, instructions, and status are available without duplicate registration, automatic model calls, or new session history', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 
@@ -307,7 +307,7 @@ describe('main Maestro extension', () => {
     expect(modelContext).not.toContain('Verifier (');
   });
 
-  it('given custom agent configuration when Maestro is enabled then the activation notice lists the provider, model, and thinking level for each agent', async () => {
+  it('GIVEN custom agent configuration WHEN Maestro is enabled THEN the activation notice lists the provider, model, and thinking level for each agent', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await mkdir(join(repository.path, '.pi'));
@@ -384,7 +384,7 @@ describe('main Maestro extension', () => {
       expectedAgents: [],
     },
   ])(
-    'given $scenario when Maestro is activated then the notice lists only enabled agents',
+    'GIVEN $scenario WHEN Maestro is activated THEN the notice lists only enabled agents',
     async ({ builder, verifier, simplifier, expectedAgents }) => {
       const repository = await createTemporaryProject();
       cleanupFunctions.push(repository.cleanup);
@@ -414,7 +414,7 @@ describe('main Maestro extension', () => {
     },
   );
 
-  it('given an unavailable simplifier model when activation is requested then Maestro stays disabled and reports which model is unavailable', async () => {
+  it('GIVEN an unavailable simplifier model WHEN activation is requested THEN Maestro stays disabled and reports which model is unavailable', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await mkdir(join(repository.path, '.pi'));
@@ -439,7 +439,7 @@ describe('main Maestro extension', () => {
     );
   });
 
-  it('given an untrusted project with valid configuration when activation is requested then Maestro activates without requiring project trust', async () => {
+  it('GIVEN an untrusted project with valid configuration WHEN activation is requested THEN Maestro activates without requiring project trust', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await saveConfiguration({
@@ -467,7 +467,7 @@ describe('main Maestro extension', () => {
     );
   });
 
-  it('given Maestro has an active spec when it is disabled and enabled again then saved files stay unchanged and the previous spec is no longer active', async () => {
+  it('GIVEN Maestro has an active spec WHEN it is disabled and enabled again THEN saved files stay unchanged and the previous spec is no longer active', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { session, notify, setStatus, settingsManager } = await piTestSessions.create({
@@ -524,7 +524,7 @@ describe('main Maestro extension', () => {
     expect(session.getActiveToolNames()).toEqual(['read', FOREIGN_TOOL, ...MAIN_TOOL_NAMES]);
   });
 
-  it('given a saved workflow when Pi resumes the session then Maestro stays disabled, leaves the workflow unchanged, and does not select an active spec', async () => {
+  it('GIVEN a saved workflow WHEN Pi resumes the session THEN Maestro stays disabled, leaves the workflow unchanged, and does not select an active spec', async () => {
     const { paths, repository } = await createApprovedWorkflow();
     const workflow = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
 
@@ -542,7 +542,7 @@ describe('main Maestro extension', () => {
     expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(workflow);
   });
 
-  it('given an approved proposal, nested-criteria spec, and design in Git when builder, verifier, and simplifier finish then the workflow ends at candidate-ready with saved reports and unchanged approved documents', async () => {
+  it('GIVEN an approved proposal, nested-criteria spec, and design in Git WHEN builder, verifier, and simplifier finish THEN the workflow ends at candidate-ready with saved reports and unchanged approved documents', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
     await execFileAsync('git', ['init', '-q', repository.path]);
@@ -929,7 +929,7 @@ describe('main Maestro extension', () => {
       stopReason: 'length' as const,
     },
   ])(
-    'given $scenario when the final response finishes then Maestro exits only after successful delivery',
+    'GIVEN $scenario WHEN the final response finishes THEN Maestro exits only after successful delivery',
     async ({ completionEvent, summary, stopReason }) => {
       maestroSessionState.activate();
       maestroSessionState.setActiveSpecId(SPEC_ID);
@@ -1158,7 +1158,7 @@ describe('main Maestro extension', () => {
   };
 
   it.each([WORKFLOW_PHASES.ESCALATION_DECISIONS, WORKFLOW_PHASES.FINDING_DECISIONS])(
-    'given a workflow in %s when the owner records a decision to revise the spec and approves the revision then the same workflow returns to ready-for-builder',
+    'GIVEN a workflow in %s WHEN the owner records a decision to revise the spec and approves the revision THEN the same workflow returns to ready-for-builder',
     async (phase) => {
       maestroSessionState.activate();
       maestroSessionState.setActiveSpecId(SPEC_ID);
@@ -1269,7 +1269,7 @@ describe('main Maestro extension', () => {
     },
   );
 
-  it('given the builder reports an unavailable compiler when its run finishes then Maestro returns the escalation and shows that an owner decision is needed', async () => {
+  it('GIVEN the builder reports an unavailable compiler WHEN its run finishes THEN Maestro returns the escalation and shows that an owner decision is needed', async () => {
     const { paths, repository } = await createApprovedWorkflow();
 
     const { session, setStatus } = await piTestSessions.create({
@@ -1344,7 +1344,7 @@ describe('main Maestro extension', () => {
     );
   });
 
-  it('given the active spec has no workflow file when Maestro prepares the next prompt then it reports the missing file, clears its status, and still adds its instructions', async () => {
+  it('GIVEN the active spec has no workflow file WHEN Maestro prepares the next prompt THEN it reports the missing file, clears its status, and still adds its instructions', async () => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
 
@@ -1432,7 +1432,7 @@ it.each([
     enabledAgents: { builder: false, verifier: false, simplifier: false },
   },
 ])(
-  'given first-use setup with $scenario when the owner finishes the selectors then completed choices alone determine enabled agents and activation',
+  'GIVEN first-use setup with $scenario WHEN the owner finishes the selectors THEN completed choices alone determine enabled agents and activation',
   async ({ actions, models, enabledAgents }) => {
     const repository = await createTemporaryProject();
     cleanupFunctions.push(repository.cleanup);
@@ -1499,7 +1499,7 @@ it.each([
   },
 );
 
-it('given Pi levels beginning with minimal and a completed high selection when builder is replaced then both thinking dialogs receive Pi order and the new first choice replaces high', async () => {
+it('GIVEN Pi levels beginning with minimal and a completed high selection WHEN builder is replaced THEN both thinking dialogs receive Pi order and the new first choice replaces high', async () => {
   const repository = await createTemporaryProject();
   cleanupFunctions.push(repository.cleanup);
 
@@ -1545,7 +1545,7 @@ it('given Pi levels beginning with minimal and a completed high selection when b
   expect(maestroSessionState.isActive()).toBe(true);
 });
 
-it('given unsaved builder selection when Escape closes the main screen then configuration remains absent and Maestro stays inactive', async () => {
+it('GIVEN unsaved builder selection WHEN Escape closes the main screen THEN configuration remains absent and Maestro stays inactive', async () => {
   const repository = await createTemporaryProject();
   cleanupFunctions.push(repository.cleanup);
 
@@ -1568,7 +1568,7 @@ it('given unsaved builder selection when Escape closes the main screen then conf
   expect(maestroSessionState.isActive()).toBe(false);
 });
 
-it('given an existing configuration missing the enabled verifier model when activation is requested then the file stays unchanged and setup is not opened', async () => {
+it('GIVEN an existing configuration missing the enabled verifier model WHEN activation is requested THEN the file stays unchanged and setup is not opened', async () => {
   const repository = await createTemporaryProject();
   cleanupFunctions.push(repository.cleanup);
   const input = { ...TEST_CONFIG, verifier: { required: true } };
@@ -1593,7 +1593,7 @@ it('given an existing configuration missing the enabled verifier model when acti
   expect(await readFile(join(repository.path, '.pi/maestro.json'), 'utf8')).toBe(before);
 });
 
-it('given builder enabled and both later phases disabled without models when activation is requested then Maestro activates using only the builder model', async () => {
+it('GIVEN builder enabled and both later phases disabled without models WHEN activation is requested THEN Maestro activates using only the builder model', async () => {
   const repository = await createTemporaryProject();
   cleanupFunctions.push(repository.cleanup);
   await saveConfiguration({

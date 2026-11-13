@@ -27,7 +27,7 @@ afterEach(async () => {
 });
 
 describe('verifier handoff tool', () => {
-  it('given verifier report inputs when the tool schema is checked then a report is accepted but unknown fields and owner decisions are rejected', async () => {
+  it('GIVEN verifier report inputs WHEN the tool schema is checked THEN a report is accepted but unknown fields and owner decisions are rejected', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: (pi) => {
         pi.registerTool(recordVerifierHandoffTool);
@@ -59,7 +59,7 @@ describe('verifier handoff tool', () => {
     ).toBe(false);
   });
 
-  it('given a workflow in ready-for-builder when a verifier report is submitted then submission fails because the verifier is not running', async () => {
+  it('GIVEN a workflow in ready-for-builder WHEN a verifier report is submitted THEN submission fails because the verifier is not running', async () => {
     const workflow = await createApprovedWorkflow();
 
     const { tool } = await piTestSessions.createRegisteredTool({
@@ -74,7 +74,7 @@ describe('verifier handoff tool', () => {
     );
   });
 
-  it('given the saved workflow names a different spec when a verifier report is submitted then submission fails with a spec ID mismatch error', async () => {
+  it('GIVEN the saved workflow names a different spec WHEN a verifier report is submitted THEN submission fails with a spec ID mismatch error', async () => {
     const workflow = await createApprovedWorkflow();
     const statePath = workflow.paths.getWorkflowPath(SPEC_ID);
     const state = await readWorkflowState(statePath);

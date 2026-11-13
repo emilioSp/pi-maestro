@@ -19,7 +19,7 @@ describe('assertSpecAcceptanceCriteria', () => {
       missingIds: 'AC1, AC2',
     },
   ])(
-    'given a handoff containing $scenario when criterion coverage is checked then an error lists missing IDs $missingIds',
+    'GIVEN a handoff containing $scenario WHEN criterion coverage is checked THEN an error lists missing IDs $missingIds',
     async ({ fixture, criterionIds, missingIds }) => {
       const markdown = await readFile(
         new URL(`../../../tests/fixtures/${fixture}`, import.meta.url),
@@ -42,7 +42,7 @@ describe('assertSpecAcceptanceCriteria', () => {
       criterionIds: ['AC2', 'AC1', 'AC3'],
     },
   ])(
-    'given $scenario when handoff criterion coverage is checked then validation succeeds',
+    'GIVEN $scenario WHEN handoff criterion coverage is checked THEN validation succeeds',
     async ({ fixture, criterionIds }) => {
       const markdown = await readFile(
         new URL(`../../../tests/fixtures/${fixture}`, import.meta.url),

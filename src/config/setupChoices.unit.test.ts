@@ -22,7 +22,7 @@ const reasoningModel: Model<Api> = {
   thinkingLevelMap: { minimal: null, medium: null, low: 'low', high: 'high' },
 };
 
-it('given reasoning and non-reasoning models when setup choices are derived then thinking levels match Pi capabilities exactly', () => {
+it('GIVEN reasoning and non-reasoning models WHEN setup choices are derived THEN thinking levels match Pi capabilities exactly', () => {
   expect(
     setupChoices([
       reasoningModel,

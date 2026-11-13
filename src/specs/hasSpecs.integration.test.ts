@@ -6,7 +6,7 @@ import { expect, it, onTestFinished } from 'vitest';
 import { hasSpecs } from '#specs/hasSpecs.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 
-it('given a valid spec directory among unrelated entries when checking for specs then returns true', async () => {
+it('GIVEN a valid spec directory among unrelated entries WHEN checking for specs THEN returns true', async () => {
   const project = await createTemporaryProject();
   onTestFinished(project.cleanup);
   await mkdir(join(project.path, '20261101-100000-add-search'));
@@ -16,7 +16,7 @@ it('given a valid spec directory among unrelated entries when checking for specs
   expect(await hasSpecs(project.path)).toBe(true);
 });
 
-it('given only unrelated directories and a file named like a spec when checking for specs then returns false', async () => {
+it('GIVEN only unrelated directories and a file named like a spec WHEN checking for specs THEN returns false', async () => {
   const project = await createTemporaryProject();
   onTestFinished(project.cleanup);
   await mkdir(join(project.path, 'notes'));
@@ -25,14 +25,14 @@ it('given only unrelated directories and a file named like a spec when checking 
   expect(await hasSpecs(project.path)).toBe(false);
 });
 
-it('given an empty directory when checking for specs then returns false', async () => {
+it('GIVEN an empty directory WHEN checking for specs THEN returns false', async () => {
   const project = await createTemporaryProject();
   onTestFinished(project.cleanup);
 
   expect(await hasSpecs(project.path)).toBe(false);
 });
 
-it('given an absent directory when checking for specs then returns false', async () => {
+it('GIVEN an absent directory WHEN checking for specs THEN returns false', async () => {
   const project = await createTemporaryProject();
   onTestFinished(project.cleanup);
 

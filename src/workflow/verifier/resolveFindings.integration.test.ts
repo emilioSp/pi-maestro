@@ -28,7 +28,7 @@ import { resolveFindings } from '#workflow/verifier/resolveFindings.ts';
 afterEach(cleanupBuilderWorkflows);
 
 describe('finding resolution', () => {
-  it('given one finding is rejected and another requires a code fix when the builder and verifier run again then new numbered reports are saved and earlier reports retain both decisions', async () => {
+  it('GIVEN one finding is rejected and another requires a code fix WHEN the builder and verifier run again THEN new numbered reports are saved and earlier reports retain both decisions', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 

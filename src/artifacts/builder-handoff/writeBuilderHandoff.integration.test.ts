@@ -47,7 +47,7 @@ afterEach(async () => {
 });
 
 describe('builder handoff writes', () => {
-  it('given an existing builder report when a valid replacement is written then reading the file returns the replacement report', async () => {
+  it('GIVEN an existing builder report WHEN a valid replacement is written THEN reading the file returns the replacement report', async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, 'B1.json');
 
@@ -68,7 +68,7 @@ describe('builder handoff writes', () => {
     );
   });
 
-  it('given an existing builder report when a done report with a failed probe would replace it then writing fails and the original file stays unchanged', async () => {
+  it('GIVEN an existing builder report WHEN a done report with a failed probe would replace it THEN writing fails and the original file stays unchanged', async () => {
     const directory = await createTemporaryDirectory();
     const path = join(directory, 'B1.json');
     await writeBuilderHandoff({

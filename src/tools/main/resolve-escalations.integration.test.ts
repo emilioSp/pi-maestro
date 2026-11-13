@@ -68,7 +68,7 @@ afterEach(async () => {
 });
 
 describe('resolve escalations tool', () => {
-  it('given escalation resolution inputs when the tool schema is checked then a nonempty decision batch with reasons is required and extra fields are rejected', async () => {
+  it('GIVEN escalation resolution inputs WHEN the tool schema is checked THEN a nonempty decision batch with reasons is required and extra fields are rejected', async () => {
     const { tool } = await piTestSessions.createRegisteredTool({
       extension: registerResolveEscalationsTool,
     });
@@ -99,7 +99,7 @@ describe('resolve escalations tool', () => {
       expect(Value.Check(tool.parameters, params)).toBe(false);
   });
 
-  it('given unanswered builder questions when the owner answers all without a spec change then answers are saved in B1, the builder can run again, and new questions restart at E1 in B2', async () => {
+  it('GIVEN unanswered builder questions WHEN the owner answers all without a spec change THEN answers are saved in B1, the builder can run again, and new questions restart at E1 in B2', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -203,7 +203,7 @@ describe('resolve escalations tool', () => {
     expect(await readFile(handoffPath, 'utf8')).toBe(savedB1);
   });
 
-  it('given earlier builder report B1 and new questions in B2 when the owner answers them with a spec revision then only B2 changes and separate approval returns the workflow to ready-for-builder', async () => {
+  it('GIVEN earlier builder report B1 and new questions in B2 WHEN the owner answers them with a spec revision THEN only B2 changes and separate approval returns the workflow to ready-for-builder', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -332,7 +332,7 @@ describe('resolve escalations tool', () => {
   });
 
   it.each([undefined, 'true', 1, null])(
-    'given specChangeRequired is %j instead of a boolean when resolution inputs are checked then the tool schema rejects the request',
+    'GIVEN specChangeRequired is %j instead of a boolean WHEN resolution inputs are checked THEN the tool schema rejects the request',
     async (specChangeRequired) => {
       const { tool } = await piTestSessions.createRegisteredTool({
         extension: registerResolveEscalationsTool,
@@ -348,7 +348,7 @@ describe('resolve escalations tool', () => {
     },
   );
 
-  it('given unanswered builder questions when direct spec approval is requested then approval fails and the spec, workflow, and builder report stay unchanged', async () => {
+  it('GIVEN unanswered builder questions WHEN direct spec approval is requested THEN approval fails and the spec, workflow, and builder report stay unchanged', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -402,7 +402,7 @@ describe('resolve escalations tool', () => {
     ],
     ['with no decisions', [], 'At least one escalation decision is required.'],
   ])(
-    'given an escalation decision batch %s when submitted then resolution fails without changing the builder report or workflow',
+    'GIVEN an escalation decision batch %s WHEN submitted THEN resolution fails without changing the builder report or workflow',
     async (_name, invalidDecisions, message) => {
       maestroSessionState.activate();
       maestroSessionState.setActiveSpecId(SPEC_ID);
@@ -441,7 +441,7 @@ describe('resolve escalations tool', () => {
     },
   );
 
-  it('given a workflow in builder-running when escalation decisions are submitted then resolution fails without changing the builder report or workflow', async () => {
+  it('GIVEN a workflow in builder-running WHEN escalation decisions are submitted THEN resolution fails without changing the builder report or workflow', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -479,7 +479,7 @@ describe('resolve escalations tool', () => {
     expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(workflowBefore);
   });
 
-  it('given a done report instead of an escalation when escalation decisions are submitted then resolution fails without changing the builder report or workflow', async () => {
+  it('GIVEN a done report instead of an escalation WHEN escalation decisions are submitted THEN resolution fails without changing the builder report or workflow', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -518,7 +518,7 @@ describe('resolve escalations tool', () => {
     expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(workflowBefore);
   });
 
-  it('given answered questions in ready-for-builder when escalation decisions are submitted then resolution fails without changing the builder report or workflow', async () => {
+  it('GIVEN answered questions in ready-for-builder WHEN escalation decisions are submitted THEN resolution fails without changing the builder report or workflow', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -554,7 +554,7 @@ describe('resolve escalations tool', () => {
     expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(workflowBefore);
   });
 
-  it('given answered questions in decision phase when escalation decisions are submitted then resolution fails without changing the builder report or workflow', async () => {
+  it('GIVEN answered questions in decision phase WHEN escalation decisions are submitted THEN resolution fails without changing the builder report or workflow', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 

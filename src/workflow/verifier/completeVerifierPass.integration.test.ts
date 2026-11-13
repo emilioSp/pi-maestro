@@ -86,7 +86,7 @@ const prepareRunningVerifier = async () => {
 };
 
 describe('verifier completion', () => {
-  it('given verifier report V1 already exists when saving the next report succeeds but saving its workflow phase fails then the error is reported and V2 remains readable', async () => {
+  it('GIVEN verifier report V1 already exists WHEN saving the next report succeeds but saving its workflow phase fails THEN the error is reported and V2 remains readable', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -131,7 +131,7 @@ describe('verifier completion', () => {
     });
   });
 
-  it('given the verifier is running when it submits a valid report with no findings then the current project workflow moves to simplifier-running', async () => {
+  it('GIVEN the verifier is running WHEN it submits a valid report with no findings THEN the current project workflow moves to simplifier-running', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -152,7 +152,7 @@ describe('verifier completion', () => {
     });
   });
 
-  it('given a verifier report names a different spec when it is submitted then submission fails without saving a report or changing the workflow', async () => {
+  it('GIVEN a verifier report names a different spec WHEN it is submitted THEN submission fails without saving a report or changing the workflow', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -180,7 +180,7 @@ describe('verifier completion', () => {
 });
 
 describe('verifier spec criterion presence', () => {
-  it('given the spec requires AC1 and AC2 when a verifier report covers only AC1 then submission fails naming AC2 without saving a report or changing the workflow', async () => {
+  it('GIVEN the spec requires AC1 and AC2 WHEN a verifier report covers only AC1 THEN submission fails naming AC2 without saving a report or changing the workflow', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 

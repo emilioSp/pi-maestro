@@ -27,7 +27,7 @@ afterEach(async () => {
 });
 
 describe('builder completion', () => {
-  it('given the builder is running when it submits a done report with passed probes then the current project workflow moves to ready-for-verifier', async () => {
+  it('GIVEN the builder is running WHEN it submits a done report with passed probes THEN the current project workflow moves to ready-for-verifier', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -63,7 +63,7 @@ describe('builder completion', () => {
     });
   });
   it.each([PROBE_STATUSES.NOT_RUN, PROBE_STATUSES.PASSED])(
-    'given a compiler escalation with a probe marked %s when the owner answers it and the next builder run succeeds then B1 keeps the answer, B2 records success, and the workflow becomes ready-for-verifier',
+    'GIVEN a compiler escalation with a probe marked %s WHEN the owner answers it and the next builder run succeeds THEN B1 keeps the answer, B2 records success, and the workflow becomes ready-for-verifier',
     async (probeStatus) => {
       maestroSessionState.activate();
       maestroSessionState.setActiveSpecId(SPEC_ID);
@@ -183,7 +183,7 @@ describe('builder completion', () => {
     },
   );
 
-  it('given a compiler escalation with passed, failed, and unrun probes when the builder submits its report then every probe result is preserved and the workflow enters escalation-decisions', async () => {
+  it('GIVEN a compiler escalation with passed, failed, and unrun probes WHEN the builder submits its report THEN every probe result is preserved and the workflow enters escalation-decisions', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -368,7 +368,7 @@ describe('builder completion', () => {
       'Builder handoff acceptance criterion IDs must be unique.',
     ],
   ])(
-    'given %s when a builder report is submitted then submission fails without saving a report or changing the workflow',
+    'GIVEN %s WHEN a builder report is submitted THEN submission fails without saving a report or changing the workflow',
     async (_name, handoff, message) => {
       maestroSessionState.activate();
       maestroSessionState.setActiveSpecId(SPEC_ID);
@@ -397,7 +397,7 @@ describe('builder completion', () => {
 });
 
 describe('builder spec criterion presence', () => {
-  it('given the spec requires AC1 and AC2 when a done builder report covers only AC1 then submission fails naming AC2 without saving a report or changing the workflow', async () => {
+  it('GIVEN the spec requires AC1 and AC2 WHEN a done builder report covers only AC1 THEN submission fails naming AC2 without saving a report or changing the workflow', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 

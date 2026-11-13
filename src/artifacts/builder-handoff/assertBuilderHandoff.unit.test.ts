@@ -28,7 +28,7 @@ const doneHandoff = (): BuilderHandoff => ({
 
 describe('builder handoff validation', () => {
   it.each([PROBE_STATUSES.FAILED, PROBE_STATUSES.NOT_RUN])(
-    'given a done builder report with one passed probe and another marked %s when validated then it is rejected because every probe must pass',
+    'GIVEN a done builder report with one passed probe and another marked %s WHEN validated THEN it is rejected because every probe must pass',
     (probeStatus) => {
       const handoff = doneHandoff();
       handoff.acceptanceCriteria.push({
@@ -87,13 +87,13 @@ describe('builder handoff validation', () => {
       message: 'Invalid builder handoff',
     },
   ])(
-    'given a builder report with $scenario when validated then it is rejected with the corresponding report error',
+    'GIVEN a builder report with $scenario WHEN validated THEN it is rejected with the corresponding report error',
     ({ handoff, message }) => {
       expect(() => assertBuilderHandoff({ handoff, specId })).toThrow(message);
     },
   );
 
-  it('given a builder report whose spec ID contains February 30 when validated then it is rejected with an invalid spec ID error', () => {
+  it('GIVEN a builder report whose spec ID contains February 30 WHEN validated THEN it is rejected with an invalid spec ID error', () => {
     expect(() =>
       assertBuilderHandoff({
         handoff: {

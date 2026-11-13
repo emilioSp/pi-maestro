@@ -42,7 +42,7 @@ const finding = (): VerifierHandoff['findings'][number] => ({
 
 describe('verifier handoff validation', () => {
   it.each([PROBE_STATUSES.FAILED, PROBE_STATUSES.NOT_RUN])(
-    'given a verifier report with a probe marked %s and no linked finding when validated then it is rejected because the probe requires a finding',
+    'GIVEN a verifier report with a probe marked %s and no linked finding WHEN validated THEN it is rejected because the probe requires a finding',
     (probeStatus) => {
       const input = handoff();
       input.acceptanceCriteria.push({
@@ -56,7 +56,7 @@ describe('verifier handoff validation', () => {
   );
 
   it.each([PROBE_STATUSES.FAILED, PROBE_STATUSES.NOT_RUN])(
-    'given a verifier report with a probe marked %s and a linked finding when validated then it is accepted',
+    'GIVEN a verifier report with a probe marked %s and a linked finding WHEN validated THEN it is accepted',
     (probeStatus) => {
       const input = handoff();
       input.acceptanceCriteria.push({
@@ -71,7 +71,7 @@ describe('verifier handoff validation', () => {
     },
   );
 
-  it('given a verifier report with a failed probe when it includes a finding for that criterion and a separate finding without a criterion then validation succeeds', () => {
+  it('GIVEN a verifier report with a failed probe WHEN it includes a finding for that criterion and a separate finding without a criterion THEN validation succeeds', () => {
     expect(() =>
       assertVerifierHandoff({
         handoff: {
@@ -177,7 +177,7 @@ describe('verifier handoff validation', () => {
       message: 'Invalid verifier handoff',
     },
   ])(
-    'given a verifier report with $scenario when validated then it is rejected with the corresponding report error',
+    'GIVEN a verifier report with $scenario WHEN validated THEN it is rejected with the corresponding report error',
     ({ handoff: input, message }) => {
       expect(() => assertVerifierHandoff({ handoff: input, specId })).toThrow(message);
     },

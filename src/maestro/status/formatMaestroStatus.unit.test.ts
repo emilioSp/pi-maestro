@@ -25,18 +25,18 @@ const theme: Pick<Theme, 'fg'> = {
 const SPEC_ID = '20250101-000000-status-test';
 
 describe('Maestro status', () => {
-  it('given Maestro is disabled when status text is requested then no status text is returned', () => {
+  it('GIVEN Maestro is disabled WHEN status text is requested THEN no status text is returned', () => {
     expect(formatMaestroStatus({ active: false, workflow: null, theme })).toBeUndefined();
   });
 
-  it('given Maestro is active without a workflow when status text is requested then it shows Maestro active and No active spec', () => {
+  it('GIVEN Maestro is active without a workflow WHEN status text is requested THEN it shows Maestro active and No active spec', () => {
     expect(formatMaestroStatus({ active: true, workflow: null, theme })).toBe(
       '<muted>Maestro active · </muted><accent>No active spec</accent>',
     );
   });
 
   it.each(Object.values(WORKFLOW_PHASES))(
-    'given a workflow in %s when status text is requested then it shows the spec ID and the icon, color, and label for that phase',
+    'GIVEN a workflow in %s WHEN status text is requested THEN it shows the spec ID and the icon, color, and label for that phase',
     (phase) => {
       const state: WorkflowState = {
         version: WORKFLOW_STATE_VERSION,
@@ -83,7 +83,7 @@ describe('Maestro status', () => {
       display: '20250101-000000-fix-123456...',
     },
   ])(
-    'given $scenario when status text is requested then it displays $display without changing the stored spec ID',
+    'GIVEN $scenario WHEN status text is requested THEN it displays $display without changing the stored spec ID',
     ({ specId, display }) => {
       const state: WorkflowState = {
         version: WORKFLOW_STATE_VERSION,

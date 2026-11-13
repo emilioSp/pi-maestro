@@ -11,11 +11,11 @@ import { taskReplyWithProviderError } from '#tests/fixtures/task-reply-with-prov
 import { taskReplyWithTextBlocks } from '#tests/fixtures/task-reply-with-text-blocks.ts';
 
 describe('task reply interpretation', () => {
-  it('given a reply with mixed content when its result is read then only text blocks are joined with newlines', () => {
+  it('GIVEN a reply with mixed content WHEN its result is read THEN only text blocks are joined with newlines', () => {
     expect(readTaskResult(taskReplyWithTextBlocks)).toBe('First line\nSecond line');
   });
 
-  it('given no assistant reply when its result is read then the result is an empty string', () => {
+  it('GIVEN no assistant reply WHEN its result is read THEN the result is an empty string', () => {
     expect(readTaskResult(undefined)).toBe('');
   });
 
@@ -31,7 +31,7 @@ describe('task reply interpretation', () => {
       message: 'Child model execution failed.',
     },
   ])(
-    'given a failed reply with $label when its result is read then its error is thrown instead of partial text',
+    'GIVEN a failed reply with $label WHEN its result is read THEN its error is thrown instead of partial text',
     ({ reply, message }) => {
       expect(() => readTaskResult(reply)).toThrowError(new Error(message));
     },
@@ -49,7 +49,7 @@ describe('task reply interpretation', () => {
       message: 'Task execution interrupted.',
     },
   ])(
-    'given an interrupted reply with $label when its result is read then AbortError is thrown instead of partial text',
+    'GIVEN an interrupted reply with $label WHEN its result is read THEN AbortError is thrown instead of partial text',
     ({ reply, message }) => {
       expect(() => readTaskResult(reply)).toThrowError(
         expect.objectContaining({ name: 'AbortError', message }),
