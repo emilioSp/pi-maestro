@@ -2,25 +2,17 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES, WORKFLOW_STATE_VERSION } from '#workflow/state/schema.ts';
 
-const temporaryDirectories: string[] = [];
-
 const createTemporaryDirectory = async (): Promise<string> => {
   const path = await mkdtemp(join(tmpdir(), 'pi-maestro-workflow-state-'));
-  temporaryDirectories.push(path);
+  onTestFinished(() => rm(path, { force: true, recursive: true }));
 
   return path;
 };
-
-afterEach(async () => {
-  await Promise.all(
-    temporaryDirectories.splice(0).map((path) => rm(path, { force: true, recursive: true })),
-  );
-});
 
 describe('readWorkflowState', () => {
   it('GIVEN workflow files with broken JSON or an unknown field WHEN read THEN reading fails with a JSON or validation error', async () => {

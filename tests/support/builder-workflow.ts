@@ -6,6 +6,8 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { onTestFinished } from 'vitest';
+
 import {
   BUILDER_HANDOFF_STATUSES,
   type BuilderHandoffSubmissionInput,
@@ -13,7 +15,6 @@ import {
 } from '#artifacts/builder-handoff/schema.ts';
 import { loadConfiguration } from '#config/loadConfiguration.ts';
 import type { PartialMaestroConfig } from '#config/schema.ts';
-import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 import { createSpec } from '#specs/create.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
@@ -23,8 +24,6 @@ import { markSpecReady } from '#workflow/spec/markSpecReady.ts';
 export const INSTANT = Temporal.Instant.from('2026-03-21T14:30:52Z');
 
 export const SPEC_ID = '20260321-143052-add-weather-alerts';
-
-const cleanupFunctions: Array<() => Promise<void>> = [];
 
 type CreateApprovedWorkflowInput = {
   specDirectory?: string;
@@ -36,8 +35,7 @@ export const createApprovedWorkflow = async ({
   agents = {},
 }: CreateApprovedWorkflowInput = {}) => {
   const repository = await createTemporaryProject();
-  cleanupFunctions.push(repository.cleanup);
-  await writeFile(join(repository.path, 'README.md'), '# Test\n', 'utf8');
+  onTestFinished(repository.cleanup);
   const configDirectory = join(repository.path, '.pi');
   await mkdir(configDirectory, { recursive: true });
   await writeFile(
@@ -64,14 +62,15 @@ export const createApprovedWorkflow = async ({
     activeWorkflowSpecId: null,
     instant: INSTANT,
   });
-  await markSpecReady({ config, paths, specId: SPEC_ID, activeWorkflowSpecId: SPEC_ID });
 
-  return { paths, repository };
-};
+  const state = await markSpecReady({
+    config,
+    paths,
+    specId: SPEC_ID,
+    activeWorkflowSpecId: SPEC_ID,
+  });
 
-export const cleanupBuilderWorkflows = async (): Promise<void> => {
-  await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
-  maestroSessionState.deactivate();
+  return { paths, repository, state };
 };
 
 export const doneHandoff = (): BuilderHandoffSubmissionInput => ({

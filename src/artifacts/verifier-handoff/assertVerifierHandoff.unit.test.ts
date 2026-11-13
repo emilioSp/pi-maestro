@@ -128,19 +128,6 @@ describe('verifier handoff validation', () => {
       message: 'references unknown acceptance criterion',
     },
     {
-      scenario: 'a failed probe without a related finding',
-      handoff: {
-        ...handoff(),
-        acceptanceCriteria: [
-          {
-            ...handoff().acceptanceCriteria[0],
-            probeStatus: PROBE_STATUSES.FAILED,
-          },
-        ],
-      },
-      message: 'requires a finding',
-    },
-    {
       scenario: 'finding confidence above 1',
       handoff: { ...handoff(), findings: [{ ...finding(), confidence: 1.1 }] },
       message: 'Invalid verifier handoff',

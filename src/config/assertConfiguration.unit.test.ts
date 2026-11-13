@@ -1,5 +1,3 @@
-import { readFile } from 'node:fs/promises';
-
 import { describe, expect, it } from 'vitest';
 
 import { assertConfiguration } from '#config/assertConfiguration.ts';
@@ -99,51 +97,47 @@ describe('configuration input validation', () => {
   it.each([
     {
       scenario: 'a version prefixed with v',
-      fixture: 'invalid-version-format.json',
+      input: { version: 'v1.0.0' },
       message: 'Invalid configuration version: "v1.0.0".',
     },
     {
       scenario: 'an unsupported major version',
-      fixture: 'unsupported-major-version.json',
+      input: { version: '2.0.0' },
       message: 'Unsupported configuration major version: 2.',
     },
     {
       scenario: 'an unsupported minor version',
-      fixture: 'unsupported-minor-version.json',
+      input: { version: '1.1.0' },
       message: 'Unsupported configuration version: "1.1.0".',
     },
     {
       scenario: 'no version field',
-      fixture: 'missing-version.json',
+      input: { builder: {} },
       message: "Missing configuration version. The 'version' field is required.",
     },
     {
       scenario: 'an unsupported verifier thinking level',
-      fixture: 'invalid-thinking-level.json',
+      input: { version: '1.0.0', verifier: { thinking: 'extreme' } },
       message: 'Invalid thinking level at "verifier.thinking".',
     },
     {
       scenario: 'an unknown top-level field',
-      fixture: 'unknown-root-field.json',
+      input: { version: '1.0.0', unknownField: true },
       message: 'Unknown configuration field: "unknownField".',
     },
     {
       scenario: 'an unknown builder field',
-      fixture: 'unknown-builder-field.json',
+      input: { version: '1.0.0', builder: { unknownOption: 'not-allowed' } },
       message: 'Unknown configuration field: "builder.unknownOption".',
     },
     {
       scenario: 'an unknown verifier field',
-      fixture: 'unknown-verifier-field.json',
+      input: { version: '1.0.0', verifier: { unknownOption: 'not-allowed' } },
       message: 'Unknown configuration field: "verifier.unknownOption".',
     },
   ])(
     'GIVEN configuration with $scenario WHEN validated THEN validation fails with the specific configuration error',
-    async ({ fixture, message }) => {
-      const input = JSON.parse(
-        await readFile(new URL(import.meta.resolve(`#tests/fixtures/config/${fixture}`)), 'utf8'),
-      );
-
+    ({ input, message }) => {
       expect(() => assertConfiguration(input)).toThrow(message);
     },
   );

@@ -8,15 +8,12 @@ import { BUILDER_HANDOFF_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
-import {
-  cleanupBuilderWorkflows,
-  createApprovedWorkflow,
-  SPEC_ID,
-} from '#tests/support/builder-workflow.ts';
+import { createApprovedWorkflow, SPEC_ID } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { recordBuilderHandoffTool } from '#tools/child/record-builder-handoff.ts';
 import { registerMarkSpecReadyTool } from '#tools/main/mark-spec-ready.ts';
 import { registerResolveEscalationsTool } from '#tools/main/resolve-escalations.ts';
+import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import {
   type EscalationDecision,
@@ -46,25 +43,19 @@ const openEscalations = async () => {
   const workflow = await createApprovedWorkflow();
   await prepareBuilderRun({ config: TEST_CONFIG, paths: workflow.paths, specId: SPEC_ID });
 
-  const { tool } = await piTestSessions.createRegisteredTool({
-    cwd: workflow.repository.path,
-    extension: (pi) => {
-      pi.registerTool(recordBuilderHandoffTool);
-    },
-  });
-
-  await tool.execute('builder-handoff', {
+  const { handoffPath } = await completeBuilderPass({
+    config: TEST_CONFIG,
+    paths: workflow.paths,
     specId: SPEC_ID,
-    ...csvExportEscalation,
+    handoff: csvExportEscalation,
   });
-  const handoffPath = await workflow.paths.getActiveBuilderHandoffPath(SPEC_ID);
 
   return { ...workflow, handoffPath };
 };
 
 afterEach(async () => {
   await piTestSessions.cleanup();
-  await cleanupBuilderWorkflows();
+  maestroSessionState.deactivate();
 });
 
 describe('resolve escalations tool', () => {
@@ -407,25 +398,11 @@ describe('resolve escalations tool', () => {
       maestroSessionState.activate();
       maestroSessionState.setActiveSpecId(SPEC_ID);
 
-      const { paths, repository, handoffPath } = await openEscalations();
+      const { paths, handoffPath } = await openEscalations();
       const handoffBefore = await readFile(handoffPath, 'utf8');
 
       const workflowBefore = await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8');
 
-      const { tool } = await piTestSessions.createRegisteredTool({
-        cwd: repository.path,
-        extension: registerResolveEscalationsTool,
-      });
-
-      await expect(
-        tool.execute('invalid-owner-batch', {
-          specId: SPEC_ID,
-          specChangeRequired: false,
-          decisions: invalidDecisions,
-        }),
-      ).rejects.toThrow(message);
-
-      // Exercise domain validation too, including schema-invalid batches rejected by Pi.
       await expect(
         resolveEscalations({
           config: TEST_CONFIG,

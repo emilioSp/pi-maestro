@@ -12,12 +12,7 @@ import {
 } from '#artifacts/verifier-handoff/schema.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
-import {
-  cleanupBuilderWorkflows,
-  createApprovedWorkflow,
-  doneHandoff,
-  SPEC_ID,
-} from '#tests/support/builder-workflow.ts';
+import { createApprovedWorkflow, doneHandoff, SPEC_ID } from '#tests/support/builder-workflow.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
@@ -25,7 +20,7 @@ import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts
 import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
 import { resolveFindings } from '#workflow/verifier/resolveFindings.ts';
 
-afterEach(cleanupBuilderWorkflows);
+afterEach(() => maestroSessionState.deactivate());
 
 describe('finding resolution', () => {
   it('GIVEN one finding is rejected and another requires a code fix WHEN the builder and verifier run again THEN new numbered reports are saved and earlier reports retain both decisions', async () => {

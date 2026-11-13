@@ -21,11 +21,7 @@ import { executeRoleTask } from '#src/delegation/executeRoleTask.ts';
 import { executeTask, type ExecuteTaskInput } from '#src/delegation/executeTask.ts';
 import { prepareSubagentEnvironment } from '#src/delegation/prepareSubagentEnvironment.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
-import {
-  cleanupBuilderWorkflows,
-  createApprovedWorkflow,
-  SPEC_ID,
-} from '#tests/support/builder-workflow.ts';
+import { createApprovedWorkflow, SPEC_ID } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { BUILDER_HANDOFF_TOOL } from '#tools/child/record-builder-handoff.ts';
 import { registerRunBuilderTool, RUN_BUILDER_TOOL } from '#tools/main/run-builder.ts';
@@ -125,7 +121,7 @@ describe('execute task', () => {
   afterEach(async () => {
     vi.useRealTimers();
     await piTestSessions.cleanup();
-    await cleanupBuilderWorkflows();
+    maestroSessionState.deactivate();
     vi.resetAllMocks();
     vi.restoreAllMocks();
   });

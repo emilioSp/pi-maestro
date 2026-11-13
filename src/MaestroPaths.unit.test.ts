@@ -1,7 +1,7 @@
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { MaestroPaths } from '#MaestroPaths.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
@@ -9,18 +9,10 @@ import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 
 const SPEC_ID = '20260321-143052-add-weather-alerts';
 
-const temporaryPaths: string[] = [];
-
-afterEach(async () => {
-  await Promise.all(
-    temporaryPaths.splice(0).map((path) => rm(path, { force: true, recursive: true })),
-  );
-});
-
 describe('Maestro paths', () => {
   it('GIVEN builder and verifier reports numbered 1 through 10 WHEN report paths are requested THEN report 10 is active and report 11 is next for each agent', async () => {
     const project = await createTemporaryProject();
-    temporaryPaths.push(project.path);
+    onTestFinished(project.cleanup);
 
     const paths = new MaestroPaths({
       projectRoot: project.path,

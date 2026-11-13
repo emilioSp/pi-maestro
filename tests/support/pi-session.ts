@@ -152,21 +152,13 @@ class PiTestSessions {
 
   public createRegisteredTool = async ({ cwd, extension }: CreateRegisteredToolInput) => {
     const createdSession = await this.create({ cwd, extensions: [extension] });
-    const { session, events } = createdSession;
+    const { session } = createdSession;
     const registeredTools = session.extensionRunner.getAllRegisteredTools();
     strictEqual(registeredTools.length, 1);
 
     const tool = wrapRegisteredTool(registeredTools[0], session.extensionRunner);
 
-    const emit = vi.spyOn(events, 'emit');
-    const subscribe = events.on.bind(events);
-
-    // Observe cleanup while preserving the real EventBus subscription and unsubscribe.
-    const on = vi
-      .spyOn(events, 'on')
-      .mockImplementation((channel, handler) => vi.fn<() => void>(subscribe(channel, handler)));
-
-    return { ...createdSession, tool, emit, on };
+    return { ...createdSession, tool };
   };
 
   public cleanup = async (): Promise<void> => {

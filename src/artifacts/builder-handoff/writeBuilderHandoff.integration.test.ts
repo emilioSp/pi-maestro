@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { readBuilderHandoff } from '#artifacts/builder-handoff/readBuilderHandoff.ts';
 import {
@@ -13,13 +13,11 @@ import {
 } from '#artifacts/builder-handoff/schema.ts';
 import { writeBuilderHandoff } from '#artifacts/builder-handoff/writeBuilderHandoff.ts';
 
-const temporaryDirectories: string[] = [];
-
 const specId = '20260321-143052-add-weather-alerts';
 
 const createTemporaryDirectory = async (): Promise<string> => {
   const path = await mkdtemp(join(tmpdir(), 'pi-maestro-builder-handoff-'));
-  temporaryDirectories.push(path);
+  onTestFinished(() => rm(path, { force: true, recursive: true }));
 
   return path;
 };
@@ -38,12 +36,6 @@ const handoff = (summary: string): BuilderHandoff => ({
     },
   ],
   notes: [],
-});
-
-afterEach(async () => {
-  await Promise.all(
-    temporaryDirectories.splice(0).map((path) => rm(path, { force: true, recursive: true })),
-  );
 });
 
 describe('builder handoff writes', () => {

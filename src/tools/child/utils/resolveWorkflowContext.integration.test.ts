@@ -1,7 +1,7 @@
 import { mkdir, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { saveConfiguration } from '#config/saveConfiguration.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
@@ -10,16 +10,10 @@ import { resolveWorkflowContext } from '#tools/child/utils/resolveWorkflowContex
 
 const SPEC_ID = '20260321-143052-add-weather-alerts';
 
-const cleanupFunctions: Array<() => Promise<void>> = [];
-
-afterEach(async () => {
-  await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
-});
-
 describe('workflow context', () => {
   it('GIVEN a working directory symlink to a nested directory WHEN workflow context is loaded THEN the real nested directory is the project root and parent configuration is not inherited', async () => {
     const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
+    onTestFinished(repository.cleanup);
     const childDirectory = join(repository.path, 'nested', 'child');
     await mkdir(childDirectory, { recursive: true });
 
@@ -52,7 +46,7 @@ describe('workflow context', () => {
 
   it('GIVEN an invalid spec ID WHEN workflow context is requested THEN loading fails with an invalid spec ID error', async () => {
     const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
+    onTestFinished(repository.cleanup);
 
     await expect(
       resolveWorkflowContext({ cwd: repository.path, specId: 'invalid' }),

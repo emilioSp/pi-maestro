@@ -4,11 +4,8 @@ import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { FINDING_DECISIONS, FINDING_SEVERITIES } from '#artifacts/verifier-handoff/schema.ts';
-import {
-  cleanupBuilderWorkflows,
-  createApprovedWorkflow,
-  SPEC_ID,
-} from '#tests/support/builder-workflow.ts';
+import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
+import { createApprovedWorkflow, SPEC_ID } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { recordVerifierHandoffTool } from '#tools/child/record-verifier-handoff.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -23,7 +20,7 @@ const createHandoffInput = () => ({
 
 afterEach(async () => {
   await piTestSessions.cleanup();
-  await cleanupBuilderWorkflows();
+  maestroSessionState.deactivate();
 });
 
 describe('verifier handoff tool', () => {

@@ -3,12 +3,12 @@
  * Used: When testing finding decisions and spec revisions.
  */
 
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { BUILDER_HANDOFF_STATUSES, PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
+import { PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { readVerifierHandoff } from '#artifacts/verifier-handoff/readVerifierHandoff.ts';
 import {
   FINDING_DECISIONS,
@@ -16,23 +16,18 @@ import {
   VERIFIER_HANDOFF_VERSION,
   type VerifierFinding,
 } from '#artifacts/verifier-handoff/schema.ts';
+import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
-import {
-  cleanupBuilderWorkflows,
-  createApprovedWorkflow,
-  SPEC_ID,
-} from '#tests/support/builder-workflow.ts';
+import { createApprovedWorkflow, SPEC_ID } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { registerMarkSpecReadyTool } from '#tools/main/mark-spec-ready.ts';
 import { registerResolveFindingsTool } from '#tools/main/resolve-findings.ts';
-import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
-import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
-import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
-import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
+import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
+import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
+import { transitionWorkflow } from '#workflow/transitions.ts';
 
 const createFinding = (id: string): VerifierFinding => ({
   id,
@@ -62,31 +57,23 @@ const createFindingsDecisionWorkflow = async ({
     agents: { simplifier: { required: simplifierRequired } },
   });
 
-  await prepareBuilderRun({ config: TEST_CONFIG, paths: workflow.paths, specId: SPEC_ID });
-  await completeBuilderPass({
-    config: TEST_CONFIG,
-    paths: workflow.paths,
-    specId: SPEC_ID,
-    handoff: {
-      status: BUILDER_HANDOFF_STATUSES.DONE,
-      escalations: [],
-      summary: 'Implemented the approved change.',
-      acceptanceCriteria: [
-        {
-          id: 'AC1',
-          probe: 'Acceptance check',
-          probeStatus: PROBE_STATUSES.PASSED,
-        },
-      ],
-      notes: [],
-    },
+  const events = [
+    WORKFLOW_EVENTS.RUN_BUILDER,
+    WORKFLOW_EVENTS.BUILDER_DONE,
+    WORKFLOW_EVENTS.RUN_VERIFIER,
+    WORKFLOW_EVENTS.VERIFIER_FOUND_FINDINGS,
+  ];
+
+  await writeWorkflowState({
+    path: workflow.paths.getWorkflowPath(SPEC_ID),
+    state: events.reduce(
+      (state, event) => transitionWorkflow({ config: TEST_CONFIG, state, event }),
+      workflow.state,
+    ),
   });
-
-  await prepareVerifierRun({ config: TEST_CONFIG, paths: workflow.paths, specId: SPEC_ID });
-
-  await completeVerifierPass({
-    config: TEST_CONFIG,
-    paths: workflow.paths,
+  await mkdir(workflow.paths.getVerifierHandoffsPath(SPEC_ID), { recursive: true });
+  await writeVerifierHandoff({
+    path: workflow.paths.getVerifierHandoffPath({ specId: SPEC_ID, handoffPassNumber: 1 }),
     specId: SPEC_ID,
     handoff: {
       version: VERIFIER_HANDOFF_VERSION,
@@ -116,7 +103,7 @@ const readCurrentHandoff = async (paths: MaestroPaths) => {
 
 afterEach(async () => {
   await piTestSessions.cleanup();
-  await cleanupBuilderWorkflows();
+  maestroSessionState.deactivate();
 });
 
 describe('resolve findings tool', () => {
@@ -238,49 +225,7 @@ describe('resolve findings tool', () => {
     ]);
   });
 
-  it('GIVEN a single finding WHEN the owner rejects it with a reason THEN the rejection is saved and Maestro requests simplification without another approval or verification', async () => {
-    maestroSessionState.activate();
-    maestroSessionState.setActiveSpecId(SPEC_ID);
-
-    const { paths, repository } = await createFindingsDecisionWorkflow({
-      findings: [createFinding('F1')],
-    });
-
-    const { tool } = await piTestSessions.createRegisteredTool({
-      cwd: repository.path,
-      extension: registerResolveFindingsTool,
-    });
-
-    const result = await tool.execute('reject', {
-      specId: SPEC_ID,
-      decisions: [
-        {
-          findingId: 'F1',
-          decision: FINDING_DECISIONS.REJECT,
-          reason: 'Outside approved scope',
-        },
-      ],
-    });
-
-    expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
-      phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
-    });
-    expect(result.content).toEqual([
-      {
-        type: 'text',
-        text: expect.stringContaining(
-          'Call maestro_run_simplifier next with this specId, without another approval or verifier pass.',
-        ),
-      },
-    ]);
-    const handoff = await readCurrentHandoff(paths);
-    expect(handoff.findings[0].decision).toEqual({
-      decision: FINDING_DECISIONS.REJECT,
-      reason: 'Outside approved scope',
-    });
-  });
-
-  it('GIVEN two findings WHEN the owner rejects both with reasons THEN both rejections are saved and the workflow moves to simplifier-running', async () => {
+  it('GIVEN two findings WHEN the owner rejects both with reasons THEN both rejections are saved and Maestro requests simplification', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -312,7 +257,9 @@ describe('resolve findings tool', () => {
     expect(result.content).toEqual([
       {
         type: 'text',
-        text: expect.stringContaining(WORKFLOW_PHASES.SIMPLIFIER_RUNNING),
+        text: expect.stringContaining(
+          'Call maestro_run_simplifier next with this specId, without another approval or verifier pass.',
+        ),
       },
     ]);
     expect(result.details).toMatchObject({
@@ -320,6 +267,10 @@ describe('resolve findings tool', () => {
       phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
       rejectedFindingIds: ['F1', 'F2'],
       findingsRequiringFixIds: [],
+    });
+
+    expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
+      phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING,
     });
 
     const handoff = await readCurrentHandoff(paths);

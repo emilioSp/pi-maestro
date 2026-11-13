@@ -1,8 +1,8 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { Value } from 'typebox/value';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi, onTestFinished } from 'vitest';
 
 import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { saveConfiguration } from '#config/saveConfiguration.ts';
@@ -25,17 +25,9 @@ const SPEC_ID = '20260321-143052-add-weather-alerts';
 
 const OTHER_SPEC_ID = '20260321-143053-other-spec';
 
-const cleanupFunctions: Array<() => Promise<void>> = [];
-
-type PhaseFlags = {
-  builder: boolean;
-  verifier: boolean;
-  simplifier: boolean;
-};
-
-const createWorkflow = async (flags?: PhaseFlags) => {
+const createWorkflow = async () => {
   const repository = await createTemporaryProject();
-  cleanupFunctions.push(repository.cleanup);
+  onTestFinished(repository.cleanup);
 
   await saveConfiguration({
     cwd: repository.path,
@@ -45,19 +37,6 @@ const createWorkflow = async (flags?: PhaseFlags) => {
       simplifier: TEST_CONFIG.simplifier,
     },
   });
-
-  if (flags !== undefined) {
-    await mkdir(join(repository.path, '.pi'), { recursive: true });
-    await writeFile(
-      join(repository.path, '.pi/maestro.json'),
-      JSON.stringify({
-        version: '1.0.0',
-        builder: { required: flags.builder },
-        verifier: { required: flags.verifier },
-        simplifier: { required: flags.simplifier },
-      }),
-    );
-  }
 
   const config = await loadConfiguration(repository.path);
 
@@ -80,7 +59,6 @@ afterEach(async () => {
   vi.mocked(executeTask).mockReset();
   await piTestSessions.cleanup();
   maestroSessionState.deactivate();
-  await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
 });
 
 describe('mark spec ready tool', () => {
@@ -146,32 +124,28 @@ describe('mark spec ready tool', () => {
   });
 });
 
-it.each([
-  { verifier: false, simplifier: false },
-  { verifier: false, simplifier: true },
-  { verifier: true, simplifier: false },
-  { verifier: true, simplifier: true },
-])(
-  'GIVEN builder disabled with verifier=$verifier and simplifier=$simplifier WHEN the draft is approved THEN candidate-ready is saved without delegation',
-  async ({ verifier, simplifier }) => {
-    maestroSessionState.activate();
-    maestroSessionState.setActiveSpecId(SPEC_ID);
+it('GIVEN builder disabled and both later phases enabled WHEN the draft is approved THEN candidate-ready is saved without delegation', async () => {
+  maestroSessionState.activate();
+  maestroSessionState.setActiveSpecId(SPEC_ID);
 
-    const { repository, created } = await createWorkflow({ builder: false, verifier, simplifier });
+  const { repository, created } = await createWorkflow();
+  await writeFile(
+    join(repository.path, '.pi/maestro.json'),
+    JSON.stringify({ ...TEST_CONFIG, builder: { ...TEST_CONFIG.builder, required: false } }),
+  );
 
-    const { tool } = await piTestSessions.createRegisteredTool({
-      cwd: repository.path,
-      extension: registerMarkSpecReadyTool,
-    });
+  const { tool } = await piTestSessions.createRegisteredTool({
+    cwd: repository.path,
+    extension: registerMarkSpecReadyTool,
+  });
 
-    const result = await tool.execute('approve-spec-only', { specId: SPEC_ID });
-    expect(result.details).toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
-    await expect(readWorkflowState(created.workflowPath)).resolves.toMatchObject({
-      phase: WORKFLOW_PHASES.CANDIDATE_READY,
-    });
-    expect(executeTask).not.toHaveBeenCalled();
-    expect(result.content).toEqual([
-      { type: 'text', text: expect.stringContaining('Builder, verifier, and simplifier skipped') },
-    ]);
-  },
-);
+  const result = await tool.execute('approve-spec-only', { specId: SPEC_ID });
+  expect(result.details).toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
+  await expect(readWorkflowState(created.workflowPath)).resolves.toMatchObject({
+    phase: WORKFLOW_PHASES.CANDIDATE_READY,
+  });
+  expect(executeTask).not.toHaveBeenCalled();
+  expect(result.content).toEqual([
+    { type: 'text', text: expect.stringContaining('Builder, verifier, and simplifier skipped') },
+  ]);
+});

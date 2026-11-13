@@ -6,7 +6,7 @@
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { BUILDER_HANDOFF_VERSION } from '#artifacts/builder-handoff/schema.ts';
 import { writeBuilderHandoff } from '#artifacts/builder-handoff/writeBuilderHandoff.ts';
@@ -28,11 +28,9 @@ const SPEC_ID = '20260321-143052-add-weather-alerts';
 
 const OTHER_SPEC_ID = '20260322-143052-add-weather-alerts';
 
-const cleanupFunctions: Array<() => Promise<void>> = [];
-
 const createWorkflow = async (phase: WorkflowPhase = WORKFLOW_PHASES.DRAFTING_SPEC) => {
   const repository = await createTemporaryProject();
-  cleanupFunctions.push(repository.cleanup);
+  onTestFinished(repository.cleanup);
   await writeFile(join(repository.path, 'README.md'), '# Test\n', 'utf8');
 
   const paths = new MaestroPaths({
@@ -59,10 +57,6 @@ const createWorkflow = async (phase: WorkflowPhase = WORKFLOW_PHASES.DRAFTING_SP
 
   return { created, paths, repository };
 };
-
-afterEach(async () => {
-  await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
-});
 
 describe('markSpecReady', () => {
   it('GIVEN an active draft WHEN approval names another spec THEN the ID mismatch is reported and all documents and the workflow stay unchanged', async () => {

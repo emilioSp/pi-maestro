@@ -2,7 +2,7 @@ import { access, mkdtemp, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { MaestroPaths } from '#MaestroPaths.ts';
 import { createSpec } from '#specs/create.ts';
@@ -14,11 +14,9 @@ const INSTANT = Temporal.Instant.from('2026-03-21T14:30:52Z');
 
 const SPEC_ID = '20260321-143052-add-weather-alerts';
 
-const temporaryDirectories: string[] = [];
-
 const createWorkspace = async (specDirectory: string = 'custom-specs') => {
   const projectRoot = await mkdtemp(join(tmpdir(), 'pi-maestro-spec-'));
-  temporaryDirectories.push(projectRoot);
+  onTestFinished(() => rm(projectRoot, { force: true, recursive: true }));
 
   const paths = new MaestroPaths({
     projectRoot,
@@ -30,12 +28,6 @@ const createWorkspace = async (specDirectory: string = 'custom-specs') => {
 
   return { projectRoot, paths };
 };
-
-afterEach(async () => {
-  await Promise.all(
-    temporaryDirectories.splice(0).map((path) => rm(path, { force: true, recursive: true })),
-  );
-});
 
 describe('spec template and creation', () => {
   it('GIVEN a custom spec directory WHEN a spec is created THEN proposal and spec drafts are saved with a drafting workflow and prototypes but no design file', async () => {

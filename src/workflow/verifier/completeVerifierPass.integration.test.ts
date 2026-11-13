@@ -12,11 +12,7 @@ import { VERIFIER_HANDOFF_VERSION } from '#artifacts/verifier-handoff/schema.ts'
 import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierHandoff.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
-import {
-  cleanupBuilderWorkflows,
-  createApprovedWorkflow,
-  SPEC_ID,
-} from '#tests/support/builder-workflow.ts';
+import { createApprovedWorkflow, SPEC_ID } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { recordVerifierHandoffTool } from '#tools/child/record-verifier-handoff.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
@@ -38,7 +34,7 @@ const { writeFile: originalWriteFile } =
 afterEach(async () => {
   vi.mocked(writeFile).mockRestore();
   await piTestSessions.cleanup();
-  await cleanupBuilderWorkflows();
+  maestroSessionState.deactivate();
 });
 
 const approvedHandoff = {

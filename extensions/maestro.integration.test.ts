@@ -13,7 +13,7 @@ import type { ExtensionAPI, wrapRegisteredTool } from '@earendil-works/pi-coding
 import { createAgentSession, SessionManager } from '@earendil-works/pi-coding-agent';
 import { stripTerminalSequences } from '@earendil-works/pi-tui';
 import { Type } from 'typebox';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi, onTestFinished } from 'vitest';
 
 import { BUILDER_HANDOFF_STATUSES, PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import { readSimplifierHandoff } from '#artifacts/simplifier-handoff/readSimplifierHandoff.ts';
@@ -35,12 +35,7 @@ import { executeTask, type ExecuteTaskInput } from '#src/delegation/executeTask.
 import { prepareSubagentEnvironment } from '#src/delegation/prepareSubagentEnvironment.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { unavailableCompilerEscalation } from '#tests/fixtures/unavailable-compiler-escalation.ts';
-import {
-  cleanupBuilderWorkflows,
-  createApprovedWorkflow,
-  doneHandoff,
-  SPEC_ID,
-} from '#tests/support/builder-workflow.ts';
+import { createApprovedWorkflow, doneHandoff, SPEC_ID } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { BUILDER_HANDOFF_TOOL } from '#tools/child/record-builder-handoff.ts';
@@ -96,20 +91,17 @@ function assertToolRegistered(tool: RegisteredTool | undefined): asserts tool is
   if (tool === undefined) throw new Error('The tool is not active in Pi.');
 }
 
-const cleanupFunctions: Array<() => Promise<void>> = [];
-
 afterEach(async () => {
   vi.mocked(executeTask).mockReset();
   vi.useRealTimers();
   await piTestSessions.cleanup();
-  await cleanupBuilderWorkflows();
-  await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
+  maestroSessionState.deactivate();
 });
 
 describe('spec restart activation', () => {
   it('GIVEN two existing specs WHEN the owner chooses restart THEN both IDs are offered for selection', async () => {
     const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
+    onTestFinished(repository.cleanup);
     await saveConfiguration({ cwd: repository.path, agentModelSelections: {} });
     const ids = ['20261101-100000-add-search', '20261102-100000-add-filter'];
 
@@ -171,7 +163,7 @@ describe('spec restart activation', () => {
     'GIVEN an %s configured spec directory WHEN activation is requested THEN Maestro activates without a choice or spec creation',
     async (directory) => {
       const repository = await createTemporaryProject();
-      cleanupFunctions.push(repository.cleanup);
+      onTestFinished(repository.cleanup);
       await saveConfiguration({ cwd: repository.path, agentModelSelections: {} });
 
       if (directory === 'empty') await mkdir(join(repository.path, '.specs'));
@@ -227,7 +219,7 @@ describe('main Maestro extension', () => {
 
   it('GIVEN valid activation checks WHEN Maestro is enabled and later re-enabled THEN its tools, instructions, and status are available without duplicate registration, automatic model calls, or new session history', async () => {
     const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
+    onTestFinished(repository.cleanup);
 
     const { session, notify, setStatus } = await piTestSessions.create({
       extensions: [foreignExtension, maestroExtension],
@@ -309,7 +301,7 @@ describe('main Maestro extension', () => {
 
   it('GIVEN custom agent configuration WHEN Maestro is enabled THEN the activation notice lists the provider, model, and thinking level for each agent', async () => {
     const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
+    onTestFinished(repository.cleanup);
     await mkdir(join(repository.path, '.pi'));
     await writeFile(
       join(repository.path, '.pi', 'maestro.json'),
@@ -387,7 +379,7 @@ describe('main Maestro extension', () => {
     'GIVEN $scenario WHEN Maestro is activated THEN the notice lists only enabled agents',
     async ({ builder, verifier, simplifier, expectedAgents }) => {
       const repository = await createTemporaryProject();
-      cleanupFunctions.push(repository.cleanup);
+      onTestFinished(repository.cleanup);
       await mkdir(join(repository.path, '.pi'));
       await writeFile(
         join(repository.path, '.pi/maestro.json'),
@@ -416,7 +408,7 @@ describe('main Maestro extension', () => {
 
   it('GIVEN an unavailable simplifier model WHEN activation is requested THEN Maestro stays disabled and reports which model is unavailable', async () => {
     const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
+    onTestFinished(repository.cleanup);
     await mkdir(join(repository.path, '.pi'));
     await writeFile(
       join(repository.path, '.pi/maestro.json'),
@@ -441,7 +433,7 @@ describe('main Maestro extension', () => {
 
   it('GIVEN an untrusted project with valid configuration WHEN activation is requested THEN Maestro activates without requiring project trust', async () => {
     const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
+    onTestFinished(repository.cleanup);
     await saveConfiguration({
       cwd: repository.path,
       agentModelSelections: {
@@ -544,7 +536,7 @@ describe('main Maestro extension', () => {
 
   it('GIVEN an approved proposal, nested-criteria spec, and design in Git WHEN builder, verifier, and simplifier finish THEN the workflow ends at candidate-ready with saved reports and unchanged approved documents', async () => {
     const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
+    onTestFinished(repository.cleanup);
     await execFileAsync('git', ['init', '-q', repository.path]);
     await saveConfiguration({
       cwd: repository.path,
@@ -1346,7 +1338,7 @@ describe('main Maestro extension', () => {
 
   it('GIVEN the active spec has no workflow file WHEN Maestro prepares the next prompt THEN it reports the missing file, clears its status, and still adds its instructions', async () => {
     const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
+    onTestFinished(repository.cleanup);
 
     const { session, notify, setStatus } = await piTestSessions.create({
       extensions: [foreignExtension, maestroExtension],
@@ -1435,7 +1427,7 @@ it.each([
   'GIVEN first-use setup with $scenario WHEN the owner finishes the selectors THEN completed choices alone determine enabled agents and activation',
   async ({ actions, models, enabledAgents }) => {
     const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
+    onTestFinished(repository.cleanup);
 
     const { session, notify } = await piTestSessions.create({
       cwd: repository.path,
@@ -1501,7 +1493,7 @@ it.each([
 
 it('GIVEN Pi levels beginning with minimal and a completed high selection WHEN builder is replaced THEN both thinking dialogs receive Pi order and the new first choice replaces high', async () => {
   const repository = await createTemporaryProject();
-  cleanupFunctions.push(repository.cleanup);
+  onTestFinished(repository.cleanup);
 
   const { session } = await piTestSessions.create({
     cwd: repository.path,
@@ -1547,7 +1539,7 @@ it('GIVEN Pi levels beginning with minimal and a completed high selection WHEN b
 
 it('GIVEN unsaved builder selection WHEN Escape closes the main screen THEN configuration remains absent and Maestro stays inactive', async () => {
   const repository = await createTemporaryProject();
-  cleanupFunctions.push(repository.cleanup);
+  onTestFinished(repository.cleanup);
 
   const { session } = await piTestSessions.create({
     cwd: repository.path,
@@ -1570,7 +1562,7 @@ it('GIVEN unsaved builder selection WHEN Escape closes the main screen THEN conf
 
 it('GIVEN an existing configuration missing the enabled verifier model WHEN activation is requested THEN the file stays unchanged and setup is not opened', async () => {
   const repository = await createTemporaryProject();
-  cleanupFunctions.push(repository.cleanup);
+  onTestFinished(repository.cleanup);
   const input = { ...TEST_CONFIG, verifier: { required: true } };
   await mkdir(join(repository.path, '.pi'), { recursive: true });
   await writeFile(join(repository.path, '.pi/maestro.json'), JSON.stringify(input));
@@ -1595,7 +1587,7 @@ it('GIVEN an existing configuration missing the enabled verifier model WHEN acti
 
 it('GIVEN builder enabled and both later phases disabled without models WHEN activation is requested THEN Maestro activates using only the builder model', async () => {
   const repository = await createTemporaryProject();
-  cleanupFunctions.push(repository.cleanup);
+  onTestFinished(repository.cleanup);
   await saveConfiguration({
     cwd: repository.path,
     agentModelSelections: { builder: TEST_CONFIG.builder },

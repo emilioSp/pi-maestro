@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import {
@@ -13,26 +13,17 @@ import {
 } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 
-const temporaryDirectories: string[] = [];
-
 const state = (phase: WorkflowPhase): WorkflowState => ({
   version: WORKFLOW_STATE_VERSION,
   specId: '20260321-143052-add-weather-alerts',
   phase,
 });
 
-afterEach(async () => {
-  vi.clearAllMocks();
-  await Promise.all(
-    temporaryDirectories.splice(0).map((path) => rm(path, { force: true, recursive: true })),
-  );
-});
-
 describe('writeWorkflowState', () => {
   it('GIVEN a saved drafting-spec workflow WHEN ready-for-builder state replaces it THEN the file contains the new state as formatted JSON', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'pi-maestro-workflow-state-'));
 
-    temporaryDirectories.push(directory);
+    onTestFinished(() => rm(directory, { force: true, recursive: true }));
 
     const path = join(directory, 'workflow.json');
 
@@ -58,7 +49,7 @@ describe('writeWorkflowState', () => {
   it('GIVEN an existing workflow file WHEN a replacement uses an unsupported version THEN writing fails and the original file stays unchanged', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'pi-maestro-workflow-state-'));
 
-    temporaryDirectories.push(directory);
+    onTestFinished(() => rm(directory, { force: true, recursive: true }));
 
     const path = join(directory, 'workflow.json');
     await writeWorkflowState({

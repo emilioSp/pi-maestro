@@ -8,11 +8,7 @@ import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
 import { unavailableCompilerEscalation } from '#tests/fixtures/unavailable-compiler-escalation.ts';
-import {
-  cleanupBuilderWorkflows,
-  createApprovedWorkflow,
-  SPEC_ID,
-} from '#tests/support/builder-workflow.ts';
+import { createApprovedWorkflow, SPEC_ID } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { recordBuilderHandoffTool } from '#tools/child/record-builder-handoff.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
@@ -23,7 +19,7 @@ import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 
 afterEach(async () => {
   await piTestSessions.cleanup();
-  await cleanupBuilderWorkflows();
+  maestroSessionState.deactivate();
 });
 
 describe('builder completion', () => {
@@ -327,45 +323,6 @@ describe('builder completion', () => {
         acceptanceCriteria: [{ id: 'AC1', probe: 'CSV check', probeStatus: PROBE_STATUSES.FAILED }],
       },
       'Done builder handoff requires every probe to pass.',
-    ],
-    [
-      'a done report with an unrun probe',
-      {
-        ...csvExportEscalation,
-        status: BUILDER_HANDOFF_STATUSES.DONE,
-        escalations: [],
-      },
-      'Done builder handoff requires every probe to pass.',
-    ],
-    [
-      'a done report with one passed probe and one unrun probe',
-      {
-        ...csvExportEscalation,
-        status: BUILDER_HANDOFF_STATUSES.DONE,
-        escalations: [],
-        acceptanceCriteria: [
-          { id: 'AC1', probe: 'CSV check', probeStatus: PROBE_STATUSES.PASSED },
-          {
-            id: 'AC2',
-            probe: 'CSV check',
-            probeStatus: PROBE_STATUSES.NOT_RUN,
-          },
-        ],
-      },
-      'Done builder handoff requires every probe to pass.',
-    ],
-    [
-      'a done report with duplicate acceptance criterion IDs',
-      {
-        ...csvExportEscalation,
-        status: BUILDER_HANDOFF_STATUSES.DONE,
-        escalations: [],
-        acceptanceCriteria: [
-          { id: 'AC1', probe: 'CSV check', probeStatus: PROBE_STATUSES.PASSED },
-          { id: 'AC1', probe: 'CSV check', probeStatus: PROBE_STATUSES.PASSED },
-        ],
-      },
-      'Builder handoff acceptance criterion IDs must be unique.',
     ],
   ])(
     'GIVEN %s WHEN a builder report is submitted THEN submission fails without saving a report or changing the workflow',

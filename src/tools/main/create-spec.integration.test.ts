@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { Value } from 'typebox/value';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, onTestFinished } from 'vitest';
 
 import { saveConfiguration } from '#config/saveConfiguration.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
@@ -14,12 +14,9 @@ import { registerCreateSpecTool } from '#tools/main/create-spec.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES, WORKFLOW_STATE_VERSION } from '#workflow/state/schema.ts';
 
-const cleanupFunctions: Array<() => Promise<void>> = [];
-
 afterEach(async () => {
   await piTestSessions.cleanup();
   maestroSessionState.deactivate();
-  await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
 });
 
 describe('create spec tool', () => {
@@ -40,7 +37,7 @@ describe('create spec tool', () => {
 
   it('GIVEN no active workflow WHEN the create-spec tool runs THEN it selects the new spec, saves its draft and workflow, and returns their paths', async () => {
     const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
+    onTestFinished(repository.cleanup);
     await saveConfiguration({
       cwd: repository.path,
       agentModelSelections: {
@@ -88,7 +85,7 @@ describe('create spec tool', () => {
 
   it('GIVEN a workflow is already active WHEN the create-spec tool runs THEN creation fails and the error names the active workflow', async () => {
     const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
+    onTestFinished(repository.cleanup);
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId('20260321-143052-current-workflow');
     await saveConfiguration({

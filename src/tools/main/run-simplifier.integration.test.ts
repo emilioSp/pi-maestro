@@ -18,47 +18,34 @@ import { MAESTRO_STATUS_KEY } from '#maestro/status/refreshMaestroStatus.ts';
 import { executeTask } from '#src/delegation/executeTask.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
-import {
-  cleanupBuilderWorkflows,
-  createApprovedWorkflow,
-  doneHandoff,
-  SPEC_ID,
-} from '#tests/support/builder-workflow.ts';
+import { createApprovedWorkflow, SPEC_ID } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { SIMPLIFIER_HANDOFF_TOOL } from '#tools/child/record-simplifier-handoff.ts';
 import { registerRunSimplifierTool } from '#tools/main/run-simplifier.ts';
-import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
-import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { completeSimplifierPass } from '#workflow/simplifier/completeSimplifierPass.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
-import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
-import { prepareVerifierRun } from '#workflow/verifier/prepareVerifierRun.ts';
+import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
+import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
+import { transitionWorkflow } from '#workflow/transitions.ts';
 
 const execFileAsync = promisify(execFile);
 
 const createSimplifierWorkflow = async () => {
   const workflow = await createApprovedWorkflow();
-  await prepareBuilderRun({ config: TEST_CONFIG, paths: workflow.paths, specId: SPEC_ID });
-  await completeBuilderPass({
-    config: TEST_CONFIG,
-    paths: workflow.paths,
-    specId: SPEC_ID,
-    handoff: doneHandoff(),
-  });
-  await prepareVerifierRun({ config: TEST_CONFIG, paths: workflow.paths, specId: SPEC_ID });
-  await completeVerifierPass({
-    config: TEST_CONFIG,
-    paths: workflow.paths,
-    specId: SPEC_ID,
-    handoff: {
-      version: '1.0.0',
-      specId: SPEC_ID,
-      summary: 'Verified',
-      acceptanceCriteria: doneHandoff().acceptanceCriteria,
-      findings: [],
-      notes: [],
-    },
+
+  const events = [
+    WORKFLOW_EVENTS.RUN_BUILDER,
+    WORKFLOW_EVENTS.BUILDER_DONE,
+    WORKFLOW_EVENTS.RUN_VERIFIER,
+    WORKFLOW_EVENTS.VERIFIER_DONE,
+  ];
+
+  await writeWorkflowState({
+    path: workflow.paths.getWorkflowPath(SPEC_ID),
+    state: events.reduce(
+      (state, event) => transitionWorkflow({ config: TEST_CONFIG, state, event }),
+      workflow.state,
+    ),
   });
 
   return workflow;
@@ -69,7 +56,7 @@ vi.mock('#src/delegation/executeTask.ts', () => ({ executeTask: vi.fn<typeof exe
 afterEach(async () => {
   vi.mocked(executeTask).mockReset();
   await piTestSessions.cleanup();
-  await cleanupBuilderWorkflows();
+  maestroSessionState.deactivate();
 });
 
 describe('run simplifier', () => {

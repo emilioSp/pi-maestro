@@ -19,12 +19,7 @@ import { executeTask } from '#src/delegation/executeTask.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
-import {
-  cleanupBuilderWorkflows,
-  createApprovedWorkflow,
-  doneHandoff,
-  SPEC_ID,
-} from '#tests/support/builder-workflow.ts';
+import { createApprovedWorkflow, doneHandoff, SPEC_ID } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import {
   BUILDER_HANDOFF_TOOL,
@@ -43,7 +38,7 @@ afterEach(async () => {
   vi.useRealTimers();
   vi.mocked(executeTask).mockReset();
   await piTestSessions.cleanup();
-  await cleanupBuilderWorkflows();
+  maestroSessionState.deactivate();
 });
 
 const normalAssistantMessage: AssistantMessage = {

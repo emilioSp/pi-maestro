@@ -2,16 +2,12 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
-import {
-  cleanupBuilderWorkflows,
-  createApprovedWorkflow,
-  SPEC_ID,
-} from '#tests/support/builder-workflow.ts';
+import { createApprovedWorkflow, SPEC_ID } from '#tests/support/builder-workflow.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 
-afterEach(cleanupBuilderWorkflows);
+afterEach(() => maestroSessionState.deactivate());
 
 describe('builder run preparation', () => {
   it('GIVEN a workflow ready for the builder WHEN a run is prepared THEN builder-running is saved and the run uses the current project', async () => {

@@ -10,7 +10,7 @@ import type { AgentToolUpdateCallback } from '@earendil-works/pi-coding-agent';
 import { Value } from 'typebox/value';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { BUILDER_HANDOFF_STATUSES, PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
+import { PROBE_STATUSES } from '#artifacts/builder-handoff/schema.ts';
 import {
   FINDING_SEVERITIES,
   VERIFIER_HANDOFF_VERSION,
@@ -21,21 +21,17 @@ import type { MaestroPaths } from '#MaestroPaths.ts';
 import { executeTask } from '#src/delegation/executeTask.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
-import {
-  cleanupBuilderWorkflows,
-  createApprovedWorkflow,
-  SPEC_ID,
-} from '#tests/support/builder-workflow.ts';
+import { createApprovedWorkflow, SPEC_ID } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import {
   recordVerifierHandoffTool,
   VERIFIER_HANDOFF_TOOL,
 } from '#tools/child/record-verifier-handoff.ts';
 import { registerRunVerifierTool } from '#tools/main/run-verifier.ts';
-import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
-import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
+import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
+import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
+import { transitionWorkflow } from '#workflow/transitions.ts';
 import { completeVerifierPass } from '#workflow/verifier/completeVerifierPass.ts';
 
 const createReadyForVerifierWorkflow = async (simplifierRequired: boolean = true) => {
@@ -46,25 +42,19 @@ const createReadyForVerifierWorkflow = async (simplifierRequired: boolean = true
     },
   });
 
-  await prepareBuilderRun({ config: TEST_CONFIG, paths: workflow.paths, specId: SPEC_ID });
-
-  await completeBuilderPass({
+  const builderRunning = transitionWorkflow({
     config: TEST_CONFIG,
-    paths: workflow.paths,
-    specId: SPEC_ID,
-    handoff: {
-      status: BUILDER_HANDOFF_STATUSES.DONE,
-      escalations: [],
-      summary: 'The approved change was implemented.',
-      acceptanceCriteria: [
-        {
-          id: 'AC1',
-          probe: 'Acceptance check',
-          probeStatus: PROBE_STATUSES.PASSED,
-        },
-      ],
-      notes: [],
-    },
+    state: workflow.state,
+    event: WORKFLOW_EVENTS.RUN_BUILDER,
+  });
+
+  await writeWorkflowState({
+    path: workflow.paths.getWorkflowPath(SPEC_ID),
+    state: transitionWorkflow({
+      config: TEST_CONFIG,
+      state: builderRunning,
+      event: WORKFLOW_EVENTS.BUILDER_DONE,
+    }),
   });
 
   return workflow;
@@ -105,7 +95,7 @@ vi.mock('#src/delegation/executeTask.ts', () => ({ executeTask: vi.fn<typeof exe
 afterEach(async () => {
   vi.mocked(executeTask).mockReset();
   await piTestSessions.cleanup();
-  await cleanupBuilderWorkflows();
+  maestroSessionState.deactivate();
 });
 
 describe('run verifier tool', () => {

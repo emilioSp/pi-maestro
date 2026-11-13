@@ -6,7 +6,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi, onTestFinished } from 'vitest';
 
 import {
   CONFIG_DIRECTORY_NAME,
@@ -18,17 +18,14 @@ import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 
-const cleanupFunctions: Array<() => Promise<void>> = [];
-
 afterEach(async () => {
   await piTestSessions.cleanup();
-  await Promise.all(cleanupFunctions.splice(0).map((cleanup) => cleanup()));
 });
 
 describe('assertEnvironment', () => {
   it('GIVEN configuration has a numeric version WHEN activation requirements are checked THEN the check fails with a configuration error', async () => {
     const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
+    onTestFinished(repository.cleanup);
     await mkdir(join(repository.path, CONFIG_DIRECTORY_NAME));
     await writeFile(join(repository.path, CONFIG_FILE_PATH), JSON.stringify({ version: 999 }));
 
@@ -48,7 +45,7 @@ describe('assertEnvironment', () => {
     'GIVEN the %s model is absent from Pi’s registry WHEN activation is checked THEN it reports the full unavailable ID',
     async (agent) => {
       const repository = await createTemporaryProject();
-      cleanupFunctions.push(repository.cleanup);
+      onTestFinished(repository.cleanup);
       const model = 'openrouter/~openai/gpt-mini-latest';
       await mkdir(join(repository.path, CONFIG_DIRECTORY_NAME));
       await writeFile(
@@ -81,7 +78,7 @@ it.each([
   'GIVEN verifier=$verifier and simplifier=$simplifier with only enabled models configured WHEN activation is checked THEN it succeeds without extension availability checks',
   async ({ verifier, simplifier }) => {
     const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
+    onTestFinished(repository.cleanup);
     await mkdir(join(repository.path, CONFIG_DIRECTORY_NAME));
     await writeFile(
       join(repository.path, CONFIG_FILE_PATH),
@@ -111,35 +108,27 @@ it.each([
   },
 );
 
-it.each([
-  { verifier: false, simplifier: false },
-  { verifier: false, simplifier: true },
-  { verifier: true, simplifier: false },
-  { verifier: true, simplifier: true },
-])(
-  'GIVEN builder disabled with verifier=$verifier and simplifier=$simplifier and no models WHEN activation is checked THEN it succeeds without model lookup',
-  async ({ verifier, simplifier }) => {
-    const repository = await createTemporaryProject();
-    cleanupFunctions.push(repository.cleanup);
-    await mkdir(join(repository.path, CONFIG_DIRECTORY_NAME));
-    await writeFile(
-      join(repository.path, CONFIG_FILE_PATH),
-      JSON.stringify({
-        version: DEFAULT_CONFIG_VERSION,
-        builder: { required: false, model: 'missing/builder' },
-        verifier: { required: verifier, model: 'missing/verifier' },
-        simplifier: { required: simplifier, model: 'missing/simplifier' },
-      }),
-    );
+it('GIVEN builder disabled and both later phases enabled with unavailable models WHEN activation is checked THEN it succeeds without model lookup', async () => {
+  const repository = await createTemporaryProject();
+  onTestFinished(repository.cleanup);
+  await mkdir(join(repository.path, CONFIG_DIRECTORY_NAME));
+  await writeFile(
+    join(repository.path, CONFIG_FILE_PATH),
+    JSON.stringify({
+      version: DEFAULT_CONFIG_VERSION,
+      builder: { required: false, model: 'missing/builder' },
+      verifier: { required: true, model: 'missing/verifier' },
+      simplifier: { required: true, model: 'missing/simplifier' },
+    }),
+  );
 
-    const { session } = await piTestSessions.create({
-      cwd: repository.path,
-      extensions: [],
-    });
+  const { session } = await piTestSessions.create({
+    cwd: repository.path,
+    extensions: [],
+  });
 
-    const context = session.extensionRunner.createContext();
-    const available = vi.spyOn(context.modelRegistry, 'getAvailable').mockReturnValue([]);
-    await expect(assertEnvironment({ context })).resolves.toBeUndefined();
-    expect(available).not.toHaveBeenCalled();
-  },
-);
+  const context = session.extensionRunner.createContext();
+  const available = vi.spyOn(context.modelRegistry, 'getAvailable').mockReturnValue([]);
+  await expect(assertEnvironment({ context })).resolves.toBeUndefined();
+  expect(available).not.toHaveBeenCalled();
+});

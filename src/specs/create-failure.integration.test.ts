@@ -2,7 +2,7 @@ import { access, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, onTestFinished } from 'vitest';
 
 import { MaestroPaths } from '#MaestroPaths.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
@@ -15,19 +15,11 @@ vi.mock('#workflow/state/writeWorkflowState.ts', () => ({
 
 const { createSpec } = await import('#specs/create.ts');
 
-const temporaryDirectories: string[] = [];
-
-afterEach(async () => {
-  await Promise.all(
-    temporaryDirectories.splice(0).map((path) => rm(path, { force: true, recursive: true })),
-  );
-});
-
 describe('partial spec creation failure', () => {
   it('GIVEN saving workflow state fails during spec creation WHEN creation is retried THEN the spec file and directory remain and the retry fails because the directory already exists', async () => {
     const projectRoot = await mkdtemp(join(tmpdir(), 'pi-maestro-spec-failure-'));
 
-    temporaryDirectories.push(projectRoot);
+    onTestFinished(() => rm(projectRoot, { force: true, recursive: true }));
 
     const paths = new MaestroPaths({
       projectRoot,
