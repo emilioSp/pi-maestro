@@ -48,6 +48,7 @@ import { RESOLVE_FINDINGS_TOOL } from '#tools/main/resolve-findings.ts';
 import { RUN_BUILDER_TOOL } from '#tools/main/run-builder.ts';
 import { RUN_SIMPLIFIER_TOOL } from '#tools/main/run-simplifier.ts';
 import { RUN_VERIFIER_TOOL } from '#tools/main/run-verifier.ts';
+import { SCORE_WORKFLOW_TOOL } from '#tools/main/score-workflow.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -71,6 +72,7 @@ const MAIN_TOOL_NAMES = [
   RUN_VERIFIER_TOOL.NAME,
   RESOLVE_FINDINGS_TOOL.NAME,
   RUN_SIMPLIFIER_TOOL.NAME,
+  SCORE_WORKFLOW_TOOL.NAME,
 ];
 
 const BASE_TOOLS = ['read', 'bash', 'edit', 'write', FOREIGN_TOOL];
@@ -818,7 +820,7 @@ describe('main Maestro extension', () => {
     const simplified = await runSimplifierTool.execute('test-call', { specId });
     expect(simplified.details).toMatchObject({
       specId,
-      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+      phase: WORKFLOW_PHASES.SCORER_RUNNING,
       handoff: {
         specId,
         refactoredFiles: [],
@@ -832,6 +834,23 @@ describe('main Maestro extension', () => {
       toolCallId: 'test-call',
       input: { specId },
       ...simplified,
+      isError: false,
+    });
+    expect(maestroSessionState.isWaitingForFinalResponse()).toBe(false);
+    vi.spyOn(session.modelRuntime, 'getModelOfType').mockReturnValue(undefined);
+
+    const scoreTool = session.agent.state.tools.find(
+      (tool) => tool.name === SCORE_WORKFLOW_TOOL.NAME,
+    );
+
+    assertToolRegistered(scoreTool);
+    const scored = await scoreTool.execute('score', { specId });
+    await session.extensionRunner.emitToolResult({
+      type: 'tool_result',
+      toolName: SCORE_WORKFLOW_TOOL.NAME,
+      toolCallId: 'score',
+      input: { specId },
+      ...scored,
       isError: false,
     });
     expect(setStatus).toHaveBeenLastCalledWith(
@@ -983,13 +1002,18 @@ describe('main Maestro extension', () => {
         'utf8',
       );
 
+      const scoreTool = session.agent.state.tools.find(
+        (tool) => tool.name === SCORE_WORKFLOW_TOOL.NAME,
+      );
+
+      assertToolRegistered(scoreTool);
+      const scored = await scoreTool.execute('score', { specId: SPEC_ID });
       await session.extensionRunner.emitToolResult({
         type: 'tool_result',
-        toolName: RUN_SIMPLIFIER_TOOL.NAME,
-        toolCallId: 'simplify',
+        toolName: SCORE_WORKFLOW_TOOL.NAME,
+        toolCallId: 'score',
         input: { specId: SPEC_ID },
-        content: [],
-        details: { specId: SPEC_ID, phase: WORKFLOW_PHASES.CANDIDATE_READY },
+        ...scored,
         isError: false,
       });
 
@@ -1007,7 +1031,10 @@ describe('main Maestro extension', () => {
         provider: 'openai-codex',
         model: 'gpt-6.1-sol',
         content: [
-          { type: 'text', text: `Verification: weather alerts passed. Simplifier: ${summary}` },
+          {
+            type: 'text',
+            text: `Verification: weather alerts passed. Simplifier: ${summary}. Evaluation failed: Git HEAD baseline unavailable. No score. Report: ${join(paths.getSpecPath(SPEC_ID), 'evaluation.json')}`,
+          },
         ],
         stopReason,
         usage: {

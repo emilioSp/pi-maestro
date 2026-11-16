@@ -31,6 +31,7 @@ import {
 import { RUN_BUILDER_TOOL, registerRunBuilderTool } from '#tools/main/run-builder.ts';
 import { RUN_SIMPLIFIER_TOOL, registerRunSimplifierTool } from '#tools/main/run-simplifier.ts';
 import { RUN_VERIFIER_TOOL, registerRunVerifierTool } from '#tools/main/run-verifier.ts';
+import { SCORE_WORKFLOW_TOOL, registerScoreWorkflowTool } from '#tools/main/score-workflow.ts';
 import { pathExists } from '#utils/path-exists.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
@@ -45,6 +46,7 @@ const MAIN_TOOL_NAMES: readonly string[] = [
   RUN_VERIFIER_TOOL.NAME,
   RESOLVE_FINDINGS_TOOL.NAME,
   RUN_SIMPLIFIER_TOOL.NAME,
+  SCORE_WORKFLOW_TOOL.NAME,
 ];
 
 type CompletedWorkflowResult = {
@@ -68,6 +70,7 @@ export default (pi: ExtensionAPI): void => {
   registerRunVerifierTool(pi);
   registerResolveFindingsTool(pi);
   registerRunSimplifierTool(pi);
+  registerScoreWorkflowTool(pi);
 
   const syncMainTools = (): void => {
     const foreignTools = pi.getActiveTools().filter((name) => !MAIN_TOOL_NAMES.includes(name));

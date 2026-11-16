@@ -62,7 +62,7 @@ const readSimplifierResult = async ({ paths, specId }: ReadSimplifierResultInput
       throw new Error(`Workflow spec ID mismatch: expected "${specId}", found "${state.specId}".`);
     }
 
-    if (state.phase !== WORKFLOW_PHASES.CANDIDATE_READY) {
+    if (state.phase !== WORKFLOW_PHASES.SCORER_RUNNING) {
       throw new Error(
         `The simplifier returned without recording a valid terminal handoff. Workflow phase is "${state.phase}".`,
       );
@@ -145,7 +145,7 @@ export const registerRunSimplifierTool = (pi: ExtensionAPI): void => {
         content: [
           {
             type: 'text',
-            text: `Simplifier completed spec ${specId}. The workflow is candidate-ready. Report the saved simplifier summary and notes as its report, not verifier evidence.`,
+            text: `Simplifier completed spec ${specId}. The workflow is scorer-running. Call maestro_score_workflow next. Report the saved simplifier summary and notes as its report, not verifier evidence.`,
           },
         ],
         details: result,

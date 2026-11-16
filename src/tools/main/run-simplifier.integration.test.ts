@@ -60,7 +60,7 @@ afterEach(async () => {
 });
 
 describe('run simplifier', () => {
-  it('GIVEN Git reports no repository WHEN simplification is requested THEN Maestro warns, skips the agent, saves candidate-ready, and creates no simplifier report', async () => {
+  it('GIVEN Git reports no repository WHEN simplification is requested THEN Maestro warns, skips the agent, saves scorer-running, and creates no simplifier report', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -98,7 +98,7 @@ describe('run simplifier', () => {
     expect(result.details).toMatchObject({
       specId: SPEC_ID,
       skipped: true,
-      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+      phase: WORKFLOW_PHASES.SCORER_RUNNING,
     });
     expect(notify).toHaveBeenCalledWith(
       'Simplifier skipped: Git repository unavailable.',
@@ -106,14 +106,14 @@ describe('run simplifier', () => {
     );
     expect(executeTask).not.toHaveBeenCalled();
     expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
-      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+      phase: WORKFLOW_PHASES.SCORER_RUNNING,
     });
     await expect(access(paths.getSimplifierHandoffPath(SPEC_ID))).rejects.toMatchObject({
       code: 'ENOENT',
     });
   });
 
-  it('GIVEN a Git project ready for simplification WHEN the simplifier saves its report THEN one run uses its configured model and project and returns candidate-ready with that report', async () => {
+  it('GIVEN a Git project ready for simplification WHEN the simplifier saves its report THEN one run uses its configured model and project and returns scorer-running with that report', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -174,7 +174,7 @@ describe('run simplifier', () => {
       prompt: expect.stringContaining(repository.path),
     });
     expect(result.details).toMatchObject({
-      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+      phase: WORKFLOW_PHASES.SCORER_RUNNING,
       handoff: { refactoredFiles: [], summary: 'No simplification needed' },
     });
     const input = vi.mocked(executeTask).mock.calls[0][0];

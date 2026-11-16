@@ -279,7 +279,7 @@ describe('run verifier tool', () => {
   });
 });
 
-it('GIVEN simplifier disabled WHEN verification completes without findings THEN candidate-ready is saved without simplifier delegation', async () => {
+it('GIVEN simplifier disabled WHEN verification completes without findings THEN scorer-running is saved without simplifier delegation', async () => {
   maestroSessionState.activate();
   maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -311,9 +311,9 @@ it('GIVEN simplifier disabled WHEN verification completes without findings THEN 
     return { text: 'Completed successfully' };
   });
   const result = await tool.execute('verifier-without-simplifier', { specId: SPEC_ID });
-  expect(result.details).toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
+  expect(result.details).toMatchObject({ phase: WORKFLOW_PHASES.SCORER_RUNNING });
   await expect(readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
-    phase: WORKFLOW_PHASES.CANDIDATE_READY,
+    phase: WORKFLOW_PHASES.SCORER_RUNNING,
   });
   expect(executeTask).toHaveBeenCalledOnce();
   expect(result.content).toEqual([

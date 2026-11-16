@@ -707,7 +707,7 @@ it('GIVEN a builder execution error without a saved session WHEN execution stops
 
 it.each([
   { simplifier: true, phase: WORKFLOW_PHASES.SIMPLIFIER_RUNNING },
-  { simplifier: false, phase: WORKFLOW_PHASES.CANDIDATE_READY },
+  { simplifier: false, phase: WORKFLOW_PHASES.SCORER_RUNNING },
 ])(
   'GIVEN verifier disabled and simplifier=$simplifier WHEN builder completes THEN $phase is saved without verifier delegation',
   async ({ simplifier, phase }) => {
