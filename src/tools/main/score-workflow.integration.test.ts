@@ -224,7 +224,7 @@ it.each([
       specId: SPEC_ID,
       provider: 'openrouter',
       model: 'typesafe/jev-1.14',
-      rubricVersion: '1.0.0',
+      scoringCriteriaVersion: '1.0.0',
       status: 'success',
       scores,
     });
@@ -413,7 +413,7 @@ it('GIVEN owner cancellation during inference WHEN the request ends THEN a failu
     specId: SPEC_ID,
     provider: 'openrouter',
     model: 'typesafe/jev-1.14',
-    rubricVersion: '1.0.0',
+    scoringCriteriaVersion: '1.0.0',
     status: 'failure',
     reason: 'Workflow scoring cancelled.',
   });

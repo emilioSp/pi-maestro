@@ -158,7 +158,7 @@ Otherwise the simplifier records handoffs/simplifier/S.json before scorer-runnin
 workflow under the same error policy as other runs.
 
 In scorer-running, call maestro_score_workflow next with only the active specId, without further owner approval. The tool collects the approved contract, all available
-handoffs and final Git changes itself. Do not supply scores, evidence, rubric, or model overrides. Do not run new verification for evaluation. A fully saved success or
+handoffs and final Git changes itself. Do not supply scores, evidence, scoring criteria, or model overrides. Do not run new verification for evaluation. A fully saved success or
 failure moves to candidate-ready; cancellation or persistence errors leave scoring incomplete. Do not reuse old evaluation files or retry inference automatically.
 
 ### Explain findings and escalations

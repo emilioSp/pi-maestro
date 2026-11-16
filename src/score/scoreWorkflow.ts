@@ -18,7 +18,7 @@ import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 
-const RUBRIC_VERSION = '1.0.0';
+const SCORING_CRITERIA_VERSION = '1.0.0';
 
 const EVALUATION_STATUS = { SUCCESS: 'success', FAILURE: 'failure' } as const;
 
@@ -65,7 +65,12 @@ export const scoreWorkflow = async ({ pi, context, specId, signal }: ScoreWorkfl
     outcome = failure(error);
   }
 
-  const report = { specId, ...CLASSIFIER, rubricVersion: RUBRIC_VERSION, ...outcome };
+  const report = {
+    specId,
+    ...CLASSIFIER,
+    scoringCriteriaVersion: SCORING_CRITERIA_VERSION,
+    ...outcome,
+  };
 
   await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`);
 
