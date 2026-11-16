@@ -27,8 +27,6 @@
     "src/",
     "!**/*.test.ts",
     "docs/",
-    "MISSION.md",
-    "TECH_STACK.md",
     "CHANGELOG.md",
     "MANIFESTO.md",
     "README.md",

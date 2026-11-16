@@ -33,10 +33,10 @@ in front matter.
 Roadmap items under `docs/roadmap/` use only `Objective` and `Completed When` sections. Keep status in front matter. Do not add evidence or completion reports. If another
 section is needed, ask the owner first.
 
-In `README.md`, `docs/**/*.md`, `MISSION.md`, `TECH_STACK.md`, and `CHANGELOG.md`, format terms from `docs/glossary.md` with inline code. Do not apply this formatting to
-section titles, blockquotes (`>`), link labels, or text inside quotation marks. Do not format `spec` within `spec-driven` phrases. Leave possessive forms, such as
-`owner's`, unformatted. Include plurals and capitalization variants only when they have the glossary meaning. Do not change wording, code blocks, link targets, or file
-paths just to apply this formatting.
+In `README.md`, `docs/**/*.md`, and `CHANGELOG.md`, format terms from `docs/glossary.md` with inline code. Do not apply this formatting to section titles, blockquotes
+(`>`), link labels, or text inside quotation marks. Do not format `spec` within `spec-driven` phrases. Leave possessive forms, such as `owner's`, unformatted. Include
+plurals and capitalization variants only when they have the glossary meaning. Do not change wording, code blocks, link targets, or file paths just to apply this
+formatting.
 
 ## Remove and unchanged behavior
 

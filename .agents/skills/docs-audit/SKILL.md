@@ -21,15 +21,14 @@ Do not check out historical commits or limit the audit to a Git diff. Use histor
 
 Check `README.md`, `docs/`, and the available project constitution:
 
-1. `../../../MISSION.md`: purpose, scope, and owner responsibilities.
-2. `../../../TECH_STACK.md`: technologies and their roles.
+1. `../../../docs/MISSION.md`: purpose, scope, and owner responsibilities.
+2. `../../../docs/TECH_STACK.md`: technologies and their roles.
 3. `../../../docs/roadmap/`: completed outcomes and planned work; `README.md` is the index.
 4. `../../../CHANGELOG.md`: meaningful codebase changes and breaking contracts.
 5. `../../../docs/adr/`: architectural choices, status, context, consequences, and evidence; `README.md` is the index.
 
-The constitution documents live at the project root, except roadmap items under `docs/roadmap/` and architecture decision records under `docs/adr/`. Discover alternative
-names, directories, or embedded sections from the repository and its instructions. Audit the actual documents rather than assuming a fixed layout. Report missing
-documents only when project instructions require them.
+The constitution documents live under `docs/`, except `CHANGELOG.md` at the project root. Discover alternative names, directories, or embedded sections from the
+repository and its instructions. Audit the actual documents rather than assuming a fixed layout. Report missing documents only when project instructions require them.
 
 Use `package.json`, `package-lock.json`, and the code under `src/`, `extensions/`, `agents/`, and `templates/` as comparison sources. `package.json` is authoritative for
 declared scripts, dependencies, peer dependencies, import aliases, published files, and the Pi manifest. Use relevant specs, tests, configuration, and local Git history
@@ -58,10 +57,10 @@ current documentation. Do not treat an accurately labeled historical changelog e
 
 Check that documentation follows this rule, with paths relative to the project root:
 
-In `README.md`, `docs/**/*.md`, `MISSION.md`, `TECH_STACK.md`, and `CHANGELOG.md`, format terms from `docs/glossary.md` with inline code. Do not apply this formatting to
-section titles, blockquotes (`>`), link labels, or text inside quotation marks. Do not format `spec` within `spec-driven` phrases. Leave possessive forms, such as
-`owner's`, unformatted. Include plurals and capitalization variants only when they have the glossary meaning. Do not change wording, code blocks, link targets, or file
-paths just to apply this formatting.
+In `README.md`, `docs/**/*.md`, and `CHANGELOG.md`, format terms from `docs/glossary.md` with inline code. Do not apply this formatting to section titles, blockquotes
+(`>`), link labels, or text inside quotation marks. Do not format `spec` within `spec-driven` phrases. Leave possessive forms, such as `owner's`, unformatted. Include
+plurals and capitalization variants only when they have the glossary meaning. Do not change wording, code blocks, link targets, or file paths just to apply this
+formatting.
 
 ### 3. Links and references
 
