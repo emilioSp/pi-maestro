@@ -111,6 +111,9 @@ it('GIVEN multiple passes and mixed Git edits WHEN evidence is collected THEN do
   await writeFile(join(project.path, 'src/export.ts'), 'staged export\n');
   await exec('git', ['add', 'src/export.ts'], { cwd: project.path });
   await writeFile(join(project.path, 'src/escape.ts'), 'unstaged escape\n');
+  await writeFile(join(project.path, 'src/evaluation.json'), '{"source": "tracked"}\n');
+  await exec('git', ['add', '--', 'src/evaluation.json'], { cwd: project.path });
+  await writeFile(join(project.path, 'src/evaluation.raw.json'), '{"source": "untracked"}\n');
   await writeFile(join(project.path, 'src/csv helpers.ts'), 'new helper\n');
   await writeFile(join(project.path, "src/quote ' $; helper.ts"), 'shell safe\n');
 
@@ -175,8 +178,15 @@ it('GIVEN multiple passes and mixed Git edits WHEN evidence is collected THEN do
       diff: expect.stringContaining('+shell safe'),
     }),
   );
-  expect(JSON.stringify(evidence)).not.toContain('evaluation.json');
-  expect(JSON.stringify(evidence)).not.toContain('evaluation.raw.json');
+  expect(evidence.trackedDiff).toContain('+{"source": "tracked"}');
+  expect(evidence.untrackedFiles).toContainEqual({
+    name: 'src/evaluation.raw.json',
+    diff: expect.stringContaining('+{"source": "untracked"}'),
+  });
+  expect(JSON.stringify(evidence)).not.toContain(`.specs/${SPEC_ID}/spec-score/evaluation.json`);
+  expect(JSON.stringify(evidence)).not.toContain(
+    `.specs/${SPEC_ID}/spec-score/evaluation.raw.json`,
+  );
 });
 
 it.each([

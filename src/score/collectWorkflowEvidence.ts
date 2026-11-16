@@ -4,7 +4,7 @@
  */
 
 import { readFile, readdir } from 'node:fs/promises';
-import { basename, join } from 'node:path';
+import { join, relative, sep } from 'node:path';
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 
@@ -114,6 +114,12 @@ export const collectWorkflowEvidence = async ({
 
   const handoffs = await collectHandoffs(paths.getHandoffsPath(specId));
 
+  const evaluationPaths = EVALUATION_FILES.map((name) =>
+    relative(paths.getProjectRoot(), join(paths.getSpecPath(specId), 'spec-score', name))
+      .split(sep)
+      .join('/'),
+  );
+
   const trackedDiff = await git({
     pi,
     paths,
@@ -125,7 +131,7 @@ export const collectWorkflowEvidence = async ({
       'HEAD',
       '--',
       '.',
-      ...EVALUATION_FILES.map((name) => `:(exclude,glob)**/${name}`),
+      ...evaluationPaths.map((path) => `:(exclude,literal)${path}`),
     ],
   });
 
@@ -133,7 +139,7 @@ export const collectWorkflowEvidence = async ({
     await git({ pi, paths, signal, args: ['ls-files', '--others', '--exclude-standard', '-z'] })
   )
     .split('\0')
-    .filter((name) => name !== '' && !EVALUATION_FILES.includes(basename(name)));
+    .filter((name) => name !== '' && !evaluationPaths.includes(name));
 
   const untrackedFiles = [];
 
