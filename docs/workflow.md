@@ -50,8 +50,8 @@ The `owner` selects phases through each agent's `required` boolean before activa
 See [Phase selection](configuration.md#phase-selection).
 
 With `builder` disabled, approval moves directly to `candidate-ready` and all agents are skipped. Otherwise, after `builder` completion, disabled verification is
-bypassed: the workflow enters `simplifier-running` if simplification is enabled, or `candidate-ready` otherwise. Successful verification and rejection of all current
-`findings` also move directly to `candidate-ready` when simplification is disabled. Skipped agents are not delegated and need no `handoffs`.
+bypassed: the workflow enters `simplifier-running` if simplification is enabled, or `scorer-running` otherwise. Successful verification and rejection of all current
+`findings` also move to `scorer-running` when simplification is disabled. After simplification completes or is skipped, evaluation runs before workflow completion.
 
 ```mermaid
 flowchart TD
@@ -62,6 +62,7 @@ flowchart TD
     verify[Verifier checks live project files]
     findings{Findings?}
     simplify[Simplifier refactors accepted code]
+    evaluate[Jev evaluates the workflow]
     candidate[Candidate ready]
     summary[Maestro summarizes results]
     review[Owner performs the final review]
@@ -81,10 +82,11 @@ flowchart TD
     recordFindings -->|Reject all with reasons| simplify
     recordFindings -->|Fix code without spec changes| build
     recordFindings -->|Spec changes| reviseSpec
-    simplify --> candidate
+    simplify --> evaluate
+    evaluate --> candidate
     candidate --> summary
     summary --> review
-    linkStyle 0,1,2,3,4,5,16,17,18 stroke: #2e7d32, stroke-width: 3px
+    linkStyle 0,1,2,3,4,5,16,17,18,19 stroke: #2e7d32, stroke-width: 3px
 ```
 
 ## Workflow phases
@@ -104,7 +106,8 @@ The default path is `.specs/<spec-id>/workflow.json`. The `spec` directory is [c
 | `verifier-running`     | A `verifier` `run` is active.                                                                                                 |
 | `finding-decisions`    | The `owner` must decide how to handle every current `finding`.                                                                |
 | `simplifier-running`   | Selected preceding phases finished. The enabled `simplifier` can run or skip if Git is unavailable.                           |
-| `candidate-ready`      | The selected phases completed or were skipped. The workflow is complete.                                                      |
+| `scorer-running`       | Implementation is finished. Evaluation gathers evidence and saves scores or a failure before completion.                      |
+| `candidate-ready`      | The workflow is complete; the `owner` can review its results.                                                                 |
 
 ## Specification documents
 
@@ -259,11 +262,11 @@ that file's `findings` list, not a separate `F2.json` file. `Finding` numbers re
 `Maestro` records `owner` decisions in the same `verifier` report, e.g. decisions about `V1/F2` update `V1.json`, not a new `V2.json`. A new `verifier` result creates the
 next report (`V2.json`).
 
-| Decision      | Result                                                                                                                                           |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `reject`      | Records the owner's reason. If every `finding` is rejected, the workflow reaches `simplifier-running` when enabled, otherwise `candidate-ready`. |
-| `fix-code`    | Keeps the current `spec` and returns to `ready-for-builder` for code fixes when no decision requires revision.                                   |
-| `revise-spec` | Records the owner's reason and agreed requirement change, then returns to `drafting-spec`.                                                       |
+| Decision      | Result                                                                                                                                          |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `reject`      | Records the owner's reason. If every `finding` is rejected, the workflow reaches `simplifier-running` when enabled, otherwise `scorer-running`. |
+| `fix-code`    | Keeps the current `spec` and returns to `ready-for-builder` for code fixes when no decision requires revision.                                  |
+| `revise-spec` | Records the owner's reason and agreed requirement change, then returns to `drafting-spec`.                                                      |
 
 `Maestro` saves every current decision together before the phase changes. If any `finding` requires revision, revision takes priority over code fixes and rejections. See
 [Spec revision](#spec-revision).
@@ -297,6 +300,30 @@ When enabled, `Maestro` starts the `simplifier` after successful verification, r
 The `simplifier` starts from all staged, unstaged, and untracked code changes, including pre-existing changes. It preserves observable behavior and introduces no new
 check failures. If no code needs refactoring, the `simplifier` does not make any change.
 
+## Workflow evaluation
+
+After the selected implementation phases, `scorer-running` evaluates the entire workflow against the approved `spec`, including later simplification. Jev receives the
+approved documents, available `handoffs` and `owner` decisions, and staged, unstaged, and untracked Git changes against `HEAD`.
+
+Jev's ratings are converted to two separate scores on a **0–100 scale**. Each retains Jev's confidence value from 0 to 1:
+
+| Score                | Criteria                                                                                                                                                                 |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Correctness          | How fully the implementation meets the approved requirements: from missing or fundamentally wrong behavior to all required behavior supported with no identified defect. |
+| Verification quality | How well execution or code inspection supports the required scenarios: from unsupported claims to complete, traceable evidence, including relevant failure cases.        |
+
+Missing verification evidence is not a code defect. Checks run by the `Builder` can support the evaluation, but they are not independent verification.
+
+The automatic grading helps the `owner` decide how much to trust the workflow's outcome. It does not prove the work is correct.
+
+Results are saved in the `spec-score/` folder inside the active `spec` directory:
+
+- `evaluation.json` has the scores and confidence values, or the reason for a failure.
+- `evaluation.raw.json` has the classifier response, if one was returned.
+
+Evaluation needs Git with an existing `HEAD`. Once a success or a failure is saved, the workflow moves to `candidate-ready`. If the evaluation hits an error or is
+cancelled, a failure report is saved without scores. If the report cannot be saved, the workflow cannot finish. Maestro adds the workflow evaluation in the final summary.
+
 ## Workflow completion
 
 The workflow ends at `candidate-ready`. `Maestro` summarizes the changes, verification results, rejected `findings` and reasons, relevant `builder` notes from the saved
@@ -329,7 +356,8 @@ For example, a repair cycle with successful `builder` results produces these fil
 | 3    | The `owner` decides every `finding` and requests a code fix.            | Updates decisions in the existing `V1.json`.                                    |
 | 4    | A new `builder` `run` completes the fixes.                              | Creates `handoffs/builder/B2.json`.                                             |
 | 5    | A new `verifier` `run` checks the work again and reports no `findings`. | Creates `handoffs/verifier/V2.json`. The workflow reaches `simplifier-running`. |
-| 6    | The `simplifier` completes its refactoring.                             | Creates `handoffs/simplifier/S.json`, then saves `candidate-ready`.             |
+| 6    | The `simplifier` completes its refactoring.                             | Creates `handoffs/simplifier/S.json`, then saves `scorer-running`.              |
+| 7    | Evaluation saves scores or a failure.                                   | Saves `spec-score/evaluation.json`, then reaches `candidate-ready`.             |
 
 If the first `builder` `run` escalates, it creates `B1.json` with its questions. `Owner` answers update `B1.json`. The next saved `builder` result creates `B2.json`.
 
@@ -355,6 +383,9 @@ The default layout after multiple `runs` is:
 │   │   └── V2.json
 │   └── simplifier/
 │       └── S.json
+├── spec-score/
+│   ├── evaluation.json
+│   └── evaluation.raw.json # when a classifier response is returned
 └── prototypes/
 ```
 

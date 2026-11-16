@@ -118,6 +118,11 @@ used for implementation in another workflow. With `builder` enabled, `verifier` 
 Disabled phases do not require model availability and produce no `handoff`. The final summary identifies skipped work rather than claiming it was performed. Enabled
 simplification can still be skipped if Git is unavailable.
 
+## Evaluator
+
+Workflow evaluation currently uses the fixed `openrouter/typesafe/jev-1.14` classifier through Pi. It is not configurable. If unavailable, evaluation is skipped and the
+workflow completes without scores. See [Workflow evaluation](workflow.md#workflow-evaluation).
+
 ## Schema version
 
 `version` identifies the configuration format, not the npm package version. The supported value is `1.0.0`. Other values stop activation.

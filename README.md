@@ -144,8 +144,8 @@ changing phase.
 If any decision requires a `spec` change, the workflow returns to `drafting-spec` before the `owner` and `Maestro` revise the same `spec`. The `owner` reviews the revised
 `spec` and replies `GREEN FLAG` again. `Maestro` records renewed approval separately before another `builder` `run`.
 
-When enabled, `Maestro` starts the `simplifier` after successful verification, rejection of all `findings`, or `builder` completion with verification disabled. Only this
-step requires Git. If Git readiness cannot be confirmed, `Maestro` warns and skips simplification. The `simplifier` selects all uncommitted code changes, including
+When enabled, `Maestro` starts the `simplifier` after successful verification, rejection of all `findings`, or `builder` completion with verification disabled. This step
+requires Git. If Git readiness cannot be confirmed, `Maestro` warns and skips simplification. The `simplifier` selects all uncommitted code changes, including
 pre-existing staged, unstaged, and untracked files.
 
 The workflow ends at `candidate-ready`. Rejected `findings` retain their reasons and accepted failures can remain. Maestro's summary separates independent verification
@@ -154,6 +154,14 @@ requests, and merging.
 
 The same `/maestro` command disables `Maestro` and leaves project files unchanged. Disabling `Maestro`, restarting Pi, or using `/resume` clears live session state. Saved
 files do not automatically restore or resume an incomplete workflow. The `owner` handles it manually.
+
+## LLM as a judge
+
+After implementation, Jev evaluates the entire workflow against the approved `spec`. It scores **correctness** (how well the result meets the requirements) and
+**verification quality** (how well the evidence supports that result). `Maestro` presents Jev's results in the final summary.
+
+This automatic grading system gives the `owner` a level of confidence in the workflow's outcome, not proof of correctness. See
+[Workflow evaluation](docs/workflow.md#workflow-evaluation) for the criteria and scores.
 
 ## Configuration
 
