@@ -1,0 +1,95 @@
+{
+  "version": "1.0.0",
+  "specId": "20261116-111707-score-completed-maestro-workflows-with-jev",
+  "summary": "Independently checked the live candidate and all 11 criteria. Repository checks passed 323 tests. AC1–AC10 are supported; AC11's required review of actual generated summaries remains unverified.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Ran npm run check (323 tests passed). Inspected src/workflow/transitions.ts and existing integration tests for run-builder, run-verifier, resolve-findings, run-simplifier, and record-simplifier-handoff. All five rows route to scorer-running: simplifier done, builder with both later roles disabled, clean verifier with simplifier disabled, rejected findings with simplifier disabled, and Git-unavailable simplifier skip.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Ran the existing builder-disabled mark-spec-ready integration test within npm run check. Inspected getSpecReadyDestination and approval routing: approval directly saves candidate-ready, does not invoke scoring or produce scores. Runtime guidance explicitly excludes stale evaluations for spec-only completion.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "Ran the real temporary Git evidence test in src/tools/main/score-workflow.integration.test.ts through npm run check. It checks proposal/spec/design, B1/B2/V1/V2/S identities, resolved E1 and decided F1, staged export.ts, unstaged escape.ts, and untracked csv helpers.ts plus shell-sensitive filename. Evaluation files are excluded. Independently inspected collectScoreEvidence.ts numeric sorting, literal Git arguments, and scoreWorkflow.ts passing collected evidence as classifier state before writing outputs.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Inspected collectHandoffs in src/score/collectScoreEvidence.ts. Directory enumeration returns only present files, with no role settings or expected-report logic: B1 alone yields only B1, and absent directory yields []. Scoring success tests executed with no handoffs. Both example rows are supported.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Inspected src/score/scoreWorkflow.ts, getScoreQuestions.ts, questions.md and src/tools/main/score-workflow.ts. Registry lookup fixes classifier/openrouter/typesafe/jev-1.14; classify uses registry credentials with maxRetries 0. Schema accepts only specId. Both score-question IDs and every ordered 0–4 rubric entry match the approved text. Guidance covers whole-workflow evaluation, decisions, uncertainty, unrelated changes and evidence-not-instructions.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "Ran verifier-running rejection integration test within npm run check, confirming no inference or report. Independently inspected scoreWorkflow.ts guard: both verifier-running and candidate-ready reject before collection, inference and writes; existing files cannot be overwritten by the rejected call. Active spec identity is checked separately.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "Ran fractional-level persistence case within npm run check: supplied 3.6/0.8 and 2/0.6 save exactly correctness 90/0.8 and verificationQuality 50/0.6. Exact report equality excludes aggregate fields. Inspected normalizeScoreResult.ts independent multiplication by 25 with unchanged confidence.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "Ran whole-level persistence case within npm run check. Actual saved raw JSON equals supplied full response including provider/model/usage/stopReason/timestamp. Report identifies spec, exact model, rubric 1.0.0 and success with correctness 100/0.9 and verificationQuality 75/0.7. Pre-existing report/raw contents are overwritten; no aggregate is introduced.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC9",
+      "probe": "Ran all scoring failure cases within npm run check: missing exact classifier, returned Unauthorized, correctness score 5, real Git without HEAD, and truncated Git output. Inspected saved-file assertions and error paths: reasons without scores, original returned error/invalid responses retained, no fabricated raw response, stale raw removed when none returns. Inspected finite score/confidence, score type, stopReason, document/JSON parsing and Git error handling.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC10",
+      "probe": "Ran success/overwrite, failure, cancellation and persistence-error integration cases within npm run check. Inspected scoreWorkflow.ts save-before-SCORER_DONE ordering and transitions.ts. Success and saved failure reach candidate-ready; omitted invocation cannot transition; cancellation leaves scorer-running; pre-existing files are not reused and successful retries overwrite both. Only scoring completion and spec-only approval route to candidate-ready. Extension integration checks confirm scorer-running does not arm final-response deactivation.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC11",
+      "probe": "Inspected agents/maestro.md: instructions correctly require both separate scores/confidences and paths or failure reason/path without scores. Inspected scoring tool output and executed extension summary tests. However, extensions/maestro.integration.test.ts supplies a hard-coded Git-baseline failure message through a mocked stream; it does not observe generated summaries for either approved row (90/0.8 plus 50/0.6, or exact-classifier-unavailable failure). No actual generated summary for those rows was available to review, so the specified procedure remains incomplete.",
+      "probeStatus": "not-run"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "acceptanceCriterion": "AC11",
+      "severity": "low",
+      "confidence": 1,
+      "summary": "The required actual-summary review is missing for both AC11 example outcomes; current checks establish guidance and finalization, not generated summary content.",
+      "evidence": [
+        {
+          "source": "spec.md, Verification boundary / AC11",
+          "observation": "The approved procedure requires runtime-instruction inspection and review of an actual summary. Its rows require the distinct 90/50 scores with confidence and paths, and an exact-classifier-unavailable failure summary without scores."
+        },
+        {
+          "source": "extensions/maestro.integration.test.ts:1026–1070",
+          "observation": "The final assistant message is constructed in the test with Git HEAD failure wording, then returned through a mocked streamFunction. It is not generated from the saved outcome and covers neither exact AC11 example."
+        },
+        {
+          "source": "handoffs/builder/B1.json, AC11 probe",
+          "observation": "The builder cites saved numeric output and the controlled streamed failure message, rather than an actual generated summary for either row. Fresh inspection confirmed this coverage limitation; no incorrect production summary was observed."
+        }
+      ],
+      "decision": {
+        "decision": "reject",
+        "reason": "The owner accepts code and runtime-instruction inspection as sufficient evidence for AC11; a separate review of an actual generated summary is not required."
+      }
+    }
+  ],
+  "notes": [
+    "Confirmed supplied project, configured .specs directory, matching workflow identity and verifier-running phase. B1 is the sole builder handoff; no earlier verifier handoffs or decisions exist.",
+    "npm run check completed successfully: 45 test files, 323 tests. git diff --check also passed. No dependencies installed, no live Jev calls, no delegation, and no product repairs.",
+    "Before npm run check, retained exact existing file bytes. Formatting and lint made no product changes; coverage HTML changes were restored to their original bytes. No new files remained. Pre-existing candidate changes and approved contract files were preserved.",
+    "Human-facing documentation updates are explicitly outside this contract. The AC11 finding records a verification limitation, not an observed summary defect or an overall verdict."
+  ]
+}
