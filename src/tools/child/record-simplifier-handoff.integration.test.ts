@@ -48,7 +48,7 @@ afterEach(async () => {
 });
 
 describe('record simplifier handoff', () => {
-  it('GIVEN verification has passed WHEN the simplifier submits changed files, a summary, and notes THEN S.json preserves those fields and the workflow becomes candidate-ready', async () => {
+  it('GIVEN verification has passed WHEN the simplifier submits changed files, a summary, and notes THEN S.json preserves those fields and the workflow becomes scorer-running', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -84,11 +84,11 @@ describe('record simplifier handoff', () => {
     );
     expect(result.details).toEqual({
       specId: SPEC_ID,
-      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+      phase: WORKFLOW_PHASES.SCORER_RUNNING,
       handoffPath: paths.getSimplifierHandoffPath(SPEC_ID),
     });
     expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
-      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+      phase: WORKFLOW_PHASES.SCORER_RUNNING,
     });
   });
 });

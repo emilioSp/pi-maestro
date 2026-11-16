@@ -59,7 +59,7 @@ export const recordSimplifierHandoffTool = {
       content: [
         {
           type: 'text',
-          text: 'Simplifier handoff and candidate-ready phase saved. Stop now.',
+          text: 'Simplifier handoff saved. Workflow moved to scorer-running. Stop now.',
         },
       ],
       details: {
