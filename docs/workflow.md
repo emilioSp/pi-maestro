@@ -394,6 +394,11 @@ available as context, not as proof for the current `run`. `Owner` decisions upda
 
 ## Limitations
 
+### Fixed evaluator
+
+Evaluation is available only through Jev on OpenRouter. The model, `openrouter/typesafe/jev-1.14`, is hardcoded and cannot be configured. If it is unavailable—for example,
+if the `owner` has not configured OpenRouter—the evaluation fails and the workflow ends without evaluation scores.
+
 ### No small models
 
 The `owner` must not use small models with a `low` thinking level for this workflow. These combinations cannot reliably follow the workflow rules. One example is

@@ -161,7 +161,8 @@ After implementation, Jev evaluates the entire workflow against the approved `sp
 **verification quality** (how well the evidence supports that result). `Maestro` presents Jev's results in the final summary.
 
 This automatic grading system gives the `owner` a level of confidence in the workflow's outcome, not proof of correctness. See
-[Workflow evaluation](docs/workflow.md#workflow-evaluation) for the criteria and scores.
+[Workflow evaluation](docs/workflow.md#workflow-evaluation) for the criteria and scores, and [Fixed evaluator](docs/workflow.md#fixed-evaluator) for model availability
+limitations.
 
 ## Configuration
 
