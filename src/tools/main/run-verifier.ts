@@ -123,6 +123,7 @@ export const registerRunVerifierTool = (pi: ExtensionAPI): void => {
     name: RUN_VERIFIER_TOOL.NAME,
     label: RUN_VERIFIER_TOOL.LABEL,
     description: RUN_VERIFIER_TOOL.DESCRIPTION,
+    executionMode: 'sequential',
     parameters: RunVerifierToolParameters,
     async execute(_toolCallId, { specId }, signal, onUpdate, context) {
       const { paths, config } = await resolveToolRunContext(context.cwd);

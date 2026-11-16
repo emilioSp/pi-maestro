@@ -107,6 +107,7 @@ export const registerResolveFindingsTool = (pi: ExtensionAPI): void => {
     name: RESOLVE_FINDINGS_TOOL.NAME,
     label: RESOLVE_FINDINGS_TOOL.LABEL,
     description: RESOLVE_FINDINGS_TOOL.DESCRIPTION,
+    executionMode: 'sequential',
     parameters: ResolveFindingsToolParameters,
     async execute(_toolCallId, { specId, decisions }, _signal, _onUpdate, context) {
       const { paths, config } = await resolveToolRunContext(context.cwd);

@@ -154,6 +154,7 @@ export const registerRunBuilderTool = (pi: ExtensionAPI): void => {
     name: RUN_BUILDER_TOOL.NAME,
     label: RUN_BUILDER_TOOL.LABEL,
     description: RUN_BUILDER_TOOL.DESCRIPTION,
+    executionMode: 'sequential',
     parameters: RunBuilderToolParameters,
     async execute(_toolCallId, { specId }, signal, onUpdate, context) {
       const { paths, config } = await resolveToolRunContext(context.cwd);

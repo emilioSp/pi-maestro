@@ -86,6 +86,7 @@ export const registerRunSimplifierTool = (pi: ExtensionAPI): void => {
     name: RUN_SIMPLIFIER_TOOL.NAME,
     label: RUN_SIMPLIFIER_TOOL.LABEL,
     description: RUN_SIMPLIFIER_TOOL.DESCRIPTION,
+    executionMode: 'sequential',
     parameters: RunSimplifierToolParameters,
     async execute(_toolCallId, { specId }, signal, onUpdate, context) {
       const { paths, config, projectRoot } = await resolveToolRunContext(context.cwd);

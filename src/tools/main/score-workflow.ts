@@ -21,6 +21,7 @@ export const registerScoreWorkflowTool = (pi: ExtensionAPI): void => {
     name: SCORE_WORKFLOW_TOOL.NAME,
     label: SCORE_WORKFLOW_TOOL.LABEL,
     description: SCORE_WORKFLOW_TOOL.DESCRIPTION,
+    executionMode: 'sequential',
     parameters: Type.Object(
       { specId: Type.String({ pattern: SPEC_ID_PATTERN.source }) },
       { additionalProperties: false },

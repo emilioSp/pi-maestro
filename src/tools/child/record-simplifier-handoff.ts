@@ -39,6 +39,7 @@ export const recordSimplifierHandoffTool = {
   name: SIMPLIFIER_HANDOFF_TOOL.NAME,
   label: SIMPLIFIER_HANDOFF_TOOL.LABEL,
   description: SIMPLIFIER_HANDOFF_TOOL.DESCRIPTION,
+  executionMode: 'sequential',
   parameters: SimplifierHandoffToolParameters,
   async execute(_toolCallId, params, _signal, _onUpdate, context) {
     assertSimplifierSubmission(params);
