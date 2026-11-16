@@ -119,7 +119,12 @@ export const registerRunSimplifierTool = (pi: ExtensionAPI): void => {
         context.ui.notify(GIT_SKIP_WARNING, 'warning');
 
         return {
-          content: [{ type: 'text', text: GIT_SKIP_WARNING }],
+          content: [
+            {
+              type: 'text',
+              text: `${GIT_SKIP_WARNING} The workflow is scorer-running. Call maestro_score_workflow next.`,
+            },
+          ],
           details: {
             specId,
             phase: nextState.phase,
