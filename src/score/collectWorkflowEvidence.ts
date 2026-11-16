@@ -97,6 +97,13 @@ export const collectWorkflowEvidence = async ({
   specId,
   signal,
 }: CollectWorkflowEvidenceInput): Promise<WorkflowEvidence> => {
+  try {
+    await git({ pi, paths, signal, args: ['rev-parse', '--verify', 'HEAD'] });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(`Git HEAD baseline unavailable: ${reason}`, { cause: error });
+  }
+
   const documents = await Promise.all([
     readDocument({ path: paths.getProposalFilePath(specId), name: 'proposal.md' }),
     readDocument({ path: paths.getSpecFilePath(specId), name: 'spec.md' }),
@@ -106,13 +113,6 @@ export const collectWorkflowEvidence = async ({
   ]);
 
   const handoffs = await collectHandoffs(paths.getHandoffsPath(specId));
-
-  try {
-    await git({ pi, paths, signal, args: ['rev-parse', '--verify', 'HEAD'] });
-  } catch (error) {
-    const reason = error instanceof Error ? error.message : String(error);
-    throw new Error(`Git HEAD baseline unavailable: ${reason}`, { cause: error });
-  }
 
   const trackedDiff = await git({
     pi,

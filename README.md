@@ -38,10 +38,6 @@ Five principles hold the workflow together:
 
 https://github.com/user-attachments/assets/dffa8bc7-6c79-491f-95df-2ee95b6447aa
 
-## License
-
-Copyright (c) 2026 Emilio Spatola. Licensed under [AGPL-3.0-or-later](LICENSE).
-
 ## Inspirations
 
 Pi Maestro is inspired by concepts from [OpenSpec](https://github.com/Fission-AI/OpenSpec) and [GitHub Spec Kit](https://github.com/github/spec-kit). It adapts those
@@ -188,3 +184,7 @@ The reading order is:
 3. [Roadmap](ROADMAP.md): completed outcomes and planned work maintained in the repository.
 4. [Changelog](CHANGELOG.md): meaningful codebase changes and breaking changes.
 5. [Architecture decision records](ADR.md): architectural choices, context, consequences, and evidence.
+
+## License
+
+Copyright (c) 2026 Emilio Spatola. Licensed under [AGPL-3.0-or-later](LICENSE).
