@@ -19,6 +19,8 @@ const EVALUATION_FILES = ['evaluation.json', 'evaluation.raw.json'];
 type ReadDocumentInput = { path: string; name: string };
 
 const readDocument = async ({ path, name }: ReadDocumentInput) => {
+  if (!(await pathExists(path))) return undefined;
+
   const content = await readFile(path, 'utf8');
 
   if (!content.trim()) throw new Error(`Required evidence ${name} is empty.`);
@@ -35,11 +37,11 @@ const collectHandoffs = async (directory: string): Promise<{ name: string; conte
     .map((file) => join(file.parentPath, file.name).slice(directory.length + 1))
     .sort((a, b) => a.localeCompare(b, 'en', { numeric: true }));
 
-  return Promise.all(
+  const documents = await Promise.all(
     names.map(async (name) => {
       const document = await readDocument({ path: join(directory, name), name });
 
-      if (name.endsWith('.json')) {
+      if (document && name.endsWith('.json')) {
         const parsed: unknown = JSON.parse(document.content);
 
         if (!isJsonObject(parsed)) {
@@ -50,6 +52,8 @@ const collectHandoffs = async (directory: string): Promise<{ name: string; conte
       return document;
     }),
   );
+
+  return documents.filter((document) => document !== undefined);
 };
 
 type GitInput = {
@@ -107,9 +111,10 @@ export const collectWorkflowEvidence = async ({
   const documents = await Promise.all([
     readDocument({ path: paths.getProposalFilePath(specId), name: 'proposal.md' }),
     readDocument({ path: paths.getSpecFilePath(specId), name: 'spec.md' }),
-    ...((await pathExists(paths.getDesignFilePath(specId)))
-      ? [readDocument({ path: paths.getDesignFilePath(specId), name: 'design.md' })]
-      : []),
+    readDocument({
+      path: paths.getDesignFilePath(specId),
+      name: 'design.md',
+    }),
   ]);
 
   const handoffs = await collectHandoffs(paths.getHandoffsPath(specId));
@@ -156,5 +161,10 @@ export const collectWorkflowEvidence = async ({
     });
   }
 
-  return { documents, handoffs, trackedDiff, untrackedFiles };
+  return {
+    documents: documents.filter((document) => document !== undefined),
+    handoffs,
+    trackedDiff,
+    untrackedFiles,
+  };
 };
