@@ -125,11 +125,19 @@ it('GIVEN multiple passes and mixed Git edits WHEN evidence is collected THEN do
     await writeFile(join(paths.getHandoffsPath(SPEC_ID), name), JSON.stringify(content));
   }
 
-  await writeFile(join(paths.getSpecPath(SPEC_ID), 'evaluation.json'), 'old evaluation');
-  await exec('git', ['add', '--', join(paths.getSpecPath(SPEC_ID), 'evaluation.json')], {
-    cwd: project.path,
-  });
-  await writeFile(join(paths.getSpecPath(SPEC_ID), 'evaluation.raw.json'), 'old raw');
+  await mkdir(join(paths.getSpecPath(SPEC_ID), 'spec-score'));
+  await writeFile(
+    join(paths.getSpecPath(SPEC_ID), 'spec-score', 'evaluation.json'),
+    'old evaluation',
+  );
+  await exec(
+    'git',
+    ['add', '--', join(paths.getSpecPath(SPEC_ID), 'spec-score', 'evaluation.json')],
+    {
+      cwd: project.path,
+    },
+  );
+  await writeFile(join(paths.getSpecPath(SPEC_ID), 'spec-score', 'evaluation.raw.json'), 'old raw');
   let api!: ExtensionAPI;
   await piTestSessions.createRegisteredTool({
     cwd: project.path,
@@ -206,8 +214,9 @@ it.each([
   'GIVEN old evaluation files and $label WHEN a valid response is saved THEN both files are overwritten with distinct scores and confidence before candidate-ready',
   async ({ response, scores }) => {
     const { project, paths } = await createScoringProject();
-    const reportPath = join(paths.getSpecPath(SPEC_ID), 'evaluation.json');
-    const rawPath = join(paths.getSpecPath(SPEC_ID), 'evaluation.raw.json');
+    const reportPath = join(paths.getSpecPath(SPEC_ID), 'spec-score', 'evaluation.json');
+    const rawPath = join(paths.getSpecPath(SPEC_ID), 'spec-score', 'evaluation.raw.json');
+    await mkdir(join(paths.getSpecPath(SPEC_ID), 'spec-score'));
     await writeFile(reportPath, 'old report');
     await writeFile(rawPath, 'old raw');
 
@@ -265,13 +274,18 @@ it.each([
     await tool.execute('score', { specId: SPEC_ID });
 
     const report = JSON.parse(
-      await readFile(join(paths.getSpecPath(SPEC_ID), 'evaluation.json'), 'utf8'),
+      await readFile(join(paths.getSpecPath(SPEC_ID), 'spec-score', 'evaluation.json'), 'utf8'),
     );
 
     expect(report).toMatchObject({ status: 'failure', reason: expect.stringContaining(reason) });
     expect(report).not.toHaveProperty('scores');
     expect(
-      JSON.parse(await readFile(join(paths.getSpecPath(SPEC_ID), 'evaluation.raw.json'), 'utf8')),
+      JSON.parse(
+        await readFile(
+          join(paths.getSpecPath(SPEC_ID), 'spec-score', 'evaluation.raw.json'),
+          'utf8',
+        ),
+      ),
     ).toEqual(response);
     expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
       phase: WORKFLOW_PHASES.CANDIDATE_READY,
@@ -281,7 +295,8 @@ it.each([
 
 it('GIVEN the exact classifier is missing and stale raw output exists WHEN scoring runs THEN a failure replaces the report and leaves existing raw output untouched', async () => {
   const { project, paths } = await createScoringProject();
-  const rawPath = join(paths.getSpecPath(SPEC_ID), 'evaluation.raw.json');
+  const rawPath = join(paths.getSpecPath(SPEC_ID), 'spec-score', 'evaluation.raw.json');
+  await mkdir(join(paths.getSpecPath(SPEC_ID), 'spec-score'));
   await writeFile(rawPath, 'old raw');
 
   const { tool, session } = await piTestSessions.createRegisteredTool({
@@ -293,7 +308,9 @@ it('GIVEN the exact classifier is missing and stale raw output exists WHEN scori
   const classify = vi.spyOn(session.modelRuntime, 'classify');
   await tool.execute('score', { specId: SPEC_ID });
   expect(
-    JSON.parse(await readFile(join(paths.getSpecPath(SPEC_ID), 'evaluation.json'), 'utf8')),
+    JSON.parse(
+      await readFile(join(paths.getSpecPath(SPEC_ID), 'spec-score', 'evaluation.json'), 'utf8'),
+    ),
   ).toEqual(
     expect.objectContaining({
       status: 'failure',
@@ -317,7 +334,7 @@ it('GIVEN Git has no HEAD WHEN scoring runs THEN the saved failure identifies th
   await tool.execute('score', { specId: SPEC_ID });
 
   const report = JSON.parse(
-    await readFile(join(paths.getSpecPath(SPEC_ID), 'evaluation.json'), 'utf8'),
+    await readFile(join(paths.getSpecPath(SPEC_ID), 'spec-score', 'evaluation.json'), 'utf8'),
   );
 
   expect(report).toMatchObject({
@@ -327,7 +344,7 @@ it('GIVEN Git has no HEAD WHEN scoring runs THEN the saved failure identifies th
   expect(report).not.toHaveProperty('scores');
   expect(classify).not.toHaveBeenCalled();
   await expect(
-    readFile(join(paths.getSpecPath(SPEC_ID), 'evaluation.raw.json')),
+    readFile(join(paths.getSpecPath(SPEC_ID), 'spec-score', 'evaluation.raw.json')),
   ).rejects.toMatchObject({ code: 'ENOENT' });
   expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
     phase: WORKFLOW_PHASES.CANDIDATE_READY,
@@ -354,7 +371,7 @@ it('GIVEN truncated Git diff output WHEN scoring runs THEN incomplete evidence s
   await tool.execute('score', { specId: SPEC_ID });
 
   const report = JSON.parse(
-    await readFile(join(paths.getSpecPath(SPEC_ID), 'evaluation.json'), 'utf8'),
+    await readFile(join(paths.getSpecPath(SPEC_ID), 'spec-score', 'evaluation.json'), 'utf8'),
   );
 
   expect(report).toMatchObject({
@@ -389,9 +406,9 @@ it('GIVEN verifier-running WHEN scoring is requested THEN inference and evaluati
     'requires scorer-running',
   );
   expect(classify).not.toHaveBeenCalled();
-  await expect(readFile(join(paths.getSpecPath(SPEC_ID), 'evaluation.json'))).rejects.toMatchObject(
-    { code: 'ENOENT' },
-  );
+  await expect(
+    readFile(join(paths.getSpecPath(SPEC_ID), 'spec-score', 'evaluation.json')),
+  ).rejects.toMatchObject({ code: 'ENOENT' });
 });
 
 it('GIVEN owner cancellation during inference WHEN the request ends THEN a failure report is saved and the workflow reaches candidate-ready', async () => {
@@ -408,7 +425,9 @@ it('GIVEN owner cancellation during inference WHEN the request ends THEN a failu
     phase: WORKFLOW_PHASES.CANDIDATE_READY,
   });
   expect(
-    JSON.parse(await readFile(join(paths.getSpecPath(SPEC_ID), 'evaluation.json'), 'utf8')),
+    JSON.parse(
+      await readFile(join(paths.getSpecPath(SPEC_ID), 'spec-score', 'evaluation.json'), 'utf8'),
+    ),
   ).toEqual({
     specId: SPEC_ID,
     provider: 'openrouter',
@@ -418,6 +437,6 @@ it('GIVEN owner cancellation during inference WHEN the request ends THEN a failu
     reason: 'Workflow scoring cancelled.',
   });
   await expect(
-    readFile(join(paths.getSpecPath(SPEC_ID), 'evaluation.raw.json')),
+    readFile(join(paths.getSpecPath(SPEC_ID), 'spec-score', 'evaluation.raw.json')),
   ).rejects.toMatchObject({ code: 'ENOENT' });
 });

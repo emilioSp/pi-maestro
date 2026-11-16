@@ -3,7 +3,7 @@
  * Used: Only by the scoring tool while the active workflow is in scorer-running.
  */
 
-import { writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent';
@@ -52,8 +52,11 @@ export const scoreWorkflow = async ({ pi, context, specId, signal }: ScoreWorkfl
   }
 
   let outcome: EvaluationOutcome;
-  const reportPath = join(paths.getSpecPath(specId), 'evaluation.json');
-  const rawPath = join(paths.getSpecPath(specId), 'evaluation.raw.json');
+  const scoreDirectory = join(paths.getSpecPath(specId), 'spec-score');
+  const reportPath = join(scoreDirectory, 'evaluation.json');
+  const rawPath = join(scoreDirectory, 'evaluation.raw.json');
+
+  await mkdir(scoreDirectory, { recursive: true });
 
   try {
     const evidence = await collectWorkflowEvidence({ pi, paths, specId, signal });
