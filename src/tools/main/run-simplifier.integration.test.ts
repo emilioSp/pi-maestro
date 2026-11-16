@@ -60,7 +60,7 @@ afterEach(async () => {
 });
 
 describe('run simplifier', () => {
-  it('GIVEN Git reports no repository WHEN simplification is requested THEN Maestro warns, skips the agent, saves scorer-running, and creates no simplifier report', async () => {
+  it('GIVEN Git reports no repository WHEN simplification is requested THEN Maestro skips the agent, saves scorer-running, and directs the caller to scoring', async () => {
     maestroSessionState.activate();
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -92,7 +92,7 @@ describe('run simplifier', () => {
     expect(result.content).toEqual([
       {
         type: 'text',
-        text: 'Simplifier skipped: Git repository unavailable.',
+        text: 'Simplifier skipped: Git repository unavailable. The workflow is scorer-running. Call maestro_score_workflow next.',
       },
     ]);
     expect(result.details).toMatchObject({
