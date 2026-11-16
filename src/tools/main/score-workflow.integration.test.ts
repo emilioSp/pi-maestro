@@ -303,11 +303,12 @@ it.each([
   },
 );
 
-it('GIVEN the exact classifier is missing and stale raw output exists WHEN scoring runs THEN a failure replaces the report and leaves existing raw output untouched', async () => {
+it('GIVEN the exact classifier is missing and stale evaluation files exist WHEN scoring runs THEN a fresh failure report is saved and the old raw response is removed', async () => {
   const { project, paths } = await createScoringProject();
   const rawPath = join(paths.getSpecPath(SPEC_ID), 'spec-score', 'evaluation.raw.json');
   await mkdir(join(paths.getSpecPath(SPEC_ID), 'spec-score'));
   await writeFile(rawPath, 'old raw');
+  await writeFile(join(paths.getSpecPath(SPEC_ID), 'spec-score', 'evaluation.json'), 'old report');
 
   const { tool, session } = await piTestSessions.createRegisteredTool({
     cwd: project.path,
@@ -327,7 +328,7 @@ it('GIVEN the exact classifier is missing and stale raw output exists WHEN scori
       reason: 'Exact classifier openrouter/typesafe/jev-1.14 unavailable.',
     }),
   );
-  expect(await readFile(rawPath, 'utf8')).toBe('old raw');
+  await expect(readFile(rawPath, 'utf8')).rejects.toMatchObject({ code: 'ENOENT' });
   expect(classify).not.toHaveBeenCalled();
 });
 
