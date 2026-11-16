@@ -18,4 +18,4 @@ decision time, so later decisions may replace part or all of an earlier choice.
 | ADR-011 | [Separate initial setup UI from configuration rules](0011-separate-initial-setup-ui-from-configuration-rules.md)             | Active     |
 | ADR-012 | [Filter main Maestro registrations after native discovery](0012-filter-main-maestro-registrations-after-native-discovery.md) | Active     |
 
-When a decision is replaced, add a new record and link both records. Requirements and planned work belong in the [roadmap](../../ROADMAP.md).
+When a decision is replaced, add a new record and link both records. Requirements and planned work belong in the [roadmap](../roadmap/README.md).

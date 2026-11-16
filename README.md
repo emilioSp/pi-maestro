@@ -190,7 +190,7 @@ The reading order is:
 
 1. [Mission](MISSION.md): purpose, scope, and `owner` responsibilities.
 2. [Tech stack](TECH_STACK.md): runtime technologies and development tools.
-3. [Roadmap](ROADMAP.md): completed outcomes and planned work maintained in the repository.
+3. [Roadmap](docs/roadmap/README.md): completed outcomes and planned work maintained in the repository.
 4. [Changelog](CHANGELOG.md): meaningful codebase changes and breaking changes.
 5. [Architecture decision records](docs/adr/README.md): architectural choices, context, consequences, and evidence.
 

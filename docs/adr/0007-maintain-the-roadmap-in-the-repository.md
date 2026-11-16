@@ -14,8 +14,8 @@ Linear project.
 
 ## Decision
 
-Maintain the roadmap in `ROADMAP.md` as the source of truth. Restore project items from Linear through read-only access, preserving existing `MAESTRO` identifiers, scope,
-and evidence. Do not transfer Linear onboarding or test issues.
+Maintain the roadmap under `docs/roadmap/` as the source of truth. Restore project items from Linear through read-only access, preserving existing `MAESTRO` identifiers,
+scope, and evidence. Do not transfer Linear onboarding or test issues.
 
 Keep Linear unchanged as historical reference. Routine roadmap reading and maintenance use local files, not MCP.
 
