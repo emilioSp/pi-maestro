@@ -95,8 +95,8 @@ const formatResolution = (details: FindingResolutionDetails): string => {
     return `${summary} The workflow is ready-for-builder. Run the builder separately.`;
   }
 
-  if (details.phase === WORKFLOW_PHASES.CANDIDATE_READY) {
-    return `${summary} The workflow is candidate-ready. Simplifier skipped by configuration.`;
+  if (details.phase === WORKFLOW_PHASES.SCORER_RUNNING) {
+    return `${summary} The workflow is scorer-running. Call maestro_score_workflow next. Simplifier skipped by configuration.`;
   }
 
   return `${summary} The workflow is simplifier-running. Call maestro_run_simplifier next with this specId, without another approval or verifier pass.`;

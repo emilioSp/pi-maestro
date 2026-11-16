@@ -566,7 +566,7 @@ describe('resolve findings tool', () => {
   });
 });
 
-it('GIVEN simplifier disabled and V1/F1 current WHEN the owner rejects F1 THEN candidate-ready and the rejection reason are saved', async () => {
+it('GIVEN simplifier disabled and V1/F1 current WHEN the owner rejects F1 THEN scorer-running and the rejection reason are saved', async () => {
   maestroSessionState.activate();
   maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -587,9 +587,9 @@ it('GIVEN simplifier disabled and V1/F1 current WHEN the owner rejects F1 THEN c
     ],
   });
 
-  expect(result.details).toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
+  expect(result.details).toMatchObject({ phase: WORKFLOW_PHASES.SCORER_RUNNING });
   await expect(readWorkflowState(paths.getWorkflowPath(SPEC_ID))).resolves.toMatchObject({
-    phase: WORKFLOW_PHASES.CANDIDATE_READY,
+    phase: WORKFLOW_PHASES.SCORER_RUNNING,
   });
   expect((await readCurrentHandoff(paths)).findings[0].decision).toEqual({
     decision: FINDING_DECISIONS.REJECT,
