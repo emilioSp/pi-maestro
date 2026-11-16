@@ -25,10 +25,11 @@ Check `README.md`, `docs/`, and the available project constitution:
 2. `../../../TECH_STACK.md`: technologies and their roles.
 3. `../../../ROADMAP.md`: completed outcomes and planned work.
 4. `../../../CHANGELOG.md`: meaningful codebase changes and breaking contracts.
-5. `../../../ADR.md`: architectural choices, status, context, consequences, and evidence.
+5. `../../../docs/adr/`: architectural choices, status, context, consequences, and evidence; `README.md` is the index.
 
-The five constitution files default to the project root. Discover alternative names, directories, or embedded sections from the repository and its instructions. Audit the
-actual documents rather than assuming a fixed layout. Report missing documents only when project instructions require them.
+The constitution documents live at the project root, except architecture decision records under `docs/adr/`. Discover alternative names, directories, or embedded sections
+from the repository and its instructions. Audit the actual documents rather than assuming a fixed layout. Report missing documents only when project instructions require
+them.
 
 Use `package.json`, `package-lock.json`, and the code under `src/`, `extensions/`, `agents/`, and `templates/` as comparison sources. `package.json` is authoritative for
 declared scripts, dependencies, peer dependencies, import aliases, published files, and the Pi manifest. Use relevant specs, tests, configuration, and local Git history
@@ -57,10 +58,10 @@ current documentation. Do not treat an accurately labeled historical changelog e
 
 Check that documentation follows this rule, with paths relative to the project root:
 
-In `README.md`, `docs/*.md`, `MISSION.md`, `TECH_STACK.md`, `ROADMAP.md`, `CHANGELOG.md`, and `ADR.md`, format terms from `docs/glossary.md` with inline code. Do not
-apply this formatting to section titles, blockquotes (`>`), link labels, or text inside quotation marks. Do not format `spec` within `spec-driven` phrases. Leave
-possessive forms, such as `owner's`, unformatted. Include plurals and capitalization variants only when they have the glossary meaning. Do not change wording, code
-blocks, link targets, or file paths just to apply this formatting.
+In `README.md`, `docs/**/*.md`, `MISSION.md`, `TECH_STACK.md`, `ROADMAP.md`, and `CHANGELOG.md`, format terms from `docs/glossary.md` with inline code. Do not apply this
+formatting to section titles, blockquotes (`>`), link labels, or text inside quotation marks. Do not format `spec` within `spec-driven` phrases. Leave possessive forms,
+such as `owner's`, unformatted. Include plurals and capitalization variants only when they have the glossary meaning. Do not change wording, code blocks, link targets, or
+file paths just to apply this formatting.
 
 ### 3. Links and references
 
@@ -132,10 +133,10 @@ Do not add tests, features, or requirements merely because they are absent. Repo
 
 #### Architecture decision records
 
-Check that each record describes an architectural decision and includes its status, context, decision, consequences, and available evidence. Compare choices and
-constraints with specs, code, and history. Reasons and rejected alternatives need explicit evidence, not inference from implementation. Distinguish recorded dates,
-implementation dates, and approval dates. Preserve explicitly unknown rationale. When a decision is superseded, check its status and links to the replacement record. Keep
-non-architectural requirements in the roadmap or other relevant documentation.
+Check that each record uses front matter for status and known dates, followed only by Context, Decision, optional Alternatives considered, and Consequences. Do not
+require an Evidence section. Compare choices and constraints with specs, code, and history. Reasons and rejected alternatives need explicit evidence, not inference from
+implementation. Distinguish recorded dates, implementation dates, and approval dates. Preserve explicitly unknown rationale. When a decision is superseded, check its
+status and links to the replacement record. Keep non-architectural requirements in the roadmap or other relevant documentation.
 
 ### 6. Report
 

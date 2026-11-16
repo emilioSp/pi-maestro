@@ -2,12 +2,12 @@
 
 ## At session start (clock in)
 
-Read `CHANGELOG.md`, `ADR.md`, and `ROADMAP.md`. Maintain the roadmap locally in `ROADMAP.md` and keep existing `MAESTRO` identifiers stable. Linear is historical
-reference only; do not read or update it unless the owner explicitly requests it.
+Read `CHANGELOG.md`, `docs/adr/README.md`, and `ROADMAP.md`. Read individual records under `docs/adr/` when relevant. Maintain the roadmap locally in `ROADMAP.md` and
+keep existing `MAESTRO` identifiers stable. Linear is historical reference only; do not read or update it unless the owner explicitly requests it.
 
 ## Before session end (clock out)
 
-1. Update `ADR.md` only when the session includes a significant architectural decision.
+1. Add or update a record under `docs/adr/` only when the session includes a significant architectural decision. Keep `docs/adr/README.md` in sync.
 2. Update the relevant item in `ROADMAP.md`, but only when work covered an item already present there. Record completion only when supported by owner acceptance.
 3. If a spec exists, link it from the relevant roadmap item.
 
@@ -26,10 +26,13 @@ README.md, and all docs under /docs folder are intended for humans. Don't write 
 
 When referring to humans, use "the owner", don't use "you".
 
-In `README.md`, `docs/*.md`, `MISSION.md`, `TECH_STACK.md`, `ROADMAP.md`, `CHANGELOG.md`, and `ADR.md`, format terms from `docs/glossary.md` with inline code. Do not
-apply this formatting to section titles, blockquotes (`>`), link labels, or text inside quotation marks. Do not format `spec` within `spec-driven` phrases. Leave
-possessive forms, such as `owner's`, unformatted. Include plurals and capitalization variants only when they have the glossary meaning. Do not change wording, code
-blocks, link targets, or file paths just to apply this formatting.
+ADR files under `docs/adr/` use only these sections, in order: `Context`, `Decision`, optional `Alternatives considered`, and `Consequences`. Keep status and known dates
+in front matter.
+
+In `README.md`, `docs/**/*.md`, `MISSION.md`, `TECH_STACK.md`, `ROADMAP.md`, and `CHANGELOG.md`, format terms from `docs/glossary.md` with inline code. Do not apply this
+formatting to section titles, blockquotes (`>`), link labels, or text inside quotation marks. Do not format `spec` within `spec-driven` phrases. Leave possessive forms,
+such as `owner's`, unformatted. Include plurals and capitalization variants only when they have the glossary meaning. Do not change wording, code blocks, link targets, or
+file paths just to apply this formatting.
 
 ## Remove and unchanged behavior
 

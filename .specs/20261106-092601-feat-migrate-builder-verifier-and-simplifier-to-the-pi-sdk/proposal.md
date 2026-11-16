@@ -29,4 +29,4 @@ See [spec.md](spec.md).
 
 ## Existing architecture
 
-See [ADR-010](../../ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation).
+See [ADR-010](../../docs/adr/0010-use-the-pi-sdk-for-sequential-agent-delegation.md).

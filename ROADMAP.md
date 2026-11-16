@@ -134,7 +134,7 @@ is implemented; `owner` acceptance is pending. Each role now receives only its o
 ### Objective
 
 Connect `builder` delegation to the internal SDK executor delivered by [MAESTRO-FREE-PRE-3](#maestro-free-pre-3-implement-internal-sdk-delegation), following
-[ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation). Preserve the existing role instructions, `handoffs`, and workflow behavior.
+[ADR-010](docs/adr/0010-use-the-pi-sdk-for-sequential-agent-delegation.md). Preserve the existing role instructions, `handoffs`, and workflow behavior.
 
 ### Scope and dependencies
 
@@ -166,7 +166,7 @@ is implemented; `owner` acceptance is pending.
 ### Objective
 
 Connect the `verifier` to the SDK executor delivered by [MAESTRO-FREE-PRE-3](#maestro-free-pre-3-implement-internal-sdk-delegation), following
-[ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation). Implement this role's switch together with FREE-3 and FREE-5 under the
+[ADR-010](docs/adr/0010-use-the-pi-sdk-for-sequential-agent-delegation.md). Implement this role's switch together with FREE-3 and FREE-5 under the
 [shared migration scope](#maestro-free-3-run-the-builder-through-the-pi-sdk). Do not redesign verification or its reports.
 
 ### Completed when
@@ -185,7 +185,7 @@ is implemented; `owner` acceptance is pending.
 ### Objective
 
 Connect the `simplifier` to the SDK executor delivered by [MAESTRO-FREE-PRE-3](#maestro-free-pre-3-implement-internal-sdk-delegation), following
-[ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation). Implement this role's switch together with FREE-3 and FREE-4 under the
+[ADR-010](docs/adr/0010-use-the-pi-sdk-for-sequential-agent-delegation.md). Implement this role's switch together with FREE-3 and FREE-4 under the
 [shared migration scope](#maestro-free-3-run-the-builder-through-the-pi-sdk). Keep its existing purpose and Git-only scope.
 
 ### Completed when
@@ -205,7 +205,7 @@ UI updates in `createAgentProgress.ts`. The full check passes all 293 tests.
 ### Objective
 
 Show activity for SDK-based agent `runs` through Pi's standard `onUpdate` presentation, as decided in
-[ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation). Requires the shared migration covered by
+[ADR-010](docs/adr/0010-use-the-pi-sdk-for-sequential-agent-delegation.md). Requires the shared migration covered by
 [MAESTRO-FREE-3](#maestro-free-3-run-the-builder-through-the-pi-sdk), FREE-4, and FREE-5, and applies to all three roles through the common executor.
 
 ### Completed when
@@ -222,7 +222,7 @@ included in this migration. Package declarations, lockfile entries, bundling, an
 
 ### Objective
 
-Finish [ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation) by removing the package dependency, bundling, and remaining integration metadata after
+Finish [ADR-010](docs/adr/0010-use-the-pi-sdk-for-sequential-agent-delegation.md) by removing the package dependency, bundling, and remaining integration metadata after
 [MAESTRO-FREE-3](#maestro-free-3-run-the-builder-through-the-pi-sdk), [MAESTRO-FREE-4](#maestro-free-4-run-the-verifier-through-the-pi-sdk), and
 [MAESTRO-FREE-5](#maestro-free-5-run-the-simplifier-through-the-pi-sdk). This is dependency removal, not another execution-engine switch.
 
@@ -253,8 +253,8 @@ Completed entries include historical records imported from Linear.
 
 ### Objective
 
-Adopt Pi 1.5.0 as the minimum supported host and verification baseline for [ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation), without changing the
-delegation engine or adding compatibility fallbacks.
+Adopt Pi 1.5.0 as the minimum supported host and verification baseline for [ADR-010](docs/adr/0010-use-the-pi-sdk-for-sequential-agent-delegation.md), without changing
+the delegation engine or adding compatibility fallbacks.
 
 ### Completed when
 
@@ -275,7 +275,7 @@ The `owner` confirmed completion of the timeout configuration removal implemente
 configuration documentation were removed. Existing TypeBox validation rejects configuration retaining those fields, without migration or compatibility handling.
 
 The `pi-subagents` integration then in use still received a fixed deadline of 9,999 minutes. This was not unlimited execution. The SDK delegation replacement under
-[ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation) later removed that deadline and the `pi-subagents` dependency.
+[ADR-010](docs/adr/0010-use-the-pi-sdk-for-sequential-agent-delegation.md) later removed that deadline and the `pi-subagents` dependency.
 
 ### Evidence
 
@@ -298,7 +298,7 @@ already cancelled signal does not prevent submission, and an aborted signal alon
 
 ### Objective
 
-Implement and verify one internal execution operation using `createAgentSession()`, following [ADR-010](ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation).
+Implement and verify one internal execution operation using `createAgentSession()`, following [ADR-010](docs/adr/0010-use-the-pi-sdk-for-sequential-agent-delegation.md).
 The operation is independent of the `builder`, `verifier`, and `simplifier` roles. Callers supply the task, role instructions, model settings, working directory, and
 additional tools needed for that execution.
 
