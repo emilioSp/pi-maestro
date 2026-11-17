@@ -45,6 +45,15 @@ export const MaestroConfigInputSchema = Type.Object(
     builder: Type.Optional(PartialAgentConfigSchema),
     verifier: Type.Optional(PartialAgentConfigSchema),
     simplifier: Type.Optional(PartialAgentConfigSchema),
+    scorer: Type.Optional(
+      Type.Object(
+        {
+          required: Type.Optional(Type.Boolean()),
+          model: Type.Optional(Type.String()),
+        },
+        { additionalProperties: false },
+      ),
+    ),
   },
   { additionalProperties: false },
 );
@@ -65,6 +74,10 @@ export const ResolvedMaestroConfigSchema = Type.Object(
     builder: ResolvedAgentConfigSchema,
     verifier: ResolvedAgentConfigSchema,
     simplifier: ResolvedAgentConfigSchema,
+    scorer: Type.Object(
+      { required: Type.Boolean(), model: Type.String() },
+      { additionalProperties: false },
+    ),
   },
   { additionalProperties: false },
 );
