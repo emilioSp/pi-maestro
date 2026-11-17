@@ -1676,6 +1676,29 @@ it('GIVEN an available classifier and chat model WHEN the scorer is selected and
   expect(maestroSessionState.isActive()).toBe(true);
 });
 
+it('GIVEN builder is disabled and scorer is enabled without a model WHEN Maestro is activated THEN spec-only activation succeeds', async () => {
+  const repository = await createTemporaryProject();
+  onTestFinished(repository.cleanup);
+  await mkdir(join(repository.path, '.pi'));
+  await writeFile(
+    join(repository.path, '.pi/maestro.json'),
+    JSON.stringify({
+      version: SUPPORTED_CONFIG_VERSION,
+      builder: { required: false },
+      scorer: { required: true },
+    }),
+  );
+
+  const { session } = await piTestSessions.create({
+    cwd: repository.path,
+    extensions: [maestroExtension],
+  });
+
+  await session.prompt('/maestro');
+
+  expect(maestroSessionState.isActive()).toBe(true);
+});
+
 it.each([
   { label: 'missing', scorer: { required: true } },
   { label: 'empty', scorer: { required: true, model: '' } },

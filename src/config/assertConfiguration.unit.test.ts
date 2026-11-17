@@ -65,6 +65,15 @@ describe('configuration input validation', () => {
     expect(() => assertConfiguration({ version: SUPPORTED_CONFIG_VERSION })).not.toThrow();
   });
 
+  it('GIVEN builder settings are omitted and scorer is enabled without a model WHEN configuration is validated THEN the scorer model is required', () => {
+    expect(() =>
+      assertConfiguration({
+        version: SUPPORTED_CONFIG_VERSION,
+        scorer: { required: true },
+      }),
+    ).toThrow('Scorer model is required when scorer.required is true.');
+  });
+
   it('GIVEN each supported builder thinking level WHEN configuration is validated THEN every supported level is accepted', () => {
     for (const level of Object.values(THINKING_LEVELS)) {
       expect(() =>

@@ -88,7 +88,7 @@ export function assertConfiguration(input: unknown): asserts input is PartialMae
     );
   }
 
-  if (input.scorer?.required && !input.scorer.model?.trim()) {
+  if (input.builder?.required !== false && input.scorer?.required && !input.scorer.model?.trim()) {
     throw new Error('Scorer model is required when scorer.required is true.');
   }
 }
