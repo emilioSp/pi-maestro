@@ -96,6 +96,21 @@ describe('configuration input validation', () => {
 
   it.each([
     {
+      scenario: 'a null input',
+      input: null,
+      message: 'Configuration must be a JSON object.',
+    },
+    {
+      scenario: 'an array input',
+      input: [],
+      message: 'Configuration must be a JSON object.',
+    },
+    {
+      scenario: 'a numeric version',
+      input: { version: 123 },
+      message: 'Invalid configuration version: expected a string.',
+    },
+    {
       scenario: 'a version prefixed with v',
       input: { version: 'v1.0.0' },
       message: 'Invalid configuration version: "v1.0.0".',
