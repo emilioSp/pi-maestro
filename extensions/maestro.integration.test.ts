@@ -33,6 +33,7 @@ import type { MaestroPaths } from '#MaestroPaths.ts';
 import type { CreatedSpec } from '#specs/create.ts';
 import { executeTask, type ExecuteTaskInput } from '#src/delegation/executeTask.ts';
 import { prepareSubagentEnvironment } from '#src/delegation/prepareSubagentEnvironment.ts';
+import * as modelPicker from '#src/ui/selectModel.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { unavailableCompilerEscalation } from '#tests/fixtures/unavailable-compiler-escalation.ts';
 import { createApprovedWorkflow, doneHandoff, SPEC_ID } from '#tests/support/builder-workflow.ts';
@@ -317,7 +318,11 @@ describe('main Maestro extension', () => {
           model: 'openai-codex/gpt-6.1-sol',
           thinking: THINKING_LEVELS.HIGH,
         },
-        simplifier: { model: TEST_CONFIG.simplifier.model, thinking: THINKING_LEVELS.MEDIUM },
+        simplifier: {
+          required: true,
+          model: TEST_CONFIG.simplifier.model,
+          thinking: THINKING_LEVELS.MEDIUM,
+        },
       }),
     );
 
@@ -416,7 +421,7 @@ describe('main Maestro extension', () => {
       join(repository.path, '.pi/maestro.json'),
       JSON.stringify({
         ...TEST_CONFIG,
-        simplifier: { model: 'openai-codex/missing' },
+        simplifier: { required: true, model: 'openai-codex/missing' },
       }),
     );
 
@@ -546,6 +551,7 @@ describe('main Maestro extension', () => {
         builder: TEST_CONFIG.builder,
         verifier: TEST_CONFIG.verifier,
         simplifier: TEST_CONFIG.simplifier,
+        scorer: TEST_CONFIG.scorer,
       },
     });
 
@@ -1475,7 +1481,7 @@ it.each([
 
     expect(select.mock.calls[0]).toEqual([
       'Maestro setup',
-      ['Select builder', 'Select verifier', 'Select simplifier', 'Confirm'],
+      ['Select builder', 'Select verifier', 'Select simplifier', 'Select scorer', 'Confirm'],
       undefined,
     ]);
     expect(session.model).toBe(mainModel);
@@ -1483,6 +1489,7 @@ it.each([
 
     const saved = JSON.parse(await readFile(join(repository.path, '.pi/maestro.json'), 'utf8'));
     expect(saved.specDirectory).toBe('.specs');
+    expect(saved.scorer).toEqual({ required: false });
     expect({
       builder: saved.builder.required,
       verifier: saved.verifier.required,
@@ -1503,6 +1510,7 @@ it.each([
       enabledAgents.builder ? `Builder: ${MODEL_A} (high)` : 'Select builder',
       enabledAgents.verifier ? `Verifier: ${MODEL_B} (medium)` : 'Select verifier',
       'Select simplifier',
+      'Select scorer',
       'Confirm',
     ]);
     expect(
@@ -1628,3 +1636,71 @@ it('GIVEN builder enabled and both later phases disabled without models WHEN act
   await session.prompt('/maestro');
   expect(maestroSessionState.isActive()).toBe(true);
 });
+
+it('GIVEN an available classifier and chat model WHEN the scorer is selected and setup confirmed THEN only classifiers are offered and the selection is saved without thinking', async () => {
+  const repository = await createTemporaryProject();
+  onTestFinished(repository.cleanup);
+
+  const { session } = await piTestSessions.create({
+    cwd: repository.path,
+    extensions: [maestroExtension],
+  });
+
+  const registry = session.extensionRunner.createContext().modelRegistry;
+  const classifier = registry.getModelOfType('classifier', 'openrouter', 'typesafe/jev-1.14');
+
+  if (!classifier) throw new Error('Test catalog lacks classifier.');
+  vi.spyOn(registry, 'getAvailableOfType').mockResolvedValue([classifier]);
+  const ui = { ...session.extensionRunner.getUIContext() };
+
+  const select = vi
+    .spyOn(ui, 'select')
+    .mockResolvedValueOnce('Select scorer')
+    .mockResolvedValueOnce('Confirm');
+
+  vi.spyOn(ui, 'custom').mockResolvedValueOnce('openrouter/typesafe/jev-1.14');
+  const picker = vi.spyOn(modelPicker, 'selectModel');
+  onTestFinished(() => picker.mockRestore());
+  session.extensionRunner.setUIContext(ui, 'tui');
+
+  await session.prompt('/maestro');
+
+  expect(registry.getAvailable()).toContainEqual(expect.objectContaining({ id: 'gpt-6.1-sol' }));
+  expect(picker).toHaveBeenCalledWith(
+    expect.objectContaining({ choices: ['openrouter/typesafe/jev-1.14'] }),
+  );
+  expect(select.mock.calls.map(([title]) => title)).toEqual(['Maestro setup', 'Maestro setup']);
+  expect(select.mock.calls.at(-1)?.[1]).toContain('Scorer: openrouter/typesafe/jev-1.14');
+  const saved = JSON.parse(await readFile(join(repository.path, '.pi/maestro.json'), 'utf8'));
+  expect(saved.scorer).toEqual({ required: true, model: 'openrouter/typesafe/jev-1.14' });
+  expect(maestroSessionState.isActive()).toBe(true);
+});
+
+it.each([
+  { label: 'missing', scorer: { required: true } },
+  { label: 'empty', scorer: { required: true, model: '' } },
+])(
+  'GIVEN an enabled builder and $label scorer model WHEN Maestro is activated THEN activation rejects the missing scorer model',
+  async ({ scorer }) => {
+    const repository = await createTemporaryProject();
+    onTestFinished(repository.cleanup);
+    await mkdir(join(repository.path, '.pi'));
+    await writeFile(
+      join(repository.path, '.pi/maestro.json'),
+      JSON.stringify({ ...TEST_CONFIG, scorer }),
+    );
+
+    const { session, notify } = await piTestSessions.create({
+      cwd: repository.path,
+      extensions: [maestroExtension],
+    });
+
+    await session.prompt('/maestro');
+
+    expect(maestroSessionState.isActive()).toBe(false);
+    expect(notify).toHaveBeenCalledWith(
+      'Maestro configuration check failed: Scorer model is required when scorer.required is true.',
+      'error',
+    );
+  },
+);
