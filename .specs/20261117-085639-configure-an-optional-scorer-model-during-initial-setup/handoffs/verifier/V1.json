@@ -1,0 +1,39 @@
+{
+  "version": "1.0.0",
+  "specId": "20261117-085639-configure-an-optional-scorer-model-during-initial-setup",
+  "summary": "Independently verified all five acceptance criteria against the live candidate. All example rows are covered by passing checks and code inspection; no findings recorded. The unchanged candidate passed 330 tests across 45 files, lint, and type checking.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Ran npm test before formatting or automatic fixes (330/330 passed). Inspected extensions/maestro.integration.test.ts:1636-1673: setup has classifier openrouter/typesafe/jev-1.14 and available chat model openai-codex/gpt-6.1-sol; selectModel receives only the classifier, and ui.select calls contain only the two setup menus, with no thinking prompt. Inspected src/maestro/setupConfiguration.ts, src/ui/selectClassifier.ts, src/ui/selectModel.ts and src/ui/showSetupMenu.ts: classifier choices come from getAvailableOfType('classifier'), reuse the existing picker, and bypass thinking selection.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Ran npm test. Inspected selected-scorer integration scenario in extensions/maestro.integration.test.ts:1636-1673 and first-use parameterized cases at 1406-1520: selected openrouter/typesafe/jev-1.14 saves exactly {required:true,model:'openrouter/typesafe/jev-1.14'}; unselected scorer, including no roles, saves exactly {required:false}. Exact-object assertions exclude thinking in both rows. Inspected src/config/saveConfiguration.ts and schema.ts for persistence and scorer field restrictions.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "Ran npm test and inspected added scenarios in src/tools/main/run-builder.integration.test.ts:755 onward, run-verifier.integration.test.ts:382 onward, and run-simplifier.integration.test.ts:274 onward. All four rows assert saved candidate-ready, no classifier invocation, and final-summary instructions identifying skipped scoring: omitted scorer after builder with verifier/simplifier disabled; explicit false after verifier with simplifier disabled; explicit false after simplifier completion; explicit false after verification followed by Git-unavailable simplifier skipping. Inspected src/config/defaults.ts/loadConfiguration.ts for default-disabled behavior, src/workflow/transitions.ts for all scoring-entry destinations (including rejected findings), tool outcome messages, and agents/maestro.md final-summary guidance. Disabled routes do not enter scorer-running; guidance prohibits stale score reporting.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Ran npm test. Inspected src/tools/main/score-workflow.integration.test.ts success cases: explicitly configured openrouter/typesafe/jev-1.14 is looked up and invoked, and evaluation.json records provider openrouter and model typesafe/jev-1.14. Additional test-provider/custom/judge case confirms selection is not hardcoded. Inspected live src/score/requestEvaluation.ts and scoreWorkflow.ts and their git diffs: existing scoring pipeline is reused; changes supply configured classifier and report identity, preserving questions, evidence collection, normalization and runtime failure handling. Inspected assertEnvironment.ts to confirm classifier availability is not an activation prerequisite; existing unavailable-classifier failure tests also passed.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Ran npm test. Inspected extensions/maestro.integration.test.ts:1676 onward: both scorer {required:true} and {required:true,model:''}, with enabled available builder from TEST_CONFIG, leave Maestro inactive and report 'Maestro configuration check failed: Scorer model is required when scorer.required is true.' Inspected src/config/assertConfiguration.ts and loadConfiguration.ts plus activation checks to confirm validation runs before activation and has no default classifier fallback.",
+      "probeStatus": "passed"
+    }
+  ],
+  "findings": [],
+  "notes": [
+    "Confirmed exact spec identity, verifier-running phase, approved proposal/spec/design, empty prototypes directory, and sole builder handoff B1; no earlier verifier decisions or escalation resolutions were present.",
+    "Executed ./node_modules/.bin/oxlint, npm run typecheck, and npm test on the original candidate before automatic fixes; all succeeded. Required npm run check also succeeded with 45 test files and 330 tests. git diff --check succeeded.",
+    "Retained exact pre-check file contents in memory. Restored formatter changes to docs/workflow.md and ADRs 0010/0012, plus regenerated pre-existing coverage reports. A complete content comparison excluding .git and node_modules confirmed restoration. No temporary project files remain, and approved contract and earlier artifacts were unchanged.",
+    "Classifier inference was mocked; no paid inference, dependency installation, implementation repairs, or human-documentation updates were performed."
+  ]
+}

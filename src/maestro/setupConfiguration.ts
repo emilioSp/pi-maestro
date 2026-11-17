@@ -11,7 +11,6 @@ import {
   type AgentModelSelections,
 } from '#config/saveConfiguration.ts';
 import { setupChoices } from '#config/setupChoices.ts';
-import { selectClassifier } from '#src/ui/selectClassifier.ts';
 import { selectModel } from '#src/ui/selectModel.ts';
 import { selectThinking } from '#src/ui/selectThinking.ts';
 import { CONFIRM_SETUP, showSetupMenu } from '#src/ui/showSetupMenu.ts';
@@ -41,7 +40,7 @@ export const setupConfiguration = async (context: ExtensionContext): Promise<boo
     }
 
     if (action === SETUP_ROLES.SCORER) {
-      const model = await selectClassifier({
+      const model = await selectModel({
         ui: context.ui,
         choices: classifiers.map(({ provider, id }) => `${provider}/${id}`),
       });

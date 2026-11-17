@@ -1,0 +1,39 @@
+{
+  "status": "done",
+  "summary": "Implemented optional, default-disabled scoring with classifier-only setup, explicit model validation, optional completion routing, and configured classifier invocation and report identity. npm run check passed: 45 test files, 330 tests.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "npm run check: extensions/maestro.integration.test.ts exercises initial setup with available openrouter/typesafe/jev-1.14 and chat model openai-codex/gpt-6.1-sol. It verifies selectModel receives only the classifier choice, the scorer model is displayed without thinking, and only setup menus are shown (no thinking prompt). Inspected src/ui/selectClassifier.ts to confirm reuse of the existing picker.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "npm run check: extensions/maestro.integration.test.ts verifies confirming the selected classifier saves scorer exactly as {required:true,model:'openrouter/typesafe/jev-1.14'}. Existing first-use parameterized scenarios, including no roles, verify an unselected scorer saves exactly {required:false}. Neither saved form contains thinking.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "npm run check: added integration scenarios in src/tools/main/run-builder.integration.test.ts (omitted scorer, verifier and simplifier disabled), run-verifier.integration.test.ts (disabled scorer and simplifier), and run-simplifier.integration.test.ts (disabled scorer after simplifier completion and after completed verification followed by Git-unavailable skipping). All four verify saved candidate-ready, no classifier call, and returned instructions to report scoring as skipped in the final summary. Inspected agents/maestro.md final-summary guidance and src/workflow/transitions.ts optional routing.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "npm run check: src/tools/main/score-workflow.integration.test.ts success cases explicitly configure openrouter/typesafe/jev-1.14, verify classifier lookup and invocation, and assert saved provider openrouter and model typesafe/jev-1.14. An additional alternate-provider/custom/judge scenario confirms lookup, invocation, and saved identity follow configuration rather than the former fixed model. Inspected diffs of src/score/requestEvaluation.ts and src/score/scoreWorkflow.ts: existing evaluation logic is reused; questions, evidence collection, normalization, and failure handling are unchanged.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "npm run check: extensions/maestro.integration.test.ts parameterized activation scenarios use enabled builder with available model and scorer {required:true} or {required:true,model:''}. Both keep Maestro inactive and assert the activation error identifies the required scorer model.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "Required npm run check completed successfully; git diff --check also passed.",
+    "Restored formatter-only changes in three excluded human documentation files. No proposal, spec, design, or workflow files were edited directly; temporary verification logs were removed.",
+    "Classifier inference was mocked; no paid live inference or dependency changes were used."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261117-085639-configure-an-optional-scorer-model-during-initial-setup"
+}
