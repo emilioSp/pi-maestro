@@ -11,6 +11,7 @@ import {
   type AgentModelSelections,
 } from '#config/saveConfiguration.ts';
 import { setupChoices } from '#config/setupChoices.ts';
+import { selectClassifier } from '#src/ui/selectClassifier.ts';
 import { selectModel } from '#src/ui/selectModel.ts';
 import { selectThinking } from '#src/ui/selectThinking.ts';
 import { CONFIRM_SETUP, showSetupMenu } from '#src/ui/showSetupMenu.ts';
@@ -21,6 +22,7 @@ export const setupConfiguration = async (context: ExtensionContext): Promise<boo
   }
 
   const choices = setupChoices(context.modelRegistry.getAvailable());
+  const classifiers = await context.modelRegistry.getAvailableOfType('classifier');
   const selections: AgentModelSelections = {};
 
   while (true) {
@@ -36,6 +38,16 @@ export const setupConfiguration = async (context: ExtensionContext): Promise<boo
       await saveConfiguration({ cwd: context.cwd, agentModelSelections: selections });
 
       return true;
+    }
+
+    if (action === SETUP_ROLES.SCORER) {
+      const model = await selectClassifier({
+        ui: context.ui,
+        choices: classifiers.map(({ provider, id }) => `${provider}/${id}`),
+      });
+
+      if (model !== undefined) selections.scorer = { model };
+      continue;
     }
 
     const model = await selectModel({ ui: context.ui, choices: choices.map(({ value }) => value) });

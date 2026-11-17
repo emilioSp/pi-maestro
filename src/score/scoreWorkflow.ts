@@ -11,7 +11,7 @@ import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-a
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { collectWorkflowEvidence } from '#src/score/collectWorkflowEvidence.ts';
 import { parseClassifierScores } from '#src/score/parseClassifierScores.ts';
-import { CLASSIFIER, requestEvaluation } from '#src/score/requestEvaluation.ts';
+import { requestEvaluation } from '#src/score/requestEvaluation.ts';
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
@@ -51,6 +51,13 @@ export const scoreWorkflow = async ({ pi, context, specId, signal }: ScoreWorkfl
     throw new Error(`Scoring requires scorer-running state, found "${state.phase}".`);
   }
 
+  const separator = config.scorer.model.indexOf('/');
+
+  const classifier = {
+    provider: config.scorer.model.slice(0, separator),
+    model: config.scorer.model.slice(separator + 1),
+  };
+
   let outcome: EvaluationOutcome;
   const scoreDirectory = join(paths.getSpecPath(specId), 'spec-score');
   const reportPath = join(scoreDirectory, 'evaluation.json');
@@ -62,7 +69,7 @@ export const scoreWorkflow = async ({ pi, context, specId, signal }: ScoreWorkfl
 
   try {
     const evidence = await collectWorkflowEvidence({ pi, paths, specId, signal });
-    const raw = await requestEvaluation({ evidence, context, signal });
+    const raw = await requestEvaluation({ evidence, classifier, context, signal });
     await writeFile(rawPath, `${JSON.stringify(raw, null, 2)}\n`);
 
     outcome = { status: EVALUATION_STATUS.SUCCESS, scores: parseClassifierScores(raw) };
@@ -72,7 +79,7 @@ export const scoreWorkflow = async ({ pi, context, specId, signal }: ScoreWorkfl
 
   const report = {
     specId,
-    ...CLASSIFIER,
+    ...classifier,
     scoringCriteriaVersion: SCORING_CRITERIA_VERSION,
     ...outcome,
   };

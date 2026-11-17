@@ -5,7 +5,11 @@
 
 import type { ExtensionContext } from '@earendil-works/pi-coding-agent';
 
-import type { SetupRole, AgentModelSelections } from '#config/saveConfiguration.ts';
+import {
+  SETUP_ROLES,
+  type SetupRole,
+  type AgentModelSelections,
+} from '#config/saveConfiguration.ts';
 
 export const CONFIRM_SETUP = 'confirm';
 
@@ -13,6 +17,7 @@ const ROLE_LABELS: Record<SetupRole, string> = {
   builder: 'Builder',
   verifier: 'Verifier',
   simplifier: 'Simplifier',
+  scorer: 'Scorer',
 };
 
 type ShowSetupMenuInput = {
@@ -24,11 +29,12 @@ type ShowSetupMenuInput = {
 export const showSetupMenu = async ({ ui, roles, selections }: ShowSetupMenuInput) => {
   const actions = roles.map((role) => {
     const selection = selections[role];
+    const thinking = role === SETUP_ROLES.SCORER ? undefined : selections[role]?.thinking;
 
     return {
       role,
       label: selection
-        ? `${ROLE_LABELS[role]}: ${selection.model} (${selection.thinking})`
+        ? `${ROLE_LABELS[role]}: ${selection.model}${thinking === undefined ? '' : ` (${thinking})`}`
         : `Select ${role}`,
     };
   });

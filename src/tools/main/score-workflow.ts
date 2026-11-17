@@ -1,5 +1,5 @@
 /**
- * Objective: Register the fixed Jev workflow scoring operation for Maestro.
+ * Objective: Register the configured-classifier workflow scoring operation for Maestro.
  * Used: After implementation phases finish and before the final summary.
  */
 
@@ -13,7 +13,7 @@ export const SCORE_WORKFLOW_TOOL = {
   NAME: 'maestro_score_workflow',
   LABEL: 'Score Workflow',
   DESCRIPTION:
-    'Evaluate the active implementation in scorer-running with the fixed Jev classifier. Collect evidence, save scores or a failure, then reach candidate-ready. Call next without owner approval.',
+    'Evaluate the active implementation in scorer-running with the configured classifier. Collect evidence, save scores or a failure, then reach candidate-ready. Call next without owner approval.',
 } as const;
 
 export const registerScoreWorkflowTool = (pi: ExtensionAPI): void => {

@@ -44,6 +44,7 @@ const createScoringProject = async () => {
       builder: TEST_CONFIG.builder,
       verifier: TEST_CONFIG.verifier,
       simplifier: TEST_CONFIG.simplifier,
+      scorer: TEST_CONFIG.scorer,
     },
   });
 
@@ -238,6 +239,16 @@ it.each([
     const classify = supplyClassifier(session);
     classify.mockResolvedValue(response);
     await tool.execute('score', { specId: SPEC_ID });
+    expect(session.modelRuntime.getModelOfType).toHaveBeenCalledWith(
+      'classifier',
+      'openrouter',
+      'typesafe/jev-1.14',
+    );
+    expect(classify).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: 'openrouter', id: 'typesafe/jev-1.14' }),
+      expect.anything(),
+      expect.anything(),
+    );
     expect(JSON.parse(await readFile(rawPath, 'utf8'))).toEqual(response);
     expect(JSON.parse(await readFile(reportPath, 'utf8'))).toEqual({
       specId: SPEC_ID,
@@ -450,4 +461,44 @@ it('GIVEN owner cancellation during inference WHEN the request ends THEN a failu
   await expect(
     readFile(join(paths.getSpecPath(SPEC_ID), 'spec-score', 'evaluation.raw.json')),
   ).rejects.toMatchObject({ code: 'ENOENT' });
+});
+
+it('GIVEN a configured classifier different from the former fixed model WHEN scoring succeeds THEN lookup, invocation, and report use the configured identity', async () => {
+  const { project, paths } = await createScoringProject();
+  const configPath = join(project.path, '.pi/maestro.json');
+  const config = JSON.parse(await readFile(configPath, 'utf8'));
+  await writeFile(
+    configPath,
+    JSON.stringify({ ...config, scorer: { required: true, model: 'test-provider/custom/judge' } }),
+  );
+
+  const { tool, session } = await piTestSessions.createRegisteredTool({
+    cwd: project.path,
+    extension: registerScoreWorkflowTool,
+  });
+
+  const catalogModel = session.modelRuntime.getModelOfType(
+    'classifier',
+    'openrouter',
+    'typesafe/jev-1.14',
+  );
+
+  if (!catalogModel) throw new Error('Test catalog lacks classifier.');
+  const selected = { ...catalogModel, provider: 'test-provider', id: 'custom/judge' };
+  const lookup = vi.spyOn(session.modelRuntime, 'getModelOfType').mockReturnValue(selected);
+  const classify = vi.spyOn(session.modelRuntime, 'classify').mockResolvedValue(SUCCESS);
+
+  await tool.execute('score', { specId: SPEC_ID });
+
+  expect(lookup).toHaveBeenCalledWith('classifier', 'test-provider', 'custom/judge');
+  expect(classify).toHaveBeenCalledWith(selected, expect.anything(), expect.anything());
+  expect(
+    JSON.parse(
+      await readFile(join(paths.getSpecPath(SPEC_ID), 'spec-score/evaluation.json'), 'utf8'),
+    ),
+  ).toMatchObject({
+    provider: 'test-provider',
+    model: 'custom/judge',
+    status: 'success',
+  });
 });
