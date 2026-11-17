@@ -22,9 +22,9 @@ The `owner` can use `Maestro` only to write and approve a `spec`, leaving implem
 2. The independent `verifier` checks every `acceptance criterion`.
 3. The `simplifier` refactors accepted code without changing behavior.
 
-Disabling the `builder` skips the entire implementation stage. With the `builder` enabled, the `verifier` and `simplifier` can be disabled independently. All three are
-enabled when their flags are omitted from an existing configuration. Initial setup enables only selected roles. See
-[Phase selection](docs/configuration.md#phase-selection).
+Disabling the `builder` skips the entire implementation stage and scoring. With the `builder` enabled, the `verifier`, `simplifier`, and scorer can be disabled
+independently. In existing configurations, `builder` and `verifier` default to enabled; `simplifier` and scorer default to disabled. Initial setup enables only selected
+roles. See [Phase selection](docs/configuration.md#phase-selection).
 
 The `owner` performs the final review.
 
@@ -157,25 +157,26 @@ files do not automatically restore or resume an incomplete workflow. The `owner`
 
 ## LLM as a judge
 
-After implementation, Jev evaluates the entire workflow against the approved `spec`. It scores **correctness** (how well the result meets the requirements) and
-**verification quality** (how well the evidence supports that result). `Maestro` presents Jev's results in the final summary.
+The optional scorer uses an explicitly selected Pi classifier to evaluate the entire workflow against the approved `spec` after implementation. 
 
-This automatic grading system gives the `owner` a level of confidence in the workflow's outcome, not proof of correctness. See
-[Workflow evaluation](docs/workflow.md#workflow-evaluation) for the criteria and scores, and [Fixed evaluator](docs/workflow.md#fixed-evaluator) for model availability
-limitations.
+It scores:
+- **correctness** (how well the result meets the requirements)
+- **verification quality** (how well the evidence supports that result). 
+
+`Maestro` presents the results in the final summary.
+
+The `owner` can select the scorer's classifier during initial setup. See [Scorer configuration](docs/configuration.md#scorer).
+
+This automatic grading system gives the `owner` a level of confidence in the workflow's outcome, not proof of correctness. 
+
+See [Workflow evaluation](docs/workflow.md#workflow-evaluation) for the criteria and scores.
 
 ## Configuration
 
-If `.pi/maestro.json` does not exist, `/maestro` starts a guided setup in Pi's interactive terminal. You, the `owner`, pick the model and thinking level for the
-`builder`, the `verifier`, and the `simplifier`. The agents you pick are enabled, and the configuration is saved before `Maestro` starts. If you pick no agents, `Maestro`
-only prepares the `spec`.
+On first use, `/maestro` opens guided setup to select agent models and thinking levels, plus an optional scorer classifier without a thinking level. Choices are saved
+in `.pi/maestro.json`.
 
-There are no default models. If a configuration file already exists, it must set a model for every enabled phase. Before starting, you can edit the file to change the
-`spec` directory, the models, the thinking levels, or the phase flags. If a `required` flag is missing in an existing file, it is treated as `true`. Do not change the
-configuration while the workflow is running.
-
-If `builder.required` is `false`, approval ends with an approved `spec` that you implement somewhere else. Otherwise, you can turn off the `verifier` and the `simplifier`
-separately. Any skipped work is listed in the final summary and is never reported as done. See [Configuration](docs/configuration.md#phase-selection).
+The `owner` can edit this file before activation. See [Configuration](docs/configuration.md) for fields, defaults, and phase selection.
 
 ## Documentation
 

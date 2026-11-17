@@ -44,14 +44,7 @@ independently and which issues it found.
 
 ## Main flow
 
-The diagram shows the default flow with all three agents enabled. The green arrows and lines show the path without `escalations` or `findings`.
-
-The `owner` selects phases through each agent's `required` boolean before activation and leaves configuration unchanged during the workflow. All flags default to `true`.
-See [Phase selection](configuration.md#phase-selection).
-
-With `builder` disabled, approval moves directly to `candidate-ready` and all agents are skipped. Otherwise, after `builder` completion, disabled verification is
-bypassed: the workflow enters `simplifier-running` if simplification is enabled, or `scorer-running` otherwise. Successful verification and rejection of all current
-`findings` also move to `scorer-running` when simplification is disabled. After simplification completes or is skipped, evaluation runs before workflow completion.
+The diagram shows a flow with all three agents and scoring enabled. The green arrows and lines show the path without `escalations` or `findings`.
 
 ```mermaid
 flowchart TD
@@ -62,7 +55,7 @@ flowchart TD
     verify[Verifier checks live project files]
     findings{Findings?}
     simplify[Simplifier refactors accepted code]
-    evaluate[Jev evaluates the workflow]
+    evaluate[Selected classifier evaluates the workflow]
     candidate[Candidate ready]
     summary[Maestro summarizes results]
     review[Owner performs the final review]
@@ -262,11 +255,11 @@ that file's `findings` list, not a separate `F2.json` file. `Finding` numbers re
 `Maestro` records `owner` decisions in the same `verifier` report, e.g. decisions about `V1/F2` update `V1.json`, not a new `V2.json`. A new `verifier` result creates the
 next report (`V2.json`).
 
-| Decision      | Result                                                                                                                                          |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `reject`      | Records the owner's reason. If every `finding` is rejected, the workflow reaches `simplifier-running` when enabled, otherwise `scorer-running`. |
-| `fix-code`    | Keeps the current `spec` and returns to `ready-for-builder` for code fixes when no decision requires revision.                                  |
-| `revise-spec` | Records the owner's reason and agreed requirement change, then returns to `drafting-spec`.                                                      |
+| Decision      | Result                                                                                                                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `reject`      | Records the owner's reason. If every `finding` is rejected, the workflow reaches `simplifier-running` when enabled, otherwise `scorer-running` if scoring is enabled, or `candidate-ready`. |
+| `fix-code`    | Keeps the current `spec` and returns to `ready-for-builder` for code fixes when no decision requires revision.                                                                              |
+| `revise-spec` | Records the owner's reason and agreed requirement change, then returns to `drafting-spec`.                                                                                                  |
 
 `Maestro` saves every current decision together before the phase changes. If any `finding` requires revision, revision takes priority over code fixes and rejections. See
 [Spec revision](#spec-revision).
@@ -302,10 +295,12 @@ check failures. If no code needs refactoring, the `simplifier` does not make any
 
 ## Workflow evaluation
 
-After the selected implementation phases, `scorer-running` evaluates the entire workflow against the approved `spec`, including later simplification. Jev receives the
-approved documents, available `handoffs` and `owner` decisions, and staged, unstaged, and untracked Git changes against `HEAD`.
+When scoring is enabled, `scorer-running` evaluates the entire workflow against the approved `spec` after the selected implementation phases, including simplification.
+The selected Pi classifier receives the approved documents, available `handoffs` and `owner` decisions, and staged, unstaged, and untracked Git changes against `HEAD`.
+The `owner` selects the classifier during initial setup or configures it in `.pi/maestro.json`. Scoring is disabled by default. See
+[Scorer configuration](configuration.md#scorer).
 
-Jev's ratings are converted to two separate scores on a **0–100 scale**. Each retains Jev's confidence value from 0 to 1:
+The classifier's ratings are converted to two separate scores on a **0–100 scale**. Each retains its confidence value from 0 to 1:
 
 | Score                | Criteria                                                                                                                                                                 |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -347,7 +342,7 @@ outcome, including `escalation`, creates the next `B` report. Revising the same 
 
 `Escalation` (`E`) numbers identify questions within a `builder` `handoff`. They restart at `E1` in each `handoff`.
 
-For example, a repair cycle with successful `builder` results produces these files:
+For example, a repair cycle with all agents and scoring enabled and successful `builder` results produces these files:
 
 | Step | Action                                                                  | Report saved or updated                                                         |
 | ---- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -372,7 +367,7 @@ The default layout after multiple `runs` is:
 .specs/<spec-id>/
 ├── proposal.md
 ├── spec.md
-├── design.md             # only when needed
+├── design.md
 ├── workflow.json
 ├── handoffs/
 │   ├── builder/
@@ -385,7 +380,7 @@ The default layout after multiple `runs` is:
 │       └── S.json
 ├── spec-score/
 │   ├── evaluation.json
-│   └── evaluation.raw.json # when a classifier response is returned
+│   └── evaluation.raw.json
 └── prototypes/
 ```
 
@@ -393,11 +388,6 @@ The default layout after multiple `runs` is:
 available as context, not as proof for the current `run`. `Owner` decisions update the active `builder` or `verifier` `handoff` without creating another numbered report.
 
 ## Limitations
-
-### Fixed evaluator
-
-Evaluation is available only through Jev on OpenRouter. The model, `openrouter/typesafe/jev-1.14`, is hardcoded and cannot be configured. If it is unavailable—for example,
-if the `owner` has not configured OpenRouter—the evaluation fails and the workflow ends without evaluation scores.
 
 ### No small models
 
