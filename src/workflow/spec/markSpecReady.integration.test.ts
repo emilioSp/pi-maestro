@@ -114,6 +114,112 @@ describe('markSpecReady', () => {
     });
   });
 
+  it('GIVEN consecutive requirements with nested and regression criteria WHEN approval is requested THEN the saved workflow is ready-for-builder and the spec is unchanged', async () => {
+    const { created, paths } = await createWorkflow();
+
+    const markdown = [
+      '### REQ1: The system MUST save titles',
+      '#### AC1: Titles are saved',
+      '### REQ2: The system MUST reject empty titles',
+      '#### AC2: Empty titles are rejected',
+      '## Regression checks',
+      '### AC3: Descriptions are saved',
+    ].join('\n');
+
+    await writeFile(created.specFilePath, markdown, 'utf8');
+
+    await markSpecReady({
+      config: TEST_CONFIG,
+      paths,
+      specId: SPEC_ID,
+      activeWorkflowSpecId: SPEC_ID,
+    });
+
+    await expect(readWorkflowState(created.workflowPath)).resolves.toMatchObject({
+      phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
+    });
+    await expect(readFile(created.specFilePath, 'utf8')).resolves.toBe(markdown);
+  });
+
+  it.each([
+    { label: 'starting at REQ2', numbers: [2] },
+    { label: 'a gap', numbers: [1, 3] },
+    { label: 'a duplicate', numbers: [1, 1] },
+    { label: 'out-of-order IDs', numbers: [1, 3, 2] },
+  ])(
+    'GIVEN requirement numbering with $label WHEN approval is requested THEN a requirement ordering error leaves the documents and draft workflow unchanged',
+    async ({ numbers }) => {
+      const { created, paths } = await createWorkflow();
+      await writeFile(
+        created.specFilePath,
+        numbers.map((number) => `### REQ${number}: The system MUST save titles`).join('\n'),
+        'utf8',
+      );
+      await writeFile(created.designFilePath, '# Agreed design\n', 'utf8');
+
+      const savedPaths = [
+        created.proposalFilePath,
+        created.specFilePath,
+        created.designFilePath,
+        created.workflowPath,
+      ];
+
+      const savedContents = await Promise.all(savedPaths.map((path) => readFile(path, 'utf8')));
+
+      await expect(
+        markSpecReady({
+          config: TEST_CONFIG,
+          paths,
+          specId: SPEC_ID,
+          activeWorkflowSpecId: SPEC_ID,
+        }),
+      ).rejects.toThrow('Fix requirement ordering in spec.md.');
+
+      expect(await Promise.all(savedPaths.map((path) => readFile(path, 'utf8')))).toEqual(
+        savedContents,
+      );
+      await expect(readWorkflowState(created.workflowPath)).resolves.toMatchObject({
+        phase: WORKFLOW_PHASES.DRAFTING_SPEC,
+      });
+    },
+  );
+
+  it('GIVEN approval rejected after a requirement merge WHEN numbering and references are corrected THEN retry saves ready-for-builder', async () => {
+    const { created, paths } = await createWorkflow();
+    await writeFile(
+      created.specFilePath,
+      '### REQ1: The system MUST save titles\n### REQ3: The system MUST reject empty titles\n',
+      'utf8',
+    );
+    await writeFile(created.proposalFilePath, 'Scope: REQ1 and REQ3.\n', 'utf8');
+
+    await expect(
+      markSpecReady({
+        config: TEST_CONFIG,
+        paths,
+        specId: SPEC_ID,
+        activeWorkflowSpecId: SPEC_ID,
+      }),
+    ).rejects.toThrow('Fix requirement ordering in spec.md.');
+
+    await writeFile(
+      created.specFilePath,
+      '### REQ1: The system MUST save titles\n### REQ2: The system MUST reject empty titles\n',
+      'utf8',
+    );
+    await writeFile(created.proposalFilePath, 'Scope: REQ1 and REQ2.\n', 'utf8');
+    await markSpecReady({
+      config: TEST_CONFIG,
+      paths,
+      specId: SPEC_ID,
+      activeWorkflowSpecId: SPEC_ID,
+    });
+
+    await expect(readWorkflowState(created.workflowPath)).resolves.toMatchObject({
+      phase: WORKFLOW_PHASES.READY_FOR_BUILDER,
+    });
+  });
+
   it('GIVEN nested AC1 and standalone regression AC3 WHEN approval is requested THEN global numbering rejects the gap without changing the draft or workflow', async () => {
     const { created, paths } = await createWorkflow();
 

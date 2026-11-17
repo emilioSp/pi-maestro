@@ -126,6 +126,10 @@ For the initial `spec`:
    the selected phases.
 4. After that reply, `Maestro` saves `ready-for-builder` and starts the enabled `builder` in the foreground, or saves `candidate-ready` with all agents skipped.
 
+Approval rejects requirement IDs with gaps, duplicates, or out-of-order numbers. Requirements must start at `REQ1` and follow document order. If this validation fails in
+`drafting-spec` after `GREEN FLAG`, `Maestro` corrects only numbering and affected links and textual references across the `specification` documents, preserving
+requirement order and meaning. It retries approval using the existing `GREEN FLAG`, without requesting renewed approval.
+
 Approval freezes all present `spec` documents and visual prototypes together. None may change during `builder`, `verifier`, or `simplifier` execution. See
 [Spec revision](#spec-revision) for permitted revisions.
 
@@ -147,10 +151,11 @@ For `modified` or `removed` requirements, a short `Before` description is includ
 
 ## Requirement coverage
 
-Each requirement has its own section and a unique, stable ID, such as `REQ1`. Its `Verified by` field links to the `acceptance criteria` or existing tests that verify it.
-The mapping appears only under the requirement, not again inside each `acceptance criterion`. Requirements use `### REQ<number>:` headings; their criteria immediately
-follow as `#### AC<number>:` subsections. Each requirement-associated AC is defined once under its primary requirement; other requirements can link to it. AC numbering is
-continuous across the whole document, including standalone regression criteria, not restarted for each requirement or section.
+Each requirement has its own section and a consecutive ID in document order, starting at `REQ1`. After additions, removals, or merges, requirements are renumbered and all
+affected links and textual references across the `specification` documents are updated. Its `Verified by` field links to the `acceptance criteria` or existing tests that
+verify it. The mapping appears only under the requirement, not again inside each `acceptance criterion`. Requirements use `### REQ<number>:` headings; their criteria
+immediately follow as `#### AC<number>:` subsections. Each requirement-associated AC is defined once under its primary requirement; other requirements can link to it. AC
+numbering is continuous across the whole document, including standalone regression criteria, not restarted for each requirement or section.
 
 For example, a change that introduces persistent item titles can describe its requirement and linked `acceptance criterion` in `spec.md` as follows:
 
