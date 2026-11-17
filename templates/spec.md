@@ -10,7 +10,7 @@ Leave verification methods, test code, fixtures, mocks, and commands to the buil
 
 ## Requirements
 
-<Give each requirement its own ### REQ<number>: <Actor> MUST <short capability> heading and a unique, stable ID. Document only behavior or constraints this change adds, modifies, or removes, with relevant measurable limits, edge cases, and error handling. Existing behavior must continue working unless explicitly changed or removed; do not list unchanged behavior as requirements. Do not copy repository or agent instructions.>
+<Give each requirement its own ### REQ<number>: <Actor> MUST <short capability> heading. Number requirements consecutively in document order starting at REQ1. After additions, removals, or merges, renumber requirements to remove gaps and update all affected links and textual references across all specification documents. Document only behavior or constraints this change adds, modifies, or removes, with relevant measurable limits, edge cases, and error handling. Existing behavior must continue working unless explicitly changed or removed; do not list unchanged behavior as requirements. Do not copy repository or agent instructions.>
 
 <Give each requirement exactly one Delta value: added, modified, or removed. Keep requirements organized by topic, not by delta category. For modified or removed requirements, add a brief Before description only when useful. Verify the previous behavior from repository evidence; do not invent it or repeat the whole old requirement. State the complete required outcome, including the required absence and any agreed replacement or error behavior for removals. Keep the same pre-change baseline during revisions.>
 
