@@ -5,6 +5,8 @@
 
 import type { ClassifierResult } from '@earendil-works/pi-ai';
 
+import questions from '#src/score/questions.json' with { type: 'json' };
+
 const SCORE_DIMENSIONS = {
   CORRECTNESS: 'correctness',
   VERIFICATION_QUALITY: 'verificationQuality',
@@ -17,13 +19,14 @@ type ParseScoreInput = {
 
 const parseScore = ({ result, dimension }: ParseScoreInput) => {
   const answer = result.answers?.[dimension];
+  const maxScore = questions[dimension].criteria.length - 1;
 
   if (answer?.type !== 'score') {
     throw new Error(`Invalid ${dimension} answer: expected score type.`);
   }
 
-  if (!Number.isFinite(answer.score) || answer.score < 0 || answer.score > 4) {
-    throw new Error(`Invalid ${dimension} score: expected a finite value from 0 to 4.`);
+  if (!Number.isFinite(answer.score) || answer.score < 0 || answer.score > maxScore) {
+    throw new Error(`Invalid ${dimension} score: expected a finite value from 0 to ${maxScore}.`);
   }
 
   if (!Number.isFinite(answer.confidence) || answer.confidence < 0 || answer.confidence > 1) {
@@ -31,7 +34,7 @@ const parseScore = ({ result, dimension }: ParseScoreInput) => {
   }
 
   return {
-    score: answer.score * 25,
+    score: answer.score * (100 / maxScore),
     confidence: answer.confidence,
   };
 };
