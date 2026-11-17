@@ -35,6 +35,7 @@ const RunVerifierToolParameters = Type.Object(
 );
 
 type VerifierTerminalPhase =
+  | typeof WORKFLOW_PHASES.CANDIDATE_READY
   | typeof WORKFLOW_PHASES.SCORER_RUNNING
   | typeof WORKFLOW_PHASES.SIMPLIFIER_RUNNING
   | typeof WORKFLOW_PHASES.FINDING_DECISIONS;
@@ -73,6 +74,7 @@ const readVerifierResult = async ({
     if (
       state.phase !== WORKFLOW_PHASES.SIMPLIFIER_RUNNING &&
       state.phase !== WORKFLOW_PHASES.SCORER_RUNNING &&
+      state.phase !== WORKFLOW_PHASES.CANDIDATE_READY &&
       state.phase !== WORKFLOW_PHASES.FINDING_DECISIONS
     ) {
       throw new Error(`Verifier returned with unexpected workflow phase "${state.phase}".`);
@@ -107,6 +109,10 @@ const readVerifierResult = async ({
 };
 
 const formatVerifierResult = (result: VerifierRunResult): string => {
+  if (result.outcome === WORKFLOW_PHASES.CANDIDATE_READY) {
+    return `Verifier completed spec ${result.specId}. The workflow is candidate-ready. Simplifier and scoring skipped by configuration. Report scoring as skipped in the final summary.`;
+  }
+
   if (result.outcome === WORKFLOW_PHASES.SCORER_RUNNING) {
     return `Verifier completed spec ${result.specId}. The workflow is scorer-running. Call maestro_score_workflow next. Simplifier skipped by configuration.`;
   }

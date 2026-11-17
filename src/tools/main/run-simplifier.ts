@@ -7,6 +7,7 @@ import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { Type } from 'typebox';
 
 import { readSimplifierHandoff } from '#artifacts/simplifier-handoff/readSimplifierHandoff.ts';
+import type { MaestroConfig } from '#config/schema.ts';
 import { SPEC_ID_PATTERN } from '#ids/isValidSpecId.ts';
 import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
@@ -14,7 +15,7 @@ import { executeRoleTask } from '#src/delegation/executeRoleTask.ts';
 import { resolveToolRunContext } from '#tools/utils/resolveToolRunContext.ts';
 import { WORKFLOW_ROLES } from '#workflow/roles.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
-import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
+import { WORKFLOW_EVENTS, WORKFLOW_PHASES, type WorkflowState } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 
@@ -52,9 +53,16 @@ const isGitReady = async ({ pi, projectRoot }: GitReadinessInput): Promise<boole
 type ReadSimplifierResultInput = {
   paths: MaestroPaths;
   specId: string;
+  config: MaestroConfig;
+  runningState: WorkflowState;
 };
 
-const readSimplifierResult = async ({ paths, specId }: ReadSimplifierResultInput) => {
+const readSimplifierResult = async ({
+  paths,
+  specId,
+  config,
+  runningState,
+}: ReadSimplifierResultInput) => {
   try {
     const state = await readWorkflowState(paths.getWorkflowPath(specId));
 
@@ -62,7 +70,13 @@ const readSimplifierResult = async ({ paths, specId }: ReadSimplifierResultInput
       throw new Error(`Workflow spec ID mismatch: expected "${specId}", found "${state.specId}".`);
     }
 
-    if (state.phase !== WORKFLOW_PHASES.SCORER_RUNNING) {
+    const expectedPhase = transitionWorkflow({
+      config,
+      state: runningState,
+      event: WORKFLOW_EVENTS.SIMPLIFIER_DONE,
+    }).phase;
+
+    if (state.phase !== expectedPhase) {
       throw new Error(
         `The simplifier returned without recording a valid terminal handoff. Workflow phase is "${state.phase}".`,
       );
@@ -122,7 +136,7 @@ export const registerRunSimplifierTool = (pi: ExtensionAPI): void => {
           content: [
             {
               type: 'text',
-              text: `${GIT_SKIP_WARNING} The workflow is scorer-running. Call maestro_score_workflow next.`,
+              text: `${GIT_SKIP_WARNING} The workflow is ${nextState.phase}. ${nextState.phase === WORKFLOW_PHASES.SCORER_RUNNING ? 'Call maestro_score_workflow next.' : 'Scoring skipped by configuration. Report scoring as skipped in the final summary.'}`,
             },
           ],
           details: {
@@ -145,13 +159,13 @@ export const registerRunSimplifierTool = (pi: ExtensionAPI): void => {
         onUpdate,
       });
 
-      const result = await readSimplifierResult({ paths, specId });
+      const result = await readSimplifierResult({ paths, specId, config, runningState: state });
 
       return {
         content: [
           {
             type: 'text',
-            text: `Simplifier completed spec ${specId}. The workflow is scorer-running. Call maestro_score_workflow next. Report the saved simplifier summary and notes as its report, not verifier evidence.`,
+            text: `Simplifier completed spec ${specId}. The workflow is ${result.phase}. ${result.phase === WORKFLOW_PHASES.SCORER_RUNNING ? 'Call maestro_score_workflow next.' : 'Scoring skipped by configuration. Report scoring as skipped in the final summary.'} Report the saved simplifier summary and notes as its report, not verifier evidence.`,
           },
         ],
         details: result,

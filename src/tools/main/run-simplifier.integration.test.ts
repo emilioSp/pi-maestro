@@ -20,7 +20,10 @@ import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { createApprovedWorkflow, SPEC_ID } from '#tests/support/builder-workflow.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
-import { SIMPLIFIER_HANDOFF_TOOL } from '#tools/child/record-simplifier-handoff.ts';
+import {
+  recordSimplifierHandoffTool,
+  SIMPLIFIER_HANDOFF_TOOL,
+} from '#tools/child/record-simplifier-handoff.ts';
 import { registerRunSimplifierTool } from '#tools/main/run-simplifier.ts';
 import { completeSimplifierPass } from '#workflow/simplifier/completeSimplifierPass.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -266,4 +269,100 @@ it('GIVEN a simplifier execution error without a saved session WHEN execution st
     'Failed before saving',
   );
   expect(notify).not.toHaveBeenCalled();
+});
+
+it('GIVEN disabled scoring and completed verification WHEN Git is unavailable for simplification THEN candidate-ready is saved without classification and scoring is reported skipped', async () => {
+  maestroSessionState.activate();
+  maestroSessionState.setActiveSpecId(SPEC_ID);
+  const { paths, repository } = await createSimplifierWorkflow();
+  const configPath = join(repository.path, '.pi/maestro.json');
+  const config = JSON.parse(await readFile(configPath, 'utf8'));
+  await writeFile(configPath, JSON.stringify({ ...config, scorer: { required: false } }));
+
+  const { tool, session } = await piTestSessions.createRegisteredTool({
+    cwd: repository.path,
+    extension: (pi) => {
+      vi.spyOn(pi, 'exec').mockResolvedValue({
+        code: 1,
+        stdout: '',
+        stderr: 'No Git',
+        killed: false,
+        truncated: false,
+      });
+      registerRunSimplifierTool(pi);
+    },
+  });
+
+  const classify = vi.spyOn(session.modelRuntime, 'classify');
+
+  const result = await tool.execute('skip', { specId: SPEC_ID });
+
+  expect(result.details).toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY, skipped: true });
+  expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
+    phase: WORKFLOW_PHASES.CANDIDATE_READY,
+  });
+  expect(classify).not.toHaveBeenCalled();
+  expect(executeTask).not.toHaveBeenCalled();
+  expect(result.content).toEqual([
+    {
+      type: 'text',
+      text: expect.stringContaining('Report scoring as skipped in the final summary'),
+    },
+  ]);
+});
+
+it('GIVEN disabled scoring WHEN the simplifier completes in Git THEN candidate-ready is saved without classification and scoring is reported skipped', async () => {
+  maestroSessionState.activate();
+  maestroSessionState.setActiveSpecId(SPEC_ID);
+  const { paths, repository } = await createSimplifierWorkflow();
+  await execFileAsync('git', ['init', '-q', repository.path]);
+  const configPath = join(repository.path, '.pi/maestro.json');
+  const config = JSON.parse(await readFile(configPath, 'utf8'));
+  await writeFile(configPath, JSON.stringify({ ...config, scorer: { required: false } }));
+
+  const { tool, session } = await piTestSessions.createRegisteredTool({
+    cwd: repository.path,
+    extension: registerRunSimplifierTool,
+  });
+
+  const { tool: childTool } = await piTestSessions.createRegisteredTool({
+    cwd: repository.path,
+    extension: (pi) => {
+      pi.registerTool(recordSimplifierHandoffTool);
+    },
+  });
+
+  const classify = vi.spyOn(session.modelRuntime, 'classify');
+  vi.mocked(executeTask).mockImplementationOnce(async () => {
+    const result = await childTool.execute('record', {
+      specId: SPEC_ID,
+      refactoredFiles: [],
+      summary: 'No simplification needed',
+      notes: [],
+    });
+
+    expect(result.details).toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
+    expect(result.content).toEqual([
+      {
+        type: 'text',
+        text: 'Simplifier handoff saved. Workflow moved to candidate-ready. Stop now.',
+      },
+    ]);
+
+    return { text: 'Saved' };
+  });
+
+  const result = await tool.execute('simplify', { specId: SPEC_ID });
+
+  expect(result.details).toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
+  expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
+    phase: WORKFLOW_PHASES.CANDIDATE_READY,
+  });
+  expect(classify).not.toHaveBeenCalled();
+  expect(result.content).toEqual([
+    {
+      type: 'text',
+      text: expect.stringContaining('Report scoring as skipped in the final summary'),
+    },
+  ]);
 });

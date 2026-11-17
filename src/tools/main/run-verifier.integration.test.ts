@@ -378,3 +378,38 @@ it('GIVEN a verifier execution error without a saved session WHEN execution stop
   );
   expect(notify).not.toHaveBeenCalled();
 });
+
+it('GIVEN disabled scorer and simplifier WHEN the verifier completes THEN candidate-ready is saved without classification and scoring is reported skipped', async () => {
+  maestroSessionState.activate();
+  maestroSessionState.setActiveSpecId(SPEC_ID);
+  const workflow = await createReadyForVerifierWorkflow(false);
+  const configPath = join(workflow.repository.path, '.pi/maestro.json');
+  const config = JSON.parse(await readFile(configPath, 'utf8'));
+  await writeFile(configPath, JSON.stringify({ ...config, scorer: { required: false } }));
+
+  const { tool, session } = await piTestSessions.createRegisteredTool({
+    cwd: workflow.repository.path,
+    extension: registerRunVerifierTool,
+  });
+
+  const classify = vi.spyOn(session.modelRuntime, 'classify');
+  vi.mocked(executeTask).mockImplementationOnce(async () => {
+    await recordVerifierHandoff({ paths: workflow.paths });
+
+    return { text: 'Saved' };
+  });
+
+  const result = await tool.execute('verify', { specId: SPEC_ID });
+
+  expect(result.details).toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
+  expect(await readWorkflowState(workflow.paths.getWorkflowPath(SPEC_ID))).toMatchObject({
+    phase: WORKFLOW_PHASES.CANDIDATE_READY,
+  });
+  expect(classify).not.toHaveBeenCalled();
+  expect(result.content).toEqual([
+    {
+      type: 'text',
+      text: expect.stringContaining('Report scoring as skipped in the final summary'),
+    },
+  ]);
+});
