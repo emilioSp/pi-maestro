@@ -7,6 +7,7 @@ import type { MaestroConfig } from '#config/schema.ts';
 
 export const TEST_CONFIG: MaestroConfig = {
   version: '1.0.0',
+  scorer: { required: true, model: 'openrouter/typesafe/jev-1.14' },
   specDirectory: '.specs',
   builder: { required: true, model: 'openai-codex/gpt-6.1-sol', thinking: 'high' },
   verifier: { required: true, model: 'openai-codex/gpt-6-astra', thinking: 'medium' },

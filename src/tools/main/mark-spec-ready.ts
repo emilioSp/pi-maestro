@@ -31,6 +31,7 @@ export const registerMarkSpecReadyTool = (pi: ExtensionAPI): void => {
     name: MARK_SPEC_READY_TOOL.NAME,
     label: MARK_SPEC_READY_TOOL.LABEL,
     description: MARK_SPEC_READY_TOOL.DESCRIPTION,
+    executionMode: 'sequential',
     parameters: MarkSpecReadyToolParameters,
     async execute(_toolCallId, { specId }, _signal, _onUpdate, context) {
       const { paths, config } = await resolveToolRunContext(context.cwd);

@@ -65,6 +65,15 @@ describe('configuration input validation', () => {
     expect(() => assertConfiguration({ version: SUPPORTED_CONFIG_VERSION })).not.toThrow();
   });
 
+  it('GIVEN builder settings are omitted and scorer is enabled without a model WHEN configuration is validated THEN the scorer model is required', () => {
+    expect(() =>
+      assertConfiguration({
+        version: SUPPORTED_CONFIG_VERSION,
+        scorer: { required: true },
+      }),
+    ).toThrow('Scorer model is required when scorer.required is true.');
+  });
+
   it('GIVEN each supported builder thinking level WHEN configuration is validated THEN every supported level is accepted', () => {
     for (const level of Object.values(THINKING_LEVELS)) {
       expect(() =>
@@ -95,6 +104,21 @@ describe('configuration input validation', () => {
   });
 
   it.each([
+    {
+      scenario: 'a null input',
+      input: null,
+      message: 'Configuration must be a JSON object.',
+    },
+    {
+      scenario: 'an array input',
+      input: [],
+      message: 'Configuration must be a JSON object.',
+    },
+    {
+      scenario: 'a numeric version',
+      input: { version: 123 },
+      message: 'Invalid configuration version: expected a string.',
+    },
     {
       scenario: 'a version prefixed with v',
       input: { version: 'v1.0.0' },

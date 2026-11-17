@@ -2,7 +2,7 @@
 
 ## Decisions
 
-1. Use the accepted `executeTask` operation for all three roles, following [ADR-010](../../ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation). No second executor or engine selector. Apply DRY where it improves simplicity and code readability; do not force a shared abstraction.
+1. Use the accepted `executeTask` operation for all three roles, following [ADR-010](../../docs/adr/0010-use-the-pi-sdk-for-sequential-agent-delegation.md). No second executor or engine selector. Apply DRY where it improves simplicity and code readability; do not force a shared abstraction.
 2. Load role guidance directly from the executing package's existing `agents/builder.md`, `agents/verifier.md`, and `agents/simplifier.md`. The owner selected reuse of these files without another role-instruction source. See [REQ5](spec.md#req5-maestro-must-reuse-the-bundled-markdown-instructions-for-each-role).
 3. Remove role frontmatter with MAESTRO-FREE-7. No parser or replacement metadata format is needed. See [REQ6](spec.md#req6-maestro-must-supply-its-three-role-instruction-files-without-frontmatter).
 4. Keep the existing SDK prompt composition: Pi's normal instructions plus role guidance. The owner selected this instead of reproducing the old `systemPromptMode: replace` setting. Reason: reuse the accepted executor without another prompt-loading mechanism.

@@ -3,7 +3,7 @@
 ## Decisions
 
 1. Use Pi's in-process SDK through `createAgentSession()`, not RPC subprocesses. The owner reconfirmed this choice after comparing implementation complexity and
-   cancellation. Follow [ADR-010](../../ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation); do not introduce another execution engine.
+   cancellation. Follow [ADR-010](../../docs/adr/0010-use-the-pi-sdk-for-sequential-agent-delegation.md); do not introduce another execution engine.
 2. Place the implementation under the new `src/delegation/` directory. Expose one primary execution operation, independent of the `builder`, `verifier`, and `simplifier`.
    Keep workflow interpretation and `handoff` validation with the existing callers. New implementation modules and useful colocated unit tests belong in this directory;
    do not introduce additional source directories. Module names and routine implementation details remain implementation choices.

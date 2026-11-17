@@ -1,0 +1,69 @@
+{
+  "status": "done",
+  "summary": "Implemented scorer-running and maestro_score_workflow with fixed Jev classifier questions, complete workflow/Git evidence collection, separate normalized scores, raw-response persistence, failure handling, cancellation protection, and runtime completion guidance. npm run check passed all 323 tests across 45 files; git diff --check passed.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Ran npm run check. Updated existing run-builder, run-verifier, resolve-findings, run-simplifier, and record-simplifier-handoff integration tests confirm all five completion rows now save scorer-running: simplifier completion, builder with both later roles disabled, verifier without findings with simplifier disabled, rejection of all findings with simplifier disabled, and Git-unavailable simplifier skipping. Inspected centralized destinations in src/workflow/transitions.ts.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Ran npm run check including the existing builder-disabled mark-spec-ready integration test and frozen-draft transition test. Inspected getSpecReadyDestination in src/workflow/transitions.ts: builder-disabled approval goes directly to candidate-ready. Approval does not invoke the scoring tool or create scores; agents/maestro.md instructs spec-only summaries not to read stale evaluations.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "Ran npm run check including the real temporary Git repository evidence test in src/tools/main/score-workflow.integration.test.ts. Verified proposal.md, spec.md, design.md, B1/B2/V1/V2/S handoff identities and recorded decisions, staged src/export.ts, unstaged src/escape.ts, untracked src/csv helpers.ts and a quote/dollar/semicolon filename. Tracked evaluation.json and untracked evaluation.raw.json are excluded. Inspected scoreWorkflow.ts passing the collected evidence directly as classifier state before persistence.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Inspected collectHandoffs in src/score/collectScoreEvidence.ts: recursively enumerates present files and sorts identities numerically, without reading role configuration or requiring expected reports. B1 alone is collected alone; missing handoffs directory returns an empty array. Successful scoring tests in npm run check also run with no handoffs.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Inspected src/score/scoreWorkflow.ts: context.modelRegistry.getModelOfType('classifier', 'openrouter', 'typesafe/jev-1.14') followed by registry.classify with Pi-managed credentials and maxRetries: 0. Inspected getScoreQuestions.ts and questions.md: exact correctness and verificationQuality IDs, score question type, and all five exact ordered levels for each rubric. Tool schema accepts only specId. No mocked-request assertions or Jev judgment tests were added.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC6",
+      "probe": "Ran npm run check including the verifier-running rejection test: no classifier request and no evaluation report. Inspected the same phase guard in scoreWorkflow.ts for candidate-ready: rejects before evidence collection, inference, and writes. Active spec identity is also checked before scoring.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC7",
+      "probe": "Ran npm run check. The fractional-level persistence case supplies correctness 3.6/confidence 0.8 and verificationQuality 2/confidence 0.6, and checks saved scores 90 and 50 with confidences unchanged. Exact saved-report equality excludes aggregate fields. Inspected normalizeScoreResult.ts for independent multiplication by 25 without rounding or clamping.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC8",
+      "probe": "Ran npm run check. Whole-level persistence case supplies correctness 4/0.9 and verificationQuality 3/0.7 with provider, model, usage, timestamp, and stopReason. Actual raw file equals the complete supplied result; report identifies spec/model/rubric version and success with 100/0.9 and 75/0.7. Both cases overwrite pre-existing files and save candidate-ready only after successful persistence.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC9",
+      "probe": "Ran npm run check. Scoring tests cover every table condition: absent exact classifier, returned Unauthorized error, invalid correctness score 5, real Git repository with HEAD removed, and truncated Git diff output. Failure reports contain reasons and no scores; returned responses are preserved, absent responses are not fabricated, and stale raw output is removed. Inspected finite score/confidence/type/stopReason checks and collection error handling for other required failures.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC10",
+      "probe": "Ran npm run check. Success, failure, overwrite, owner-cancelled classifier response, and unwritable-report tests verify resulting phases. Inspected scoreWorkflow.ts: fresh collection/request on each invocation; both required files saved or stale raw removed before SCORER_DONE; cancellation throws without completion; persistence errors leave scorer-running. Inspected transitions.ts and extension finalization: omitting the scoring call provides no scoring completion event and cannot arm candidate-ready finalization.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC11",
+      "probe": "Inspected agents/maestro.md completion instructions and score-workflow.ts tool output: separate scores/confidences and both report paths on success; failure reason/path and no score on failure; no overall score or correctness-proof claim. Reviewed actual fractional saved-output values (90/0.8 and 50/0.6) from the passing persistence test against these instructions, and reviewed the controlled streamed final failure summary in extensions/maestro.integration.test.ts, including no-score wording and saved report path. Missing-exact-classifier reason is verified through its saved failure test. No instruction-string tests or live Jev judgment calls were added.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "Verification stayed within Maestro-owned behavior using real Pi session registration and temporary Git repositories, with supplied classifier responses at the external boundary. No live Jev/provider inference or dependency changes were needed.",
+    "Human-facing documentation updates remain excluded as approved. Runtime agent instructions were updated. No existing roadmap item covers this scoring feature, so ROADMAP.md was left unchanged.",
+    "Temporary verification projects were cleaned by test cleanup hooks, and temporary command logs were removed. Frozen contract documents and workflow state were not edited directly."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261116-111707-score-completed-maestro-workflows-with-jev"
+}

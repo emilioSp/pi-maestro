@@ -22,13 +22,18 @@ export const SETUP_ROLES = {
   BUILDER: 'builder',
   VERIFIER: 'verifier',
   SIMPLIFIER: 'simplifier',
+  SCORER: 'scorer',
 } as const;
 
 export type SetupRole = (typeof SETUP_ROLES)[keyof typeof SETUP_ROLES];
 
 export type RoleSelection = { model: string; thinking: ThinkingLevel };
 
-export type AgentModelSelections = Partial<Record<SetupRole, RoleSelection>>;
+export type AgentModelSelections = Partial<
+  Record<Exclude<SetupRole, typeof SETUP_ROLES.SCORER>, RoleSelection>
+> & {
+  scorer?: { model: string };
+};
 
 type SaveConfigurationInput = {
   cwd: string;
@@ -47,6 +52,9 @@ export const saveConfiguration = async ({
       : { required: false },
     verifier: agentModelSelections.verifier
       ? { required: true, ...agentModelSelections.verifier }
+      : { required: false },
+    scorer: agentModelSelections.scorer
+      ? { required: true, model: agentModelSelections.scorer.model }
       : { required: false },
     simplifier: agentModelSelections.simplifier
       ? { required: true, ...agentModelSelections.simplifier }

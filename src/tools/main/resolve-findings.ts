@@ -96,7 +96,11 @@ const formatResolution = (details: FindingResolutionDetails): string => {
   }
 
   if (details.phase === WORKFLOW_PHASES.CANDIDATE_READY) {
-    return `${summary} The workflow is candidate-ready. Simplifier skipped by configuration.`;
+    return `${summary} The workflow is candidate-ready. Simplifier and scoring skipped by configuration. Report scoring as skipped in the final summary.`;
+  }
+
+  if (details.phase === WORKFLOW_PHASES.SCORER_RUNNING) {
+    return `${summary} The workflow is scorer-running. Call maestro_score_workflow next. Simplifier skipped by configuration.`;
   }
 
   return `${summary} The workflow is simplifier-running. Call maestro_run_simplifier next with this specId, without another approval or verifier pass.`;
@@ -107,6 +111,7 @@ export const registerResolveFindingsTool = (pi: ExtensionAPI): void => {
     name: RESOLVE_FINDINGS_TOOL.NAME,
     label: RESOLVE_FINDINGS_TOOL.LABEL,
     description: RESOLVE_FINDINGS_TOOL.DESCRIPTION,
+    executionMode: 'sequential',
     parameters: ResolveFindingsToolParameters,
     async execute(_toolCallId, { specId, decisions }, _signal, _onUpdate, context) {
       const { paths, config } = await resolveToolRunContext(context.cwd);

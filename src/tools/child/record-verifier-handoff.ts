@@ -48,6 +48,7 @@ export const recordVerifierHandoffTool = {
   name: VERIFIER_HANDOFF_TOOL.NAME,
   label: VERIFIER_HANDOFF_TOOL.LABEL,
   description: VERIFIER_HANDOFF_TOOL.DESCRIPTION,
+  executionMode: 'sequential',
   parameters: VerifierHandoffToolParameters,
   async execute(_toolCallId, params, _signal, _onUpdate, context) {
     const { specId, ...submission } = params;

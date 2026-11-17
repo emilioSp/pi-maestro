@@ -10,8 +10,9 @@ For example, if Pi starts in `/work/app/src`, `Maestro` reads `/work/app/src/.pi
 
 ## Initial setup
 
-The `owner` runs `/maestro` in Pi's interactive terminal and follows the guided setup to select models and thinking levels for `builder`, `verifier`, and `simplifier`,
-then confirms to save the configuration and activate `Maestro`.
+The `owner` runs `/maestro` in Pi's interactive terminal and follows the guided setup to select models and thinking levels for `builder`, `verifier`, and `simplifier`.
+The `scorer` appears in the same menu and offers available Pi classifiers only, without a thinking-level prompt. Selecting a classifier enables scoring; leaving it
+unselected keeps scoring disabled. Confirmation saves the choices in `.pi/maestro.json` and activates `Maestro`.
 
 ## Example configuration
 
@@ -35,6 +36,10 @@ This is an explicit all-agent configuration, not a set of model defaults. The `o
     "required": true,
     "model": "openai-codex/gpt-6.1-sol",
     "thinking": "high"
+  },
+  "scorer": {
+    "required": true,
+    "model": "openrouter/typesafe/jev-1.14"
   }
 }
 ```
@@ -54,9 +59,12 @@ This is an explicit all-agent configuration, not a set of model defaults. The `o
 | `verifier.model`      |     For enabled execution | None                  | Model string passed unchanged to Pi.                     |
 | `verifier.thinking`   |                        No | `medium`              | One supported thinking level.                            |
 | `simplifier`          |                        No | `Simplifier` defaults | Overrides supported `simplifier` fields.                 |
-| `simplifier.required` |                        No | `true`                | Boolean selecting the `simplifier` phase.                |
+| `simplifier.required` |                        No | `false`               | Boolean selecting the `simplifier` phase.                |
 | `simplifier.model`    |     For enabled execution | None                  | Model string passed unchanged to Pi.                     |
 | `simplifier.thinking` |                        No | `high`                | One supported thinking level.                            |
+| `scorer`              |                        No | Disabled              | Overrides supported `scorer` fields.                       |
+| `scorer.required`     |                        No | `false`               | Boolean selecting workflow scoring.                      |
+| `scorer.model`        |   When scoring is enabled | None                  | Full Pi classifier identifier; no default or fallback.   |
 
 Model values use the full `provider/model` identifier supplied by Pi's model registry, such as `openrouter/~openai/gpt-mini-latest`. Model IDs may contain additional
 slashes. `Maestro` does not apply a separate format rule; it matches the complete identifier against Pi's available models and uses it unchanged for SDK execution.
@@ -101,11 +109,12 @@ directory is `.specs` because `specDirectory` is omitted.
 
 ## Phase selection
 
-Set each agent's `required` boolean before activation and leave configuration unchanged until the workflow completes. Omitted flags default to `true`, even when an agent
-section is absent. Strings, numbers, and `null` are invalid.
+Set each phase's `required` boolean before activation and leave configuration unchanged until the workflow completes. Omitted flags default to `true` for `builder` and
+`verifier`, and `false` for `simplifier` and `scorer`, including when their sections are absent. Strings, numbers, and `null` are invalid.
 
 With `builder.required: false`, approval completes the workflow with an approved `spec` and no agent execution, regardless of the other flags. The approved `spec` can be
-used for implementation in another workflow. With `builder` enabled, `verifier` and `simplifier` can each be disabled independently. Neither runs without `builder`.
+used for implementation in another workflow. With `builder` enabled, `verifier`, `simplifier`, and `scorer` can each be disabled independently. None runs without `builder`.
+The table below shows agent execution; enabled scoring follows the last selected implementation phase.
 
 | `builder.required` | `verifier.required` | `simplifier.required` | Selected phases after approval |
 | ------------------ | ------------------- | --------------------- | ------------------------------ |
@@ -117,6 +126,16 @@ used for implementation in another workflow. With `builder` enabled, `verifier` 
 
 Disabled phases do not require model availability and produce no `handoff`. The final summary identifies skipped work rather than claiming it was performed. Enabled
 simplification can still be skipped if Git is unavailable.
+
+## Scorer
+
+The `scorer` uses the classifier selected by the `owner` during initial setup, stored as `scorer.model`. Any available Pi classifier can be selected; the example above uses
+`openrouter/typesafe/jev-1.14`, but no model or provider is required by default.
+
+Scoring is disabled when `scorer` is omitted or `scorer.required` is `false`. Enabling it requires an explicit, non-empty model.
+
+If the configured classifier is unavailable when scoring runs, evaluation saves a failure and the workflow
+completes without scores. See [Workflow evaluation](workflow.md#workflow-evaluation).
 
 ## Schema version
 

@@ -42,6 +42,7 @@ export const recordBuilderHandoffTool = {
   name: BUILDER_HANDOFF_TOOL.NAME,
   label: BUILDER_HANDOFF_TOOL.LABEL,
   description: BUILDER_HANDOFF_TOOL.DESCRIPTION,
+  executionMode: 'sequential',
   parameters: BuilderHandoffToolParameters,
   async execute(_toolCallId, params, _signal, _onUpdate, context) {
     const { specId, ...handoff } = params;

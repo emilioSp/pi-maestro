@@ -44,6 +44,7 @@ type BuilderRunResult =
       phase:
         | typeof WORKFLOW_PHASES.READY_FOR_VERIFIER
         | typeof WORKFLOW_PHASES.SIMPLIFIER_RUNNING
+        | typeof WORKFLOW_PHASES.SCORER_RUNNING
         | typeof WORKFLOW_PHASES.CANDIDATE_READY;
       handoff: BuilderHandoff;
     }
@@ -83,6 +84,7 @@ const readBuilderResult = async ({
     if (
       state.phase !== WORKFLOW_PHASES.READY_FOR_VERIFIER &&
       state.phase !== WORKFLOW_PHASES.SIMPLIFIER_RUNNING &&
+      state.phase !== WORKFLOW_PHASES.SCORER_RUNNING &&
       state.phase !== WORKFLOW_PHASES.CANDIDATE_READY &&
       state.phase !== WORKFLOW_PHASES.ESCALATION_DECISIONS
     ) {
@@ -139,7 +141,11 @@ const formatBuilderResult = (result: BuilderRunResult): string => {
   }
 
   if (result.phase === WORKFLOW_PHASES.CANDIDATE_READY) {
-    return `Builder completed spec ${result.specId}. The workflow is candidate-ready. Verifier and simplifier skipped by configuration. No independent verification was performed.`;
+    return `Builder completed spec ${result.specId}. The workflow is candidate-ready. Verifier, simplifier, and scoring skipped by configuration. No independent verification was performed. Report scoring as skipped in the final summary.`;
+  }
+
+  if (result.phase === WORKFLOW_PHASES.SCORER_RUNNING) {
+    return `Builder completed spec ${result.specId}. The workflow is scorer-running. Call maestro_score_workflow next. Verifier and simplifier skipped by configuration. No independent verification was performed.`;
   }
 
   if (result.phase === WORKFLOW_PHASES.SIMPLIFIER_RUNNING) {
@@ -154,6 +160,7 @@ export const registerRunBuilderTool = (pi: ExtensionAPI): void => {
     name: RUN_BUILDER_TOOL.NAME,
     label: RUN_BUILDER_TOOL.LABEL,
     description: RUN_BUILDER_TOOL.DESCRIPTION,
+    executionMode: 'sequential',
     parameters: RunBuilderToolParameters,
     async execute(_toolCallId, { specId }, signal, onUpdate, context) {
       const { paths, config } = await resolveToolRunContext(context.cwd);

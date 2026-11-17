@@ -22,8 +22,11 @@ const hasDynamicDestinationBasedOnConfig = (
   destination: WorkflowTransition['to'],
 ): destination is (config: MaestroConfig) => WorkflowPhase => typeof destination === 'function';
 
+const getScorerDestination = (config: MaestroConfig): WorkflowPhase =>
+  config.scorer.required ? WORKFLOW_PHASES.SCORER_RUNNING : WORKFLOW_PHASES.CANDIDATE_READY;
+
 const getSimplifierDestination = (config: MaestroConfig): WorkflowPhase =>
-  config.simplifier.required ? WORKFLOW_PHASES.SIMPLIFIER_RUNNING : WORKFLOW_PHASES.CANDIDATE_READY;
+  config.simplifier.required ? WORKFLOW_PHASES.SIMPLIFIER_RUNNING : getScorerDestination(config);
 
 const getSpecReadyDestination = (config: MaestroConfig): WorkflowPhase =>
   config.builder.required ? WORKFLOW_PHASES.READY_FOR_BUILDER : WORKFLOW_PHASES.CANDIDATE_READY;
@@ -78,10 +81,14 @@ export const WORKFLOW_TRANSITIONS: Record<WorkflowEvent, WorkflowTransition> = {
   },
   [WORKFLOW_EVENTS.SIMPLIFIER_DONE]: {
     from: [WORKFLOW_PHASES.SIMPLIFIER_RUNNING],
-    to: WORKFLOW_PHASES.CANDIDATE_READY,
+    to: getScorerDestination,
   },
   [WORKFLOW_EVENTS.SIMPLIFIER_SKIPPED]: {
     from: [WORKFLOW_PHASES.SIMPLIFIER_RUNNING],
+    to: getScorerDestination,
+  },
+  [WORKFLOW_EVENTS.SCORER_DONE]: {
+    from: [WORKFLOW_PHASES.SCORER_RUNNING],
     to: WORKFLOW_PHASES.CANDIDATE_READY,
   },
   [WORKFLOW_EVENTS.OWNER_REQUEST_FIXES]: {

@@ -44,6 +44,7 @@ export const registerResolveEscalationsTool = (pi: ExtensionAPI): void => {
     name: RESOLVE_ESCALATIONS_TOOL.NAME,
     label: RESOLVE_ESCALATIONS_TOOL.LABEL,
     description: RESOLVE_ESCALATIONS_TOOL.DESCRIPTION,
+    executionMode: 'sequential',
     parameters: ResolveEscalationsToolParameters,
     async execute(_toolCallId, params, _signal, _onUpdate, context) {
       const { specId, specChangeRequired, decisions } = params;

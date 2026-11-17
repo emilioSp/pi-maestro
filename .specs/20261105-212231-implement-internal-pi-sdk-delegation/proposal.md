@@ -7,8 +7,8 @@ how the roles run. Combining both changes would make execution problems harder t
 
 ## Goal and scope
 
-Deliver one internal, role-independent SDK executor under `src/delegation/`, following [ADR-010](../../ADR.md#adr-010-use-the-pi-sdk-for-sequential-agent-delegation).
-This is [MAESTRO-FREE-PRE-3](../../ROADMAP.md#maestro-free-pre-3-implement-internal-sdk-delegation), not the role migration.
+Deliver one internal, role-independent SDK executor under `src/delegation/`, following [ADR-010](../../docs/adr/0010-use-the-pi-sdk-for-sequential-agent-delegation.md).
+This is [MAESTRO-FREE-PRE-3](../../docs/roadmap/maestro-free-pre-3-implement-internal-sdk-delegation.md), not the role migration.
 
 Verify the executor manually in this item. Automated integration tests are deferred to the following migration tasks; useful unit tests remain in scope. Update existing
 human documentation where the new internal capability needs explaining, without describing the existing workflow as SDK-based.

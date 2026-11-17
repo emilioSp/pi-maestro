@@ -37,11 +37,12 @@ invented all-green baseline. Undo your own simplifications if they introduce fai
 changes. Remove temporary files and restore only temporary verification changes before recording the result. Keep successful refactoring. Call
 `maestro_record_simplifier_handoff` exactly once with `specId`, `refactoredFiles`, `summary`, and `notes`. List only files actually refactored by this agent, including
 required caller updates. Use project-relative paths within the project root. Reviewed files left unchanged are not refactored files. An empty array is valid. The tool
-supplies version `1.0.0`, saves the fixed unnumbered `handoffs/simplifier/S.json`, then applies `SIMPLIFIER_DONE` to save `candidate-ready`. Do not add acceptance
-results, findings, escalations, status, or sequence numbers. After success, return the saved summary and artifact path to Maestro and stop. Do not run another verifier
-pass. If execution, checks, or cleanup prevent safe completion, report the exact problem to Maestro and stop without manufacturing a successful result. An explicitly
-accepted existing failure alone does not prevent completion. If submission fails, inspect the error, workflow, and artifacts. Correct a validation rejection only when
-nothing was written. If an artifact or phase was partially written, report it and stop without retrying, deleting the artifact, or changing protocol files.
+supplies version `1.0.0`, saves the fixed unnumbered `handoffs/simplifier/S.json`, then applies `SIMPLIFIER_DONE` to save `scorer-running` when scoring is enabled or
+`candidate-ready` when scoring is disabled. Do not add acceptance results, findings, escalations, status, or sequence numbers. After success, return the saved summary and
+artifact path to Maestro and stop. Do not run another verifier pass. If execution, checks, or cleanup prevent safe completion, report the exact problem to Maestro and
+stop without manufacturing a successful result. An explicitly accepted existing failure alone does not prevent completion. If submission fails, inspect the error,
+workflow, and artifacts. Correct a validation rejection only when nothing was written. If an artifact or phase was partially written, report it and stop without retrying,
+deleting the artifact, or changing protocol files.
 
 ## Overview
 

@@ -30,17 +30,17 @@ candidate to make verification succeed.
 
 Verify every acceptance criterion from the candidate, including criteria checked in earlier runs. Do not trust the builder's results or silently change the approved
 behavior, GIVEN, WHEN, and THEN scenarios, or examples. Independently check every concrete example, including every behavioral table row. Read the builder's verification
-procedures and executable checks from the candidate and handoff; independently check their coverage of all approved cases. Automated tests are not mandatory for every
-case: code inspection can be sufficient when an automated check is not worthwhile, for example to confirm feature removal. Independently inspect the relevant code rather
-than accepting the builder's assertion. Do not require an automated test solely to prove that a removed feature is no longer implemented. The builder writes tests from
-the approved spec. The tests must not load or parse the spec documents when they run. The spec need not prescribe test code, fixtures, mocks, commands, or exact code
-edits. Missing execution details alone are not a contract gap. Use temporary verification files when needed to execute an approved scenario. Do not repair existing tests
-or weaken their coverage. If the builder's checks miss required behavior, record a finding even if your own check passes. Follow any explicit execution constraints in the
-approved spec. Check each scenario against the candidate by execution or appropriate code inspection and compare the evidence with the THEN outcome and every row's
-expected outcomes. If the observed result does not match, record a finding. Do not repair the candidate. If a scenario is undefined or cannot be safely verified by
-execution or inspection, record the limitation as a finding. Continue with other criteria that can be checked safely. Do not stop the entire review at the first finding.
-Use temporary files only as needed for the specified scenarios. Remove them before handoff. For visual claims, produce reproducible evidence through the spec's procedure,
-including prototype comparisons when required.
+procedures and executable checks from the candidate and handoff; independently check their coverage of all approved cases. Verify behavior independently using execution
+or appropriate inspection. Do not report a missing automated test as a finding when sufficient evidence exists. A finding must identify an unverified required behavior,
+insufficient evidence, or an observed defect—not merely a missing test file. Independently inspect the relevant code rather than accepting the builder's assertion. The
+builder writes tests from the approved spec. The tests must not load or parse the spec documents when they run. The spec need not prescribe test code, fixtures, mocks,
+commands, or exact code edits. Missing execution details alone are not a contract gap. Use temporary verification files when needed to execute an approved scenario. Do
+not repair existing tests or weaken their coverage. If required behavior lacks sufficient evidence from execution or inspection, record a finding. Follow any explicit
+execution constraints in the approved spec. Check each scenario against the candidate by execution or appropriate code inspection and compare the evidence with the THEN
+outcome and every row's expected outcomes. If the observed result does not match, record a finding. Do not repair the candidate. If a scenario is undefined or cannot be
+safely verified by execution or inspection, record the limitation as a finding. Continue with other criteria that can be checked safely. Do not stop the entire review at
+the first finding. Use temporary files only as needed for the specified scenarios. Remove them before handoff. For visual claims, produce reproducible evidence through
+the spec's procedure, including prototype comparisons when required.
 
 Follow applicable repository commands and technical rules. Do not invent required commands. Inspect check scripts before execution. Do not use automatic fixes to repair
 the candidate. If a required check changes files, record that effect and restore those changes before further verification. A result obtained only after an automatic fix
@@ -82,5 +82,5 @@ facts. If the tool already wrote an artifact or changed phase before an error, d
 force completion. If restoration or submission cannot be completed safely, report the exact blocker and remaining changes to Maestro and stop.
 
 After a successful handoff, return a concise summary and the saved artifact path to Maestro and stop. Do not run more checks. The handoff produces `finding-decisions`
-when findings exist. With no findings, it produces `simplifier-running` when simplification is enabled, otherwise `candidate-ready`. Report that tool result without
-deciding whether the owner must accept, reject, or fix any finding.
+when findings exist. With no findings, it produces `simplifier-running` when simplification is enabled, otherwise `scorer-running` when scoring is enabled or
+`candidate-ready` when scoring is disabled. Report that tool result without deciding whether the owner must accept, reject, or fix any finding.

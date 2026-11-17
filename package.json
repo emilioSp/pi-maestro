@@ -27,12 +27,8 @@
     "src/",
     "!**/*.test.ts",
     "docs/",
-    "MISSION.md",
-    "TECH_STACK.md",
-    "ROADMAP.md",
     "CHANGELOG.md",
     "MANIFESTO.md",
-    "ADR.md",
     "README.md",
     "LICENSE"
   ],

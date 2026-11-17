@@ -33,6 +33,7 @@ import type { MaestroPaths } from '#MaestroPaths.ts';
 import type { CreatedSpec } from '#specs/create.ts';
 import { executeTask, type ExecuteTaskInput } from '#src/delegation/executeTask.ts';
 import { prepareSubagentEnvironment } from '#src/delegation/prepareSubagentEnvironment.ts';
+import * as modelPicker from '#src/ui/selectModel.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { unavailableCompilerEscalation } from '#tests/fixtures/unavailable-compiler-escalation.ts';
 import { createApprovedWorkflow, doneHandoff, SPEC_ID } from '#tests/support/builder-workflow.ts';
@@ -48,6 +49,7 @@ import { RESOLVE_FINDINGS_TOOL } from '#tools/main/resolve-findings.ts';
 import { RUN_BUILDER_TOOL } from '#tools/main/run-builder.ts';
 import { RUN_SIMPLIFIER_TOOL } from '#tools/main/run-simplifier.ts';
 import { RUN_VERIFIER_TOOL } from '#tools/main/run-verifier.ts';
+import { SCORE_WORKFLOW_TOOL } from '#tools/main/score-workflow.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -71,6 +73,7 @@ const MAIN_TOOL_NAMES = [
   RUN_VERIFIER_TOOL.NAME,
   RESOLVE_FINDINGS_TOOL.NAME,
   RUN_SIMPLIFIER_TOOL.NAME,
+  SCORE_WORKFLOW_TOOL.NAME,
 ];
 
 const BASE_TOOLS = ['read', 'bash', 'edit', 'write', FOREIGN_TOOL];
@@ -315,7 +318,11 @@ describe('main Maestro extension', () => {
           model: 'openai-codex/gpt-6.1-sol',
           thinking: THINKING_LEVELS.HIGH,
         },
-        simplifier: { model: TEST_CONFIG.simplifier.model, thinking: THINKING_LEVELS.MEDIUM },
+        simplifier: {
+          required: true,
+          model: TEST_CONFIG.simplifier.model,
+          thinking: THINKING_LEVELS.MEDIUM,
+        },
       }),
     );
 
@@ -414,7 +421,7 @@ describe('main Maestro extension', () => {
       join(repository.path, '.pi/maestro.json'),
       JSON.stringify({
         ...TEST_CONFIG,
-        simplifier: { model: 'openai-codex/missing' },
+        simplifier: { required: true, model: 'openai-codex/missing' },
       }),
     );
 
@@ -544,6 +551,7 @@ describe('main Maestro extension', () => {
         builder: TEST_CONFIG.builder,
         verifier: TEST_CONFIG.verifier,
         simplifier: TEST_CONFIG.simplifier,
+        scorer: TEST_CONFIG.scorer,
       },
     });
 
@@ -818,7 +826,7 @@ describe('main Maestro extension', () => {
     const simplified = await runSimplifierTool.execute('test-call', { specId });
     expect(simplified.details).toMatchObject({
       specId,
-      phase: WORKFLOW_PHASES.CANDIDATE_READY,
+      phase: WORKFLOW_PHASES.SCORER_RUNNING,
       handoff: {
         specId,
         refactoredFiles: [],
@@ -832,6 +840,23 @@ describe('main Maestro extension', () => {
       toolCallId: 'test-call',
       input: { specId },
       ...simplified,
+      isError: false,
+    });
+    expect(maestroSessionState.isWaitingForFinalResponse()).toBe(false);
+    vi.spyOn(session.modelRuntime, 'getModelOfType').mockReturnValue(undefined);
+
+    const scoreTool = session.agent.state.tools.find(
+      (tool) => tool.name === SCORE_WORKFLOW_TOOL.NAME,
+    );
+
+    assertToolRegistered(scoreTool);
+    const scored = await scoreTool.execute('score', { specId });
+    await session.extensionRunner.emitToolResult({
+      type: 'tool_result',
+      toolName: SCORE_WORKFLOW_TOOL.NAME,
+      toolCallId: 'score',
+      input: { specId },
+      ...scored,
       isError: false,
     });
     expect(setStatus).toHaveBeenLastCalledWith(
@@ -983,13 +1008,18 @@ describe('main Maestro extension', () => {
         'utf8',
       );
 
+      const scoreTool = session.agent.state.tools.find(
+        (tool) => tool.name === SCORE_WORKFLOW_TOOL.NAME,
+      );
+
+      assertToolRegistered(scoreTool);
+      const scored = await scoreTool.execute('score', { specId: SPEC_ID });
       await session.extensionRunner.emitToolResult({
         type: 'tool_result',
-        toolName: RUN_SIMPLIFIER_TOOL.NAME,
-        toolCallId: 'simplify',
+        toolName: SCORE_WORKFLOW_TOOL.NAME,
+        toolCallId: 'score',
         input: { specId: SPEC_ID },
-        content: [],
-        details: { specId: SPEC_ID, phase: WORKFLOW_PHASES.CANDIDATE_READY },
+        ...scored,
         isError: false,
       });
 
@@ -1007,7 +1037,10 @@ describe('main Maestro extension', () => {
         provider: 'openai-codex',
         model: 'gpt-6.1-sol',
         content: [
-          { type: 'text', text: `Verification: weather alerts passed. Simplifier: ${summary}` },
+          {
+            type: 'text',
+            text: `Verification: weather alerts passed. Simplifier: ${summary}. Evaluation failed: Git HEAD baseline unavailable. No score. Report: ${join(paths.getSpecPath(SPEC_ID), 'evaluation.json')}`,
+          },
         ],
         stopReason,
         usage: {
@@ -1448,7 +1481,7 @@ it.each([
 
     expect(select.mock.calls[0]).toEqual([
       'Maestro setup',
-      ['Select builder', 'Select verifier', 'Select simplifier', 'Confirm'],
+      ['Select builder', 'Select verifier', 'Select simplifier', 'Select scorer', 'Confirm'],
       undefined,
     ]);
     expect(session.model).toBe(mainModel);
@@ -1456,6 +1489,7 @@ it.each([
 
     const saved = JSON.parse(await readFile(join(repository.path, '.pi/maestro.json'), 'utf8'));
     expect(saved.specDirectory).toBe('.specs');
+    expect(saved.scorer).toEqual({ required: false });
     expect({
       builder: saved.builder.required,
       verifier: saved.verifier.required,
@@ -1476,6 +1510,7 @@ it.each([
       enabledAgents.builder ? `Builder: ${MODEL_A} (high)` : 'Select builder',
       enabledAgents.verifier ? `Verifier: ${MODEL_B} (medium)` : 'Select verifier',
       'Select simplifier',
+      'Select scorer',
       'Confirm',
     ]);
     expect(
@@ -1601,3 +1636,94 @@ it('GIVEN builder enabled and both later phases disabled without models WHEN act
   await session.prompt('/maestro');
   expect(maestroSessionState.isActive()).toBe(true);
 });
+
+it('GIVEN an available classifier and chat model WHEN the scorer is selected and setup confirmed THEN only classifiers are offered and the selection is saved without thinking', async () => {
+  const repository = await createTemporaryProject();
+  onTestFinished(repository.cleanup);
+
+  const { session } = await piTestSessions.create({
+    cwd: repository.path,
+    extensions: [maestroExtension],
+  });
+
+  const registry = session.extensionRunner.createContext().modelRegistry;
+  const classifier = registry.getModelOfType('classifier', 'openrouter', 'typesafe/jev-1.14');
+
+  if (!classifier) throw new Error('Test catalog lacks classifier.');
+  vi.spyOn(registry, 'getAvailableOfType').mockResolvedValue([classifier]);
+  const ui = { ...session.extensionRunner.getUIContext() };
+
+  const select = vi
+    .spyOn(ui, 'select')
+    .mockResolvedValueOnce('Select scorer')
+    .mockResolvedValueOnce('Confirm');
+
+  vi.spyOn(ui, 'custom').mockResolvedValueOnce('openrouter/typesafe/jev-1.14');
+  const picker = vi.spyOn(modelPicker, 'selectModel');
+  onTestFinished(() => picker.mockRestore());
+  session.extensionRunner.setUIContext(ui, 'tui');
+
+  await session.prompt('/maestro');
+
+  expect(registry.getAvailable()).toContainEqual(expect.objectContaining({ id: 'gpt-6.1-sol' }));
+  expect(picker).toHaveBeenCalledWith(
+    expect.objectContaining({ choices: ['openrouter/typesafe/jev-1.14'] }),
+  );
+  expect(select.mock.calls.map(([title]) => title)).toEqual(['Maestro setup', 'Maestro setup']);
+  expect(select.mock.calls.at(-1)?.[1]).toContain('Scorer: openrouter/typesafe/jev-1.14');
+  const saved = JSON.parse(await readFile(join(repository.path, '.pi/maestro.json'), 'utf8'));
+  expect(saved.scorer).toEqual({ required: true, model: 'openrouter/typesafe/jev-1.14' });
+  expect(maestroSessionState.isActive()).toBe(true);
+});
+
+it('GIVEN builder is disabled and scorer is enabled without a model WHEN Maestro is activated THEN spec-only activation succeeds', async () => {
+  const repository = await createTemporaryProject();
+  onTestFinished(repository.cleanup);
+  await mkdir(join(repository.path, '.pi'));
+  await writeFile(
+    join(repository.path, '.pi/maestro.json'),
+    JSON.stringify({
+      version: SUPPORTED_CONFIG_VERSION,
+      builder: { required: false },
+      scorer: { required: true },
+    }),
+  );
+
+  const { session } = await piTestSessions.create({
+    cwd: repository.path,
+    extensions: [maestroExtension],
+  });
+
+  await session.prompt('/maestro');
+
+  expect(maestroSessionState.isActive()).toBe(true);
+});
+
+it.each([
+  { label: 'missing', scorer: { required: true } },
+  { label: 'empty', scorer: { required: true, model: '' } },
+])(
+  'GIVEN an enabled builder and $label scorer model WHEN Maestro is activated THEN activation rejects the missing scorer model',
+  async ({ scorer }) => {
+    const repository = await createTemporaryProject();
+    onTestFinished(repository.cleanup);
+    await mkdir(join(repository.path, '.pi'));
+    await writeFile(
+      join(repository.path, '.pi/maestro.json'),
+      JSON.stringify({ ...TEST_CONFIG, scorer }),
+    );
+
+    const { session, notify } = await piTestSessions.create({
+      cwd: repository.path,
+      extensions: [maestroExtension],
+    });
+
+    await session.prompt('/maestro');
+
+    expect(maestroSessionState.isActive()).toBe(false);
+    expect(notify).toHaveBeenCalledWith(
+      'Maestro configuration check failed: Scorer model is required when scorer.required is true.',
+      'error',
+    );
+  },
+);

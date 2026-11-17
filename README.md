@@ -22,9 +22,15 @@ The `owner` can use `Maestro` only to write and approve a `spec`, leaving implem
 2. The independent `verifier` checks every `acceptance criterion`.
 3. The `simplifier` refactors accepted code without changing behavior.
 
-Disabling the `builder` skips the entire implementation stage. With the `builder` enabled, the `verifier` and `simplifier` can be disabled independently. All three are
-enabled when their flags are omitted from an existing configuration. Initial setup enables only selected roles. See
-[Phase selection](docs/configuration.md#phase-selection).
+Disabling the `builder` skips the entire implementation stage and scoring. With the `builder` enabled, the `verifier`, `simplifier`, and `scorer` can be disabled
+independently. 
+
+In existing configurations, `builder` and `verifier` default to enabled; 
+
+`simplifier` and `scorer` default to disabled. Initial setup enables only selected
+roles. 
+
+See [Phase selection](docs/configuration.md#phase-selection) for details.
 
 The `owner` performs the final review.
 
@@ -38,42 +44,10 @@ Five principles hold the workflow together:
 
 https://github.com/user-attachments/assets/dffa8bc7-6c79-491f-95df-2ee95b6447aa
 
-## License
-
-Copyright (c) 2026 Emilio Spatola. Licensed under [AGPL-3.0-or-later](LICENSE).
-
 ## Inspirations
 
 Pi Maestro is inspired by concepts from [OpenSpec](https://github.com/Fission-AI/OpenSpec) and [GitHub Spec Kit](https://github.com/github/spec-kit). It adapts those
-concepts to a sequential multiagent workflow in Pi.
-
-The following official sources document the conceptual references. The links point to fixed revisions so the cited content remains inspectable.
-
-1. **The `specification` drives the code.** [Spec Kit's philosophy][spec-kit-philosophy] treats the `specification` as the primary `artifact` and code as its expression.
-   In `Maestro`, the approved `spec` defines a working contract for the `builder` and `verifier`.
-2. **Describe behavior, not routine implementation choices.** [OpenSpec's schema][openspec-schema] defines a `specification` as a behavior contract, not an implementation
-   plan. `Maestro` records required behavior, constraints, and approved architectural decisions in the `spec`, leaving routine implementation choices to the `builder`.
-3. **Use concrete, testable scenarios.** [OpenSpec's schema][openspec-schema] pairs requirements with scenarios; [Spec Kit's template][spec-kit-template] uses
-   Given/When/Then acceptance scenarios. Each `Maestro` `acceptance criterion` includes a `GIVEN`, a `WHEN`, a `THEN`, and a concrete example.
-4. **Clarify requirements progressively.** [Spec Kit's clarify command][spec-kit-clarify] asks one question at a time and integrates accepted answers into the
-   `specification`. `Maestro` likewise asks one focused question, waits for the owner's answer, and updates the `spec` before asking the next question.
-5. **Review requirements separately from testing code.** [Spec Kit's checklist command][spec-kit-checklist] evaluates requirements for completeness, clarity, consistency,
-   and measurability, not implementation correctness. Before approval, `Maestro` reviews the `spec` for consistency, missing decisions, measurable outcomes, and
-   reproducible scenarios. The later `verifier` checks the implementation independently.
-6. **Separate motivation, behavior, and design.** [OpenSpec's schema][openspec-schema] separates these concerns and calls for `design.md` only when significant technical
-   decisions need recording, including reasons, alternatives, and risks.
-7. **Make requirement changes explicit.** [OpenSpec's schema][openspec-schema] distinguishes added, modified, removed, and renamed requirements. `Maestro` adapts this
-   concept with one `Delta` field per requirement: `added`, `modified`, or `removed`. Each requirement heading states the required outcome with a named actor and `MUST`.
-8. **Make requirement coverage traceable.** [Spec Kit's analyze command][spec-kit-analyze] maps requirements to implementation tasks and identifies coverage gaps.
-   `Maestro` applies a related principle to verification: each requirement has a `Verified by` field linking to its `acceptance criteria`, existing tests covering exact
-   scenarios, or both. The mapping connects requirements to verification.
-
-[openspec-schema]: https://github.com/Fission-AI/OpenSpec/blob/6d04a1b58dedc95729d34e4f223d9d483aae210a/schemas/spec-driven/schema.yaml
-[spec-kit-philosophy]: https://github.com/github/spec-kit/blob/222a973f8b8794366680c043fb935a31f71902af/spec-driven.md
-[spec-kit-template]: https://github.com/github/spec-kit/blob/222a973f8b8794366680c043fb935a31f71902af/templates/spec-template.md
-[spec-kit-clarify]: https://github.com/github/spec-kit/blob/222a973f8b8794366680c043fb935a31f71902af/templates/commands/clarify.md
-[spec-kit-checklist]: https://github.com/github/spec-kit/blob/222a973f8b8794366680c043fb935a31f71902af/templates/commands/checklist.md
-[spec-kit-analyze]: https://github.com/github/spec-kit/blob/222a973f8b8794366680c043fb935a31f71902af/templates/commands/analyze.md
+concepts to a sequential multiagent workflow in Pi. See [Inspirations](docs/inspiration.md) for details and sources.
 
 ## The roles
 
@@ -84,9 +58,7 @@ The following official sources document the conceptual references. The links poi
 | `Builder`    | Implements the approved `spec` and checks each `acceptance criterion`.                                                  |
 | `Verifier`   | Independently checks the project files against the `spec` and reports technical issues.                                 |
 | `Simplifier` | Refactors accepted code for clarity without changing behavior or introducing check failures.                            |
-
-An `escalation` asks the `owner` to decide an implementation question. A `finding` records a technical issue reported by the `verifier`. The `owner` discusses both with
-`Maestro`, not directly with the `builder` or `verifier`.
+| `Scorer` | Optional classifier invoked by `Maestro` to score correctness and verification quality. |
 
 ## Prerequisites
 
@@ -129,48 +101,45 @@ The `owner` follows this workflow:
 5. Reviews `verifier` `findings` and chooses an action for every `finding`.
 6. Reads Maestro's summary at `candidate-ready` and performs the final review.
 
-`Maestro` starts the `verifier`, when enabled, after a successful `builder` `run`. Selected agents use Pi's SDK and run one at a time in the foreground. Pi waits for each
+Selected agents use Pi's SDK and run one at a time in the foreground. Pi waits for each
 `run` to finish, and `Maestro` shows the current phase in Pi's status.
 
-When a saved native child session exists, `Maestro` displays its path on completion or failure. The `owner` can inspect that file directly or export it to HTML:
+
+During the workflow, the `builder` may raise `escalations` and the `verifier` may report `findings` that require human review. `Maestro` presents them to the `owner`,
+who must decide how to proceed for each one. See [Escalations](docs/workflow.md#escalations) and [Findings](docs/workflow.md#findings) for details.
+
+The same `/maestro` command disables `Maestro` and leaves project files unchanged.
+
+### Troubleshooting
+When a saved native child session exists, `Maestro` displays its path on completion or failure. For troubleshooting, the `owner` can review the agent's messages, tool
+calls, and results by inspecting that file directly or exporting it to HTML:
 
 ```bash
 pi --export /sessions/weather/subagents/child.jsonl conversation.html
 ```
 
-The `owner` must not edit product files while the workflow runs. `Maestro` can perform temporary experiments with `owner` agreement during `spec` preparation and
-permitted revisions. See [Workflow](docs/workflow.md#spec-approval).
+## LLM as a judge
 
-An `escalation` asks the `owner` to decide an implementation question, and a `finding` records a technical issue reported by the `verifier`. The `owner` discusses both
-with `Maestro`, never directly with the `builder` or `verifier`. `Maestro` records all current `escalation` answers or `finding` decisions in the active `handoff` before
-changing phase.
+The optional `scorer` uses an explicitly selected Pi classifier to evaluate the entire workflow against the approved `spec` after implementation. 
 
-If any decision requires a `spec` change, the workflow returns to `drafting-spec` before the `owner` and `Maestro` revise the same `spec`. The `owner` reviews the revised
-`spec` and replies `GREEN FLAG` again. `Maestro` records renewed approval separately before another `builder` `run`.
+It scores:
+- **correctness** (how well the result meets the requirements)
+- **verification quality** (how well the evidence supports that result). 
 
-When enabled, `Maestro` starts the `simplifier` after successful verification, rejection of all `findings`, or `builder` completion with verification disabled. Only this
-step requires Git. If Git readiness cannot be confirmed, `Maestro` warns and skips simplification. The `simplifier` selects all uncommitted code changes, including
-pre-existing staged, unstaged, and untracked files.
+`Maestro` presents the results in the final summary.
 
-The workflow ends at `candidate-ready`. Rejected `findings` retain their reasons and accepted failures can remain. Maestro's summary separates independent verification
-from the later simplifier's report. After the final summary finishes successfully, `Maestro` automatically turns off. The `owner` controls later review, commits, pull
-requests, and merging.
+The `owner` can select the scorer's classifier during initial setup. See [Scorer configuration](docs/configuration.md#scorer).
 
-The same `/maestro` command disables `Maestro` and leaves project files unchanged. Disabling `Maestro`, restarting Pi, or using `/resume` clears live session state. Saved
-files do not automatically restore or resume an incomplete workflow. The `owner` handles it manually.
+This automatic grading system gives the `owner` a level of confidence in the workflow's outcome, not proof of correctness. 
+
+See [Workflow evaluation](docs/workflow.md#workflow-evaluation) for the criteria and scores.
 
 ## Configuration
 
-If `.pi/maestro.json` does not exist, `/maestro` starts a guided setup in Pi's interactive terminal. You, the `owner`, pick the model and thinking level for the
-`builder`, the `verifier`, and the `simplifier`. The agents you pick are enabled, and the configuration is saved before `Maestro` starts. If you pick no agents, `Maestro`
-only prepares the `spec`.
+On first use, `/maestro` opens guided setup to select agent models and thinking levels, plus an optional `scorer` classifier without a thinking level. Choices are saved
+in `.pi/maestro.json`.
 
-There are no default models. If a configuration file already exists, it must set a model for every enabled phase. Before starting, you can edit the file to change the
-`spec` directory, the models, the thinking levels, or the phase flags. If a `required` flag is missing in an existing file, it is treated as `true`. Do not change the
-configuration while the workflow is running.
-
-If `builder.required` is `false`, approval ends with an approved `spec` that you implement somewhere else. Otherwise, you can turn off the `verifier` and the `simplifier`
-separately. Any skipped work is listed in the final summary and is never reported as done. See [Configuration](docs/configuration.md#phase-selection).
+The `owner` can edit this file before activation. See [Configuration](docs/configuration.md) for fields, defaults, and phase selection.
 
 ## Documentation
 
@@ -183,8 +152,12 @@ The reading order is:
 
 ## Project constitution
 
-1. [Mission](MISSION.md): purpose, scope, and `owner` responsibilities.
-2. [Tech stack](TECH_STACK.md): runtime technologies and development tools.
-3. [Roadmap](ROADMAP.md): completed outcomes and planned work maintained in the repository.
+1. [Mission](docs/MISSION.md): purpose, scope, and `owner` responsibilities.
+2. [Tech stack](docs/TECH_STACK.md): runtime technologies and development tools.
+3. [Roadmap](docs/roadmap/README.md): completed outcomes and planned work maintained in the repository.
 4. [Changelog](CHANGELOG.md): meaningful codebase changes and breaking changes.
-5. [Architecture decision records](ADR.md): architectural choices, context, consequences, and evidence.
+5. [Architecture decision records](docs/adr/README.md): architectural choices, context, consequences, and evidence.
+
+## License
+
+Copyright (c) 2026 Emilio Spatola. Licensed under [AGPL-3.0-or-later](LICENSE).
