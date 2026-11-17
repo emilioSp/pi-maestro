@@ -52,7 +52,7 @@ describe('assertEnvironment', () => {
         join(repository.path, CONFIG_FILE_PATH),
         JSON.stringify({
           ...TEST_CONFIG,
-          [agent]: { model },
+          [agent]: { required: true, model },
         }),
       );
 

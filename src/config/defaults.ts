@@ -20,6 +20,6 @@ export const DEFAULT_CONFIG: MaestroConfig = {
   specDirectory: DEFAULT_SPEC_DIRECTORY,
   builder: { required: true, model: '', thinking: THINKING_LEVELS.HIGH },
   verifier: { required: true, model: '', thinking: THINKING_LEVELS.MEDIUM },
-  simplifier: { required: true, model: '', thinking: THINKING_LEVELS.HIGH },
+  simplifier: { required: false, model: '', thinking: THINKING_LEVELS.HIGH },
   scorer: { required: false, model: '' },
 };
