@@ -13,14 +13,22 @@ import { WORKFLOW_EVENTS, type WorkflowState } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
 
-function assertAcceptanceCriterionOrdering(markdown: string): void {
+const assertRequirementOrdering = (markdown: string): void => {
+  const requirements = [...markdown.matchAll(/^### REQ(\d+):/gm)];
+
+  if (requirements.some((match, index) => Number(match[1]) !== index + 1)) {
+    throw new Error('Fix requirement ordering in spec.md.');
+  }
+};
+
+const assertAcceptanceCriterionOrdering = (markdown: string): void => {
   // Match standalone ACs (###), including regression checks, and ACs nested under requirements (####).
   const criteria = [...markdown.matchAll(/^#{3,4} AC(\d+):/gm)];
 
   if (criteria.some((match, index) => Number(match[1]) !== index + 1)) {
     throw new Error('Fix acceptance criterion ordering in spec.md.');
   }
-}
+};
 
 type MarkSpecReadyInput = {
   config: MaestroConfig;
@@ -70,7 +78,9 @@ export const markSpecReady = async ({
     event: WORKFLOW_EVENTS.MARK_SPEC_READY,
   });
 
-  assertAcceptanceCriterionOrdering(await readFile(specFilePath, 'utf8'));
+  const markdown = await readFile(specFilePath, 'utf8');
+  assertRequirementOrdering(markdown);
+  assertAcceptanceCriterionOrdering(markdown);
 
   await writeWorkflowState({
     path: workflowPath,
