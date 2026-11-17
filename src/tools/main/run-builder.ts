@@ -44,7 +44,8 @@ type BuilderRunResult =
       phase:
         | typeof WORKFLOW_PHASES.READY_FOR_VERIFIER
         | typeof WORKFLOW_PHASES.SIMPLIFIER_RUNNING
-        | typeof WORKFLOW_PHASES.SCORER_RUNNING;
+        | typeof WORKFLOW_PHASES.SCORER_RUNNING
+        | typeof WORKFLOW_PHASES.CANDIDATE_READY;
       handoff: BuilderHandoff;
     }
   | {
@@ -84,6 +85,7 @@ const readBuilderResult = async ({
       state.phase !== WORKFLOW_PHASES.READY_FOR_VERIFIER &&
       state.phase !== WORKFLOW_PHASES.SIMPLIFIER_RUNNING &&
       state.phase !== WORKFLOW_PHASES.SCORER_RUNNING &&
+      state.phase !== WORKFLOW_PHASES.CANDIDATE_READY &&
       state.phase !== WORKFLOW_PHASES.ESCALATION_DECISIONS
     ) {
       throw new Error(`Builder returned with unexpected workflow phase "${state.phase}".`);
@@ -136,6 +138,10 @@ const readBuilderResult = async ({
 const formatBuilderResult = (result: BuilderRunResult): string => {
   if (result.outcome !== BUILDER_HANDOFF_STATUSES.DONE) {
     return `Builder submitted escalation questions for spec ${result.specId}. The workflow is waiting for an owner decision.`;
+  }
+
+  if (result.phase === WORKFLOW_PHASES.CANDIDATE_READY) {
+    return `Builder completed spec ${result.specId}. The workflow is candidate-ready. Verifier, simplifier, and scoring skipped by configuration. No independent verification was performed. Report scoring as skipped in the final summary.`;
   }
 
   if (result.phase === WORKFLOW_PHASES.SCORER_RUNNING) {

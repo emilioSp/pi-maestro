@@ -751,3 +751,49 @@ it.each([
     ]);
   },
 );
+
+it('GIVEN configuration without a scorer field and with verifier and simplifier disabled WHEN the builder completes THEN candidate-ready is saved without classification and scoring is reported skipped', async () => {
+  maestroSessionState.activate();
+  maestroSessionState.setActiveSpecId(SPEC_ID);
+
+  const { paths, repository } = await createApprovedWorkflow({
+    agents: { verifier: { required: false }, simplifier: { required: false } },
+  });
+
+  const configPath = join(repository.path, '.pi/maestro.json');
+  const { scorer: _scorer, ...existingConfig } = JSON.parse(await readFile(configPath, 'utf8'));
+  await writeFile(configPath, JSON.stringify(existingConfig));
+
+  const { tool, session } = await piTestSessions.createRegisteredTool({
+    cwd: repository.path,
+    extension: registerRunBuilderTool,
+  });
+
+  const { tool: childTool } = await piTestSessions.createRegisteredTool({
+    cwd: repository.path,
+    extension: (pi) => {
+      pi.registerTool(recordBuilderHandoffTool);
+    },
+  });
+
+  const classify = vi.spyOn(session.modelRuntime, 'classify');
+  vi.mocked(executeTask).mockImplementationOnce(async () => {
+    await childTool.execute('record-builder', { specId: SPEC_ID, ...doneHandoff() });
+
+    return { text: 'Saved' };
+  });
+
+  const result = await tool.execute('builder-only', { specId: SPEC_ID });
+
+  expect(result.details).toMatchObject({ phase: WORKFLOW_PHASES.CANDIDATE_READY });
+  expect(await readWorkflowState(paths.getWorkflowPath(SPEC_ID))).toMatchObject({
+    phase: WORKFLOW_PHASES.CANDIDATE_READY,
+  });
+  expect(classify).not.toHaveBeenCalled();
+  expect(result.content).toEqual([
+    {
+      type: 'text',
+      text: expect.stringContaining('Report scoring as skipped in the final summary'),
+    },
+  ]);
+});

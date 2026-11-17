@@ -60,7 +60,7 @@ export const recordSimplifierHandoffTool = {
       content: [
         {
           type: 'text',
-          text: 'Simplifier handoff saved. Workflow moved to scorer-running. Stop now.',
+          text: `Simplifier handoff saved. Workflow moved to ${completed.state.phase}. Stop now.`,
         },
       ],
       details: {
