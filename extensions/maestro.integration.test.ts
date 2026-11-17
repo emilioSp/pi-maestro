@@ -353,6 +353,7 @@ describe('main Maestro extension', () => {
       builder: true,
       verifier: false,
       simplifier: false,
+      scorer: false,
       expectedAgents: [`Builder (${TEST_CONFIG.builder.model} ${TEST_CONFIG.builder.thinking})`],
     },
     {
@@ -360,6 +361,7 @@ describe('main Maestro extension', () => {
       builder: true,
       verifier: true,
       simplifier: false,
+      scorer: false,
       expectedAgents: [
         `Builder (${TEST_CONFIG.builder.model} ${TEST_CONFIG.builder.thinking})`,
         `Verifier (${TEST_CONFIG.verifier.model} ${TEST_CONFIG.verifier.thinking})`,
@@ -370,9 +372,21 @@ describe('main Maestro extension', () => {
       builder: true,
       verifier: false,
       simplifier: true,
+      scorer: false,
       expectedAgents: [
         `Builder (${TEST_CONFIG.builder.model} ${TEST_CONFIG.builder.thinking})`,
         `Simplifier (${TEST_CONFIG.simplifier.model} ${TEST_CONFIG.simplifier.thinking})`,
+      ],
+    },
+    {
+      scenario: 'builder and scorer',
+      builder: true,
+      verifier: false,
+      simplifier: false,
+      scorer: true,
+      expectedAgents: [
+        `Builder (${TEST_CONFIG.builder.model} ${TEST_CONFIG.builder.thinking})`,
+        `Scorer (${TEST_CONFIG.scorer.model})`,
       ],
     },
     {
@@ -380,11 +394,12 @@ describe('main Maestro extension', () => {
       builder: false,
       verifier: true,
       simplifier: true,
+      scorer: true,
       expectedAgents: [],
     },
   ])(
     'GIVEN $scenario WHEN Maestro is activated THEN the notice lists only enabled agents',
-    async ({ builder, verifier, simplifier, expectedAgents }) => {
+    async ({ builder, verifier, simplifier, scorer, expectedAgents }) => {
       const repository = await createTemporaryProject();
       onTestFinished(repository.cleanup);
       await mkdir(join(repository.path, '.pi'));
@@ -395,6 +410,7 @@ describe('main Maestro extension', () => {
           builder: { ...TEST_CONFIG.builder, required: builder },
           verifier: { ...TEST_CONFIG.verifier, required: verifier },
           simplifier: { ...TEST_CONFIG.simplifier, required: simplifier },
+          scorer: { ...TEST_CONFIG.scorer, required: scorer },
         }),
       );
 
