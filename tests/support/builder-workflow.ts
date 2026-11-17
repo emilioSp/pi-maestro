@@ -27,7 +27,7 @@ export const SPEC_ID = '20260321-143052-add-weather-alerts';
 
 type CreateApprovedWorkflowInput = {
   specDirectory?: string;
-  agents?: Pick<PartialMaestroConfig, 'builder' | 'verifier' | 'simplifier'>;
+  agents?: Pick<PartialMaestroConfig, 'builder' | 'verifier' | 'simplifier' | 'scorer'>;
 };
 
 export const createApprovedWorkflow = async ({
@@ -47,6 +47,7 @@ export const createApprovedWorkflow = async ({
         builder: { ...TEST_CONFIG.builder, ...agents.builder },
         verifier: { ...TEST_CONFIG.verifier, ...agents.verifier },
         simplifier: { ...TEST_CONFIG.simplifier, ...agents.simplifier },
+        scorer: agents.scorer === undefined ? TEST_CONFIG.scorer : agents.scorer,
       },
       null,
       2,
