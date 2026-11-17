@@ -1,5 +1,5 @@
 /**
- * Objective: Request an evaluation of supplied workflow evidence from the fixed classifier.
+ * Objective: Request an evaluation of supplied workflow evidence from the configured classifier.
  * Used: By workflow scoring before normalizing and persisting the evaluation outcome.
  */
 
@@ -10,8 +10,6 @@ import type { ExtensionContext } from '@earendil-works/pi-coding-agent';
 
 import type { WorkflowEvidence } from '#src/score/collectWorkflowEvidence.ts';
 
-export const CLASSIFIER = { provider: 'openrouter', model: 'typesafe/jev-1.14' } as const;
-
 export class EvaluationCancelledError extends Error {
   constructor() {
     super('Workflow scoring cancelled.');
@@ -20,22 +18,29 @@ export class EvaluationCancelledError extends Error {
 
 type RequestEvaluationInput = {
   evidence: WorkflowEvidence;
+  classifier: { provider: string; model: string };
   context: ExtensionContext;
   signal?: AbortSignal;
 };
 
-export const requestEvaluation = async ({ evidence, context, signal }: RequestEvaluationInput) => {
+export const requestEvaluation = async ({
+  evidence,
+  classifier,
+  context,
+  signal,
+}: RequestEvaluationInput) => {
   const questions: Record<string, ClassifierScoreQuestion> = JSON.parse(
     await readFile(new URL('./questions.json', import.meta.url), 'utf8'),
   );
 
   const model = context.modelRegistry.getModelOfType(
     'classifier',
-    CLASSIFIER.provider,
-    CLASSIFIER.model,
+    classifier.provider,
+    classifier.model,
   );
 
-  if (!model) throw new Error('Exact classifier openrouter/typesafe/jev-1.14 unavailable.');
+  if (!model)
+    throw new Error(`Exact classifier ${classifier.provider}/${classifier.model} unavailable.`);
 
   const raw = await context.modelRegistry.classify(
     model,
