@@ -76,6 +76,25 @@ describe('Maestro paths', () => {
     );
   });
 
+  it('GIVEN a spec directory with two valid spec IDs and one other entry WHEN spec IDs are listed THEN only the valid IDs are returned in sorted order', async () => {
+    const project = await createTemporaryProject();
+    onTestFinished(project.cleanup);
+
+    const paths = new MaestroPaths({
+      projectRoot: project.path,
+      config: { ...TEST_CONFIG, specDirectory: join(project.path, '.specs') },
+    });
+
+    await mkdir(paths.getSpecPath('20261102-100000-add-filter'), { recursive: true });
+    await mkdir(paths.getSpecPath('20261101-100000-add-search'), { recursive: true });
+    await mkdir(join(paths.getSpecDirectory(), 'not-a-spec'), { recursive: true });
+
+    await expect(paths.listSpecIds()).resolves.toEqual([
+      '20261101-100000-add-search',
+      '20261102-100000-add-filter',
+    ]);
+  });
+
   it('GIVEN spec and prototype paths WHEN Maestro builds their full paths THEN valid paths stay inside the project and attempts to leave their allowed directories throw errors', () => {
     const projectRoot = '/repo';
 
