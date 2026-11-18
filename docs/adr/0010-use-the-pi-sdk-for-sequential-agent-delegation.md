@@ -7,8 +7,7 @@ status: active
 
 ## Context
 
-Main-extension pre-load exclusion is superseded by
-[ADR-012](0012-filter-main-maestro-registrations-after-native-discovery.md).
+Main-extension pre-load exclusion is superseded by [ADR-012](0012-filter-main-maestro-registrations-after-native-discovery.md).
 
 `Maestro` currently depends on `pi-subagents` to execute the `builder`, `verifier`, and `simplifier`. Its delegation needs are limited: only one workflow and one child
 agent execute at a time, and `Maestro` waits for each child to finish. `Maestro` already owns workflow transitions, role instructions, saved `handoffs`, and result

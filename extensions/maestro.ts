@@ -90,9 +90,12 @@ export default (pi: ExtensionAPI): void => {
     );
   };
 
+  let hasSentMaestroInstructions = false;
+
   // Pi fires this when a session starts, resumes, forks, or reloads.
   // Reset Maestro to off without activation checks or startup notifications.
   pi.on('session_start', async (_event, context) => {
+    hasSentMaestroInstructions = false;
     maestroSessionState.deactivate();
     syncMainTools();
     await refreshMaestroStatus(context);
@@ -184,8 +187,15 @@ export default (pi: ExtensionAPI): void => {
     if (!maestroSessionState.isActive()) {
       delete event.systemPromptOptions.sections.maestro;
 
+      if (hasSentMaestroInstructions) {
+        event.systemPromptOptions.sections.maestro_status =
+          'IMPORTANT: Maestro is off. Ignore earlier Maestro instructions.';
+      }
+
       return;
     }
+
+    delete event.systemPromptOptions.sections.maestro_status;
 
     const specId = maestroSessionState.getActiveSpecId();
     event.systemPromptOptions.sections.maestro = [
@@ -194,6 +204,8 @@ export default (pi: ExtensionAPI): void => {
         ? []
         : [`Active spec ID: ${specId}. Resolve its paths in the configured spec directory.`]),
     ].join('\n\n');
+
+    hasSentMaestroInstructions = true;
     await refreshMaestroStatus(context);
   });
 
