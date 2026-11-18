@@ -1,6 +1,6 @@
 /**
- * Objective: Build and persist project configuration from confirmed agent model selections.
- * Used: After setup confirmation and before activation checks.
+ * Objective: Build or patch and persist project configuration from confirmed agent model selections.
+ * Used: After setup confirmation, before activation checks, and when the owner changes agent models.
  */
 
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -12,11 +12,13 @@ import {
   CONFIG_FILE_PATH,
   DEFAULT_SPEC_DIRECTORY,
 } from '#config/defaults.ts';
+import { readConfigurationFile } from '#config/loadConfiguration.ts';
 import {
   type PartialMaestroConfig,
   SUPPORTED_CONFIG_VERSION,
   type ThinkingLevel,
 } from '#config/schema.ts';
+import { pathExists } from '#utils/path-exists.ts';
 
 export const SETUP_ROLES = {
   BUILDER: 'builder',
@@ -35,6 +37,22 @@ export type AgentModelSelections = Partial<
   scorer?: { model: string };
 };
 
+type AgentSelection = RoleSelection | { model: string };
+
+const toAgentSection = (selection?: AgentSelection) =>
+  selection ? { required: true, ...selection } : { required: false };
+
+const readCurrentConfiguration = async (
+  path: string,
+): Promise<PartialMaestroConfig | undefined> => {
+  if (!(await pathExists(path))) return undefined;
+
+  const parsed = await readConfigurationFile(path);
+  assertConfiguration(parsed);
+
+  return parsed;
+};
+
 type SaveConfigurationInput = {
   cwd: string;
   agentModelSelections: AgentModelSelections;
@@ -44,24 +62,22 @@ export const saveConfiguration = async ({
   cwd,
   agentModelSelections,
 }: SaveConfigurationInput): Promise<void> => {
-  const config: PartialMaestroConfig = {
-    version: SUPPORTED_CONFIG_VERSION,
+  const targetPath = join(cwd, CONFIG_FILE_PATH);
+
+  const currentConfiguration = (await readCurrentConfiguration(targetPath)) ?? {
     specDirectory: DEFAULT_SPEC_DIRECTORY,
-    builder: agentModelSelections.builder
-      ? { required: true, ...agentModelSelections.builder }
-      : { required: false },
-    verifier: agentModelSelections.verifier
-      ? { required: true, ...agentModelSelections.verifier }
-      : { required: false },
-    scorer: agentModelSelections.scorer
-      ? { required: true, model: agentModelSelections.scorer.model }
-      : { required: false },
-    simplifier: agentModelSelections.simplifier
-      ? { required: true, ...agentModelSelections.simplifier }
-      : { required: false },
+  };
+
+  const config: PartialMaestroConfig = {
+    ...currentConfiguration,
+    version: SUPPORTED_CONFIG_VERSION,
+    builder: toAgentSection(agentModelSelections.builder),
+    verifier: toAgentSection(agentModelSelections.verifier),
+    scorer: toAgentSection(agentModelSelections.scorer),
+    simplifier: toAgentSection(agentModelSelections.simplifier),
   };
 
   assertConfiguration(config);
   await mkdir(join(cwd, CONFIG_DIRECTORY_NAME), { recursive: true });
-  await writeFile(join(cwd, CONFIG_FILE_PATH), `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+  await writeFile(targetPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
 };

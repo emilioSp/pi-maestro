@@ -92,6 +92,15 @@ export class MaestroPaths {
     return this.specDirectory;
   }
 
+  public async listSpecIds(): Promise<string[]> {
+    const entries = await readdir(this.specDirectory, { withFileTypes: true });
+
+    return entries
+      .filter((entry) => entry.isDirectory() && isValidSpecId(entry.name))
+      .map((entry) => entry.name)
+      .sort();
+  }
+
   public getSpecPath(specId: string): string {
     assertSpecId(specId);
 

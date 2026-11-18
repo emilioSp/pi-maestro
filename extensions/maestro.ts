@@ -10,15 +10,16 @@ import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 
 import { CONFIG_FILE_PATH } from '#config/defaults.ts';
 import { loadConfiguration } from '#config/loadConfiguration.ts';
-import type { ThinkingLevel } from '#config/schema.ts';
+import { type AgentModelSelections, saveConfiguration } from '#config/saveConfiguration.ts';
+import type { MaestroConfig, ThinkingLevel } from '#config/schema.ts';
 import { assertEnvironment } from '#maestro/checks/assertEnvironment.ts';
 import { getMaestroInstructions } from '#maestro/instructions/getMaestroInstructions.ts';
+import { selectAgentModels } from '#maestro/selectAgentModels.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
-import { setupConfiguration } from '#maestro/setupConfiguration.ts';
+import { setupInitialConfiguration } from '#maestro/setupInitialConfiguration.ts';
 import { refreshMaestroStatus } from '#maestro/status/refreshMaestroStatus.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 import { hasSpecs } from '#specs/hasSpecs.ts';
-import { showSpecMenu, SPEC_ACTIONS } from '#src/ui/showSpecMenu.ts';
 import { CREATE_SPEC_TOOL, registerCreateSpecTool } from '#tools/main/create-spec.ts';
 import { MARK_SPEC_READY_TOOL, registerMarkSpecReadyTool } from '#tools/main/mark-spec-ready.ts';
 import {
@@ -38,6 +39,27 @@ import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
+
+const ACTIVATION_MENU_ACTIONS = {
+  NEW_SPEC: 'New spec',
+  RESTART_SPEC: 'Restart spec',
+  AGENT_MODELS: 'Agent models',
+} as const;
+
+const getCurrentAgentsConfiguration = (config: MaestroConfig): AgentModelSelections => ({
+  ...(config.builder.required && config.builder.model
+    ? { builder: { model: config.builder.model, thinking: config.builder.thinking } }
+    : {}),
+  ...(config.verifier.required && config.verifier.model
+    ? { verifier: { model: config.verifier.model, thinking: config.verifier.thinking } }
+    : {}),
+  ...(config.simplifier.required && config.simplifier.model
+    ? { simplifier: { model: config.simplifier.model, thinking: config.simplifier.thinking } }
+    : {}),
+  ...(config.scorer.required && config.scorer.model
+    ? { scorer: { model: config.scorer.model } }
+    : {}),
+});
 
 const MAIN_TOOL_NAMES: readonly string[] = [
   CREATE_SPEC_TOOL.NAME,
@@ -113,28 +135,49 @@ export default (pi: ExtensionAPI): void => {
       }
 
       try {
-        if (
-          !(await pathExists(join(context.cwd, CONFIG_FILE_PATH))) &&
-          !(await setupConfiguration(context))
-        ) {
-          return;
+        if (!(await pathExists(join(context.cwd, CONFIG_FILE_PATH)))) {
+          const isConfigured = await setupInitialConfiguration(context);
+
+          if (!isConfigured) return;
         }
 
-        await assertEnvironment({ context });
-        const config = await loadConfiguration(context.cwd);
-        const isImplementationEnabled = config.builder.required;
+        let config = await loadConfiguration(context.cwd);
 
         const paths = new MaestroPaths({ projectRoot: await realpath(context.cwd), config });
 
-        if (await hasSpecs(paths.getSpecDirectory())) {
-          const specId = await showSpecMenu({
-            ui: context.ui,
-            specDirectory: paths.getSpecDirectory(),
-          });
+        const activationMenuActions = (await hasSpecs(paths.getSpecDirectory()))
+          ? [
+              ACTIVATION_MENU_ACTIONS.NEW_SPEC,
+              ACTIVATION_MENU_ACTIONS.RESTART_SPEC,
+              ACTIVATION_MENU_ACTIONS.AGENT_MODELS,
+            ]
+          : [ACTIVATION_MENU_ACTIONS.NEW_SPEC, ACTIVATION_MENU_ACTIONS.AGENT_MODELS];
 
-          if (specId === undefined) return;
+        while (true) {
+          const action = await context.ui.select('Start Maestro workflow', activationMenuActions);
 
-          if (specId !== SPEC_ACTIONS.NEW) {
+          if (action === undefined) return;
+
+          if (action === ACTIVATION_MENU_ACTIONS.AGENT_MODELS) {
+            const agentModelSelections = await selectAgentModels({
+              context,
+              currentAgentsConfiguration: getCurrentAgentsConfiguration(config),
+            });
+
+            if (agentModelSelections === undefined) continue;
+
+            await saveConfiguration({ cwd: context.cwd, agentModelSelections });
+            config = await loadConfiguration(context.cwd);
+            continue;
+          }
+
+          if (action === ACTIVATION_MENU_ACTIONS.RESTART_SPEC) {
+            const specId = await context.ui.select('Restart spec', await paths.listSpecIds());
+
+            if (specId === undefined) continue;
+
+            assertEnvironment({ context, config });
+
             const state = await readWorkflowState(paths.getWorkflowPath(specId));
 
             if (state.specId !== specId)
@@ -145,6 +188,14 @@ export default (pi: ExtensionAPI): void => {
               state: transitionWorkflow({ state, event: WORKFLOW_EVENTS.RESTART_SPEC, config }),
             });
             maestroSessionState.setActiveSpecId(specId);
+
+            break;
+          }
+
+          if (action === ACTIVATION_MENU_ACTIONS.NEW_SPEC) {
+            assertEnvironment({ context, config });
+
+            break;
           }
         }
 
@@ -164,7 +215,7 @@ export default (pi: ExtensionAPI): void => {
               { label: 'Simplifier', settings: config.simplifier },
               { label: 'Scorer', settings: config.scorer },
             ]
-              .filter(({ settings }) => isImplementationEnabled && settings.required)
+              .filter(({ settings }) => config.builder.required && settings.required)
               .map(({ label, settings }) =>
                 context.ui.theme.fg('accent', formatEnabledAgent({ label, ...settings })),
               ),
