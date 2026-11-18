@@ -7,8 +7,7 @@ status: active
 
 ## Context
 
-Supersedes
-only the pre-load exclusion constraint in [ADR-010](0010-use-the-pi-sdk-for-sequential-agent-delegation.md).
+Supersedes only the pre-load exclusion constraint in [ADR-010](0010-use-the-pi-sdk-for-sequential-agent-delegation.md).
 
 Child preparation duplicated Pi's package discovery to exclude the main `Maestro` extension before initialization.
 

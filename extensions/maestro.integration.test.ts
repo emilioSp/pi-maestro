@@ -522,6 +522,7 @@ describe('main Maestro extension', () => {
     expect(session.getActiveToolNames()).toEqual(['read', FOREIGN_TOOL]);
     expect(inactivePrompt.systemPromptOptions.sections).toEqual({
       foreign: 'Keep foreign instructions',
+      maestro_status: expect.stringContaining('Maestro is off.'),
     });
     expect(setStatus).toHaveBeenLastCalledWith(MAESTRO_STATUS_KEY, undefined);
     expect(notify).toHaveBeenCalledOnce();
@@ -537,6 +538,85 @@ describe('main Maestro extension', () => {
       theme.fg('muted', 'Maestro active · ') + theme.fg('accent', 'No active spec'),
     );
     expect(session.getActiveToolNames()).toEqual(['read', FOREIGN_TOOL, ...MAIN_TOOL_NAMES]);
+  });
+
+  it('GIVEN a session has sent Maestro instructions WHEN the owner toggles Maestro off and back on THEN the model receives the off notice and its removal', async () => {
+    const repository = await createTemporaryProject();
+    onTestFinished(repository.cleanup);
+    await saveConfiguration({ cwd: repository.path, agentModelSelections: {} });
+
+    const { session } = await piTestSessions.create({
+      cwd: repository.path,
+      extensions: [
+        maestroExtension,
+        (pi) => {
+          pi.on('before_agent_start', (event) => {
+            event.systemPromptOptions.sections.foreign = 'Keep foreign instructions';
+          });
+        },
+      ],
+    });
+
+    const modelRequests = vi.spyOn(session.agent, 'streamFunction').mockImplementation((model) => {
+      const stream = createAssistantMessageEventStream();
+      stream.push({
+        type: 'done',
+        reason: 'stop',
+        message: {
+          role: 'assistant',
+          api: model.api,
+          provider: model.provider,
+          model: model.id,
+          content: [{ type: 'text', text: 'Ready.' }],
+          stopReason: 'stop',
+          usage: {
+            input: 0,
+            output: 0,
+            cacheRead: 0,
+            cacheWrite: 0,
+            totalTokens: 0,
+            cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+          },
+          timestamp: Temporal.Now.instant().epochMilliseconds,
+        },
+      });
+
+      return stream;
+    });
+
+    const outgoingSystemSections = () =>
+      modelRequests.mock.lastCall?.[1].messages
+        .filter((message) => message.role === 'system')
+        .map((message) => message.sections);
+
+    await session.prompt('/maestro');
+    await session.prompt('Discuss the change.');
+    expect(outgoingSystemSections()).toContainEqual(
+      expect.objectContaining({ maestro: expect.stringContaining('You are Maestro') }),
+    );
+
+    await session.prompt('/maestro');
+    await session.prompt('Discuss something else.');
+    expect(modelRequests).toHaveBeenCalledTimes(2);
+    expect(outgoingSystemSections()?.at(-1)).toEqual({
+      maestro: null,
+      maestro_status:
+        '<maestro_status>\nIMPORTANT: Maestro is off. Ignore earlier Maestro instructions.\n</maestro_status>',
+    });
+    expect(outgoingSystemSections()).toContainEqual(
+      expect.objectContaining({
+        foreign: expect.stringContaining('Keep foreign instructions'),
+        maestro: expect.stringContaining('You are Maestro'),
+      }),
+    );
+
+    await session.prompt('/maestro');
+    await session.prompt('Return to the change.');
+    expect(modelRequests).toHaveBeenCalledTimes(3);
+    expect(outgoingSystemSections()?.at(-1)).toEqual({
+      maestro: expect.stringContaining('You are Maestro'),
+      maestro_status: null,
+    });
   });
 
   it('GIVEN a saved workflow WHEN Pi resumes the session THEN Maestro stays disabled, leaves the workflow unchanged, and does not select an active spec', async () => {
@@ -1124,7 +1204,7 @@ describe('main Maestro extension', () => {
       expect(nextPrompt.systemPromptOptions.sections.foreign).toBe('Keep foreign instructions');
       expect(nextPrompt.systemPromptOptions.sections.maestro !== undefined).toBe(maestroIsActive);
       expect(Object.keys(nextPrompt.systemPromptOptions.sections)).toEqual(
-        maestroIsActive ? ['maestro', 'foreign'] : ['foreign'],
+        maestroIsActive ? ['maestro', 'foreign'] : ['foreign', 'maestro_status'],
       );
 
       expect(await readFile(paths.getWorkflowPath(SPEC_ID), 'utf8')).toBe(savedWorkflow);
