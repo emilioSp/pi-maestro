@@ -844,6 +844,10 @@ describe('main Maestro extension', () => {
       ],
     });
 
+    const ui = { ...session.extensionRunner.getUIContext() };
+    vi.spyOn(ui, 'select').mockResolvedValue('New spec');
+    session.extensionRunner.setUIContext(ui, 'tui');
+
     const modelRequests = vi.spyOn(session.agent, 'streamFunction').mockImplementation((model) => {
       const stream = createAssistantMessageEventStream();
       stream.push({
