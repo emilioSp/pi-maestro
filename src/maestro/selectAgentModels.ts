@@ -21,7 +21,12 @@ export const selectAgentModels = async ({
   currentAgentsConfiguration,
 }: SelectAgentModelsInput): Promise<AgentModelSelections | undefined> => {
   const choices = setupChoices(context.modelRegistry.getAvailable());
-  const classifiers = await context.modelRegistry.getAvailableOfType('classifier');
+
+  const classifiers = (await context.modelRegistry.getAvailableOfType('classifier')).map(
+    ({ provider, id }) => `${provider}/${id}`,
+  );
+
+  const models = choices.map(({ value }) => value);
   const draft: AgentModelSelections = { ...currentAgentsConfiguration };
 
   while (true) {
@@ -35,17 +40,23 @@ export const selectAgentModels = async ({
 
     if (action === CONFIRM_SETUP) return draft;
 
-    if (action === SETUP_ROLES.SCORER) {
-      const model = await selectModel({
-        ui: context.ui,
-        choices: classifiers.map(({ provider, id }) => `${provider}/${id}`),
-      });
+    const model = await selectModel({
+      ui: context.ui,
+      choices: action === SETUP_ROLES.SCORER ? classifiers : models,
+    });
 
-      if (model !== undefined) draft.scorer = { model };
+    if (model === undefined) continue;
+
+    if (model === null) {
+      delete draft[action];
       continue;
     }
 
-    const model = await selectModel({ ui: context.ui, choices: choices.map(({ value }) => value) });
+    if (action === SETUP_ROLES.SCORER) {
+      draft.scorer = { model };
+      continue;
+    }
+
     const choice = choices.find(({ value }) => value === model);
 
     if (!choice) continue;

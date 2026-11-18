@@ -1,0 +1,36 @@
+{
+  "version": "1.0.0",
+  "specId": "20261118-211851-clear-agent-model-selections-without-losing-other-roles",
+  "summary": "Verified all five criteria against the live implementation, including all three role-clear examples and a no-match search in the production terminal picker.",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Ran Vitest and inspected extensions/maestro.integration.test.ts and src/maestro/selectAgentModels.ts. First-use clearing Verifier saved Builder A (high) and disabled Verifier without model or thinking. Clearing Simplifier preserved Builder A (high) and Scorer C. Clearing Scorer without a Builder removed its classifier and retained Verifier B (medium). The cancelled replacement model regression also passed; picker cancellation leaves the draft untouched.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Ran the clear-Verifier-then-close integration scenario: Verifier became unset in the draft, the workflow menu returned, and the configuration matched its original bytes. Inspected selectAgentModels: closing returns undefined instead of the draft.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "Hosted production selectModel in Pi TuiMainScreen with ProcessTerminal in an Expect PTY. Observed None first, above sample/B and sample/A. Moved down to sample/B, typed z (no matches), and observed only the selected None row between Search and the hint. Down then Enter returned null.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Ran and inspected the all-roles clear/reopen integration scenario: immediately after clearing Builder the draft title identified spec-only mode, Builder was unset, and Verifier B (medium), Simplifier A (low), and Scorer C each had the skipped-without-a-Builder label.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "The same integration scenario checked both saved configurations and the reopened menu. With Builder disabled, all three other selections remained intact. Selecting Builder B (high) and confirming preserved those selections, removed skipped labels, and listed all three roles on activation. Inspected the Builder gate in src/workflow/transitions.ts.",
+      "probeStatus": "passed"
+    }
+  ],
+  "findings": [],
+  "notes": [
+    "npm run check exited successfully (349 tests across 45 files). Its formatter rewrote six Markdown files with existing formatting differences; those edits and temporary probe artifacts were restored or removed. Read-only lint, typecheck, and a separate full Vitest run also succeeded."
+  ]
+}

@@ -266,12 +266,12 @@ describe('agent model changes', () => {
     expect(maestroSessionState.isActive()).toBe(true);
   });
 
-  it('GIVEN one existing spec WHEN the owner closes the agent menu THEN the configuration file is unchanged and the workflow menu returns', async () => {
+  it('GIVEN saved builder and verifier models WHEN the owner clears verifier then closes the agent menu THEN the configuration file is unchanged and the workflow menu returns', async () => {
     const repository = await createTemporaryProject();
     onTestFinished(repository.cleanup);
     await saveConfiguration({
       cwd: repository.path,
-      agentModelSelections: { builder: TEST_CONFIG.builder },
+      agentModelSelections: { builder: TEST_CONFIG.builder, verifier: TEST_CONFIG.verifier },
     });
     await mkdir(join(repository.path, '.specs', SPEC_ID), { recursive: true });
     const before = await readFile(join(repository.path, '.pi/maestro.json'), 'utf8');
@@ -286,10 +286,11 @@ describe('agent model changes', () => {
     const select = vi
       .spyOn(ui, 'select')
       .mockResolvedValueOnce('Agent models')
+      .mockResolvedValueOnce(`Verifier: ${MODEL_B} (medium)`)
       .mockResolvedValueOnce(undefined)
       .mockResolvedValueOnce('New spec');
 
-    const custom = vi.spyOn(ui, 'custom');
+    vi.spyOn(ui, 'custom').mockResolvedValueOnce(null);
     session.extensionRunner.setUIContext(ui, 'tui');
 
     await session.prompt('/maestro');
@@ -297,11 +298,153 @@ describe('agent model changes', () => {
     expect(select.mock.calls.map(([title]) => title)).toEqual([
       'Start Maestro workflow',
       'Maestro setup',
+      'Maestro setup',
       'Start Maestro workflow',
     ]);
-    expect(custom).not.toHaveBeenCalled();
+    expect(select.mock.calls[2]?.[1]).toContain('Select verifier');
     expect(await readFile(join(repository.path, '.pi/maestro.json'), 'utf8')).toBe(before);
     expect(maestroSessionState.isActive()).toBe(true);
+  });
+
+  it.each([
+    {
+      role: 'simplifier',
+      builder: TEST_CONFIG.builder,
+      label: `Simplifier: ${TEST_CONFIG.simplifier.model} (low)`,
+    },
+    {
+      role: 'scorer',
+      builder: { required: false },
+      label: `Scorer: ${TEST_CONFIG.scorer.model} — skipped without a Builder`,
+    },
+  ] as const)(
+    'GIVEN a saved $role model WHEN the owner clears it and confirms THEN only that role is disabled',
+    async ({ role, builder, label }) => {
+      const repository = await createTemporaryProject();
+      onTestFinished(repository.cleanup);
+
+      const config = {
+        ...TEST_CONFIG,
+        builder,
+        simplifier: { ...TEST_CONFIG.simplifier, thinking: 'low' },
+      };
+
+      const configPath = join(repository.path, '.pi/maestro.json');
+      await mkdir(join(repository.path, '.pi'), { recursive: true });
+      await writeFile(configPath, JSON.stringify(config));
+
+      const { session } = await piTestSessions.create({
+        cwd: repository.path,
+        extensions: [maestroExtension],
+      });
+
+      const ui = { ...session.extensionRunner.getUIContext() };
+
+      const select = vi
+        .spyOn(ui, 'select')
+        .mockResolvedValueOnce('Agent models')
+        .mockResolvedValueOnce(label)
+        .mockResolvedValueOnce('Confirm');
+
+      vi.spyOn(ui, 'custom').mockResolvedValueOnce(null);
+      session.extensionRunner.setUIContext(ui, 'tui');
+
+      await session.prompt('/maestro');
+
+      expect(select.mock.calls[1]?.[1]).toContain(label);
+      expect(select.mock.calls[2]?.[1]).toContain(`Select ${role}`);
+      expect(select.mock.calls.map(([title]) => title)).not.toContain('Select thinking');
+      expect(JSON.parse(await readFile(configPath, 'utf8'))).toEqual({
+        ...config,
+        [role]: { required: false },
+      });
+    },
+  );
+
+  it('GIVEN all roles are selected WHEN the owner clears Builder and later selects a replacement THEN the other roles stay saved and are no longer skipped', async () => {
+    const repository = await createTemporaryProject();
+    onTestFinished(repository.cleanup);
+
+    const config = {
+      ...TEST_CONFIG,
+      simplifier: { ...TEST_CONFIG.simplifier, thinking: 'low' },
+    };
+
+    const configPath = join(repository.path, '.pi/maestro.json');
+    await mkdir(join(repository.path, '.pi'), { recursive: true });
+    await writeFile(configPath, JSON.stringify(config));
+
+    const { session, notify } = await piTestSessions.create({
+      cwd: repository.path,
+      extensions: [maestroExtension],
+    });
+
+    const ui = { ...session.extensionRunner.getUIContext() };
+
+    const select = vi
+      .spyOn(ui, 'select')
+      .mockResolvedValueOnce('Agent models')
+      .mockResolvedValueOnce(`Builder: ${MODEL_A} (high)`)
+      .mockResolvedValueOnce('Confirm');
+
+    const custom = vi.spyOn(ui, 'custom').mockResolvedValueOnce(null);
+    session.extensionRunner.setUIContext(ui, 'tui');
+
+    await session.prompt('/maestro');
+
+    const skippedMenu = [
+      'Select builder',
+      `Verifier: ${MODEL_B} (medium) — skipped without a Builder`,
+      `Simplifier: ${MODEL_A} (low) — skipped without a Builder`,
+      `Scorer: ${config.scorer.model} — skipped without a Builder`,
+      'Confirm',
+    ];
+
+    expect(select).toHaveBeenLastCalledWith(
+      'Start Maestro workflow',
+      ['New spec', 'Agent models'],
+      undefined,
+    );
+    expect(select.mock.calls[2]).toEqual([
+      'Maestro setup — spec-only mode',
+      skippedMenu,
+      undefined,
+    ]);
+    expect(JSON.parse(await readFile(configPath, 'utf8'))).toEqual({
+      ...config,
+      builder: { required: false },
+    });
+
+    select.mockClear();
+    select
+      .mockResolvedValueOnce('Agent models')
+      .mockResolvedValueOnce('Select builder')
+      .mockResolvedValueOnce('high')
+      .mockResolvedValueOnce('Confirm')
+      .mockResolvedValueOnce('New spec');
+    custom.mockResolvedValueOnce(MODEL_B);
+    await session.prompt('/maestro');
+
+    expect(select.mock.calls[1]).toEqual([
+      'Maestro setup — spec-only mode',
+      skippedMenu,
+      undefined,
+    ]);
+    expect(select.mock.calls[3]?.[1]).toEqual([
+      `Builder: ${MODEL_B} (high)`,
+      `Verifier: ${MODEL_B} (medium)`,
+      `Simplifier: ${MODEL_A} (low)`,
+      `Scorer: ${config.scorer.model}`,
+      'Confirm',
+    ]);
+    expect(JSON.parse(await readFile(configPath, 'utf8'))).toEqual({
+      ...config,
+      builder: { required: true, model: MODEL_B, thinking: 'high' },
+    });
+    const activation = stripTerminalSequences(notify.mock.calls.at(-1)?.[0] ?? '');
+    expect(activation).toContain(`Verifier (${MODEL_B} medium)`);
+    expect(activation).toContain(`Simplifier (${MODEL_A} low)`);
+    expect(activation).toContain(`Scorer (${config.scorer.model})`);
   });
 
   it('GIVEN one existing spec and an unavailable verifier model WHEN activation is requested THEN the workflow menu appears before the model error stops activation', async () => {
@@ -1589,6 +1732,19 @@ it.each([
     enabledAgents: { builder: true, verifier: true, simplifier: false },
   },
   {
+    scenario: 'cleared verifier',
+    actions: [
+      'Select builder',
+      'high',
+      'Select verifier',
+      'medium',
+      `Verifier: ${MODEL_B} (medium)`,
+      'Confirm',
+    ],
+    models: [MODEL_A, MODEL_B, null],
+    enabledAgents: { builder: true, verifier: false, simplifier: false },
+  },
+  {
     scenario: 'verifier without builder',
     actions: ['Select verifier', 'medium', 'Confirm'],
     models: [MODEL_B],
@@ -1616,6 +1772,12 @@ it.each([
     scenario: 'cancelled new model',
     actions: ['Select verifier', 'Confirm'],
     models: [undefined],
+    enabledAgents: { builder: false, verifier: false, simplifier: false },
+  },
+  {
+    scenario: 'None for an unset verifier',
+    actions: ['Select verifier', 'Confirm'],
+    models: [null],
     enabledAgents: { builder: false, verifier: false, simplifier: false },
   },
   {
@@ -1649,7 +1811,7 @@ it.each([
     await session.prompt('/maestro');
 
     expect(select.mock.calls[0]).toEqual([
-      'Maestro setup',
+      'Maestro setup — spec-only mode',
       ['Select builder', 'Select verifier', 'Select simplifier', 'Select scorer', 'Confirm'],
       undefined,
     ]);
@@ -1675,9 +1837,16 @@ it.each([
         ? { required: true, model: MODEL_B, thinking: 'medium' }
         : { required: false },
     );
-    expect(select.mock.calls.filter(([title]) => title === 'Maestro setup').at(-1)?.[1]).toEqual([
+
+    const verifierLabel = enabledAgents.builder
+      ? `Verifier: ${MODEL_B} (medium)`
+      : `Verifier: ${MODEL_B} (medium) — skipped without a Builder`;
+
+    expect(
+      select.mock.calls.filter(([title]) => title.startsWith('Maestro setup')).at(-1)?.[1],
+    ).toEqual([
       enabledAgents.builder ? `Builder: ${MODEL_A} (high)` : 'Select builder',
-      enabledAgents.verifier ? `Verifier: ${MODEL_B} (medium)` : 'Select verifier',
+      enabledAgents.verifier ? verifierLabel : 'Select verifier',
       'Select simplifier',
       'Select scorer',
       'Confirm',
@@ -1848,12 +2017,12 @@ it('GIVEN an available classifier and chat model WHEN the scorer is selected and
     expect.objectContaining({ choices: ['openrouter/typesafe/jev-1.14'] }),
   );
   expect(select.mock.calls.map(([title]) => title)).toEqual([
-    'Maestro setup',
-    'Maestro setup',
+    'Maestro setup — spec-only mode',
+    'Maestro setup — spec-only mode',
     'Start Maestro workflow',
   ]);
-  expect(select.mock.calls.filter(([title]) => title === 'Maestro setup').at(-1)?.[1]).toContain(
-    'Scorer: openrouter/typesafe/jev-1.14',
+  expect(select.mock.calls[1]?.[1]).toContain(
+    'Scorer: openrouter/typesafe/jev-1.14 — skipped without a Builder',
   );
   const saved = JSON.parse(await readFile(join(repository.path, '.pi/maestro.json'), 'utf8'));
   expect(saved.scorer).toEqual({ required: true, model: 'openrouter/typesafe/jev-1.14' });

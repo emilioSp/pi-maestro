@@ -1,0 +1,37 @@
+{
+  "status": "done",
+  "summary": "Added a searchable picker's clear action for selected roles in initial setup and Agent models. Clearing Builder switches the draft to spec-only mode without dropping other selections. npm run check passed (349 tests).",
+  "acceptanceCriteria": [
+    {
+      "id": "AC1",
+      "probe": "Ran npm run check. In extensions/maestro.integration.test.ts, the first-use 'cleared verifier' row saved Builder A (high) and disabled Verifier without model or thinking. The Agent models clear cases disabled Simplifier while keeping Builder A (high) and Scorer C, and disabled Scorer without a Builder while retaining Verifier B (medium). The existing 'cancelled replacement model' row also passed.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC2",
+      "probe": "Ran npm run check. The Agent models cancel integration test cleared Verifier in the draft, left the menu without confirming, returned to the workflow menu, and checked that the saved Builder/Verifier configuration was byte-for-byte unchanged.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC3",
+      "probe": "Ran the production selectModel component with Pi's TuiMainScreen and ProcessTerminal in an Expect PTY, with two model rows and clearing enabled. Observed None as the first row, moved Down to a model, typed the no-match query zzzz-maestro-no-match-7492, and observed None selected at the top. Down then Enter still returned null (clear). This used the real terminal picker with a minimal UI host, not a mocked picker or a full Pi startup.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC4",
+      "probe": "Ran npm run check. The Builder clear/reopen integration test asserted the draft menu title identified spec-only mode, Builder was unset, and the exact Verifier B (medium), Simplifier A (low), and Scorer C rows said they were skipped without a Builder.",
+      "probeStatus": "passed"
+    },
+    {
+      "id": "AC5",
+      "probe": "Ran npm run check. The Builder clear/reopen integration test checked the first saved file had only Builder disabled, reopened to the same retained selections, selected Builder B (high), and checked the second saved file and activation notice showed all retained roles enabled without reselecting them.",
+      "probeStatus": "passed"
+    }
+  ],
+  "notes": [
+    "The full Pi CLI did not complete startup under the test PTY; AC3 was verified by hosting the production picker directly in Pi's terminal renderer and sending actual terminal keystrokes."
+  ],
+  "escalations": [],
+  "version": "1.0.0",
+  "specId": "20261118-211851-clear-agent-model-selections-without-losing-other-roles"
+}

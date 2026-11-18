@@ -33,21 +33,28 @@ export const showAgentRolesSetupMenu = async ({
   roles,
   currentAgentsConfiguration,
 }: ShowAgentRolesSetupMenuInput) => {
+  const specOnly = currentAgentsConfiguration.builder === undefined;
+
   const actions = roles.map((role) => {
     const selection = currentAgentsConfiguration[role];
 
     const thinking =
       role === SETUP_ROLES.SCORER ? undefined : currentAgentsConfiguration[role]?.thinking;
 
+    const thinkingLabel = thinking === undefined ? '' : ` (${thinking})`;
+
+    const skippedLabel =
+      specOnly && role !== SETUP_ROLES.BUILDER ? ' — skipped without a Builder' : '';
+
     return {
       role,
       label: selection
-        ? `${ROLE_LABELS[role]}: ${selection.model}${thinking === undefined ? '' : ` (${thinking})`}`
+        ? `${ROLE_LABELS[role]}: ${selection.model}${thinkingLabel}${skippedLabel}`
         : `Select ${role}`,
     };
   });
 
-  const choice = await ui.select('Maestro setup', [
+  const choice = await ui.select(specOnly ? 'Maestro setup — spec-only mode' : 'Maestro setup', [
     ...actions.map(({ label }) => label),
     CONFIRM_LABEL,
   ]);

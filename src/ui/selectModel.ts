@@ -1,6 +1,6 @@
 /**
  * Objective: Show a searchable, bounded picker for supplied model identifiers.
- * Used: When editing an agent's model during initial setup.
+ * Used: When selecting or clearing an agent's model.
  */
 
 import type { ExtensionContext } from '@earendil-works/pi-coding-agent';
@@ -11,26 +11,34 @@ type SelectModelInput = {
   choices: string[];
 };
 
-export const selectModel = ({ ui, choices }: SelectModelInput): Promise<string | undefined> =>
-  ui.custom<string | undefined>((tui, theme, keybindings, done) => {
+const CLEAR_ROLE_ITEM = { value: '', label: 'None — clear this role' };
+
+export const selectModel = ({
+  ui,
+  choices,
+}: SelectModelInput): Promise<string | null | undefined> =>
+  ui.custom<string | null | undefined>((tui, theme, keybindings, done) => {
     const input = new Input({ prompt: 'Search: ' });
     const title = new Text('Select model', 0, 0);
     const hint = new Text('Type to search. Up/down navigate, Enter select, Escape cancel.', 0, 0);
 
     const createList = (query: string) => {
-      const list = new SelectList(
-        fuzzyFilter(choices, query, (value) => value).map((value) => ({ value, label: value })),
-        10,
-        {
-          selectedPrefix: (text) => theme.fg('accent', text),
-          selectedText: (text) => theme.fg('accent', text),
-          description: (text) => theme.fg('muted', text),
-          scrollInfo: (text) => theme.fg('dim', text),
-          noMatch: (text) => theme.fg('warning', text),
-        },
-      );
+      const items = fuzzyFilter(choices, query, (value) => value).map((value) => ({
+        value,
+        label: value,
+      }));
 
-      list.onSelect = ({ value }) => done(value);
+      items.unshift(CLEAR_ROLE_ITEM);
+
+      const list = new SelectList(items, 10, {
+        selectedPrefix: (text) => theme.fg('accent', text),
+        selectedText: (text) => theme.fg('accent', text),
+        description: (text) => theme.fg('muted', text),
+        scrollInfo: (text) => theme.fg('dim', text),
+        noMatch: (text) => theme.fg('warning', text),
+      });
+
+      list.onSelect = (item) => done(item === CLEAR_ROLE_ITEM ? null : item.value);
       list.onCancel = () => done(undefined);
 
       return list;

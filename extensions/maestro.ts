@@ -47,16 +47,18 @@ const ACTIVATION_MENU_ACTIONS = {
 } as const;
 
 const getCurrentAgentsConfiguration = (config: MaestroConfig): AgentModelSelections => ({
-  ...(config.builder.required
+  ...(config.builder.required && config.builder.model
     ? { builder: { model: config.builder.model, thinking: config.builder.thinking } }
     : {}),
-  ...(config.verifier.required
+  ...(config.verifier.required && config.verifier.model
     ? { verifier: { model: config.verifier.model, thinking: config.verifier.thinking } }
     : {}),
-  ...(config.simplifier.required
+  ...(config.simplifier.required && config.simplifier.model
     ? { simplifier: { model: config.simplifier.model, thinking: config.simplifier.thinking } }
     : {}),
-  ...(config.scorer.required ? { scorer: { model: config.scorer.model } } : {}),
+  ...(config.scorer.required && config.scorer.model
+    ? { scorer: { model: config.scorer.model } }
+    : {}),
 });
 
 const MAIN_TOOL_NAMES: readonly string[] = [
