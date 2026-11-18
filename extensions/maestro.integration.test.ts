@@ -9,7 +9,11 @@ import { join } from 'node:path';
 import { promisify } from 'node:util';
 
 import { type AssistantMessage, createAssistantMessageEventStream } from '@earendil-works/pi-ai';
-import type { ExtensionAPI, wrapRegisteredTool } from '@earendil-works/pi-coding-agent';
+import type {
+  AgentSession,
+  ExtensionAPI,
+  wrapRegisteredTool,
+} from '@earendil-works/pi-coding-agent';
 import { createAgentSession, SessionManager } from '@earendil-works/pi-coding-agent';
 import { stripTerminalSequences } from '@earendil-works/pi-tui';
 import { Type } from 'typebox';
@@ -102,7 +106,7 @@ afterEach(async () => {
 });
 
 describe('spec restart activation', () => {
-  it('GIVEN two existing specs WHEN the owner chooses restart THEN both IDs are offered for selection', async () => {
+  it('GIVEN two existing specs WHEN the owner presses Escape in the restart list THEN the workflow menu returns before activation', async () => {
     const repository = await createTemporaryProject();
     onTestFinished(repository.cleanup);
     await saveConfiguration({ cwd: repository.path, agentModelSelections: {} });
@@ -120,15 +124,17 @@ describe('spec restart activation', () => {
     const select = vi
       .spyOn(ui, 'select')
       .mockResolvedValueOnce('Restart spec')
-      .mockResolvedValueOnce(undefined);
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce('New spec');
 
     session.extensionRunner.setUIContext(ui, 'tui');
     await session.prompt('/maestro');
     expect(select.mock.calls.map(([title, choices]) => [title, choices])).toEqual([
-      ['Start Maestro workflow', ['New spec', 'Restart spec']],
+      ['Start Maestro workflow', ['New spec', 'Restart spec', 'Agent models']],
       ['Restart spec', ids],
+      ['Start Maestro workflow', ['New spec', 'Restart spec', 'Agent models']],
     ]);
-    expect(maestroSessionState.isActive()).toBe(false);
+    expect(maestroSessionState.isActive()).toBe(true);
   });
 
   it.each(Object.values(WORKFLOW_PHASES))(
@@ -163,7 +169,7 @@ describe('spec restart activation', () => {
   );
 
   it.each(['empty', 'absent'])(
-    'GIVEN an %s configured spec directory WHEN activation is requested THEN Maestro activates without a choice or spec creation',
+    'GIVEN an %s configured spec directory WHEN activation is requested THEN the workflow menu omits restart and Maestro activates without spec creation',
     async (directory) => {
       const repository = await createTemporaryProject();
       onTestFinished(repository.cleanup);
@@ -177,10 +183,14 @@ describe('spec restart activation', () => {
       });
 
       const ui = { ...session.extensionRunner.getUIContext() };
-      const select = vi.spyOn(ui, 'select');
+      const select = vi.spyOn(ui, 'select').mockResolvedValue('New spec');
       session.extensionRunner.setUIContext(ui, 'tui');
       await session.prompt('/maestro');
-      expect(select).not.toHaveBeenCalled();
+      expect(select).toHaveBeenCalledExactlyOnceWith(
+        'Start Maestro workflow',
+        ['New spec', 'Agent models'],
+        undefined,
+      );
       expect(maestroSessionState.isActive()).toBe(true);
       expect(maestroSessionState.getActiveSpecId()).toBeNull();
 
@@ -191,6 +201,135 @@ describe('spec restart activation', () => {
       expect(entries).toEqual(directory === 'empty' ? [] : 'ENOENT');
     },
   );
+});
+
+describe('agent model changes', () => {
+  it('GIVEN one existing spec WHEN the owner replaces the builder model then starts a new spec THEN the file keeps the other settings and the notice shows the new model', async () => {
+    const repository = await createTemporaryProject();
+    onTestFinished(repository.cleanup);
+    await mkdir(join(repository.path, '.pi'), { recursive: true });
+    await writeFile(
+      join(repository.path, '.pi/maestro.json'),
+      JSON.stringify({
+        version: SUPPORTED_CONFIG_VERSION,
+        specDirectory: 'planning/specs',
+        builder: TEST_CONFIG.builder,
+        verifier: { required: false },
+        simplifier: { required: false },
+        scorer: { required: false },
+      }),
+    );
+    await mkdir(join(repository.path, 'planning/specs', SPEC_ID), { recursive: true });
+
+    const { session, notify } = await piTestSessions.create({
+      cwd: repository.path,
+      extensions: [maestroExtension],
+    });
+
+    const ui = { ...session.extensionRunner.getUIContext() };
+
+    const select = vi
+      .spyOn(ui, 'select')
+      .mockResolvedValueOnce('Agent models')
+      .mockResolvedValueOnce(`Builder: ${MODEL_A} (high)`)
+      .mockResolvedValueOnce(THINKING_LEVELS.LOW)
+      .mockResolvedValueOnce('Confirm')
+      .mockResolvedValueOnce('New spec');
+
+    vi.spyOn(ui, 'custom').mockResolvedValueOnce(MODEL_B);
+    session.extensionRunner.setUIContext(ui, 'tui');
+
+    await session.prompt('/maestro');
+
+    expect(select.mock.calls[1]).toEqual([
+      'Maestro setup',
+      [
+        `Builder: ${MODEL_A} (high)`,
+        'Select verifier',
+        'Select simplifier',
+        'Select scorer',
+        'Confirm',
+      ],
+      undefined,
+    ]);
+    expect(JSON.parse(await readFile(join(repository.path, '.pi/maestro.json'), 'utf8'))).toEqual({
+      version: SUPPORTED_CONFIG_VERSION,
+      specDirectory: 'planning/specs',
+      builder: { required: true, model: MODEL_B, thinking: THINKING_LEVELS.LOW },
+      verifier: { required: false },
+      simplifier: { required: false },
+      scorer: { required: false },
+    });
+    expect(stripTerminalSequences(notify.mock.calls.at(-1)?.[0] ?? '')).toContain(
+      `Builder (${MODEL_B} ${THINKING_LEVELS.LOW})`,
+    );
+    expect(maestroSessionState.isActive()).toBe(true);
+  });
+
+  it('GIVEN one existing spec WHEN the owner closes the agent menu THEN the configuration file is unchanged and the workflow menu returns', async () => {
+    const repository = await createTemporaryProject();
+    onTestFinished(repository.cleanup);
+    await saveConfiguration({
+      cwd: repository.path,
+      agentModelSelections: { builder: TEST_CONFIG.builder },
+    });
+    await mkdir(join(repository.path, '.specs', SPEC_ID), { recursive: true });
+    const before = await readFile(join(repository.path, '.pi/maestro.json'), 'utf8');
+
+    const { session } = await piTestSessions.create({
+      cwd: repository.path,
+      extensions: [maestroExtension],
+    });
+
+    const ui = { ...session.extensionRunner.getUIContext() };
+
+    const select = vi
+      .spyOn(ui, 'select')
+      .mockResolvedValueOnce('Agent models')
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce('New spec');
+
+    const custom = vi.spyOn(ui, 'custom');
+    session.extensionRunner.setUIContext(ui, 'tui');
+
+    await session.prompt('/maestro');
+
+    expect(select.mock.calls.map(([title]) => title)).toEqual([
+      'Start Maestro workflow',
+      'Maestro setup',
+      'Start Maestro workflow',
+    ]);
+    expect(custom).not.toHaveBeenCalled();
+    expect(await readFile(join(repository.path, '.pi/maestro.json'), 'utf8')).toBe(before);
+    expect(maestroSessionState.isActive()).toBe(true);
+  });
+
+  it('GIVEN one existing spec and an unavailable verifier model WHEN activation is requested THEN the workflow menu appears before the model error stops activation', async () => {
+    const repository = await createTemporaryProject();
+    onTestFinished(repository.cleanup);
+    const model = 'openrouter/~openai/gpt-mini-latest';
+    await mkdir(join(repository.path, '.pi'), { recursive: true });
+    await writeFile(
+      join(repository.path, '.pi/maestro.json'),
+      JSON.stringify({ ...TEST_CONFIG, verifier: { required: true, model } }),
+    );
+    await mkdir(join(repository.path, '.specs', SPEC_ID), { recursive: true });
+
+    const { session, notify } = await piTestSessions.create({
+      cwd: repository.path,
+      extensions: [maestroExtension],
+    });
+
+    const ui = { ...session.extensionRunner.getUIContext() };
+    const select = vi.spyOn(ui, 'select').mockResolvedValueOnce('New spec');
+    session.extensionRunner.setUIContext(ui, 'tui');
+
+    await session.prompt('/maestro');
+
+    expect(select.mock.calls[0]?.[0]).toBe('Start Maestro workflow');
+    expect(maestroSessionState.isActive()).toBe(false);
+    expect(notify).toHaveBeenCalledWith(`Configured model is not available: "${model}".`, 'error');
+  });
 });
 
 describe('main Maestro extension', () => {
@@ -240,6 +379,7 @@ describe('main Maestro extension', () => {
     const entriesBeforeActivation = session.sessionManager.getEntries();
     const modelRequests = vi.spyOn(session.agent, 'streamFunction');
 
+    chooseNewSpec(session);
     await session.prompt('/maestro');
     const theme = session.extensionRunner.createContext().ui.theme;
 
@@ -331,6 +471,7 @@ describe('main Maestro extension', () => {
       cwd: repository.path,
     });
 
+    chooseNewSpec(session);
     await session.prompt('/maestro');
     const theme = session.extensionRunner.createContext().ui.theme;
 
@@ -419,6 +560,7 @@ describe('main Maestro extension', () => {
         extensions: [maestroExtension],
       });
 
+      chooseNewSpec(session);
       await session.prompt('/maestro');
 
       expect(notify).toHaveBeenCalledOnce();
@@ -446,6 +588,7 @@ describe('main Maestro extension', () => {
       extensions: [maestroExtension],
     });
 
+    chooseNewSpec(session);
     await session.prompt('/maestro');
     expect(maestroSessionState.isActive()).toBe(false);
     expect(notify).toHaveBeenCalledExactlyOnceWith(
@@ -472,6 +615,7 @@ describe('main Maestro extension', () => {
       projectTrusted: false,
     });
 
+    chooseNewSpec(session);
     await session.prompt('/maestro');
 
     expect(maestroSessionState.isActive()).toBe(true);
@@ -576,6 +720,7 @@ describe('main Maestro extension', () => {
       cwd: repository.path,
     });
 
+    chooseNewSpec(session);
     await session.prompt('/maestro');
     const theme = session.extensionRunner.createContext().ui.theme;
 
@@ -1402,6 +1547,7 @@ describe('main Maestro extension', () => {
         simplifier: TEST_CONFIG.simplifier,
       },
     });
+    chooseNewSpec(session);
     await session.prompt('/maestro');
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
@@ -1422,6 +1568,12 @@ describe('main Maestro extension', () => {
 const MODEL_A = TEST_CONFIG.builder.model;
 
 const MODEL_B = TEST_CONFIG.verifier.model;
+
+const chooseNewSpec = (session: AgentSession): void => {
+  const ui = { ...session.extensionRunner.getUIContext() };
+  vi.spyOn(ui, 'select').mockResolvedValue('New spec');
+  session.extensionRunner.setUIContext(ui, 'tui');
+};
 
 it.each([
   {
@@ -1487,6 +1639,7 @@ it.each([
     const select = vi.spyOn(ui, 'select');
 
     for (const action of actions) select.mockResolvedValueOnce(action);
+    select.mockResolvedValue('New spec');
     const custom = vi.spyOn(ui, 'custom');
 
     for (const model of models) custom.mockResolvedValueOnce(model);
@@ -1567,7 +1720,8 @@ it('GIVEN Pi levels beginning with minimal and a completed high selection WHEN b
     .mockResolvedValueOnce('high')
     .mockResolvedValueOnce(`Builder: ${MODEL_A} (high)`)
     .mockResolvedValueOnce('minimal')
-    .mockResolvedValueOnce('Confirm');
+    .mockResolvedValueOnce('Confirm')
+    .mockResolvedValue('New spec');
 
   vi.spyOn(ui, 'custom').mockResolvedValueOnce(MODEL_A).mockResolvedValueOnce(MODEL_B);
   session.extensionRunner.setUIContext(ui, 'tui');
@@ -1582,7 +1736,9 @@ it('GIVEN Pi levels beginning with minimal and a completed high selection WHEN b
     ['minimal', 'low', 'medium', 'high'],
     ['minimal', 'low', 'medium', 'high'],
   ]);
-  expect(select.mock.calls.at(-1)?.[1][0]).toBe(`Builder: ${MODEL_B} (minimal)`);
+  expect(select.mock.calls.filter(([title]) => title === 'Maestro setup').at(-1)?.[1][0]).toBe(
+    `Builder: ${MODEL_B} (minimal)`,
+  );
   const saved = JSON.parse(await readFile(join(repository.path, '.pi/maestro.json'), 'utf8'));
   expect(saved.builder).toEqual({ required: true, model: MODEL_B, thinking: 'minimal' });
   expect(maestroSessionState.isActive()).toBe(true);
@@ -1625,13 +1781,17 @@ it('GIVEN an existing configuration missing the enabled verifier model WHEN acti
   });
 
   const ui = { ...session.extensionRunner.getUIContext() };
-  const select = vi.spyOn(ui, 'select');
+  const select = vi.spyOn(ui, 'select').mockResolvedValue('New spec');
   const custom = vi.spyOn(ui, 'custom');
   session.extensionRunner.setUIContext(ui, 'tui');
   await session.prompt('/maestro');
   expect(maestroSessionState.isActive()).toBe(false);
   expect(notify).toHaveBeenCalledWith('Configured model is not available: "".', 'error');
-  expect(select).not.toHaveBeenCalled();
+  expect(select).toHaveBeenCalledExactlyOnceWith(
+    'Start Maestro workflow',
+    ['New spec', 'Agent models'],
+    undefined,
+  );
   expect(custom).not.toHaveBeenCalled();
   expect(await readFile(join(repository.path, '.pi/maestro.json'), 'utf8')).toBe(before);
 });
@@ -1649,6 +1809,7 @@ it('GIVEN builder enabled and both later phases disabled without models WHEN act
     extensions: [maestroExtension],
   });
 
+  chooseNewSpec(session);
   await session.prompt('/maestro');
   expect(maestroSessionState.isActive()).toBe(true);
 });
@@ -1672,7 +1833,8 @@ it('GIVEN an available classifier and chat model WHEN the scorer is selected and
   const select = vi
     .spyOn(ui, 'select')
     .mockResolvedValueOnce('Select scorer')
-    .mockResolvedValueOnce('Confirm');
+    .mockResolvedValueOnce('Confirm')
+    .mockResolvedValue('New spec');
 
   vi.spyOn(ui, 'custom').mockResolvedValueOnce('openrouter/typesafe/jev-1.14');
   const picker = vi.spyOn(modelPicker, 'selectModel');
@@ -1685,8 +1847,14 @@ it('GIVEN an available classifier and chat model WHEN the scorer is selected and
   expect(picker).toHaveBeenCalledWith(
     expect.objectContaining({ choices: ['openrouter/typesafe/jev-1.14'] }),
   );
-  expect(select.mock.calls.map(([title]) => title)).toEqual(['Maestro setup', 'Maestro setup']);
-  expect(select.mock.calls.at(-1)?.[1]).toContain('Scorer: openrouter/typesafe/jev-1.14');
+  expect(select.mock.calls.map(([title]) => title)).toEqual([
+    'Maestro setup',
+    'Maestro setup',
+    'Start Maestro workflow',
+  ]);
+  expect(select.mock.calls.filter(([title]) => title === 'Maestro setup').at(-1)?.[1]).toContain(
+    'Scorer: openrouter/typesafe/jev-1.14',
+  );
   const saved = JSON.parse(await readFile(join(repository.path, '.pi/maestro.json'), 'utf8'));
   expect(saved.scorer).toEqual({ required: true, model: 'openrouter/typesafe/jev-1.14' });
   expect(maestroSessionState.isActive()).toBe(true);
@@ -1710,6 +1878,7 @@ it('GIVEN builder is disabled and scorer is enabled without a model WHEN Maestro
     extensions: [maestroExtension],
   });
 
+  chooseNewSpec(session);
   await session.prompt('/maestro');
 
   expect(maestroSessionState.isActive()).toBe(true);
@@ -1734,11 +1903,12 @@ it.each([
       extensions: [maestroExtension],
     });
 
+    chooseNewSpec(session);
     await session.prompt('/maestro');
 
     expect(maestroSessionState.isActive()).toBe(false);
     expect(notify).toHaveBeenCalledWith(
-      'Maestro configuration check failed: Scorer model is required when scorer.required is true.',
+      'Scorer model is required when scorer.required is true.',
       'error',
     );
   },

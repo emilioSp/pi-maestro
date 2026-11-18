@@ -1,18 +1,19 @@
 /**
- * Objective: Check Maestro's read-only activation requirements.
+ * Objective: Check Maestro's model availability requirement.
  * Used: In integration tests with isolated Pi environments and offline Pi model registries.
  */
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { afterEach, describe, expect, it, vi, onTestFinished } from 'vitest';
+import { afterEach, expect, it, vi, onTestFinished } from 'vitest';
 
 import {
   CONFIG_DIRECTORY_NAME,
   CONFIG_FILE_PATH,
   DEFAULT_CONFIG_VERSION,
 } from '#config/defaults.ts';
+import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { assertEnvironment } from '#maestro/checks/assertEnvironment.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import piTestSessions from '#tests/support/pi-session.ts';
@@ -22,53 +23,33 @@ afterEach(async () => {
   await piTestSessions.cleanup();
 });
 
-describe('assertEnvironment', () => {
-  it('GIVEN configuration has a numeric version WHEN activation requirements are checked THEN the check fails with a configuration error', async () => {
+it.each(['builder', 'verifier', 'simplifier'])(
+  'GIVEN the %s model is absent from Pi’s registry WHEN activation is checked THEN it reports the full unavailable ID',
+  async (agent) => {
     const repository = await createTemporaryProject();
     onTestFinished(repository.cleanup);
+    const model = 'openrouter/~openai/gpt-mini-latest';
     await mkdir(join(repository.path, CONFIG_DIRECTORY_NAME));
-    await writeFile(join(repository.path, CONFIG_FILE_PATH), JSON.stringify({ version: 999 }));
+    await writeFile(
+      join(repository.path, CONFIG_FILE_PATH),
+      JSON.stringify({
+        ...TEST_CONFIG,
+        [agent]: { required: true, model },
+      }),
+    );
 
     const { session } = await piTestSessions.create({
       cwd: repository.path,
       extensions: [],
     });
 
-    await expect(
-      assertEnvironment({
-        context: session.extensionRunner.createContext(),
-      }),
-    ).rejects.toThrow('Maestro configuration check failed:');
-  });
+    const config = await loadConfiguration(repository.path);
 
-  it.each(['builder', 'verifier', 'simplifier'])(
-    'GIVEN the %s model is absent from Pi’s registry WHEN activation is checked THEN it reports the full unavailable ID',
-    async (agent) => {
-      const repository = await createTemporaryProject();
-      onTestFinished(repository.cleanup);
-      const model = 'openrouter/~openai/gpt-mini-latest';
-      await mkdir(join(repository.path, CONFIG_DIRECTORY_NAME));
-      await writeFile(
-        join(repository.path, CONFIG_FILE_PATH),
-        JSON.stringify({
-          ...TEST_CONFIG,
-          [agent]: { required: true, model },
-        }),
-      );
-
-      const { session } = await piTestSessions.create({
-        cwd: repository.path,
-        extensions: [],
-      });
-
-      await expect(
-        assertEnvironment({
-          context: session.extensionRunner.createContext(),
-        }),
-      ).rejects.toThrow(`Configured model is not available: "${model}".`);
-    },
-  );
-});
+    expect(() =>
+      assertEnvironment({ context: session.extensionRunner.createContext(), config }),
+    ).toThrow(`Configured model is not available: "${model}".`);
+  },
+);
 
 it.each([
   { verifier: false, simplifier: true },
@@ -102,9 +83,12 @@ it.each([
       extensions: [],
     });
 
-    await expect(
-      assertEnvironment({ context: session.extensionRunner.createContext() }),
-    ).resolves.toBeUndefined();
+    expect(
+      assertEnvironment({
+        context: session.extensionRunner.createContext(),
+        config: await loadConfiguration(repository.path),
+      }),
+    ).toBeUndefined();
   },
 );
 
@@ -129,6 +113,8 @@ it('GIVEN builder disabled and both later phases enabled with unavailable models
 
   const context = session.extensionRunner.createContext();
   const available = vi.spyOn(context.modelRegistry, 'getAvailable').mockReturnValue([]);
-  await expect(assertEnvironment({ context })).resolves.toBeUndefined();
+  const config = await loadConfiguration(repository.path);
+
+  expect(assertEnvironment({ context, config })).toBeUndefined();
   expect(available).not.toHaveBeenCalled();
 });
