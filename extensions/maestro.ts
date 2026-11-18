@@ -173,6 +173,8 @@ export default (pi: ExtensionAPI): void => {
 
             if (specId === undefined) continue;
 
+            assertEnvironment({ context, config });
+
             const state = await readWorkflowState(paths.getWorkflowPath(specId));
 
             if (state.specId !== specId)
@@ -183,12 +185,17 @@ export default (pi: ExtensionAPI): void => {
               state: transitionWorkflow({ state, event: WORKFLOW_EVENTS.RESTART_SPEC, config }),
             });
             maestroSessionState.setActiveSpecId(specId);
+
+            break;
           }
 
-          break;
+          if (action === ACTIVATION_MENU_ACTIONS.NEW_SPEC) {
+            assertEnvironment({ context, config });
+
+            break;
+          }
         }
 
-        assertEnvironment({ context, config });
         maestroSessionState.activate();
         syncMainTools();
         await refreshMaestroStatus(context);
