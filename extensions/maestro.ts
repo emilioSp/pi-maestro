@@ -10,6 +10,7 @@ import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 
 import { CONFIG_FILE_PATH } from '#config/defaults.ts';
 import { loadConfiguration } from '#config/loadConfiguration.ts';
+import type { ThinkingLevel } from '#config/schema.ts';
 import { assertEnvironment } from '#maestro/checks/assertEnvironment.ts';
 import { getMaestroInstructions } from '#maestro/instructions/getMaestroInstructions.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
@@ -53,6 +54,15 @@ type CompletedWorkflowResult = {
   specId: string;
   phase: typeof WORKFLOW_PHASES.CANDIDATE_READY;
 };
+
+type EnabledAgent = {
+  label: string;
+  model: string;
+  thinking?: ThinkingLevel;
+};
+
+const formatEnabledAgent = ({ label, model, thinking }: EnabledAgent): string =>
+  thinking === undefined ? `${label} (${model})` : `${label} (${model} ${thinking})`;
 
 const isCompletedWorkflowResult = (details: unknown): details is CompletedWorkflowResult =>
   typeof details === 'object' &&
@@ -149,10 +159,11 @@ export default (pi: ExtensionAPI): void => {
               { label: 'Builder', settings: config.builder },
               { label: 'Verifier', settings: config.verifier },
               { label: 'Simplifier', settings: config.simplifier },
+              { label: 'Scorer', settings: config.scorer },
             ]
               .filter(({ settings }) => isImplementationEnabled && settings.required)
               .map(({ label, settings }) =>
-                context.ui.theme.fg('accent', `${label} (${settings.model} ${settings.thinking})`),
+                context.ui.theme.fg('accent', formatEnabledAgent({ label, ...settings })),
               ),
           ].join('\n'),
           'info',
