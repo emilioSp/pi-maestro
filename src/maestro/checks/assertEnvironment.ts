@@ -1,41 +1,18 @@
 /**
- * Objective: Validate the read-only environment required by Maestro.
- * Used: When the owner activates Maestro mode.
+ * Objective: Validate that the models of enabled agents exist in Pi's registry.
+ * Used: After the owner chooses the workflow action and before Maestro activates.
  */
-
-import { realpath } from 'node:fs/promises';
 
 import type { ExtensionContext } from '@earendil-works/pi-coding-agent';
 
-import { loadConfiguration } from '#config/loadConfiguration.ts';
-
-const getErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : String(error);
-
-const getProjectRoot = async (context: ExtensionContext): Promise<string> => {
-  try {
-    return await realpath(context.cwd);
-  } catch (error) {
-    throw new Error(`Project check failed: ${getErrorMessage(error)}`);
-  }
-};
-
-const getActivationConfiguration = async (
-  projectRoot: string,
-): Promise<Awaited<ReturnType<typeof loadConfiguration>>> => {
-  try {
-    return await loadConfiguration(projectRoot);
-  } catch (error) {
-    throw new Error(`Maestro configuration check failed: ${getErrorMessage(error)}`);
-  }
-};
+import type { MaestroConfig } from '#config/schema.ts';
 
 type AssertModelsAvailableInput = {
   context: ExtensionContext;
   models: string[];
 };
 
-function assertModelsAvailable({ context, models }: AssertModelsAvailableInput): void {
+const assertModelsAvailable = ({ context, models }: AssertModelsAvailableInput): void => {
   const availableModels = context.modelRegistry.getAvailable();
 
   for (const model of models) {
@@ -43,16 +20,14 @@ function assertModelsAvailable({ context, models }: AssertModelsAvailableInput):
       throw new Error(`Configured model is not available: "${model}".`);
     }
   }
-}
+};
 
 type AssertEnvironmentInput = {
   context: ExtensionContext;
+  config: MaestroConfig;
 };
 
-export async function assertEnvironment({ context }: AssertEnvironmentInput): Promise<void> {
-  const projectRoot = await getProjectRoot(context);
-  const config = await getActivationConfiguration(projectRoot);
-
+export const assertEnvironment = ({ context, config }: AssertEnvironmentInput): void => {
   if (!config.builder.required) return;
 
   const enabledAgents = [config.builder, config.verifier, config.simplifier].filter(
@@ -60,4 +35,4 @@ export async function assertEnvironment({ context }: AssertEnvironmentInput): Pr
   );
 
   assertModelsAvailable({ context, models: enabledAgents.map(({ model }) => model) });
-}
+};

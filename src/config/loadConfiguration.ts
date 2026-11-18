@@ -1,6 +1,6 @@
 /**
  * Objective: Load and validate project configuration.
- * Used: When Maestro initializes for a project.
+ * Used: When Maestro initializes for a project, and before patching an existing file.
  */
 
 import { readFile, realpath } from 'node:fs/promises';
@@ -70,7 +70,7 @@ const resolveDirectories = ({ projectRoot, config }: ResolveDirectoriesInput): M
   };
 };
 
-const readConfigurationFile = async (path: string): Promise<unknown> => {
+export const readConfigurationFile = async (path: string): Promise<unknown> => {
   try {
     const content = await readFile(path, 'utf8');
 
