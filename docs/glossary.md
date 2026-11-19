@@ -49,12 +49,6 @@ An ID is an identifier that names one record. These labels refer to records with
 All paths in this table are relative to the `spec` directory unless stated otherwise. The [configuration](configuration.md#path-rules) can change the directory that
 contains `specs`.
 
-Requirement IDs use the `REQ` prefix. They are unique within the `spec` and remain stable during revisions. Each requirement links to its verification through
-`Verified by`. See [Requirement coverage](workflow.md#requirement-coverage).
-
-The `AC` prefix is the template's naming convention. Criterion IDs must be unique within the `spec`. Reports use the exact IDs from the `spec`, including standalone
-regression criteria without a requirement association. `Builder` and `verifier` numbers count saved `handoffs` in separate sequences.
-
 ## Escalation references
 
 Read `B1/E1` as "escalation 1 in builder report 1". `B1` selects `handoffs/builder/B1.json`. `E1` selects the entry with `id: "E1"` in its `escalations` list.
