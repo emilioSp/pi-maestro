@@ -12,7 +12,11 @@ For example, if Pi starts in `/work/app/src`, `Maestro` reads `/work/app/src/.pi
 
 The `owner` runs `/maestro` in Pi's interactive terminal and follows the guided setup to select models and thinking levels for `builder`, `verifier`, and `simplifier`.
 The `scorer` appears in the same menu and offers available Pi classifiers only, without a thinking-level prompt. Selecting a classifier enables scoring; leaving it
-unselected keeps scoring disabled. Confirmation saves the choices in `.pi/maestro.json` and activates `Maestro`.
+unselected keeps scoring disabled. Confirmation saves the choices in `.pi/maestro.json`.
+
+## Agent models
+
+Before starting or restarting a `spec`, the `owner` can choose "Agent models" in `/maestro` to change or clear any role's model.
 
 ## Example configuration
 
@@ -129,7 +133,7 @@ simplification can still be skipped if Git is unavailable.
 
 ## Scorer
 
-The `scorer` uses the classifier selected by the `owner` during initial setup, stored as `scorer.model`. Any available Pi classifier can be selected; the example above
+The `owner` can choose any available Pi classifier in [Agent models](#agent-models) or during initial setup. The choice is saved as `scorer.model`. The example above
 uses `openrouter/typesafe/jev-1.14`, but no model or provider is required by default.
 
 Scoring is disabled when `scorer` is omitted or `scorer.required` is `false`. Enabling it requires an explicit, non-empty model.
