@@ -11,7 +11,7 @@ import { MaestroPaths } from '#MaestroPaths.ts';
 import { createSpec } from '#specs/create.ts';
 import { executeTask } from '#src/delegation/executeTask.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
-import piTestSessions from '#tests/support/pi-session.ts';
+import * as piTestSessions from '#tests/support/pi-session.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { registerMarkSpecReadyTool } from '#tools/main/mark-spec-ready.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -55,9 +55,8 @@ const createWorkflow = async () => {
   return { created, paths, repository };
 };
 
-afterEach(async () => {
+afterEach(() => {
   vi.mocked(executeTask).mockReset();
-  await piTestSessions.cleanup();
   maestroSessionState.deactivate();
 });
 

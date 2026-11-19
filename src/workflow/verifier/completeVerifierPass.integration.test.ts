@@ -13,7 +13,7 @@ import { writeVerifierHandoff } from '#artifacts/verifier-handoff/writeVerifierH
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { createApprovedWorkflow, SPEC_ID } from '#tests/support/builder-workflow.ts';
-import piTestSessions from '#tests/support/pi-session.ts';
+import * as piTestSessions from '#tests/support/pi-session.ts';
 import { recordVerifierHandoffTool } from '#tools/child/record-verifier-handoff.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
@@ -31,9 +31,8 @@ vi.mock('node:fs/promises', async (importOriginal) => {
 const { writeFile: originalWriteFile } =
   await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises');
 
-afterEach(async () => {
+afterEach(() => {
   vi.mocked(writeFile).mockRestore();
-  await piTestSessions.cleanup();
   maestroSessionState.deactivate();
 });
 

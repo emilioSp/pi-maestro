@@ -9,7 +9,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import {
-  type AgentSession,
   createAgentSession,
   createEventBus,
   DefaultResourceLoader,
@@ -22,7 +21,7 @@ import {
   SettingsManager,
   wrapRegisteredTool,
 } from '@earendil-works/pi-coding-agent';
-import { vi } from 'vitest';
+import { aroundEach, onTestFinished, vi } from 'vitest';
 
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 
@@ -39,143 +38,127 @@ type CreateRegisteredToolInput = {
   extension: ExtensionFactory;
 };
 
-type PiSessionResource = {
-  directory: string;
-  session?: AgentSession;
-  errors: ExtensionError[];
+// Restore process-wide state after the per-session cleanup hooks have run.
+aroundEach(async (runTest) => {
+  try {
+    await runTest();
+  } finally {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+  }
+});
+
+export const create = async ({
+  cwd,
+  extensions,
+  additionalExtensionPaths = [],
+  projectTrusted = true,
+  sessionStartEvent,
+}: CreatePiSessionInput) => {
+  initTheme('dark', false);
+  const directory = await mkdtemp(join(tmpdir(), 'pi-maestro-session-'));
+  const errors: ExtensionError[] = [];
+  onTestFinished(async () => {
+    await rm(directory, { recursive: true, force: true });
+    deepStrictEqual(errors, []);
+  });
+  const agentDir = join(directory, 'agent');
+  await mkdir(agentDir);
+  vi.stubEnv('PI_CODING_AGENT_DIR', agentDir);
+  vi.stubEnv('HOME', directory);
+  vi.stubEnv('PI_OFFLINE', '1');
+
+  const modelRuntime = await ModelRuntime.create({
+    authPath: join(agentDir, 'auth.json'),
+    modelsPath: null,
+    allowModelNetwork: false,
+    refreshOnCreate: false,
+  });
+
+  modelRuntime.registerProvider('openai-codex', {
+    api: 'openai-completions',
+    apiKey: 'offline-test-key',
+    baseUrl: 'http://127.0.0.1:1',
+    models: [TEST_CONFIG.builder.model, TEST_CONFIG.verifier.model].map((model) => ({
+      id: model.split('/')[1],
+      name: model,
+      reasoning: true,
+      input: ['text'],
+      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+      contextWindow: 4096,
+      maxTokens: 1024,
+    })),
+    streamSimple: () => {
+      throw new Error('Live model calls are not allowed in tests.');
+    },
+  });
+  await modelRuntime.refresh({ allowNetwork: false });
+
+  const settingsManager = SettingsManager.inMemory(
+    {
+      compaction: { enabled: false },
+      retry: { enabled: false },
+      cacheWarming: 'off',
+    },
+    { projectTrusted },
+  );
+
+  const events = createEventBus();
+
+  const resourceLoader = new DefaultResourceLoader({
+    cwd: cwd ?? directory,
+    agentDir,
+    settingsManager,
+    eventBus: events,
+    extensionFactories: extensions,
+    additionalExtensionPaths,
+    noExtensions: true,
+    noSkills: true,
+    noPromptTemplates: true,
+    noThemes: true,
+    noContextFiles: true,
+  });
+
+  await resourceLoader.reload();
+  deepStrictEqual(resourceLoader.getExtensions().errors, []);
+
+  const { session } = await createAgentSession({
+    cwd: cwd ?? directory,
+    agentDir,
+    resourceLoader,
+    settingsManager,
+    modelRuntime,
+    model: modelRuntime.getModel('openai-codex', TEST_CONFIG.builder.model.split('/')[1]),
+    sessionManager: SessionManager.inMemory(cwd ?? directory),
+    sessionStartEvent,
+  });
+
+  onTestFinished(() => session.dispose());
+  // Observe Pi's own headless UI methods. No replacement ExtensionAPI or context is needed.
+  const ui = { ...session.extensionRunner.getUIContext() };
+  const notify = vi.spyOn(ui, 'notify');
+  const setStatus = vi.spyOn(ui, 'setStatus');
+  await session.bindExtensions({
+    uiContext: ui,
+    onError: (error) => errors.push(error),
+  });
+
+  return {
+    session,
+    events,
+    notify,
+    setStatus,
+    settingsManager,
+  };
 };
 
-class PiTestSessions {
-  private readonly resources: PiSessionResource[] = [];
+export const createRegisteredTool = async ({ cwd, extension }: CreateRegisteredToolInput) => {
+  const createdSession = await create({ cwd, extensions: [extension] });
+  const { session } = createdSession;
+  const registeredTools = session.extensionRunner.getAllRegisteredTools();
+  strictEqual(registeredTools.length, 1);
 
-  public create = async ({
-    cwd,
-    extensions,
-    additionalExtensionPaths = [],
-    projectTrusted = true,
-    sessionStartEvent,
-  }: CreatePiSessionInput) => {
-    initTheme('dark', false);
-    const directory = await mkdtemp(join(tmpdir(), 'pi-maestro-session-'));
-    const errors: ExtensionError[] = [];
-    const resource: PiSessionResource = { directory, errors };
-    this.resources.push(resource);
-    const agentDir = join(directory, 'agent');
-    await mkdir(agentDir);
-    vi.stubEnv('PI_CODING_AGENT_DIR', agentDir);
-    vi.stubEnv('HOME', directory);
-    vi.stubEnv('PI_OFFLINE', '1');
+  const tool = wrapRegisteredTool(registeredTools[0], session.extensionRunner);
 
-    const modelRuntime = await ModelRuntime.create({
-      authPath: join(agentDir, 'auth.json'),
-      modelsPath: null,
-      allowModelNetwork: false,
-      refreshOnCreate: false,
-    });
-
-    modelRuntime.registerProvider('openai-codex', {
-      api: 'openai-completions',
-      apiKey: 'offline-test-key',
-      baseUrl: 'http://127.0.0.1:1',
-      models: [TEST_CONFIG.builder.model, TEST_CONFIG.verifier.model].map((model) => ({
-        id: model.split('/')[1],
-        name: model,
-        reasoning: true,
-        input: ['text'],
-        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-        contextWindow: 4096,
-        maxTokens: 1024,
-      })),
-      streamSimple: () => {
-        throw new Error('Live model calls are not allowed in tests.');
-      },
-    });
-    await modelRuntime.refresh({ allowNetwork: false });
-
-    const settingsManager = SettingsManager.inMemory(
-      {
-        compaction: { enabled: false },
-        retry: { enabled: false },
-        cacheWarming: 'off',
-      },
-      { projectTrusted },
-    );
-
-    const events = createEventBus();
-
-    const resourceLoader = new DefaultResourceLoader({
-      cwd: cwd ?? directory,
-      agentDir,
-      settingsManager,
-      eventBus: events,
-      extensionFactories: extensions,
-      additionalExtensionPaths,
-      noExtensions: true,
-      noSkills: true,
-      noPromptTemplates: true,
-      noThemes: true,
-      noContextFiles: true,
-    });
-
-    await resourceLoader.reload();
-    deepStrictEqual(resourceLoader.getExtensions().errors, []);
-
-    const { session } = await createAgentSession({
-      cwd: cwd ?? directory,
-      agentDir,
-      resourceLoader,
-      settingsManager,
-      modelRuntime,
-      model: modelRuntime.getModel('openai-codex', TEST_CONFIG.builder.model.split('/')[1]),
-      sessionManager: SessionManager.inMemory(cwd ?? directory),
-      sessionStartEvent,
-    });
-
-    resource.session = session;
-    // Observe Pi's own headless UI methods. No replacement ExtensionAPI or context is needed.
-    const ui = { ...session.extensionRunner.getUIContext() };
-    const notify = vi.spyOn(ui, 'notify');
-    const setStatus = vi.spyOn(ui, 'setStatus');
-    await session.bindExtensions({
-      uiContext: ui,
-      onError: (error) => errors.push(error),
-    });
-
-    return {
-      session,
-      events,
-      notify,
-      setStatus,
-      settingsManager,
-    };
-  };
-
-  public createRegisteredTool = async ({ cwd, extension }: CreateRegisteredToolInput) => {
-    const createdSession = await this.create({ cwd, extensions: [extension] });
-    const { session } = createdSession;
-    const registeredTools = session.extensionRunner.getAllRegisteredTools();
-    strictEqual(registeredTools.length, 1);
-
-    const tool = wrapRegisteredTool(registeredTools[0], session.extensionRunner);
-
-    return { ...createdSession, tool };
-  };
-
-  public cleanup = async (): Promise<void> => {
-    const resources = this.resources.splice(0);
-
-    try {
-      for (const resource of resources) resource.session?.dispose();
-      await Promise.all(
-        resources.map(({ directory }) => rm(directory, { recursive: true, force: true })),
-      );
-
-      for (const { errors } of resources) deepStrictEqual(errors, []);
-    } finally {
-      vi.restoreAllMocks();
-      vi.unstubAllEnvs();
-    }
-  };
-}
-
-export default new PiTestSessions();
+  return { ...createdSession, tool };
+};

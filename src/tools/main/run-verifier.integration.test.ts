@@ -22,7 +22,7 @@ import { executeTask } from '#src/delegation/executeTask.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { createApprovedWorkflow, SPEC_ID } from '#tests/support/builder-workflow.ts';
-import piTestSessions from '#tests/support/pi-session.ts';
+import * as piTestSessions from '#tests/support/pi-session.ts';
 import {
   recordVerifierHandoffTool,
   VERIFIER_HANDOFF_TOOL,
@@ -92,9 +92,8 @@ const recordVerifierHandoff = async ({
 
 vi.mock('#src/delegation/executeTask.ts', () => ({ executeTask: vi.fn<typeof executeTask>() }));
 
-afterEach(async () => {
+afterEach(() => {
   vi.mocked(executeTask).mockReset();
-  await piTestSessions.cleanup();
   maestroSessionState.deactivate();
 });
 

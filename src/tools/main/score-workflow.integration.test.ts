@@ -13,7 +13,7 @@ import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { MaestroPaths } from '#MaestroPaths.ts';
 import { collectWorkflowEvidence } from '#src/score/collectWorkflowEvidence.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
-import piTestSessions from '#tests/support/pi-session.ts';
+import * as piTestSessions from '#tests/support/pi-session.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { registerScoreWorkflowTool } from '#tools/main/score-workflow.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -92,8 +92,7 @@ const supplyClassifier = (
   return vi.spyOn(session.modelRuntime, 'classify');
 };
 
-afterEach(async () => {
-  await piTestSessions.cleanup();
+afterEach(() => {
   maestroSessionState.deactivate();
 });
 

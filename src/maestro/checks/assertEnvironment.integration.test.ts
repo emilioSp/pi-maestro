@@ -6,7 +6,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { afterEach, expect, it, vi, onTestFinished } from 'vitest';
+import { expect, it, vi, onTestFinished } from 'vitest';
 
 import {
   CONFIG_DIRECTORY_NAME,
@@ -16,12 +16,8 @@ import {
 import { loadConfiguration } from '#config/loadConfiguration.ts';
 import { assertEnvironment } from '#maestro/checks/assertEnvironment.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
-import piTestSessions from '#tests/support/pi-session.ts';
+import * as piTestSessions from '#tests/support/pi-session.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
-
-afterEach(async () => {
-  await piTestSessions.cleanup();
-});
 
 it.each(['builder', 'verifier', 'simplifier'])(
   'GIVEN the %s model is absent from Pi’s registry WHEN activation is checked THEN it reports the full unavailable ID',

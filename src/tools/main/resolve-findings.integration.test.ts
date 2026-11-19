@@ -21,7 +21,7 @@ import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import type { MaestroPaths } from '#MaestroPaths.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { createApprovedWorkflow, SPEC_ID } from '#tests/support/builder-workflow.ts';
-import piTestSessions from '#tests/support/pi-session.ts';
+import * as piTestSessions from '#tests/support/pi-session.ts';
 import { registerMarkSpecReadyTool } from '#tools/main/mark-spec-ready.ts';
 import { registerResolveFindingsTool } from '#tools/main/resolve-findings.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
@@ -101,8 +101,7 @@ const readCurrentHandoff = async (paths: MaestroPaths) => {
   });
 };
 
-afterEach(async () => {
-  await piTestSessions.cleanup();
+afterEach(() => {
   maestroSessionState.deactivate();
 });
 
