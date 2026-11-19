@@ -5,7 +5,8 @@ GitHub Releases are not required.
 
 ## Unreleased
 
-- feat: Change or clear agent models from /maestro before starting or restarting a spec.
+- feat: Change or clear agent models from `/maestro` before starting or restarting a `spec`.
+- feat: Optionally score workflow correctness and verification quality with a Pi classifier. The final summary reports both scores.
 
 ## 0.20.0
 
