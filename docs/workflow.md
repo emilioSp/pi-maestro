@@ -233,7 +233,7 @@ An `escalation` returns an implementation decision or a technical problem to the
 `spec`, or a possible scope change.
 
 The `builder` saves all questions from one `pass` in the `escalations` list of its numbered `handoff`. `Maestro` identifies each question with both report and
-`escalation` IDs, such as `B1/E1`. See [Escalation references](glossary.md#escalation-references) for their scope.
+`escalation` IDs, such as `B1/E1`. See [Identifiers and file names](glossary.md#identifiers-and-file-names).
 
 `Maestro` presents each question, evidence, options, consequences, and next steps. The workflow pauses in `escalation-decisions` while the `owner` decides how to proceed.
 
@@ -253,9 +253,7 @@ different decision.
 
 Every current `finding` requires an `owner` decision, regardless of severity. `Maestro` explains the issue, evidence, practical effect, and available choices.
 
-`Maestro` identifies each `finding` with its report and `finding` IDs. For example, `V1/F2` means `finding` 2 in `verifier` report `V1.json`. The `finding` is an entry in
-that file's `findings` list, not a separate `F2.json` file. `Finding` numbers restart at `F1` in each `verifier` report. See
-[Finding references](glossary.md#finding-references) for a worked example.
+`Maestro` identifies each `finding` with a [report and finding reference](glossary.md#identifiers-and-file-names), such as `V1/F2`.
 
 `Maestro` records `owner` decisions in the same `verifier` report, e.g. decisions about `V1/F2` update `V1.json`, not a new `V2.json`. A new `verifier` result creates the
 next report (`V2.json`).

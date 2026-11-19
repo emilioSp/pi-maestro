@@ -31,8 +31,6 @@
 
 ## Identifiers and file names
 
-An ID is an identifier that names one record. These labels refer to records within one `spec`, not across all workflows.
-
 | Label          | Meaning                                                           | Location or scope                                                               |
 | -------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | `<spec-id>`    | The identifier shared by the `spec` and its workflow `artifacts`. | The directory name under `<project-root>/.specs/` by default.                   |
@@ -49,27 +47,4 @@ An ID is an identifier that names one record. These labels refer to records with
 All paths in this table are relative to the `spec` directory unless stated otherwise. The [configuration](configuration.md#path-rules) can change the directory that
 contains `specs`.
 
-## Escalation references
-
-Read `B1/E1` as "escalation 1 in builder report 1". `B1` selects `handoffs/builder/B1.json`. `E1` selects the entry with `id: "E1"` in its `escalations` list.
-
-`Escalation` numbers restart at `E1` in each `builder` report. `B1/E1` and `B2/E1` identify different questions, even if they concern the same topic.
-
-The `owner` discusses every current question with `Maestro`. `Maestro` records all answers and reasons together in that same `builder` report. See
-[Escalations](workflow.md#escalations) for the available choices and their effects.
-
-## Finding references
-
-Read `V1/F2` as "finding 2 in verifier report 1". `V1` selects `handoffs/verifier/V1.json`. `F2` selects the entry with `id: "F2"` in its `findings` list.
-
-`Finding` numbers restart at `F1` in each `verifier` report. `V1/F2` and `V2/F2` identify different records, even if they describe a similar issue.
-
-For example, a `finding` about a saved title can appear in a `Maestro` message like this:
-
-> Verifier report 1, finding 2 (`V1/F2`): the title returns to "Draft" after saving "Ready" and reopening the item. Acceptance criterion 1 (`AC1`) requires the saved
-> title to remain "Ready".
-
-In this example, the finding's `acceptanceCriterion: "AC1"` connects the issue to criterion `AC1` in `spec.md`.
-
-The `owner` discusses the issue with `Maestro`. `Maestro` records the decision in the same `verifier` report. See [Findings](workflow.md#findings) for the available
-choices and their effects.
+`Escalation` and `finding` numbers restart in each report: `B1/E1` and `B2/E1` refer to different questions.
