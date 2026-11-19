@@ -22,7 +22,7 @@ import { executeTask, type ExecuteTaskInput } from '#src/delegation/executeTask.
 import { prepareSubagentEnvironment } from '#src/delegation/prepareSubagentEnvironment.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
 import { createApprovedWorkflow, SPEC_ID } from '#tests/support/builder-workflow.ts';
-import piTestSessions from '#tests/support/pi-session.ts';
+import * as piTestSessions from '#tests/support/pi-session.ts';
 import { BUILDER_HANDOFF_TOOL } from '#tools/child/record-builder-handoff.ts';
 import { registerRunBuilderTool, RUN_BUILDER_TOOL } from '#tools/main/run-builder.ts';
 import { WORKFLOW_ROLES } from '#workflow/roles.ts';
@@ -118,12 +118,10 @@ const createObservedProgressSession = async ({
 };
 
 describe('execute task', () => {
-  afterEach(async () => {
+  afterEach(() => {
     vi.useRealTimers();
-    await piTestSessions.cleanup();
     maestroSessionState.deactivate();
     vi.resetAllMocks();
-    vi.restoreAllMocks();
   });
 
   it('GIVEN a successful child session WHEN a task is executed THEN its final text and saved path are returned and the child is closed', async () => {

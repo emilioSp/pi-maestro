@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { createApprovedWorkflow, doneHandoff, SPEC_ID } from '#tests/support/builder-workflow.ts';
-import piTestSessions from '#tests/support/pi-session.ts';
+import * as piTestSessions from '#tests/support/pi-session.ts';
 import { recordSimplifierHandoffTool } from '#tools/child/record-simplifier-handoff.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
@@ -42,8 +42,7 @@ const verifiedHandoff = {
   notes: [],
 };
 
-afterEach(async () => {
-  await piTestSessions.cleanup();
+afterEach(() => {
   maestroSessionState.deactivate();
 });
 

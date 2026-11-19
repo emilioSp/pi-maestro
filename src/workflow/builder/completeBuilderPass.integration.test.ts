@@ -9,7 +9,7 @@ import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
 import { unavailableCompilerEscalation } from '#tests/fixtures/unavailable-compiler-escalation.ts';
 import { createApprovedWorkflow, SPEC_ID } from '#tests/support/builder-workflow.ts';
-import piTestSessions from '#tests/support/pi-session.ts';
+import * as piTestSessions from '#tests/support/pi-session.ts';
 import { recordBuilderHandoffTool } from '#tools/child/record-builder-handoff.ts';
 import { completeBuilderPass } from '#workflow/builder/completeBuilderPass.ts';
 import { prepareBuilderRun } from '#workflow/builder/prepareBuilderRun.ts';
@@ -17,8 +17,7 @@ import { resolveEscalations } from '#workflow/builder/resolveEscalations.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 
-afterEach(async () => {
-  await piTestSessions.cleanup();
+afterEach(() => {
   maestroSessionState.deactivate();
 });
 

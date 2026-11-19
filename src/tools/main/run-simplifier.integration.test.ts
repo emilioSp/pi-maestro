@@ -3,10 +3,8 @@
  * Used: With real Pi tools and scripted SDK executions, without model calls.
  */
 
-import { execFile } from 'node:child_process';
 import { access, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { promisify } from 'node:util';
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import type { AgentToolUpdateCallback } from '@earendil-works/pi-coding-agent';
@@ -19,7 +17,8 @@ import { executeTask } from '#src/delegation/executeTask.ts';
 import { TaskExecutionError } from '#src/delegation/TaskExecutionError.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { createApprovedWorkflow, SPEC_ID } from '#tests/support/builder-workflow.ts';
-import piTestSessions from '#tests/support/pi-session.ts';
+import * as piTestSessions from '#tests/support/pi-session.ts';
+import { initTestGitRepository } from '#tests/support/temp-repository.ts';
 import {
   recordSimplifierHandoffTool,
   SIMPLIFIER_HANDOFF_TOOL,
@@ -30,8 +29,6 @@ import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_EVENTS, WORKFLOW_PHASES } from '#workflow/state/schema.ts';
 import { writeWorkflowState } from '#workflow/state/writeWorkflowState.ts';
 import { transitionWorkflow } from '#workflow/transitions.ts';
-
-const execFileAsync = promisify(execFile);
 
 const createSimplifierWorkflow = async () => {
   const workflow = await createApprovedWorkflow();
@@ -56,9 +53,8 @@ const createSimplifierWorkflow = async () => {
 
 vi.mock('#src/delegation/executeTask.ts', () => ({ executeTask: vi.fn<typeof executeTask>() }));
 
-afterEach(async () => {
+afterEach(() => {
   vi.mocked(executeTask).mockReset();
-  await piTestSessions.cleanup();
   maestroSessionState.deactivate();
 });
 
@@ -121,7 +117,7 @@ describe('run simplifier', () => {
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
     const { paths, repository } = await createSimplifierWorkflow();
-    await execFileAsync('git', ['init', '-q', repository.path]);
+    await initTestGitRepository(repository.path);
 
     const { tool, notify, session, setStatus } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
@@ -222,7 +218,7 @@ it.each([
     maestroSessionState.setActiveSpecId(SPEC_ID);
 
     const { paths, repository } = await createSimplifierWorkflow();
-    await execFileAsync('git', ['init', '-q', repository.path]);
+    await initTestGitRepository(repository.path);
 
     const { tool, notify } = await piTestSessions.createRegisteredTool({
       cwd: repository.path,
@@ -255,7 +251,7 @@ it('GIVEN a simplifier execution error without a saved session WHEN execution st
   maestroSessionState.setActiveSpecId(SPEC_ID);
 
   const { repository } = await createSimplifierWorkflow();
-  await execFileAsync('git', ['init', '-q', repository.path]);
+  await initTestGitRepository(repository.path);
 
   const { tool, notify } = await piTestSessions.createRegisteredTool({
     cwd: repository.path,
@@ -315,7 +311,7 @@ it('GIVEN disabled scoring WHEN the simplifier completes in Git THEN candidate-r
   maestroSessionState.activate();
   maestroSessionState.setActiveSpecId(SPEC_ID);
   const { paths, repository } = await createSimplifierWorkflow();
-  await execFileAsync('git', ['init', '-q', repository.path]);
+  await initTestGitRepository(repository.path);
   const configPath = join(repository.path, '.pi/maestro.json');
   const config = JSON.parse(await readFile(configPath, 'utf8'));
   await writeFile(configPath, JSON.stringify({ ...config, scorer: { required: false } }));

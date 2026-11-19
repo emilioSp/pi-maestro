@@ -8,14 +8,13 @@ import { saveConfiguration } from '#config/saveConfiguration.ts';
 import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import type { CreatedSpec } from '#specs/create.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
-import piTestSessions from '#tests/support/pi-session.ts';
+import * as piTestSessions from '#tests/support/pi-session.ts';
 import { createTemporaryProject } from '#tests/support/temp-repository.ts';
 import { registerCreateSpecTool } from '#tools/main/create-spec.ts';
 import { readWorkflowState } from '#workflow/state/readWorkflowState.ts';
 import { WORKFLOW_PHASES, WORKFLOW_STATE_VERSION } from '#workflow/state/schema.ts';
 
-afterEach(async () => {
-  await piTestSessions.cleanup();
+afterEach(() => {
   maestroSessionState.deactivate();
 });
 

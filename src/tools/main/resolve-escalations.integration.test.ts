@@ -9,7 +9,7 @@ import maestroSessionState from '#maestro/session/MaestroSessionState.ts';
 import { TEST_CONFIG } from '#tests/fixtures/config/selected-agents.ts';
 import { csvExportEscalation } from '#tests/fixtures/csv-export-escalation.ts';
 import { createApprovedWorkflow, SPEC_ID } from '#tests/support/builder-workflow.ts';
-import piTestSessions from '#tests/support/pi-session.ts';
+import * as piTestSessions from '#tests/support/pi-session.ts';
 import { recordBuilderHandoffTool } from '#tools/child/record-builder-handoff.ts';
 import { registerMarkSpecReadyTool } from '#tools/main/mark-spec-ready.ts';
 import { registerResolveEscalationsTool } from '#tools/main/resolve-escalations.ts';
@@ -53,8 +53,7 @@ const openEscalations = async () => {
   return { ...workflow, handoffPath };
 };
 
-afterEach(async () => {
-  await piTestSessions.cleanup();
+afterEach(() => {
   maestroSessionState.deactivate();
 });
 
