@@ -3,6 +3,11 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
+## Unreleased
+
+- feat: Change or clear agent models from `/maestro` before starting or restarting a `spec`.
+- feat: Optionally score workflow correctness and verification quality with a Pi classifier. The final summary reports both scores.
+
 ## 0.20.0
 
 - `Acceptance criteria` now use self-contained behavioral example tables by default, with written examples for cases that do not fit readable columns. Every row must be

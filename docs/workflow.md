@@ -1,47 +1,5 @@
 # Workflow
 
-`Maestro` guides one spec-driven workflow inside the current Pi session. You, the `owner`, work with `Maestro` directly.
-
-The approved `spec` is a set of documents that together form one contract for the change. `proposal.md` explains why we are doing it and what is in scope. `spec.md`
-describes how things should behave and lists the `acceptance criteria`. `design.md` is optional and records the important technical decisions.
-
-Each `acceptance criterion` has one `GIVEN`, one `WHEN`, one `THEN`, and a behavioral example table or a written example. `GIVEN` and `WHEN` set up the scenario. `THEN`
-says what result we expect, in a way we can measure.
-
-A `handoff` is a report saved by an agent. Reports from the `builder` and the `verifier` include `probe` outcomes. The simplifier's report lists the files it refactored,
-a short summary, and any notes.
-
-A `builder` `handoff` may include `escalations`, which are questions that only you can decide. A `verifier` `handoff` may include `findings`, which are technical issues
-it found.
-
-## Roles
-
-| Role         | Responsibility                                                                                                                                                                     |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Owner`      | Decides requirements, scope, technical decisions, `spec` approval, `escalation` answers, and `finding` decisions. Performs the final review.                                       |
-| `Maestro`    | Prepares the `spec` with the `owner`, records workflow progress, runs agents, presents issues, and saves `owner` decisions.                                                        |
-| `Builder`    | Implements the approved `spec` and checks every `GIVEN`, `WHEN`, and `THEN` scenario. Reports completion or an `escalation`, including technical problems that prevent completion. |
-| `Verifier`   | Independently checks every `GIVEN`, `WHEN`, and `THEN` scenario against the live project files. Reports `findings` without repairing product code.                                 |
-| `Simplifier` | Refactors accepted code for clarity without changing behavior or introducing check failures.                                                                                       |
-
-`Builder`, `verifier`, and `simplifier` `runs` are sequential foreground operations. Each starts with a fresh conversation and reads the `spec` and saved `artifacts`.
-
-## Observability
-
-`Observability` is the owner's ability to inspect workflow progress and reported results.
-
-Maestro's Pi status shows the current phase.
-
-`Maestro` displays the saved native child session path when one exists, including after a failed or interrupted `run`. The `owner` can inspect the file or export it with
-Pi. See [Inspecting saved sessions](subagent-integration.md#inspecting-saved-sessions).
-
-Saved `handoffs` provide a structured account of each reported `run`. The `builder` reports its outcome, `probe` results, notes, and any `escalation` questions. The
-`verifier` reports its independent checks, results, and `findings`. The `simplifier` reports its refactoring separately. Recorded `owner` decisions explain how questions
-and issues were resolved. Earlier numbered reports remain available for inspection.
-
-For example, the `owner` can read `B1.json` to see what the `builder` reports implementing and which `probes` it ran. `V1.json` shows what the `verifier` reports checking
-independently and which issues it found.
-
 ## Main flow
 
 The diagram shows a flow with all three agents and scoring enabled. The green arrows and lines show the path without `escalations` or `findings`.
@@ -55,7 +13,7 @@ flowchart TD
     verify[Verifier checks live project files]
     findings{Findings?}
     simplify[Simplifier refactors accepted code]
-    evaluate[Selected classifier evaluates the workflow]
+    evaluate["LLM as Judge: scores correctness and verification quality"]
     candidate[Candidate ready]
     summary[Maestro summarizes results]
     review[Owner performs the final review]
@@ -84,10 +42,7 @@ flowchart TD
 
 ## Workflow phases
 
-Each `spec` has a `workflow.json` file that records its identity and current phase. The saved phase controls the next permitted workflow action. An agent's final message
-alone does not establish a completed action.
-
-The default path is `.specs/<spec-id>/workflow.json`. The `spec` directory is [configurable](configuration.md).
+The saved phase in `workflow.json` determines what can happen next.
 
 | Phase                  | Meaning                                                                                                                       |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
@@ -114,151 +69,24 @@ Each new `spec` uses these documents in the same directory:
 
 ## Spec approval
 
-For the initial `spec`:
-
-1. `Maestro` creates `proposal.md`, `spec.md`, and `workflow.json` in `drafting-spec`, then prepares the documents with the `owner`. It adds `design.md` only when needed.
-2. The `owner` reviews the complete document set: motivation, scope, requirements, `acceptance criteria`, `assumptions`, and any approved technical decisions.
-3. `Maestro` asks the `owner` to inspect `proposal.md`, `spec.md`, and `design.md` when present and reply `GREEN FLAG` once to approve the entire set and proceed through
-   the selected phases.
-4. After that reply, `Maestro` saves `ready-for-builder` and starts the enabled `builder` in the foreground, or saves `candidate-ready` with all agents skipped.
-
-Approval rejects requirement IDs with gaps, duplicates, or out-of-order numbers. Requirements must start at `REQ1` and follow document order. If this validation fails in
-`drafting-spec` after `GREEN FLAG`, `Maestro` corrects only numbering and affected links and textual references across the `specification` documents, preserving
-requirement order and meaning. It retries approval using the existing `GREEN FLAG`, without requesting renewed approval.
-
-Approval freezes all present `spec` documents and visual prototypes together. None may change during `builder`, `verifier`, or `simplifier` execution. See
-[Spec revision](#spec-revision) for permitted revisions.
-
-## Requirement deltas
-
-Each requirement has exactly one `Delta` field. It describes the impact of the requirement against the current system's behavior.
-
-| Value      | Meaning                                                                   |
-| ---------- | ------------------------------------------------------------------------- |
-| `added`    | Introduces behavior or a constraint that did not exist before the change. |
-| `modified` | Changes existing behavior or a constraint.                                |
-| `removed`  | Removes behavior that must no longer be available.                        |
-
-The `spec` describes only requirements added, modified, or removed by the change. Existing behavior must continue working unless explicitly changed or removed. Unchanged
-behavior is implicit, not an inventory of requirements to repeat in every `spec`.
-
-For `modified` or `removed` requirements, a short `Before` description is included only when it helps explain the change. For example,
-`Before: Tokens expire 30 minutes after issuance.`
-
-## Requirement coverage
-
-Each requirement has its own section and a consecutive ID in document order, starting at `REQ1`. After additions, removals, or merges, requirements are renumbered and all
-affected links and textual references across the `specification` documents are updated. Its `Verified by` field links to the `acceptance criteria` or existing tests that
-verify it. The mapping appears only under the requirement, not again inside each `acceptance criterion`. Requirements use `### REQ<number>:` headings; their criteria
-immediately follow as `#### AC<number>:` subsections. Each requirement-associated AC is defined once under its primary requirement; other requirements can link to it. AC
-numbering is continuous across the whole document, including standalone regression criteria, not restarted for each requirement or section.
-
-For example, a change that introduces persistent item titles can describe its requirement and linked `acceptance criterion` in `spec.md` as follows:
-
-```markdown
-### REQ1: The system MUST persist saved titles
-
-Delta: added
-
-Verified by: [AC1](#ac1-saved-title-is-persisted)
-
-#### AC1: Saved title is persisted
-
-- GIVEN a saved item.
-- WHEN its title is changed and saved, then the item is reopened.
-- THEN the saved title is present.
-
-| Saved title | Action                                             | Title after reopening |
-| ----------- | -------------------------------------------------- | --------------------- |
-| Draft       | Change title to "Ready", save, and reopen the item | Ready                 |
-```
-
-A requirement can link to several `acceptance criteria`, and one criterion can verify several requirements (1:N). When an existing test covers the exact starting
-conditions, action, and outcome, `Verified by` links to the test file relative to `spec.md` and includes the exact scenario name. No duplicate criterion is needed. A
-requirement can reference both criteria and existing tests.
-
-Before approval, `Maestro` follows the links and checks that their combined scenarios verify the whole requirement. Missing, partial, or uncertain coverage must be
-resolved with an appropriate criterion or a confirmed existing test. References are updated when criterion headings or test locations change, including during `spec`
-revisions.
-
-## Acceptance criteria
-
-Each `acceptance criterion` has a unique ID and describes one observable result. A criterion can verify a changed requirement or check a relevant regression in existing
-behavior without an associated requirement.
-
-Standalone regression criteria belong in an optional `## Regression checks` section, with `### AC<number>:` headings. They do not need a `REQ` heading, `Delta`, or an
-artificial requirement association. Only regressions relevant to the change belong here; unchanged requirements are not listed. The section is omitted when unnecessary.
-
-For example, if saving item descriptions already works, adding title persistence may warrant this regression check without a new requirement for descriptions:
-
-```markdown
-## Regression checks
-
-### AC2: Existing descriptions remain saved
-
-- GIVEN an item with a saved description.
-- WHEN its title is changed and saved, then the item is reopened.
-- THEN the description is unchanged.
-
-| Saved title | Saved description | Action                                                | Description after reopening |
-| ----------- | ----------------- | ----------------------------------------------------- | --------------------------- |
-| Draft       | Buy milk          | Change title to "Shopping", save, and reopen the item | Buy milk                    |
-```
-
-Both nested and standalone criteria share one continuous AC sequence and are checked by the `builder` and `verifier`. Standalone criteria have the same fields as
-requirement-associated criteria:
-
-| Part     | Content                                                                          |
-| -------- | -------------------------------------------------------------------------------- |
-| `GIVEN`  | Starting conditions.                                                             |
-| `WHEN`   | The action or observation that checks the behavior.                              |
-| `THEN`   | The measurable outcome the `WHEN` must produce.                                  |
-| Examples | A behavioral table by default, or a written `Example` when a table does not fit. |
-
-Concrete examples normally appear as tables. Each row describes a complete case with its starting conditions, action, and expected outcome. When a table would be
-difficult to read, the criterion uses a written example instead.
-
-During approval, the `owner` reviews these examples as part of the required behavior. Every case must be satisfied and independently checked, but an automated test is not
-always necessary; code inspection may provide sufficient evidence.
-
-## Assumptions
-
-An `assumption` records a detail the request did not specify or a scope boundary taken as given. `Maestro` writes short `assumptions` in a `## Assumptions` section of
-`spec.md` as a bullet list, without paragraphs. The section is omitted when there are none. An `assumption` that proves false during implementation is an `escalation`
-trigger.
+Review `proposal.md`, `spec.md`, and `design.md` if present. Reply `GREEN FLAG` when `Maestro` asks for approval. This approves the whole set, including any visual
+prototypes, and starts the selected [implementation phases](configuration.md#phase-selection). The approved files are frozen until a [spec revision](#spec-revision).
 
 ## Escalations
 
-An `escalation` returns an implementation decision or a technical problem to the `owner`. For instance a technical failure, an undefined behavior, a conflict with the
-`spec`, or a possible scope change.
-
-The `builder` saves all questions from one `pass` in the `escalations` list of its numbered `handoff`. `Maestro` identifies each question with both report and
-`escalation` IDs, such as `B1/E1`. See [Escalation references](glossary.md#escalation-references) for their scope.
-
-`Maestro` presents each question, evidence, options, consequences, and next steps. The workflow pauses in `escalation-decisions` while the `owner` decides how to proceed.
-
-The `owner` gives `Maestro` an answer and reason for every current question, whether or not the `spec` must change. The `owner` can select a listed option or give a
-different decision.
-
-`Maestro` saves all answers in the current `builder` `handoff` before the workflow continues.
+The `builder` raises an `escalation` when an implementation question or blocker needs an `owner` decision. The `owner` gives `Maestro` an answer and a reason for each
+question and can pick a suggested option or give a different answer. References such as [B1/E1](glossary.md#identifiers-and-file-names) identify the question in its
+report.
 
 | `Owner` choice          | Result                                                                                                                            |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | Keep the current `spec` | `Maestro` starts another `builder` `run` without renewed approval.                                                                |
 | Change the `spec`       | The `owner` and `Maestro` revise the same `spec`. The `owner` reviews it and replies `GREEN FLAG` before another `builder` `run`. |
 
-`Owner` decisions update only the questions' `resolution` fields. The handoff's other content and earlier `handoffs` remain unchanged.
-
 ## Findings
 
-Every current `finding` requires an `owner` decision, regardless of severity. `Maestro` explains the issue, evidence, practical effect, and available choices.
-
-`Maestro` identifies each `finding` with its report and `finding` IDs. For example, `V1/F2` means `finding` 2 in `verifier` report `V1.json`. The `finding` is an entry in
-that file's `findings` list, not a separate `F2.json` file. `Finding` numbers restart at `F1` in each `verifier` report. See
-[Finding references](glossary.md#finding-references) for a worked example.
-
-`Maestro` records `owner` decisions in the same `verifier` report, e.g. decisions about `V1/F2` update `V1.json`, not a new `V2.json`. A new `verifier` result creates the
-next report (`V2.json`).
+A `finding` is an issue the `verifier` identifies while independently checking the implementation against the approved `spec`. The `owner` decides how to handle each
+`finding`, regardless of severity. References such as [V1/F2](glossary.md#identifiers-and-file-names) identify the issue in its report.
 
 | Decision      | Result                                                                                                                                                                                      |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -266,22 +94,13 @@ next report (`V2.json`).
 | `fix-code`    | Keeps the current `spec` and returns to `ready-for-builder` for code fixes when no decision requires revision.                                                                              |
 | `revise-spec` | Records the owner's reason and agreed requirement change, then returns to `drafting-spec`.                                                                                                  |
 
-`Maestro` saves every current decision together before the phase changes. If any `finding` requires revision, revision takes priority over code fixes and rejections. See
-[Spec revision](#spec-revision).
-
-Without revision, any `fix-code` decision requires another `builder` `run`, including when other `findings` are rejected. After the `builder` completes the fixes, the
-`verifier` checks the work again.
+If any `finding` requires revision, revise the `spec` before any code fixes. Otherwise, if any decision is `fix-code`, the `verifier` checks the work again after the
+`builder` fixes it. Rejecting a `finding` does not mean its check passed.
 
 ## Spec revision
 
-For either `escalation` answers or `finding` decisions, `Maestro` records the complete batch before the workflow returns to `drafting-spec`. This decision does not
-approve the `spec` or start an agent. The `owner` and `Maestro` then revise the same `spec` together in `drafting-spec`.
-
-The `owner` reviews the complete revised set of `proposal.md`, `spec.md`, and `design.md` when present and replies `GREEN FLAG` once again. `Maestro` records that renewed
-approval separately, moves to `ready-for-builder`, and starts another `builder` `run`. Approval is permitted only in `drafting-spec`, not directly from either decision
-phase.
-
-The revised `spec` controls subsequent work. Earlier `escalations`, `findings`, and their decisions remain historical context.
+A decision to change the `spec` pauses implementation. Review the revised document set and reply `GREEN FLAG` again before the `builder` restarts. Earlier reports and
+decisions remain available as context.
 
 ## Verification boundary
 
@@ -302,8 +121,7 @@ check failures. If no code needs refactoring, the `simplifier` does not make any
 
 When scoring is enabled, `scorer-running` evaluates the entire workflow against the approved `spec` after the selected implementation phases, including simplification.
 The selected Pi classifier receives the approved documents, available `handoffs` and `owner` decisions, and staged, unstaged, and untracked Git changes against `HEAD`.
-The `owner` selects the classifier during initial setup or configures it in `.pi/maestro.json`. Scoring is disabled by default. See
-[Scorer configuration](configuration.md#scorer).
+Scoring is off by default. The `owner` can choose a classifier in [Agent models](configuration.md#agent-models) before starting or restarting a `spec`.
 
 The classifier's ratings are converted to two separate scores on a **0–100 scale**. Each retains its confidence value from 0 to 1:
 
@@ -326,47 +144,12 @@ cancelled, a failure report is saved without scores. If the report cannot be sav
 
 ## Workflow completion
 
-The workflow ends at `candidate-ready`. `Maestro` summarizes the changes, verification results, rejected `findings` and reasons, relevant `builder` notes from the saved
-`artifacts`, and simplifier's summary and notes, only for phases that ran. It identifies every skipped phase and its reason. An approved `spec` alone does not mean code
-was implemented or verified. `Builder` checks and the simplifier's report are not independent verification when `verifier` is disabled. The `owner` can use an approved
-`spec` for implementation in another workflow without further `Maestro` execution.
-
-`Maestro` stays active while delivering this final summary, then automatically turns off after successful delivery. The `owner` performs the final review and controls any
-later Git use, pull request, or merge. Changes after completion are outside the completed verification.
+When the workflow ends, `Maestro` presents a summary and turns off. The `owner` then reviews the changes.
 
 ## Stored artifacts
 
-An `artifact` is a saved workflow file. `Maestro` creates the `spec` directory with `proposal.md`, `spec.md`, `workflow.json`, and an empty `prototypes/` directory.
-`design.md` is created during drafting only when needed. `Builder`, `verifier`, and `simplifier` `handoff` directories appear when those results are saved.
-
-The agents submit results through `Maestro` tools instead of writing the reports directly. A successful submission saves the result and updates the phase in
-`workflow.json` before the agent returns.
-
-`Builder` (`B`) and `verifier` (`V`) numbers count saved `handoffs` within one `spec`. Each sequence starts at 1 and advances independently. Every saved `builder`
-outcome, including `escalation`, creates the next `B` report. Revising the same `spec` keeps these sequences. A new `spec` starts new sequences.
-
-`Escalation` (`E`) numbers identify questions within a `builder` `handoff`. They restart at `E1` in each `handoff`.
-
-For example, a repair cycle with all agents and scoring enabled and successful `builder` results produces these files:
-
-| Step | Action                                                                  | Report saved or updated                                                         |
-| ---- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| 1    | The `builder` completes the implementation.                             | Creates `handoffs/builder/B1.json`.                                             |
-| 2    | The `verifier` checks it and reports `findings`.                        | Creates `handoffs/verifier/V1.json`.                                            |
-| 3    | The `owner` decides every `finding` and requests a code fix.            | Updates decisions in the existing `V1.json`.                                    |
-| 4    | A new `builder` `run` completes the fixes.                              | Creates `handoffs/builder/B2.json`.                                             |
-| 5    | A new `verifier` `run` checks the work again and reports no `findings`. | Creates `handoffs/verifier/V2.json`. The workflow reaches `simplifier-running`. |
-| 6    | The `simplifier` completes its refactoring.                             | Creates `handoffs/simplifier/S.json`, then saves `scorer-running`.              |
-| 7    | Evaluation saves scores or a failure.                                   | Saves `spec-score/evaluation.json`, then reaches `candidate-ready`.             |
-
-If the first `builder` `run` escalates, it creates `B1.json` with its questions. `Owner` answers update `B1.json`. The next saved `builder` result creates `B2.json`.
-
-A `builder` report has `status: done` or `status: escalation`. A `done` report requires every recorded `probe` to pass and an empty `escalations` list. An `escalation`
-retains actual `probe` results: `passed`, `failed`, or `not-run`.
-
-Execution errors or missing or invalid saved results stop the workflow. See [Limitations](#limitations).
-
-The default layout after multiple `runs` is:
+A new `spec` starts with `proposal.md`, `spec.md`, `workflow.json`, and an empty `prototypes/` directory. `design.md` is optional, and `handoff` directories appear when
+the first reports are saved. This example shows the files saved when all phases are enabled and the `verifier` checks the code again after a fix.
 
 ```text
 .specs/<spec-id>/
@@ -389,8 +172,15 @@ The default layout after multiple `runs` is:
 └── prototypes/
 ```
 
-`Maestro` uses the latest saved `builder` and `verifier` `handoffs` as their active results. New results do not replace earlier numbered reports. Earlier reports remain
-available as context, not as proof for the current `run`. `Owner` decisions update the active `builder` or `verifier` `handoff` without creating another numbered report.
+| What happens                                             | Report saved or updated |
+| -------------------------------------------------------- | ----------------------- |
+| The `builder` implements the change.                     | Creates `B1.json`.      |
+| The `verifier` checks the change and reports `findings`. | Creates `V1.json`.      |
+| The `owner` requests a code fix for `V1/F2`.             | Updates `V1.json`.      |
+| The `builder` fixes the issue.                           | Creates `B2.json`.      |
+| The `verifier` checks the fix.                           | Creates `V2.json`.      |
+
+`B` and `V` are numbered separately within each `spec`. Revising the `spec` does not reset the numbering or remove earlier reports.
 
 ## Limitations
 
@@ -404,18 +194,13 @@ these project-specific checks.
 
 ### No automatic rollback
 
-The `owner` can stop a running agent through Pi's cancel action (`Escape` by default). There is no automatic `Maestro` execution deadline. Cancellation does not request a
-final agent turn or create a synthetic `handoff`.
-
-Launch errors, execution failures, interruptions, cancellations, and missing or invalid `handoffs` stop the workflow without a recovery transition. If a `run` saves no
-completed transition, its saved running phase remains unchanged. Partial protocol writes require manual `owner` follow-up. `Maestro` provides no automatic rollback,
-repair, or recovery for these errors. The files that remain are available for `owner` inspection.
+A failed or interrupted `run` can leave file changes on disk and a running phase in `workflow.json`. `Maestro` does not roll back or repair partial changes. The `owner`
+should inspect the project files and saved reports before restarting.
 
 ### Restart an existing spec
 
-When existing `specs` are available, `/maestro` activation offers "New spec" and "Restart spec". Restart opens a selector of existing `specs` in the configured directory.
-The selected `spec` returns to `drafting-spec` from any saved phase. `Maestro` reads and reviews its proposal, `spec`, and optional design with the `owner` before asking
-for renewed `GREEN FLAG`.
+To revisit an existing `spec`, choose "Restart spec" in `/maestro`. The selected `spec` returns to `drafting-spec` from any saved phase. `Maestro` reads and reviews its
+proposal, `spec`, and optional design with the `owner` before asking for renewed `GREEN FLAG`.
 
 Restart preserves the existing files except for the workflow phase. Saved `owner` decisions retain their normal effect for the same approved documents. Restart does not
 recover an interrupted agent or its conversation, reconstruct progress from the previous phase, or reconcile partial saves.

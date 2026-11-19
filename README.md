@@ -88,35 +88,26 @@ Activate `Maestro`:
 /maestro
 ```
 
-During activation, `Maestro` checks configuration and model availability for enabled agents. Model availability comes from Pi's model registry. If a check fails,
-`Maestro` stays disabled and reports the problem.
+Choose "New spec" to start or ["Restart spec"](docs/workflow.md#restart-an-existing-spec) to revisit an existing `spec`.
+
+If the configuration is invalid or a model for an enabled implementation role is unavailable, `Maestro` stays off and reports the problem.
 
 The `owner` follows this workflow:
 
 1. Describes one change to `Maestro`.
 2. Reviews the `spec`, including its `acceptance criteria` and concrete examples.
-3. Replies `GREEN FLAG` when `Maestro` asks for approval. `Maestro` records the approval and starts the selected phases.
-4. Reviews every current `builder` `escalation` and gives `Maestro` an answer and reason for each question.
-5. Reviews `verifier` `findings` and chooses an action for every `finding`.
-6. Reads Maestro's summary at `candidate-ready` and performs the final review.
-
-Selected agents use Pi's SDK and run one at a time in the foreground. Pi waits for each `run` to finish, and `Maestro` shows the current phase in Pi's status.
-
-During the workflow, the `builder` may raise `escalations` and the `verifier` may report `findings` that require human review. `Maestro` presents them to the `owner`, who
-must decide how to proceed for each one. See [Escalations](docs/workflow.md#escalations) and [Findings](docs/workflow.md#findings) for details.
+3. Replies `GREEN FLAG` when `Maestro` asks for approval.
+4. Answers each [builder escalation](docs/workflow.md#escalations) and gives a reason, if any arise.
+5. Chooses what to do about each [verifier finding](docs/workflow.md#findings), if any arise.
+6. Reads Maestro's summary and performs the final review.
 
 The same `/maestro` command disables `Maestro` and leaves project files unchanged.
 
 ### Troubleshooting
 
-When a saved native child session exists, `Maestro` displays its path on completion or failure. For troubleshooting, the `owner` can review the agent's messages, tool
-calls, and results by inspecting that file directly or exporting it to HTML:
+If an agent fails, use the session path shown by `Maestro`, when available, to [inspect or export the session](docs/subagent-integration.md#inspecting-saved-sessions).
 
-```bash
-pi --export /sessions/weather/subagents/child.jsonl conversation.html
-```
-
-## LLM as a judge
+## LLM as Judge
 
 The optional `scorer` uses an explicitly selected Pi classifier to evaluate the entire workflow against the approved `spec` after implementation.
 
@@ -127,7 +118,7 @@ It scores:
 
 `Maestro` presents the results in the final summary.
 
-The `owner` can select the scorer's classifier during initial setup. See [Scorer configuration](docs/configuration.md#scorer).
+See [Scorer configuration](docs/configuration.md#scorer) to choose a classifier.
 
 This automatic grading system gives the `owner` a level of confidence in the workflow's outcome, not proof of correctness.
 

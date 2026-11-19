@@ -2,36 +2,53 @@
 
 ## Terms
 
+### Roles
+
+| Term         | Meaning                                                                                                                          |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `Owner`      | The person who approves the `spec`, decides questions and `findings`, and performs the final review.                             |
+| `Maestro`    | The coordinator that prepares the `spec`, runs the agents, and records `owner` decisions.                                        |
+| `Builder`    | The agent that implements the approved `spec` and checks every `GIVEN`, `WHEN`, and `THEN` scenario.                             |
+| `Verifier`   | The independent agent that checks the implementation and reports technical issues.                                               |
+| `Simplifier` | The agent that refactors accepted code for clarity without changing behavior or introducing check failures.                      |
+| `Scorer`     | The optional classifier invoked by `Maestro` to score workflow correctness and verification quality against the approved `spec`. |
+
+### Specification
+
 | Term                          | Meaning                                                                                                                                                                                                                               |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Owner`                       | The person who approves the `spec`, decides questions and `findings`, and performs the final review.                                                                                                                                  |
-| `Maestro`                     | The coordinator that prepares the `spec`, runs the agents, and records `owner` decisions.                                                                                                                                             |
-| `Builder`                     | The agent that implements the approved `spec` and checks every `GIVEN`, `WHEN`, and `THEN` scenario.                                                                                                                                  |
-| `Verifier`                    | The independent agent that checks the implementation and reports technical issues.                                                                                                                                                    |
-| `Simplifier`                  | The agent that refactors accepted code for clarity without changing behavior or introducing check failures.                                                                                                                           |
-| `Scorer`                      | The optional classifier invoked by `Maestro` to score workflow correctness and verification quality against the approved `spec`.                                                                                                      |
 | `Spec`                        | A `specification` for one change: `proposal.md` for motivation and scope, `spec.md` for behavior and `acceptance criteria`, and optional `design.md` for technical decisions. The present documents are approved and frozen together. |
+| `Delta`                       | Field under each requirement in `spec.md` that shows whether it adds, modifies, or removes behavior.                                                                                                                                  |
+| `Verified by`                 | Field under each requirement in `spec.md` that links to the `acceptance criteria` or existing tests that cover it.                                                                                                                    |
 | `Acceptance criterion` (`AC`) | One required, observable result defined in the `spec`.                                                                                                                                                                                |
 | `GIVEN`                       | The starting conditions of an `acceptance criterion`.                                                                                                                                                                                 |
 | `WHEN`                        | The action or observation that checks the behavior of an `acceptance criterion`.                                                                                                                                                      |
 | `THEN`                        | The measurable outcome the `WHEN` must produce.                                                                                                                                                                                       |
 | `Assumption`                  | A detail the request did not specify or a scope boundary taken as given. A false `assumption` during implementation is an `escalation` trigger.                                                                                       |
-| `Artifact`                    | A saved workflow file, such as a `spec`, or a `handoff` between agents.                                                                                                                                                               |
-| `Handoff`                     | A saved agent report. `Builder` and `verifier` reports include `probe` outcomes. A `simplifier` report includes refactored files, a summary, and notes.                                                                               |
-| `Observability`               | The owner's ability to inspect workflow progress and reported results.                                                                                                                                                                |
-| `Run` or `pass`               | One agent execution with a fresh conversation.                                                                                                                                                                                        |
-| `Candidate`                   | The project files created by agents after a workflow `run`                                                                                                                                                                            |
-| `Finding`                     | A technical issue that the `verifier` records for an `owner` decision.                                                                                                                                                                |
-| `Escalation`                  | An implementation question or reportable technical problem that the `builder` records in its `handoff` for an `owner` decision.                                                                                                       |
-| `GREEN FLAG`                  | The owner's explicit reply that approves the current `spec` and proceeds through the selected phases.                                                                                                                                 |
-| `fix-code`                    | An `owner` decision that requests code fixes without changing the approved `spec`.                                                                                                                                                    |
-| `revise-spec`                 | An `owner` decision that records a reason and agreed requirement change, then returns to `drafting-spec` for revision and renewed approval.                                                                                           |
-| `reject`                      | An `owner` decision that declines a `finding` and records a reason. It does not mean that verification passed.                                                                                                                        |
-| `candidate-ready`             | The completed workflow phase. Final review remains with the `owner`.                                                                                                                                                                  |
+
+### Approval and decisions
+
+| Term          | Meaning                                                                                                                                     |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GREEN FLAG`  | The owner's explicit reply that approves the current `spec` and proceeds through the selected phases.                                       |
+| `Escalation`  | An implementation question or reportable technical problem that the `builder` records in its `handoff` for an `owner` decision.             |
+| `Finding`     | A technical issue that the `verifier` records for an `owner` decision.                                                                      |
+| `fix-code`    | An `owner` decision that requests code fixes without changing the approved `spec`.                                                          |
+| `revise-spec` | An `owner` decision that records a reason and agreed requirement change, then returns to `drafting-spec` for revision and renewed approval. |
+| `reject`      | An `owner` decision that declines a `finding` and records a reason. It does not mean that verification passed.                              |
+
+### Runs and results
+
+| Term              | Meaning                                                                                                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Run` or `pass`   | One agent execution with a fresh conversation.                                                                                                          |
+| `Artifact`        | A saved workflow file, such as a `spec`, or a `handoff` between agents.                                                                                 |
+| `Handoff`         | A saved agent report. `Builder` and `verifier` reports include `probe` outcomes. A `simplifier` report includes refactored files, a summary, and notes. |
+| `Observability`   | The owner's ability to inspect workflow progress and reported results.                                                                                  |
+| `Candidate`       | The project files created by agents after a workflow `run`                                                                                              |
+| `candidate-ready` | The completed workflow phase. Final review remains with the `owner`.                                                                                    |
 
 ## Identifiers and file names
-
-An ID is an identifier that names one record. These labels refer to records within one `spec`, not across all workflows.
 
 | Label          | Meaning                                                           | Location or scope                                                               |
 | -------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -49,33 +66,4 @@ An ID is an identifier that names one record. These labels refer to records with
 All paths in this table are relative to the `spec` directory unless stated otherwise. The [configuration](configuration.md#path-rules) can change the directory that
 contains `specs`.
 
-Requirement IDs use the `REQ` prefix. They are unique within the `spec` and remain stable during revisions. Each requirement links to its verification through
-`Verified by`. See [Requirement coverage](workflow.md#requirement-coverage).
-
-The `AC` prefix is the template's naming convention. Criterion IDs must be unique within the `spec`. Reports use the exact IDs from the `spec`, including standalone
-regression criteria without a requirement association. `Builder` and `verifier` numbers count saved `handoffs` in separate sequences.
-
-## Escalation references
-
-Read `B1/E1` as "escalation 1 in builder report 1". `B1` selects `handoffs/builder/B1.json`. `E1` selects the entry with `id: "E1"` in its `escalations` list.
-
-`Escalation` numbers restart at `E1` in each `builder` report. `B1/E1` and `B2/E1` identify different questions, even if they concern the same topic.
-
-The `owner` discusses every current question with `Maestro`. `Maestro` records all answers and reasons together in that same `builder` report. See
-[Escalations](workflow.md#escalations) for the available choices and their effects.
-
-## Finding references
-
-Read `V1/F2` as "finding 2 in verifier report 1". `V1` selects `handoffs/verifier/V1.json`. `F2` selects the entry with `id: "F2"` in its `findings` list.
-
-`Finding` numbers restart at `F1` in each `verifier` report. `V1/F2` and `V2/F2` identify different records, even if they describe a similar issue.
-
-For example, a `finding` about a saved title can appear in a `Maestro` message like this:
-
-> Verifier report 1, finding 2 (`V1/F2`): the title returns to "Draft" after saving "Ready" and reopening the item. Acceptance criterion 1 (`AC1`) requires the saved
-> title to remain "Ready".
-
-In this example, the finding's `acceptanceCriterion: "AC1"` connects the issue to criterion `AC1` in `spec.md`.
-
-The `owner` discusses the issue with `Maestro`. `Maestro` records the decision in the same `verifier` report. See [Findings](workflow.md#findings) for the available
-choices and their effects.
+`Escalation` and `finding` numbers restart in each report: `B1/E1` and `B2/E1` refer to different questions.
