@@ -3,7 +3,7 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
-## Unreleased
+## 0.21.0
 
 - feat: Change or clear agent models from `/maestro` before starting or restarting a `spec`.
 - feat: Optionally score workflow correctness and verification quality with a Pi classifier. The final summary reports both scores.
