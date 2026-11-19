@@ -1,45 +1,25 @@
 # Subagent integration
 
-`Maestro` runs the `builder`, `verifier`, and `simplifier` through Pi's SDK. Each child session handles one role while the `owner` stays in the main `Maestro`
-conversation.
+The `owner` stays in the main `Maestro` conversation while the `builder`, `verifier`, and `simplifier` each work in a separate Pi session. The optional `scorer` uses a Pi
+classifier instead of a separate agent session. See [Workflow evaluation](workflow.md#workflow-evaluation).
 
 ## Roles and context
 
-The package supplies the three roles:
+Each agent `run` starts a fresh conversation. Agents use the `spec`, relevant saved `artifacts`, and Pi's global and project instructions, including `AGENTS.md`. They do
+not see the main conversation or earlier agent conversations. Requirements discussed in chat should be captured in the `spec`.
 
-| Role         | Instructions                                      |
-| ------------ | ------------------------------------------------- |
-| `Builder`    | [`agents/builder.md`](../agents/builder.md)       |
-| `Verifier`   | [`agents/verifier.md`](../agents/verifier.md)     |
-| `Simplifier` | [`agents/simplifier.md`](../agents/simplifier.md) |
+Agents can use Pi's enabled extensions and skills, including configured MCP, codemode, and tool search support.
 
-Each `run` starts a fresh conversation, without the main session's history or automatic resumption of earlier child sessions. The bundled role instructions supplement
-Pi's normal instructions. Global and project instructions, including `AGENTS.md`, and available skills are discovered through Pi. Models and thinking levels come from
-[Maestro configuration](configuration.md).
-
-Enabled global and project extensions load in child sessions. Native Pi tools and configured MCP, codemode, and tool search support are available.
-
-The `owner` approves the `spec` and selected phases through the main conversation. See [Phase selection](configuration.md#phase-selection).
-
-## Following a run
-
-`Runs` stay in the foreground and occur one at a time. Pi waits for each `run` to finish before `Maestro` continues. Maestro's Pi status shows the workflow phase.
-
-Saved `handoffs` contain the structured results. See [Stored artifacts](workflow.md#stored-artifacts) for further details.
+Maestro's status in Pi shows the current workflow phase.
 
 ## Cancellation and errors
 
-The `owner` can interrupt a running agent with Pi's cancel action (`Escape` by default). `Maestro` forwards cancellation to the child and waits for cleanup.
-
-Execution errors, interruptions, and missing or invalid `handoffs` stop the workflow. Completed file changes remain.
+Press `Escape` (Pi's default cancel key) to stop a running agent. Cancellation does not undo file changes. After an interruption or error, see
+[Restart an existing spec](workflow.md#restart-an-existing-spec).
 
 ## Inspecting saved sessions
 
-When a native child session file exists, `Maestro` displays its exact path on completion or failure, including interruptions and invalid `handoffs`. No path is displayed
-when execution fails before a session file is saved.
-
-Child session files live under `subagents/` in Pi's project session directory, outside the project repository. The `owner` can read the displayed JSONL file directly or
-export it with Pi:
+If `Maestro` displays a saved session path, open the JSONL file or export it to HTML to inspect the agent's messages and tool calls:
 
 ```bash
 pi --export /sessions/weather/subagents/child.jsonl conversation.html
