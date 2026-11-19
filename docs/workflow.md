@@ -413,7 +413,7 @@ repair, or recovery for these errors. The files that remain are available for `o
 
 ### Restart an existing spec
 
-When existing `specs` are available, `/maestro` activation offers "New spec" and "Restart spec". Restart opens a selector of existing `specs` in the configured directory.
+To revisit an existing `spec`, choose "Restart spec" in `/maestro`.
 The selected `spec` returns to `drafting-spec` from any saved phase. `Maestro` reads and reviews its proposal, `spec`, and optional design with the `owner` before asking
 for renewed `GREEN FLAG`.
 
