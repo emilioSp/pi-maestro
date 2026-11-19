@@ -117,7 +117,7 @@ calls, and results by inspecting that file directly or exporting it to HTML:
 pi --export /sessions/weather/subagents/child.jsonl conversation.html
 ```
 
-## LLM as a judge
+## LLM as Judge
 
 The optional `scorer` uses an explicitly selected Pi classifier to evaluate the entire workflow against the approved `spec` after implementation.
 
