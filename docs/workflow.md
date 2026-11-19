@@ -302,8 +302,7 @@ check failures. If no code needs refactoring, the `simplifier` does not make any
 
 When scoring is enabled, `scorer-running` evaluates the entire workflow against the approved `spec` after the selected implementation phases, including simplification.
 The selected Pi classifier receives the approved documents, available `handoffs` and `owner` decisions, and staged, unstaged, and untracked Git changes against `HEAD`.
-The `owner` selects the classifier during initial setup or configures it in `.pi/maestro.json`. Scoring is disabled by default. See
-[Scorer configuration](configuration.md#scorer).
+Scoring is off by default. The `owner` can choose a classifier in [Agent models](configuration.md#agent-models) before starting or restarting a `spec`.
 
 The classifier's ratings are converted to two separate scores on a **0–100 scale**. Each retains its confidence value from 0 to 1:
 
@@ -413,9 +412,8 @@ repair, or recovery for these errors. The files that remain are available for `o
 
 ### Restart an existing spec
 
-To revisit an existing `spec`, choose "Restart spec" in `/maestro`.
-The selected `spec` returns to `drafting-spec` from any saved phase. `Maestro` reads and reviews its proposal, `spec`, and optional design with the `owner` before asking
-for renewed `GREEN FLAG`.
+To revisit an existing `spec`, choose "Restart spec" in `/maestro`. The selected `spec` returns to `drafting-spec` from any saved phase. `Maestro` reads and reviews its
+proposal, `spec`, and optional design with the `owner` before asking for renewed `GREEN FLAG`.
 
 Restart preserves the existing files except for the workflow phase. Saved `owner` decisions retain their normal effect for the same approved documents. Restart does not
 recover an interrupted agent or its conversation, reconstruct progress from the previous phase, or reconcile partial saves.

@@ -133,8 +133,8 @@ simplification can still be skipped if Git is unavailable.
 
 ## Scorer
 
-The `owner` can choose any available Pi classifier in [Agent models](#agent-models) or during initial setup. The choice is saved as `scorer.model`. The example above
-uses `openrouter/typesafe/jev-1.14`, but no model or provider is required by default.
+The `owner` can choose any available Pi classifier in [Agent models](#agent-models) or during initial setup. The choice is saved as `scorer.model`. The example above uses
+`openrouter/typesafe/jev-1.14`, but no model or provider is required by default.
 
 Scoring is disabled when `scorer` is omitted or `scorer.required` is `false`. Enabling it requires an explicit, non-empty model.
 
@@ -158,11 +158,9 @@ For example, `specDirectory: "planning/specs"` places `specs` in `<project-root>
 
 ## Model access
 
-During activation, `Maestro` checks the configured models for enabled agents against Pi's available model registry. Pi's registry is the source of truth for model
-availability; `Maestro` does not maintain a separate model list or authentication check. A missing enabled model stops activation and identifies the full configured
-identifier.
+An unavailable model for an enabled `builder`, `verifier`, or `simplifier` prevents activation. The `owner` can select a different model in [Agent models](#agent-models)
+or sign in to the provider in Pi. If the `builder` is disabled, no models are needed to start.
 
-With `builder` disabled, activation checks only configuration, without a model lookup.
+If the `scorer` classifier is unavailable at evaluation time, the workflow finishes without scores. See [Scorer](#scorer).
 
-The `owner` can correct the identifier or authenticate the provider in Pi, then retry `/maestro`. Authentication or provider errors during execution still appear as `run`
-failures. Agent context are described in [Subagent integration](subagent-integration.md#roles-and-context).
+See [Subagent integration](subagent-integration.md#roles-and-context) for agent context.
