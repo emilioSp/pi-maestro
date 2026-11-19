@@ -6,40 +6,19 @@ Pi extension for writing a `spec` and optionally implementing it through a spec-
 
 ![Maestro workflow](docs/maestro.png)
 
-## The idea
+## How it works
+
+Every change starts with a `spec`. `Maestro` helps the `owner` to define a specification (`spec`) for a change, including clear requirements and acceptance criteria.
+
+Two ways of working with `Maestro` are available:
+- **Spec only:** Stop after approval and use the `spec` in another workflow.
+- **Spec and implementation:** The `builder` implements the approved `spec`. Three optional steps can follow: the `verifier` independently checks every
+  `acceptance criterion`, the `simplifier` improves the code without changing its behavior, and the [`scorer`](#llm-as-judge) rates the result and the quality of the
+  verification evidence. These steps can be enabled independently. See [Phase selection](docs/configuration.md#phase-selection) for setup and defaults.
+
+Each agent has a separate job. No agent approves its own work and the `owner` makes decisions when questions come up and reviews the final code.
 
 Read [The Pi Maestro Manifesto](MANIFESTO.md) for the motivation behind the project.
-
-`Maestro` has two goals:
-
-1. Help the `owner` write and approve a `specification` (`spec`) for one reversible change.
-2. Implement the approved `spec` through a multiagent workflow.
-
-The `owner` can use `Maestro` only to write and approve a `spec`, leaving implementation to another workflow, or to write the `spec` and implement it within `Maestro`.
-`Spec` preparation and approval are required. The entire implementation stage is optional, and each of its phases is optional too:
-
-1. The `builder` implements the approved `spec`.
-2. The independent `verifier` checks every `acceptance criterion`.
-3. The `simplifier` refactors accepted code without changing behavior.
-
-Disabling the `builder` skips the entire implementation stage and scoring. With the `builder` enabled, the `verifier`, `simplifier`, and `scorer` can be disabled
-independently.
-
-In existing configurations, `builder` and `verifier` default to enabled;
-
-`simplifier` and `scorer` default to disabled. Initial setup enables only selected roles.
-
-See [Phase selection](docs/configuration.md#phase-selection) for details.
-
-The `owner` performs the final review.
-
-Five principles hold the workflow together:
-
-1. The approved `spec` defines the required work for the `builder` and `verifier`.
-2. No agent approves its own work.
-3. When enabled, the `verifier` checks every `acceptance criterion` independently.
-4. The `owner` decides requirements, scope, and unresolved questions.
-5. Each agent has one and only one role. Specific and with clear instruction.
 
 https://github.com/user-attachments/assets/dffa8bc7-6c79-491f-95df-2ee95b6447aa
 
@@ -52,18 +31,18 @@ concepts to a sequential multiagent workflow in Pi. See [Inspirations](docs/insp
 
 | Role         | Responsibility                                                                                                          |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `Owner`      | Brings the problem, approves the `spec`, decides questions and `findings`, and reviews the final code.                  |
+| `Owner`      | Brings the problem, approves the `spec`, decides questions, and reviews the final code.                  |
 | `Maestro`    | Works directly with the `owner`, prepares the `spec`, runs the other agents, records decisions, and summarizes results. |
-| `Builder`    | Implements the approved `spec` and checks each `acceptance criterion`.                                                  |
-| `Verifier`   | Independently checks the project files against the `spec` and reports technical issues.                                 |
+| `Builder`    | Implements the approved `spec`.                                                  |
+| `Verifier`   | Independently checks the implementation against the approved `spec` and reports any technical issues it finds.                   |
 | `Simplifier` | Refactors accepted code for clarity without changing behavior or introducing check failures.                            |
 | `Scorer`     | Optional classifier invoked by `Maestro` to score correctness and verification quality.                                 |
 
 ## Prerequisites
 
-1. Node.js 26 or later.
-2. Pi 1.5.0 or later.
-3. Access to the models for enabled agents.
+- Node.js 26 or later. 
+- Pi 1.5.0 or later.
+- Access to the models for enabled agents.
 
 ## Installation
 
@@ -133,20 +112,18 @@ The `owner` can edit this file before activation. See [Configuration](docs/confi
 
 ## Documentation
 
-The reading order is:
-
-1. [Glossary](docs/glossary.md): terms and identifiers used in `specs`, reports, and `Maestro` messages. Read this before the first workflow.
-2. [Workflow](docs/workflow.md): approvals, decisions, and how each `run` produces `artifacts`.
-3. [Configuration](docs/configuration.md): project paths, models, and thinking levels.
-4. [Subagent integration](docs/subagent-integration.md): agent context, execution, and activity tracking.
+- [Glossary](docs/glossary.md): terms and identifiers used in `specs`, reports, and `Maestro` messages. Read this before the first workflow.
+- [Workflow](docs/workflow.md): approvals, decisions, and how each `run` produces `artifacts`.
+- [Configuration](docs/configuration.md): project paths, models, and thinking levels.
+- [Subagent integration](docs/subagent-integration.md): agent context, execution, and activity tracking.
 
 ## Project constitution
 
-1. [Mission](docs/MISSION.md): purpose, scope, and `owner` responsibilities.
-2. [Tech stack](docs/TECH_STACK.md): runtime technologies and development tools.
-3. [Roadmap](docs/roadmap/README.md): completed outcomes and planned work maintained in the repository.
-4. [Changelog](CHANGELOG.md): meaningful codebase changes and breaking changes.
-5. [Architecture decision records](docs/adr/README.md): architectural choices, context, consequences, and evidence.
+- [Mission](docs/MISSION.md): purpose, scope, and `owner` responsibilities.
+- [Tech stack](docs/TECH_STACK.md): runtime technologies and development tools.
+- [Roadmap](docs/roadmap/README.md): completed outcomes and planned work maintained in the repository.
+- [Changelog](CHANGELOG.md): meaningful codebase changes and breaking changes.
+- [Architecture decision records](docs/adr/README.md): architectural choices, context, consequences, and evidence.
 
 ## License
 
