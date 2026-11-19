@@ -127,7 +127,7 @@ It scores:
 
 `Maestro` presents the results in the final summary.
 
-The `owner` can select the scorer's classifier during initial setup. See [Scorer configuration](docs/configuration.md#scorer).
+See [Scorer configuration](docs/configuration.md#scorer) to choose a classifier.
 
 This automatic grading system gives the `owner` a level of confidence in the workflow's outcome, not proof of correctness.
 
