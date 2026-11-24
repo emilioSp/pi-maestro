@@ -65,5 +65,3 @@
 
 All paths in this table are relative to the `spec` directory unless stated otherwise. The [configuration](configuration.md#path-rules) can change the directory that
 contains `specs`.
-
-`Escalation` and `finding` numbers restart in each report: `B1/E1` and `B2/E1` refer to different questions.

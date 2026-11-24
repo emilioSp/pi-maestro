@@ -13,6 +13,7 @@ Pi extension for writing a specification and optionally implementing it through 
 Every change starts with a `spec`. `Maestro` helps the `owner` to define a specification (`spec`) for a change, including clear requirements and acceptance criteria.
 
 Two ways of working with `Maestro` are available:
+
 - **Spec only:** Stop after approval and use the `spec` in another workflow.
 - **Spec and implementation:** The `builder` implements the approved `spec`. Three optional steps can follow: the `verifier` independently checks every
   `acceptance criterion`, the `simplifier` improves the code without changing its behavior, and the [`scorer`](#llm-as-judge) rates the result and the quality of the
@@ -33,16 +34,16 @@ concepts to a sequential multiagent workflow in Pi. See [Inspirations](docs/insp
 
 | Role         | Responsibility                                                                                                          |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `Owner`      | Brings the problem, approves the `spec`, decides questions, and reviews the final code.                  |
+| `Owner`      | Brings the problem, approves the `spec`, decides questions, and reviews the final code.                                 |
 | `Maestro`    | Works directly with the `owner`, prepares the `spec`, runs the other agents, records decisions, and summarizes results. |
-| `Builder`    | Implements the approved `spec`.                                                  |
-| `Verifier`   | Independently checks the implementation against the approved `spec` and reports any technical issues it finds.                   |
+| `Builder`    | Implements the approved `spec`.                                                                                         |
+| `Verifier`   | Independently checks the implementation against the approved `spec` and reports any technical issues it finds.          |
 | `Simplifier` | Refactors accepted code for clarity without changing behavior or introducing check failures.                            |
 | `Scorer`     | Optional classifier invoked by `Maestro` to score correctness and verification quality.                                 |
 
 ## Prerequisites
 
-- Node.js 26 or later. 
+- Node.js 26 or later.
 - Pi 1.5.0 or later.
 - Access to the models for enabled agents.
 
@@ -99,7 +100,7 @@ It scores:
 
 `Maestro` presents the results in the final summary.
 
-See [Scorer configuration](docs/configuration.md#scorer) to choose a classifier.
+See [Scorer configuration](docs/configuration.md#model-access) to choose a classifier.
 
 This automatic grading system gives the `owner` a level of confidence in the workflow's outcome, not proof of correctness.
 

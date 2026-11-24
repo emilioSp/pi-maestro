@@ -42,8 +42,6 @@ flowchart TD
 
 ## Workflow phases
 
-The saved phase in `workflow.json` determines what can happen next.
-
 | Phase                  | Meaning                                                                                                                       |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `drafting-spec`        | The `owner` and `Maestro` prepare the initial `spec` or revise it after recorded `escalation` answers or `finding` decisions. |
@@ -59,8 +57,6 @@ The saved phase in `workflow.json` determines what can happen next.
 
 ## Specification documents
 
-Each new `spec` uses these documents in the same directory:
-
 | Document      | Content                                                                                                      | Presence                                                       |
 | ------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
 | `proposal.md` | Problem, goal, scope, and exclusions.                                                                        | Always created.                                                |
@@ -69,8 +65,8 @@ Each new `spec` uses these documents in the same directory:
 
 ## Spec approval
 
-Review `proposal.md`, `spec.md`, and `design.md` if present. Reply `GREEN FLAG` when `Maestro` asks for approval. This approves the whole set, including any visual
-prototypes, and starts the selected [implementation phases](configuration.md#phase-selection). The approved files are frozen until a [spec revision](#spec-revision).
+Review `proposal.md`, `spec.md`, and `design.md` if present, and reply `GREEN FLAG` when `Maestro` asks for approval. This approves the whole set, including any visual
+prototypes, and starts the selected [implementation phases](configuration.md#phase-selection).
 
 ## Escalations
 
@@ -95,33 +91,18 @@ A `finding` is an issue the `verifier` identifies while independently checking t
 | `revise-spec` | Records the owner's reason and agreed requirement change, then returns to `drafting-spec`.                                                                                                  |
 
 If any `finding` requires revision, revise the `spec` before any code fixes. Otherwise, if any decision is `fix-code`, the `verifier` checks the work again after the
-`builder` fixes it. Rejecting a `finding` does not mean its check passed.
+`builder` fixes it.
 
 ## Spec revision
 
 A decision to change the `spec` pauses implementation. Review the revised document set and reply `GREEN FLAG` again before the `builder` restarts. Earlier reports and
 decisions remain available as context.
 
-## Verification boundary
-
-The `verifier` can make temporary changes to run its checks. Before submitting its `handoff`, it restores the exact original contents of affected files and removes only
-files it created.
-
-Cleanup relies on the `verifier`. If cleanup cannot finish safely, the `verifier` stops and reports the remaining changes.
-
-## Simplification
-
-When enabled, `Maestro` starts the `simplifier` after successful verification, rejection of all `findings`, or `builder` completion with verification disabled. The
-`simplifier` runs only if Git is available, if not, a warning is displayed: `Simplifier skipped: Git repository unavailable.`
-
-The `simplifier` starts from all staged, unstaged, and untracked code changes, including pre-existing changes. It preserves observable behavior and introduces no new
-check failures. If no code needs refactoring, the `simplifier` does not make any change.
-
 ## Workflow evaluation
 
 When scoring is enabled, `scorer-running` evaluates the entire workflow against the approved `spec` after the selected implementation phases, including simplification.
 The selected Pi classifier receives the approved documents, available `handoffs` and `owner` decisions, and staged, unstaged, and untracked Git changes against `HEAD`.
-Scoring is off by default. The `owner` can choose a classifier in [Agent models](configuration.md#agent-models) before starting or restarting a `spec`.
+Scoring is off by default.
 
 The classifier's ratings are converted to two separate scores on a **0–100 scale**. Each retains its confidence value from 0 to 1:
 
@@ -138,9 +119,6 @@ Results are saved in the `spec-score/` folder inside the active `spec` directory
 
 - `evaluation.json` has the scores and confidence values, or the reason for a failure.
 - `evaluation.raw.json` has the classifier response, if one was returned.
-
-Evaluation needs Git with an existing `HEAD`. Once a success or a failure is saved, the workflow moves to `candidate-ready`. If the evaluation hits an error or is
-cancelled, a failure report is saved without scores. If the report cannot be saved, the workflow cannot finish. Maestro adds the workflow evaluation in the final summary.
 
 ## Workflow completion
 
@@ -194,13 +172,12 @@ these project-specific checks.
 
 ### No automatic rollback
 
-A failed or interrupted `run` can leave file changes on disk and a running phase in `workflow.json`. `Maestro` does not roll back or repair partial changes. The `owner`
-should inspect the project files and saved reports before restarting.
+A failed or interrupted `run` can leave file changes on disk and a running phase in `workflow.json`. `Maestro` does not roll back or repair partial changes.
 
 ### Restart an existing spec
 
 To revisit an existing `spec`, choose "Restart spec" in `/maestro`. The selected `spec` returns to `drafting-spec` from any saved phase. `Maestro` reads and reviews its
 proposal, `spec`, and optional design with the `owner` before asking for renewed `GREEN FLAG`.
 
-Restart preserves the existing files except for the workflow phase. Saved `owner` decisions retain their normal effect for the same approved documents. Restart does not
-recover an interrupted agent or its conversation, reconstruct progress from the previous phase, or reconcile partial saves.
+Restart preserves the existing files, saved `owner` decisions retain their normal effect for the same approved documents and restart does not recover an interrupted agent
+or its conversation.

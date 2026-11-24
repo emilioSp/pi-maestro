@@ -1,6 +1,6 @@
 # Configuration
 
-`Maestro` reads `.pi/maestro.json` from the project root. When it is absent, `/maestro` opens initial setup in Pi's interactive terminal.
+`Maestro` reads `.pi/maestro.json` from the project root. When it is absent, `/maestro` opens initial setup in Pi's interactive terminal and creates the file.
 
 ## Project root
 
@@ -11,12 +11,8 @@ For example, if Pi starts in `/work/app/src`, `Maestro` reads `/work/app/src/.pi
 ## Initial setup
 
 The `owner` runs `/maestro` in Pi's interactive terminal and follows the guided setup to select models and thinking levels for `builder`, `verifier`, and `simplifier`.
-The `scorer` appears in the same menu and offers available Pi classifiers only, without a thinking-level prompt. Selecting a classifier enables scoring; leaving it
-unselected keeps scoring disabled. Confirmation saves the choices in `.pi/maestro.json`.
-
-## Agent models
-
-Before starting or restarting a `spec`, the `owner` can choose "Agent models" in `/maestro` to change or clear any role's model.
+The `scorer` appears in the same menu and offers available Pi classifiers only. Selecting a classifier enables scoring; leaving it unselected keeps scoring disabled.
+Confirmation saves the choices in `.pi/maestro.json`.
 
 ## Example configuration
 
@@ -70,8 +66,7 @@ This is an explicit all-agent configuration, not a set of model defaults. The `o
 | `scorer.required`     |                        No | `false`               | Boolean selecting workflow scoring.                      |
 | `scorer.model`        |   When scoring is enabled | None                  | Full Pi classifier identifier; no default or fallback.   |
 
-Model values use the full `provider/model` identifier supplied by Pi's model registry, such as `openrouter/~openai/gpt-mini-latest`. Model IDs may contain additional
-slashes. `Maestro` does not apply a separate format rule; it matches the complete identifier against Pi's available models and uses it unchanged for SDK execution.
+Model values use the full `provider/model` identifier supplied by Pi's model registry, such as `openrouter/~openai/gpt-mini-latest`.
 
 `Maestro` accepts these thinking levels:
 
@@ -89,12 +84,10 @@ max
 
 The configuration file can omit fields that have a default in the table above:
 
-1. `version` is always required and must be `1.0.0`.
-2. Each agent that will execute needs an explicit `model`. If its model is missing, `Maestro` reports an error and does not activate.
-3. An agent disabled with `required: false` needs no model. With `builder.required: false`, no agents execute, so no models are required.
-4. Other omitted fields use the defaults in the table. For example, omitting `specDirectory` uses `.specs`.
-
-There are no default models: `Maestro` does not automatically assign Pi's current model to an agent.
+- `version` is always required and must be `1.0.0`.
+- Each agent that will execute needs an explicit `model`. If its model is missing, `Maestro` reports an error and does not activate.
+- An agent disabled with `required: false` needs no model. With `builder.required: false`, no agents execute, so no models are required.
+- Other omitted fields use the defaults in the table. For example, omitting `specDirectory` uses `.specs`.
 
 ```json
 {
@@ -113,33 +106,19 @@ directory is `.specs` because `specDirectory` is omitted.
 
 ## Phase selection
 
-Set each phase's `required` boolean before activation and leave configuration unchanged until the workflow completes. Omitted flags default to `true` for `builder` and
-`verifier`, and `false` for `simplifier` and `scorer`, including when their sections are absent. Strings, numbers, and `null` are invalid.
+The `required` flags determine which phases run after the `owner` approves the `spec`.
 
-With `builder.required: false`, approval completes the workflow with an approved `spec` and no agent execution, regardless of the other flags. The approved `spec` can be
-used for implementation in another workflow. With `builder` enabled, `verifier`, `simplifier`, and `scorer` can each be disabled independently. None runs without
-`builder`. The table below shows agent execution; enabled scoring follows the last selected implementation phase.
-
-| `builder.required` | `verifier.required` | `simplifier.required` | Selected phases after approval |
-| ------------------ | ------------------- | --------------------- | ------------------------------ |
-| `false`            | Any                 | Any                   | None; approved `spec` only     |
-| `true`             | `false`             | `false`               | `Builder` only                 |
-| `true`             | `true`              | `false`               | `Builder`, then `verifier`     |
-| `true`             | `false`             | `true`                | `Builder`, then `simplifier`   |
-| `true`             | `true`              | `true`                | All three, in order            |
-
-Disabled phases do not require model availability and produce no `handoff`. The final summary identifies skipped work rather than claiming it was performed. Enabled
-simplification can still be skipped if Git is unavailable.
-
-## Scorer
-
-The `owner` can choose any available Pi classifier in [Agent models](#agent-models) or during initial setup. The choice is saved as `scorer.model`. The example above uses
-`openrouter/typesafe/jev-1.14`, but no model or provider is required by default.
-
-Scoring is disabled when `scorer` is omitted or `scorer.required` is `false`. Enabling it requires an explicit, non-empty model.
-
-If the configured classifier is unavailable when scoring runs, evaluation saves a failure and the workflow completes without scores. See
-[Workflow evaluation](workflow.md#workflow-evaluation).
+| `builder.required` | `verifier.required` | `simplifier.required` | `scorer.required` | What runs after spec approval                    |
+| ------------------ | ------------------- | --------------------- | ----------------- | ------------------------------------------------ |
+| `false`            | Any                 | Any                   | Any               | None; approved `spec` only                       |
+| `true`             | `false`             | `false`               | `false`           | `Builder` only                                   |
+| `true`             | `false`             | `false`               | `true`            | `Builder` → `scorer`                             |
+| `true`             | `false`             | `true`                | `false`           | `Builder` → `simplifier`                         |
+| `true`             | `false`             | `true`                | `true`            | `Builder` → `simplifier` → `scorer`              |
+| `true`             | `true`              | `false`               | `false`           | `Builder` → `verifier`                           |
+| `true`             | `true`              | `false`               | `true`            | `Builder` → `verifier` → `scorer`                |
+| `true`             | `true`              | `true`                | `false`           | `Builder` → `verifier` → `simplifier`            |
+| `true`             | `true`              | `true`                | `true`            | `Builder` → `verifier` → `simplifier` → `scorer` |
 
 ## Schema version
 
@@ -158,9 +137,9 @@ For example, `specDirectory: "planning/specs"` places `specs` in `<project-root>
 
 ## Model access
 
-An unavailable model for an enabled `builder`, `verifier`, or `simplifier` prevents activation. The `owner` can select a different model in [Agent models](#agent-models)
-or sign in to the provider in Pi. If the `builder` is disabled, no models are needed to start.
+Each enabled phase needs a model when the `builder` is enabled. The `owner` can change models under "Agent models" in `/maestro`.
 
-If the `scorer` classifier is unavailable at evaluation time, the workflow finishes without scores. See [Scorer](#scorer).
+- `Builder`, `verifier`, and `simplifier`: If an enabled model is unavailable, `Maestro` won’t start.
+- `Scorer`: `Maestro` checks the Pi classifier when scoring runs. If it’s unavailable, `Maestro` records the failure and finishes without scores.
 
 See [Subagent integration](subagent-integration.md#roles-and-context) for agent context.

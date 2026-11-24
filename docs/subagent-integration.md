@@ -1,4 +1,4 @@
-# Subagent integration
+# Subagents integration
 
 The `owner` stays in the main `Maestro` conversation while the `builder`, `verifier`, and `simplifier` each work in a separate Pi session. The optional `scorer` uses a Pi
 classifier instead of a separate agent session. See [Workflow evaluation](workflow.md#workflow-evaluation).
@@ -10,11 +10,9 @@ not see the main conversation or earlier agent conversations. Requirements discu
 
 Agents can use Pi's enabled extensions and skills, including configured MCP, codemode, and tool search support.
 
-Maestro's status in Pi shows the current workflow phase.
-
 ## Cancellation and errors
 
-Press `Escape` (Pi's default cancel key) to stop a running agent. Cancellation does not undo file changes. After an interruption or error, see
+Press `Escape` (Pi's default cancel key) to stop a running agent. Cancellation does not undo file changes. After an interruption or error the spec can be restarted, see
 [Restart an existing spec](workflow.md#restart-an-existing-spec).
 
 ## Inspecting saved sessions
