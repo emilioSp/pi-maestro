@@ -1,10 +1,12 @@
+<p align="center">
+  <img src="pi-maestro-logo-black.png" alt="Pi Maestro logo" width="200">
+</p>
+
 # pi-maestro
 
 [![Coverage](https://img.shields.io/codecov/c/github/emiliosp/pi-maestro?logo=codecov)](https://codecov.io/gh/emiliosp/pi-maestro)
 
 Pi extension for writing a specification and optionally implementing it through a spec-driven multiagent workflow.
-
-![Maestro workflow](docs/maestro.png)
 
 ## How it works
 
