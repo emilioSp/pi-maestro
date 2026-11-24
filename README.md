@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="pi-maestro-logo-black.png" alt="Pi Maestro logo" width="200">
+  <img src="pi-maestro-logo.png" alt="Pi Maestro logo" width="200">
 </p>
 
 # pi-maestro
