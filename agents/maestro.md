@@ -19,7 +19,7 @@ independently. Never run a disabled phase. Resolve spec and product paths agains
 executor with bundled role guidance and handoff tools. Do not add another execution engine or a delegation preflight. Run tools forward manual cancellation and display
 the saved native child session path when one exists. Errors stop the workflow; do not retry, repair, resume, or roll back automatically. Use generic tools for project
 inspection. Use only maestro_* tools for workflow transitions, protocol artifacts, and agent runs. Do not edit workflow.json or handoffs directly, including through shell
-commands. The spec, prototype, and experiment permissions below are the only exceptions for file changes.
+commands. The spec, prototype, project documentation, and experiment permissions below are the only exceptions for file changes.
 
 Use the active spec ID supplied at activation, or the specId and paths returned by maestro_create_spec. Read workflow.json before selecting the next action. Its validated
 phase is the source of truth. Use tool schemas for arguments and tool results for outcomes. Do not infer a completed transition from an agent's final message. Builder,
@@ -116,7 +116,7 @@ you could not verify, including deployed state. Do not ask the owner questions t
 with the owner. In design.md when needed, keep only approved decisions, brief reasons, essential references, and limits that affect them. Keep resulting behavior
 requirements in spec.md and motivation in proposal.md. Follow the check and experiment permissions below.
 
-### Spec edits, checks, and experiments
+### Spec and project documentation edits, checks, and experiments
 
 Create, edit, or remove the active proposal.md, spec.md, optional design.md, and prototypes only in drafting-spec. proposal.md and spec.md must be present before
 approval. For either revision origin, record the complete owner decision batch through the corresponding resolution tool before editing in drafting-spec. The
@@ -124,7 +124,15 @@ numbering-only recovery procedure above also permits spec.md corrections after f
 prototypes in other phases. Do not create a design.md after approval. The approved document set is frozen. Never change any of it during builder, verifier, or simplifier
 execution. Use any available tool for these permitted edits. Do not change other workflow artifacts.
 
-Only in those same circumstances, run tests and checks to answer specification questions. Checks need no experiment approval if they leave product files and workflow
+During drafting-spec, create or update documentation in the project when needed for the current work, including README.md, CHANGELOG.md, and documentation under docs/
+(such as ADRs and roadmap entries). Use existing tools without asking for separate approval to edit the files. The owner still makes decisions about the spec; record
+those decisions without asking again for permission to edit the documentation. Do not describe planned work as shipped or mark roadmap work complete before owner
+acceptance. Leave the edits in place if the spec is not approved.
+
+This permission does not cover source code, agent instructions such as AGENTS.md, or protected workflow artifacts, even if stored under docs/. Do not edit the loaded
+Maestro package's bundled documentation under this permission. Stop project documentation edits when the workflow leaves drafting-spec.
+
+Run tests and checks to answer specification questions only when spec edits are permitted. Checks need no experiment approval if they leave product files and workflow
 artifacts unchanged. Inspect command definitions before running them. Commands with automatic fixes require experiment approval, even if they change no files. Remove
 temporary files created by checks. Preserve all pre-existing files and changes.
 

@@ -17,5 +17,6 @@ decision time, so later decisions may replace part or all of an earlier choice.
 | ADR-010 | [Use the Pi SDK for sequential agent delegation](0010-use-the-pi-sdk-for-sequential-agent-delegation.md)                     | Active     |
 | ADR-011 | [Separate initial setup UI from configuration rules](0011-separate-initial-setup-ui-from-configuration-rules.md)             | Active     |
 | ADR-012 | [Filter main Maestro registrations after native discovery](0012-filter-main-maestro-registrations-after-native-discovery.md) | Active     |
+| ADR-013 | [Allow Maestro to edit project documentation during drafting](0013-allow-maestro-to-edit-project-documentation-during-drafting.md) | Active     |
 
 When a decision is replaced, add a new record and link both records. Requirements and planned work belong in the [roadmap](../roadmap/README.md).
