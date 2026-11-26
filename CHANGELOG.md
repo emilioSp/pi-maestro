@@ -3,6 +3,10 @@
 This file summarizes meaningful changes to the codebase, including behavior, data formats, architecture, and development tools. Git tags identify version boundaries;
 GitHub Releases are not required.
 
+## 0.24.0
+
+- `Maestro` can update project documentation, such as ADRs and roadmap entries, while drafting a `spec` without separate approval.
+
 ## 0.23.0
 
 - feat: Change or clear agent models from `/maestro` before starting or restarting a `spec`.
